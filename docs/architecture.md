@@ -1,0 +1,233 @@
+# Architecture
+
+**Owns:** system design, component boundaries, and deferred design decisions.
+
+> **Status: proposed, and subject to review.**
+>
+> Nothing described here is implemented. This document records the intended direction so it can be reviewed and challenged *before* code exists. Several parts of it depend on facts that data discovery has not yet established — actual dataset formats, sizes, resolutions, and licensing. Expect this document to change once real data has been inspected, and expect the changes to be recorded as decision records under [decisions/](decisions/README.md).
+>
+> The source-code layout proposed near the end of this document has deliberately **not** been created.
+
+---
+
+## System context
+
+The system has three kinds of participant:
+
+- **Authoritative external publishers** — NOAA and the California BWBS program — who publish the whale distribution model, the AIS vessel records, and the VSR zone definition. They are read-only upstreams. See [data-sources.md](data-sources.md).
+- **The author, working offline**, who retrieves that data, inspects it, processes it into derived datasets, and publishes the results. All analysis happens here.
+- **A visitor's browser**, which loads a static web application and reads published layers. The browser displays and filters; it does not analyze.
+
+The important boundary is between the second and third: **every analytical decision is made offline and published as a result.** The browser never recomputes the exposure index. This keeps the analysis reproducible, keeps the client fast, and keeps the numbers shown to a visitor identical to the numbers in the documentation.
+
+## End-to-end data flow
+
+```
+Authoritative sources
+  NOAA whale distribution model
+  NOAA / USCG AIS vessel records
+  California BWBS VSR zone definition
+        |
+        v
+Local raw data store  (not committed to Git)
+        |
+        v
+Offline processing    (ArcGIS Pro and/or Python)
+  inspect -> clean -> reproject -> clip to study area
+  -> aggregate onto analysis grid -> combine -> derive exposure
+        |
+        v
+Validated derived datasets  (+ recorded lineage)
+        |
+        v
+ArcGIS Online
+  hosted feature / tile layers
+  web map
+        |
+        v
+Next.js + TypeScript application
+  ArcGIS Maps SDK for JavaScript
+        |
+        v
+Static deployment  ->  visitor's browser
+```
+
+Summary statistics follow the same path: they are computed offline in the processing step, checked against the published layers, and delivered to the application as a small committed data file rather than recomputed client-side.
+
+## Component responsibilities
+
+### ArcGIS Pro
+
+- Visual inspection of source data — the fastest way to notice that a dataset is in the wrong place, the wrong projection, or the wrong units.
+- Exploratory spatial analysis while the method is still being worked out.
+- Cartographic work: symbology, classification, and layouts.
+- Publishing derived datasets to ArcGIS Online.
+- Geoprocessing that is materially easier in Pro than in code.
+
+**Constraint:** anything done in Pro that affects a published result must be reproducible. A sequence of manual clicks that cannot be repeated is not an acceptable production step. Pro work that shapes results should be either recorded as an ordered, parameter-level written procedure, or exported to a script or model that can be rerun.
+
+### Python
+
+- Retrieval and bulk handling of AIS records, which are too large and too repetitive for manual work.
+- Cleaning and filtering: vessel-class selection, implausible-position and implausible-speed removal, deduplication.
+- Aggregation onto the analysis grid.
+- The relative exposure calculation itself — this is the project's own analytical contribution and should live in code that can be read, reviewed, and rerun.
+- Computation of the inside-versus-outside VSR summary statistics.
+- Validation checks over inputs and outputs.
+- Emission of lineage metadata alongside each derived dataset.
+
+Python is the preferred home for any step that must be reproducible or that will be run more than once.
+
+### ArcGIS Online
+
+- Hosting the derived layers as feature or tile services.
+- Holding the web map that assembles them with agreed symbology.
+- Serving those layers to the application over HTTPS.
+- Sharing and access control for the published items.
+
+ArcGIS Online is a publication and hosting target, not a processing tier. Analysis is not performed there for Version 1.
+
+### Next.js, TypeScript, and the ArcGIS Maps SDK for JavaScript
+
+- Loading the published layers and rendering the map.
+- Layer visibility, legends, and popups.
+- Presenting precomputed summary statistics.
+- Explaining what each layer means, including units, assumptions, and limitations.
+- Client-side filtering and view state — cheap, presentational operations only.
+
+The application is a presentation layer. It does not compute exposure, does not derive statistics, and does not transform data in ways that would change a reported number.
+
+## Offline processing versus browser-side processing
+
+| Concern | Offline (Pro / Python) | Browser (Next.js / SDK) |
+|---|---|---|
+| Raw source retrieval and cleaning | Yes | Never |
+| Reprojection, clipping, gridding | Yes | Never |
+| Exposure index computation | Yes | Never |
+| Inside/outside VSR statistics | Yes | Never |
+| Symbology decisions | Yes (authored) | Applied as published |
+| Layer visibility, opacity, basemap | — | Yes |
+| Attribute filtering of a displayed layer | — | Yes |
+| Map extent, zoom, popups | — | Yes |
+
+The rule behind the table: **if it changes a number a reader might quote, it happens offline.** If it only changes what is currently visible, it can happen in the browser.
+
+## Proposed deployment model
+
+- A static or statically-rendered Next.js build, deployed to a hosting platform that serves it over HTTPS from a stable public URL.
+- No application server, no server-side rendering of analytical content, no server-side data processing.
+- Layers served directly from ArcGIS Online to the browser.
+- Deployments triggered from the repository's default branch.
+
+Specific hosting platform: **to be decided.** The constraints that matter are HTTPS, a stable URL, static hosting of a Next.js build, and the ability to inject environment variables at build time.
+
+## Secrets and credentials
+
+- No credential, API key, token, or ArcGIS Online password is ever committed. This includes example files, screenshots, notebooks, and test fixtures.
+- Configuration reaches the application through environment variables, supplied locally by an ignored `.env.local` and in deployment by the hosting platform's environment settings.
+- A committed `.env.example` lists required variable **names** with empty or placeholder values, and never real values.
+- Any key that reaches the browser is public by definition. Any such key must be scoped and referrer-restricted to the deployed origin, and must never be a key with publishing or account-management rights.
+- Publishing to ArcGIS Online is an authenticated, local, author-run operation. Those credentials stay on the author's machine and never enter the repository or the application build.
+- If a credential is ever committed, it is treated as compromised: rotate it first, then clean up history.
+
+## Large-data handling
+
+- **Raw source data is never committed.** AIS extracts in particular can be very large. Raw data lives in a local, Git-ignored directory.
+- Derived datasets are published to ArcGIS Online rather than committed, except where a derived output is genuinely small and benefits from being versioned — for example the summary-statistics file the application reads.
+- Git LFS is **not** planned for Version 1. If a real need appears, it gets a decision record first.
+- Every dataset the project depends on must be *retrievable*: the register in [data-sources.md](data-sources.md) records the source, retrieval method, and retrieval date so that an uncommitted file can be obtained again.
+- The AIS extract should be scoped to the study area and analytical period at download time, not filtered down after downloading a national dataset.
+- Actual data volumes are unknown until discovery. If they turn out to be large enough to break this model, that finding gets recorded and the model gets revised.
+
+## Testing boundaries
+
+Testing effort follows consequence, not coverage.
+
+- **Analytical code (Python)** — the highest-value target. Aggregation, normalization, the exposure calculation, and the inside/outside statistics should be tested with small synthetic inputs whose correct answers are known by construction. A geometry whose area is known, a grid whose totals are known, a case where a cell falls exactly on the zone boundary.
+- **Validation checks** — CRS correctness, extent coverage, null handling, and value ranges are asserted as part of processing rather than as a separate test suite.
+- **Application code (TypeScript)** — type checking and linting, plus tests for any non-trivial presentational logic such as number formatting or classification. UI tests are not a Version 1 priority.
+- **Not tested** — third-party libraries, the ArcGIS SDK, ArcGIS Online itself, and the correctness of upstream datasets. Upstream data is *inspected and documented*, not unit-tested.
+- **Manual verification remains part of the process.** Some spatial errors are only visible on a map. Visual inspection of each derived layer is a required step, not a substitute for tests.
+
+No test framework has been chosen. Commands are pending implementation.
+
+## Reproducibility and data lineage
+
+Reproducibility is a Version 1 requirement, not a nice-to-have. It rests on three practices:
+
+1. **Recorded provenance.** For each source: publisher, exact URL or tool used, retrieval date, any query parameters or extract bounds, and dataset version or vintage where one is published.
+2. **An ordered processing path.** Each derived dataset records the steps that produced it, in order, with the parameters used. Steps implemented in code are self-documenting; steps performed in ArcGIS Pro are written down at parameter level.
+3. **Traceable outputs.** Each published layer and each reported statistic maps back to the derived dataset and processing step that produced it. Nothing is published whose origin cannot be stated.
+
+The intended test of all this is simple: rerun the process from raw inputs and compare against the published layers. That check happens in M8 of the [roadmap](roadmap.md).
+
+## Initial performance considerations
+
+These are early concerns to keep in view, not measured problems:
+
+- **ArcGIS SDK payload.** The Maps SDK is substantial. Import only what is used, and watch initial load time from the start rather than at release.
+- **Feature count and geometry complexity.** Vessel-activity layers can carry very high feature counts. Aggregating to the analysis grid before publishing is both the analytical choice and the performance choice.
+- **Raster versus vector delivery.** A continuous exposure surface may be better served as tiles than as features. The decision depends on the resolution chosen in discovery.
+- **Classification cost.** Client-side renderer classification over large layers is slower than publishing a layer with symbology already defined.
+- **Basemap and layer requests** on a mid-range connection: a reviewer opening the deployed app should see something meaningful quickly.
+
+No performance budget has been set. One should be set once the real layers exist.
+
+## Version 1 architectural constraints
+
+For Version 1, the project deliberately does **not** introduce:
+
+- a custom backend or API service,
+- microservices,
+- PostGIS or any self-hosted database,
+- job queues or schedulers,
+- containers or Kubernetes,
+- AI or machine-learning features.
+
+Each of these would add operational surface without serving the Version 1 question. Any of them may be introduced later if a concrete, demonstrated need appears — and if it does, it gets a decision record explaining the need before it gets an implementation.
+
+## Proposed future repository structure
+
+Proposed only. **These directories are intentionally not created yet**; they will be created when the milestone that needs them begins.
+
+```
+socal-whale-vessel-risk/
+├── docs/                  # documentation (exists)
+│   └── decisions/         # architecture decision records (exists)
+├── analysis/              # Python analysis package  [proposed]
+│   ├── src/               #   retrieval, cleaning, gridding, exposure, statistics
+│   └── tests/             #   tests over analytical logic
+├── data/                  # local data root, Git-ignored  [proposed]
+│   ├── raw/               #   untouched source downloads
+│   ├── interim/           #   intermediate processing outputs
+│   └── derived/           #   validated outputs for publication
+├── arcgis/                # ArcGIS Pro project and exported tools  [proposed]
+├── web/                   # Next.js + TypeScript application  [proposed]
+│   ├── app/               #   routes and pages
+│   ├── components/        #   map and UI components
+│   ├── lib/               #   layer configuration, formatting helpers
+│   └── public/            #   static assets
+└── results/               # small committed outputs the app reads  [proposed]
+```
+
+Open questions about this layout: whether `web/` should sit at the repository root instead of in a subdirectory; whether `results/` is distinct enough from `data/derived/` to justify existing; and whether the ArcGIS Pro project belongs in the repository at all given its file sizes. These are settled at the milestone that needs them.
+
+## Explicitly deferred decisions
+
+Deferred on purpose. Each should be resolved by evidence — real data, real measurements — and recorded as a decision record when it is.
+
+| Decision | Deferred until | Why it is not decided now |
+|---|---|---|
+| Study area extent, projected CRS, and analysis grid resolution | Data discovery | Depends on the native resolution and extent of the whale model and the AIS density needed. |
+| Analytical period for Version 1 | Data discovery | Depends on the temporal coverage the whale model and AIS records actually share. |
+| Exposure index formula, normalization, and weighting | After both inputs are inspected | Cannot be defined responsibly before the units and value distributions of the inputs are known. |
+| High-exposure threshold definition | After the exposure surface exists | Should be chosen against the real value distribution and tested for sensitivity. |
+| Raster versus vector representation for the exposure layer | After resolution is chosen | Drives both publishing method and client performance. |
+| Whether vessel speed is used in the index or reported separately | Data discovery | Depends on whether AIS speed data supports reliable summarization. |
+| Split of work between ArcGIS Pro and Python for each processing step | Processing workflow | Depends on which operations turn out to be awkward in code. |
+| Hosting platform for the deployed application | Application foundation | Constraints are known; the specific platform is not yet chosen. |
+| ArcGIS Online sharing model and API-key scoping | Application foundation | Depends on the account and licensing available. |
+| Test framework and toolchain for both Python and TypeScript | When the first code is written | Choosing a framework before there is code to test is premature. |
+| Layer schemas, field names, and any data or API contract | After real datasets are inspected | Contracts written against imagined data are wrong contracts. |
+
+The last row matters most: **no data contract, API contract, layer contract, analytical schema, or exposure formula is written until real datasets have been inspected.**
