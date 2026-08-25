@@ -134,6 +134,8 @@ Stand up the web application shell — the framework, the map, and the deploymen
 - Application scaffold created following the reviewed architecture.
 - A working map view of the study area using the ArcGIS Maps SDK for JavaScript.
 - Environment-variable and credential handling in place, with nothing secret committed.
+- **A verified ArcGIS Online capability check**, recording: access to an organization; content-creation and publishing privileges; permission to share items publicly; availability of hosted imagery and tile publishing as well as hosted feature layers; credit availability and which operations consume credits; and storage availability against quota.
+- A test item published and shared publicly, then loaded from the application, proving the publish-and-serve path end to end before any real layer depends on it.
 - A working deployment of the empty shell.
 - Formatting, linting, and type-checking configured.
 
@@ -142,8 +144,12 @@ Stand up the web application shell — the framework, the map, and the deploymen
 - The map renders, pans, and zooms over the study area.
 - No API keys or credentials appear in the repository or in committed build output.
 - The deployment is reachable and reflects the current main branch state.
+- **The ArcGIS Online capability check is complete and recorded.** Publishing privileges, public sharing, imagery and tile support, credits, and storage are each confirmed or confirmed unavailable. The deployment path is not considered proven until a publicly shared item loads in the deployed application.
+- Any capability found unavailable is recorded as a constraint on layer representation and hosting, and carried into the core-input-layers milestone rather than discovered there.
 
 **Risks and open questions**
+- **ArcGIS Online account capabilities are unverified and gate delivery.** If the available account cannot publish hosted imagery or tiles, cannot share publicly, or lacks credits or storage, the layer representation and possibly the whole hosting approach have to change. This is cheaper to discover here than at release.
+- Credit consumption for publishing and storage is not yet understood and could constrain how often layers are republished during iteration.
 - ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment.
 - Bundle size and initial load time of the SDK need an early look rather than a late one.
 
@@ -301,6 +307,8 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 - Version 1 scope items in [project-brief.md](project-brief.md) are all satisfied or explicitly recorded as reduced, with the reason.
 
 **Risks and open questions**
+- **Public delivery depends on ArcGIS Online account capabilities.** If public sharing, publishing privileges, imagery or tile support, credits, or storage prove insufficient, the layers cannot be served to a public visitor and the release is blocked regardless of how complete the analysis is. This is verified in M4 precisely so it is not discovered here.
+- Credits and storage are consumable. A release can be blocked by an exhausted quota even when everything was working during development.
 - Deployment hosting and any ArcGIS credential requirements must be settled before release, not at release.
 - Screenshots and headline numbers go stale if the analysis is later revised; they need a stated "results as of" date.
 

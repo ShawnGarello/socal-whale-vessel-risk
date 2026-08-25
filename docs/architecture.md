@@ -87,6 +87,18 @@ Python is the preferred home for any step that must be reproducible or that will
 
 ArcGIS Online is a publication and hosting target, not a processing tier. Analysis is not performed there for Version 1.
 
+**Account capability is an unverified delivery gate.** This architecture assumes ArcGIS Online can host the project's eventual layers and serve them publicly. That assumption has not been checked against an actual account, and it is a hard delivery constraint rather than a detail: if the available account cannot publish or share what the analysis produces, the delivery path does not work. The following must all be verified before the hosting approach is considered proven:
+
+- access to an ArcGIS Online organization, and which one;
+- content-creation and publishing privileges on that account;
+- permission to share items publicly, and whether the organization allows public sharing at all;
+- availability of hosted imagery or tile publishing, not only hosted feature layers;
+- credit availability, and which publishing operations consume credits;
+- storage availability against the account's quota;
+- whether the account supports the raster-delivery method the exposure layer ends up needing.
+
+The last two points matter most for the whale-density input and the derived exposure result, which may be raster or tiled imagery rather than features. **The final layer representation and hosting approach therefore depend partly on verified account capabilities**, not only on the analytical resolution chosen. No layer format is selected here; the choice is made once both the resolution and the account capabilities are known. Verification is a deliverable of the application-foundation milestone in the [roadmap](roadmap.md).
+
 ### Next.js, TypeScript, and the ArcGIS Maps SDK for JavaScript
 
 - Loading the published layers and rendering the map.
@@ -120,6 +132,8 @@ The rule behind the table: **if it changes a number a reader might quote, it hap
 - Deployments triggered from the repository's default branch.
 
 Specific hosting platform: **to be decided.** The constraints that matter are HTTPS, a stable URL, static hosting of a Next.js build, and the ability to inject environment variables at build time.
+
+This model has two halves, and only one of them is about the web host. The application half is straightforward. The layer half depends entirely on ArcGIS Online account capabilities — publishing privileges, public sharing, imagery or tile support, credits, and storage — as set out under [ArcGIS Online](#arcgis-online) above. The deployment path is not proven until both halves are verified: a deployed application that cannot load a publicly shared layer is not a deployment.
 
 ## Secrets and credentials
 
@@ -156,7 +170,7 @@ No test framework has been chosen. Commands are pending implementation.
 Reproducibility is a Version 1 requirement, not a nice-to-have. It rests on three practices:
 
 1. **Recorded provenance.** For each source: publisher, exact URL or tool used, retrieval date, any query parameters or extract bounds, and dataset version or vintage where one is published.
-2. **An ordered processing path.** Each derived dataset records the steps that produced it, in order, with the parameters used. Steps implemented in code are self-documenting; steps performed in ArcGIS Pro are written down at parameter level.
+2. **An ordered processing path.** Each derived dataset records the steps that produced it, in order, with the parameters used. Steps performed in ArcGIS Pro are written down at parameter level. Code is not self-documenting for this purpose — source alone does not capture how it was run — so a coded step is reproducible only when all of the following exist: version-controlled code; configuration and parameters that are themselves versioned rather than passed ad hoc; a documented invocation or entrypoint; a pinned or recorded environment, including runtime and dependency versions; and run metadata tying that execution to the specific input datasets and output datasets it consumed and produced. No workflow engine or tooling is chosen for this yet.
 3. **Traceable outputs.** Each published layer and each reported statistic maps back to the derived dataset and processing step that produced it. Nothing is published whose origin cannot be stated.
 
 The intended test of all this is simple: rerun the process from raw inputs and compare against the published layers. That check happens in M8 of the [roadmap](roadmap.md).
@@ -222,11 +236,12 @@ Deferred on purpose. Each should be resolved by evidence — real data, real mea
 | Analytical period for Version 1 | Data discovery | Depends on the temporal coverage the whale model and AIS records actually share. |
 | Exposure index formula, normalization, and weighting | After both inputs are inspected | Cannot be defined responsibly before the units and value distributions of the inputs are known. |
 | High-exposure threshold definition | After the exposure surface exists | Should be chosen against the real value distribution and tested for sensitivity. |
-| Raster versus vector representation for the exposure layer | After resolution is chosen | Drives both publishing method and client performance. |
+| Raster versus vector representation for the exposure layer | After resolution is chosen and account capabilities are verified | Drives both publishing method and client performance, and is constrained by what the ArcGIS Online account can actually publish. |
 | Whether vessel speed is used in the index or reported separately | Data discovery | Depends on whether AIS speed data supports reliable summarization. |
 | Split of work between ArcGIS Pro and Python for each processing step | Processing workflow | Depends on which operations turn out to be awkward in code. |
 | Hosting platform for the deployed application | Application foundation | Constraints are known; the specific platform is not yet chosen. |
-| ArcGIS Online sharing model and API-key scoping | Application foundation | Depends on the account and licensing available. |
+| ArcGIS Online account capability and publishing feasibility — organization access, publishing privileges, public sharing, hosted imagery and tile support, credits, storage | Application foundation, before the deployment path is treated as proven | Unverified against a real account. It gates what can be published at all, and therefore constrains the layer representation and the hosting approach. |
+| ArcGIS Online sharing model and API-key scoping | Application foundation | Depends on the account and licensing available, and on the capability check above. |
 | Test framework and toolchain for both Python and TypeScript | When the first code is written | Choosing a framework before there is code to test is premature. |
 | Layer schemas, field names, and any data or API contract | After real datasets are inspected | Contracts written against imagined data are wrong contracts. |
 

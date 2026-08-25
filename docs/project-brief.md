@@ -16,7 +16,7 @@ The project is an exploratory spatial analysis with an interactive map applicati
 
 The Southern California Bight carries some of the densest commercial shipping traffic in the United States and also holds foraging habitat for endangered blue whales. California's Protecting Blue Whales and Blue Skies (BWBS) program responds with voluntary Vessel Speed Reduction (VSR) zones, asking large vessels to travel at reduced speed inside designated waters during a defined season.
 
-Whale habitat, shipping traffic, and management boundaries are each published separately and are usually looked at separately. How well they line up geographically is answerable with public data and standard GIS operations, but it requires deliberately bringing the three together, normalizing them onto a common study area and grid, and being explicit about what the combined layer does and does not mean.
+These datasets originate from different sources, in different formats and at different resolutions, and require deliberate normalization before they can be compared in one transparent, reproducible analysis. Answering the question with public data and standard GIS operations therefore means bringing the three inputs onto a common study area and grid, and being explicit about what the combined layer does and does not mean. The value of the project is that transparency and reproducibility, not any claim to have combined these subjects first — the BWBS program itself already evaluates related inputs and impacts.
 
 ## Intended audience
 

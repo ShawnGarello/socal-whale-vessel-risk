@@ -9,7 +9,7 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 
 The Southern California Bight carries some of the densest commercial shipping traffic in the United States and also holds foraging habitat for endangered blue whales. California's [Protecting Blue Whales and Blue Skies](https://bluewhalesblueskies.org/) program responds with voluntary Vessel Speed Reduction (VSR) zones, asking large vessels to slow down inside designated waters during a defined season.
 
-Whale habitat, shipping traffic, and management boundaries are published separately and usually looked at separately. This project brings the three onto one study area and grid to see how well they line up.
+These datasets originate from different sources, in different formats and at different resolutions, and require deliberate normalization before they can be compared in one transparent, reproducible analysis. This project brings the three onto a common study area and grid, and documents every step that gets them there.
 
 ## The question
 
@@ -61,7 +61,7 @@ Identified source categories. None has been downloaded, inspected, or verified y
 
 This is an exploratory, decision-support spatial analysis. It does **not** predict individual whale strikes, calculate validated collision probability, or identify objectively optimal VSR boundaries, and it makes no policy recommendations. Its outputs describe *relative exposure* — where habitat and traffic coincide — not risk in any validated sense.
 
-Any modeled distribution is an estimate, not observed whale locations. AIS coverage is uneven and self-reported. Analytical choices such as thresholds, weightings, and time windows are documented as choices, with their rationale, wherever their results appear.
+Any modeled distribution is an estimate, not observed whale locations. Potential AIS limitations — including coverage variation and self-reported vessel attributes — will be evaluated during data discovery. Analytical choices such as thresholds, weightings, and time windows are documented as choices, with their rationale, wherever their results appear.
 
 ## Results
 
