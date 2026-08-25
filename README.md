@@ -1,38 +1,91 @@
 # socal-whale-vessel-risk
 
-An ArcGIS-based spatial analysis examining how California's Vessel Speed Reduction (VSR) zones align with blue-whale habitat and large commercial vessel activity off Southern California.
+A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
+
+> **Status: in development — documentation and planning stage.**
+> The analysis and the web application described below are defined but **not yet implemented**. Nothing in this repository is a result yet.
 
 ## Why
 
-Southern California holds important habitat for endangered blue whales while also carrying some of the busiest commercial shipping traffic in the United States. Large vessels bring risk of ship strikes, underwater noise, and air and greenhouse-gas emissions. California's [Protecting Blue Whales and Blue Skies](https://bluewhalesblueskies.org/) program addresses this with voluntary speed-reduction zones — vessels of 300+ gross tons are asked to travel at 10 knots or less inside designated areas during the season.
+The Southern California Bight carries some of the densest commercial shipping traffic in the United States and also holds foraging habitat for endangered blue whales. California's [Protecting Blue Whales and Blue Skies](https://bluewhalesblueskies.org/) program responds with voluntary Vessel Speed Reduction (VSR) zones, asking large vessels to slow down inside designated waters during a defined season.
 
-This project asks a geographic question about that program:
+Whale habitat, shipping traffic, and management boundaries are published separately and usually looked at separately. This project brings the three onto one study area and grid to see how well they line up.
 
-> **How well do California's Vessel Speed Reduction zones spatially and seasonally align with the areas where commercial shipping creates the most pressure on blue whales and surrounding coastal ecosystems?**
+## The question
 
-## What it does
+> Where does modeled blue-whale habitat overlap with commercial vessel activity off Southern California, and how much of that relative exposure occurs inside versus outside the current Vessel Speed Reduction zone?
 
-The analysis combines three things — where whales are likely to be, where large vessels travel and how fast, and where California asks ships to slow down — and measures how those geographies overlap:
+## Version 1 scope
 
-- **Strike exposure** — where high modeled blue-whale density overlaps heavy vessel traffic, and how much of that overlap falls inside versus outside current VSR zones
-- **Underwater noise** — where vessel traffic generates the greatest potential acoustic pressure within whale habitat
-- **Emissions** — where shipping emissions concentrate, and how speed reduction could change them
-- **Scenarios** — how alternative zone configurations would change those results
+Version 1 is an analytical MVP, not a map viewer: it produces a derived result rather than displaying layers someone else published. It is planned to include —
 
-## What it is not
+- a defined Southern California study area, projection, and analysis grid;
+- an authoritative VSR zone boundary and its season definition;
+- a modeled blue-whale density or distribution layer;
+- processed commercial AIS vessel activity, with vessel speed where the data supports it;
+- a documented **relative exposure** calculation combining whale density and vessel activity;
+- a derived exposure / hotspot layer;
+- inside-versus-outside VSR summary statistics;
+- an interactive ArcGIS web application;
+- reproducible processing, with documented methodology, provenance, assumptions, and limitations.
 
-This is an exploratory, decision-support analysis, not a predictive or prescriptive one. It does not claim to predict where a whale will be struck, and it does not claim to identify California's objectively optimal VSR boundaries. Its purpose is to show where habitat, traffic, and management boundaries do and do not line up, and to make those spatial tradeoffs visible.
+Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison are **out of scope for Version 1**. They remain genuine directions for later versions — see [docs/roadmap.md](docs/roadmap.md).
+
+## Current status
+
+| Area | State |
+|---|---|
+| Project scope and roadmap | Documented |
+| Architecture | Proposed, pending review |
+| Data sources | Identified, **not yet verified or downloaded** |
+| Processing workflow | Not started |
+| Analysis and derived layers | Not started |
+| Web application | Not started |
+| Deployment | Not started |
+
+## Technology direction
+
+Proposed and subject to review: ArcGIS Pro and Python for offline data preparation and spatial analysis → ArcGIS Online for hosted layers and web maps → a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/).
+
+All analysis happens offline and is published as a result. The browser displays and filters; it does not compute exposure. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md).
 
 ## Data sources
 
-- [NOAA West Coast species distribution models](https://www.fisheries.noaa.gov/west-coast/science-data/species-distribution-models) — modeled blue-whale density
-- [NOAA / USCG AIS vessel traffic](https://coast.noaa.gov/digitalcoast/tools/ais.html) — commercial vessel tracks and speeds
-- [Blue Whales and Blue Skies](https://bluewhalesblueskies.org/operators/) — VSR zone boundaries and season definitions
+Identified source categories. None has been downloaded, inspected, or verified yet; formats, resolutions, coverage, and licensing are all open questions tracked in [docs/data-sources.md](docs/data-sources.md).
 
-## Stack
+- **Modeled blue-whale distribution** — [NOAA Fisheries species distribution models](https://www.fisheries.noaa.gov/west-coast/science-data/species-distribution-models)
+- **Commercial vessel activity** — [NOAA / USCG AIS vessel traffic](https://coast.noaa.gov/digitalcoast/tools/ais.html)
+- **VSR zone boundary and season** — [Blue Whales and Blue Skies](https://bluewhalesblueskies.org/operators/), with [California Ocean Protection Council](https://opc.ca.gov/2026/05/protecting-whales-from-ship-strikes/) program context
 
-ArcGIS Pro and Python for data preparation and spatial analysis, ArcGIS Online for hosted feature services and web maps, and the ArcGIS Maps SDK for JavaScript inside a Next.js / TypeScript app for the interactive front end.
+## What this project does not claim
 
-## Status
+This is an exploratory, decision-support spatial analysis. It does **not** predict individual whale strikes, calculate validated collision probability, or identify objectively optimal VSR boundaries, and it makes no policy recommendations. Its outputs describe *relative exposure* — where habitat and traffic coincide — not risk in any validated sense.
 
-In progress. Foundations and the core habitat–traffic–VSR overlap analysis come first; noise, emissions, and scenario comparison follow.
+Any modeled distribution is an estimate, not observed whale locations. AIS coverage is uneven and self-reported. Analytical choices such as thresholds, weightings, and time windows are documented as choices, with their rationale, wherever their results appear.
+
+## Results
+
+**Not yet available.** Headline statistics will be published here once the analysis is complete and verified.
+
+## Live demo
+
+**Not yet deployed.** A public URL will be added here at release.
+
+## Screenshots
+
+**Not yet available.** Added once the application renders real layers.
+
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [docs/project-brief.md](docs/project-brief.md) | Authoritative scope: Version 1 definition, non-goals, success criteria |
+| [docs/roadmap.md](docs/roadmap.md) | Dependency-ordered milestones, progress, and version direction |
+| [docs/architecture.md](docs/architecture.md) | Proposed system design and deferred decisions |
+| [docs/data-sources.md](docs/data-sources.md) | Source register, provenance, and verification status |
+| [docs/development.md](docs/development.md) | Engineering workflow |
+| [docs/decisions/](docs/decisions/README.md) | Architecture decision records |
+| [docs/project-vision-and-learning-plan.md](docs/project-vision-and-learning-plan.md) | Original project vision and GIS learning plan |
+| [AGENTS.md](AGENTS.md) | Instructions for coding agents |
+
+Built as a portfolio project. Target for Version 1: **September 5, 2026**.
