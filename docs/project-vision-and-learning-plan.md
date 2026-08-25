@@ -1,3 +1,13 @@
+> **About this document**
+>
+> This is the original project vision and GIS learning plan, preserved as written. It records why the project exists, the GIS concepts to work through, the datasets to investigate, and the full long-term ambition for the analysis.
+>
+> It is a reference, not the current source of truth. The actionable product scope and engineering direction now live in the newer documents alongside it in `docs/`: `project-brief.md` defines scope, `roadmap.md` defines milestones, `architecture.md` defines system design, `data-sources.md` tracks dataset provenance, and `development.md` defines the working process. Where this document and those disagree — on milestone ordering, on what Version 1 must contain, or on target dates — the newer documents take precedence.
+>
+> It is kept because the learning path, the reasoning behind the research question, and the collected source links below remain useful.
+
+---
+
 # Southern California Whale–Vessel Impact GIS
 
 **Repository:** `socal-whale-vessel-risk`
