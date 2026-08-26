@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
   // URLs still resolve every route.
   trailingSlash: true,
 
+  // `next dev` otherwise writes its own AGENTS.md and CLAUDE.md into this
+  // directory. The repository already has agent guidance at its root, and a
+  // second, generated set of instructions here would compete with it.
+  agentRules: false,
+
   // `next/image` optimization requires a server. Nothing in the application
   // relies on it today; this makes the constraint explicit rather than
   // letting a future `<Image>` silently break the export.
