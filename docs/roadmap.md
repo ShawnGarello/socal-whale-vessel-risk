@@ -11,7 +11,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 | # | Milestone | Status |
 |---|-----------|--------|
 | M1 | Project foundation | Complete |
-| M2 | Data discovery and validation | Not started |
+| M2 | Data discovery and validation | In progress |
 | M3 | Processing workflow | Not started |
 | M4 | GIS application foundation | Not started |
 | M5 | Core input layers | Not started |
@@ -54,7 +54,7 @@ None.
 
 ## M2 — Data discovery and validation
 
-**Status:** Not started
+**Status:** In progress
 
 **Objective**
 Obtain and inspect the actual candidate datasets, and determine what analysis the data can genuinely support. This milestone is where assumptions become findings.

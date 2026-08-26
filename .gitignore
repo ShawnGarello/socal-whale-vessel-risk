@@ -1,0 +1,88 @@
+# Root ignore rules.
+#
+# This file is currently owned by the data-discovery work. Rules below cover the
+# local data root and credentials. Application/build rules are added by the
+# milestone that creates the application, in a separate section.
+
+# ---------------------------------------------------------------------------
+# Local data root
+# ---------------------------------------------------------------------------
+# Raw source downloads, intermediate processing outputs, and derived datasets
+# are never committed. See data/README.md for what belongs in each directory.
+# The ignore is deliberately broad — everything under data/ is ignored except
+# the documentation and provenance files explicitly re-included below.
+data/**
+!data/**/
+!data/**/README.md
+!data/**/.gitkeep
+
+# Belt-and-braces: geospatial and tabular payloads are never committed from
+# anywhere in the tree, whatever directory they end up in.
+*.nc
+*.nc4
+*.hdf
+*.hdf5
+*.h5
+*.tif
+*.tiff
+*.img
+*.grd
+*.bil
+*.bsq
+*.asc
+*.shp
+*.shx
+*.dbf
+*.sbn
+*.sbx
+*.prj
+*.cpg
+*.qix
+*.gdb/
+*.gpkg
+*.gpkg-shm
+*.gpkg-wal
+*.mpk
+*.lpk
+*.lpkx
+*.tpk
+*.tpkx
+*.parquet
+*.feather
+*.zip
+*.gz
+*.tar
+*.tgz
+*.7z
+*.laz
+*.las
+
+# CSV is ignored by default because AIS extracts arrive as CSV. Small committed
+# reference tables must be re-included explicitly, one path at a time.
+*.csv
+
+# ---------------------------------------------------------------------------
+# Credentials and local configuration
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+credentials.json
+token.json
+
+# ---------------------------------------------------------------------------
+# Editor, OS, and tooling noise
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
