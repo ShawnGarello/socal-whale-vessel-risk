@@ -56,6 +56,8 @@ None.
 
 **Status:** In progress
 
+> An independent audit of this milestone on 2026-08-26 found five problems: provenance claimed but not recorded, AIS record counts quoted inconsistently and snapshot results generalised into period facts, an analytical domain accepted on evidence that could not support it, a boundary method that would have made the headline statistic an artefact of the grid, and a retrieval policy that contradicted itself. All five have been corrected. The corrections **enlarged** the set of open questions rather than shrinking it, which is the honest outcome.
+
 **Objective**
 Obtain and inspect the actual candidate datasets, and determine what analysis the data can genuinely support. This milestone is where assumptions become findings.
 
@@ -63,60 +65,90 @@ Obtain and inspect the actual candidate datasets, and determine what analysis th
 - M1 (source register exists with the questions each source must answer).
 
 **Deliverables**
-- A small, retrievable sample of each candidate dataset, inspected locally.
-- For each source: confirmed format, coordinate reference system, spatial extent and resolution, temporal coverage, value meaning and units, and license or terms of use.
-- A written definition of the Southern California study area: extent, projected CRS, and analysis grid, with the reasoning for each.
-- A decision on the analytical period Version 1 will use.
-- A decision on whether vessel speed can be derived reliably from the available AIS records.
-- Updated source register with verification status replacing every "to be verified" entry that has been resolved.
-- Architecture decision records for choices that constrain later work.
+
+| Deliverable | State |
+|---|---|
+| A small, retrievable sample of each candidate dataset, inspected locally | **Done.** Sixteen artifacts, each with a recorded size and SHA-256 |
+| For each source: confirmed format, CRS, spatial extent and resolution, temporal coverage, value meaning and units, and licence or terms of use | **Done**, except redistribution terms for the VSR geometry |
+| A written definition of the Southern California study area: extent, projected CRS, and analysis grid | **Partial.** Projected CRS ([0003](decisions/0003-projected-coordinate-system.md)) and grid ([0004](decisions/0004-analysis-grid-resolution.md)) are accepted. Extent is split: the **map extent is proposed**, the **analytical domain is open** ([0002](decisions/0002-southern-california-study-area-extent.md)) |
+| A decision on the analytical period | **Done** ([0005](decisions/0005-analytical-period.md)) |
+| A decision on whether vessel speed can be derived reliably from the available AIS records | **Done, with its evidentiary limits stated** ([0006](decisions/0006-report-vessel-speed-separately.md)). `SOG` is present, documented, and appears usable in the inspected sample; that is not the same as established across the period |
+| Updated source register with verification status replacing every resolved "to be verified" entry | **Done**, with a provenance manifest and a utility that re-checks it |
+| Architecture decision records for choices that constrain later work | **Done.** Five records, one of which is deliberately Proposed rather than Accepted |
 
 **Completion criteria**
 
 | Criterion | State |
 |---|---|
-| Every Version 1 input has an identified, retrievable, authoritative source with recorded provenance | **Met.** All three retrieved and inspected on 2026-08-25, with direct retrieval methods, checksums, and sizes recorded |
+| Every Version 1 input has an identified, retrievable, authoritative source with recorded provenance | **Met.** Source URL or query endpoint, method and parameters, retrieval date, local filename, byte size and SHA-256 are recorded for all sixteen artifacts in [data-sources.md](data-sources.md), and `python tools/m2_verify.py verify` checks them against the local files. This criterion was previously claimed as met when the checksums did not exist |
 | The whale model layer's values are understood well enough to state what they mean in the application legend | **Met.** `DENSITY` is animals per km², publisher-defined, with a per-cell coefficient of variation |
-| The AIS extract needed for the study area and analytical period has been scoped, and its volume is known | **Met, with a caveat.** Scoped to the study area for 1 July – 30 November 2024 and estimated at ≈87 million records and ~60 GB of transfer. The figure is an extrapolation from a 34-minute sample, not a measurement |
+| The AIS extract needed for the study area and analytical period has been scoped, and its volume is known | **Met, with the volume qualified.** The period is fixed and the retrieval footprint is bounded, but the volume is an **order-of-magnitude planning estimate** — 60 to 90 million study-area records, ≈56 GB of transfer — extrapolated from five 34-minute windows all at the same time of day. It is not a measurement and nothing analytical rests on it |
 | The VSR boundary geometry is confirmed as obtainable from an authoritative source, or a documented derivation from published coordinates is agreed on | **Met.** A closed, land-clipped polygon is retrievable, and seven of the program's eight published points lie exactly on its boundary |
 | Redistribution terms are known for each dataset, so it is clear what may be committed or hosted publicly | **Not met.** Clear for both NOAA sources. **Not clear for the VSR zone geometry** — publicly shared with attribution, but with no redistribution grant, and BWBS/CMSF is not a federal publisher |
-| Anything that cannot be verified is explicitly recorded as unresolved rather than assumed | **Met** |
+| Anything that cannot be verified is explicitly recorded as unresolved rather than assumed | **Met**, and this is what the audit repaired. Several things previously stated as established are now recorded as unresolved |
 
-**M2 stays in progress on the fifth criterion alone.** Everything else is done. It is not marked blocked, because nothing external prevents progress — the question needs a decision or an email, and it does not stop M3 from starting, since computing an inside/outside statistic does not require republishing the boundary.
+**M2 is not complete.** Two criteria are unsatisfied or qualified, and one deliverable — the study-area definition — is only half done. **The blocking item is the analytical domain, not the licensing question.**
 
-**What was established**
+### Open items, in order of how much they constrain the work
+
+1. **The analytical and statistical domain is undecided.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md) is **Proposed**, not Accepted. NOAA states AIS coverage is unavailable more than 40–50 miles offshore, and 42.3% of the proposed water area — holding 34.6% of the in-box VSR zone — lies west of −120.5, where the sampled record density falls off. **A snapshot cannot distinguish sparse reception from low traffic**, and the two imply opposite treatments. Until a domain is accepted, **no inside-versus-outside statistic may be published.** Three candidates and the evidence each needs are in the record.
+
+2. **Redistribution of the VSR zone geometry is unresolved.** Publicly shared by BWBS/CMSF with attribution and no stated prohibition, but no grant either, and the publisher is not a federal agency. Options: obtain permission, reference the published service rather than copy it, or substitute a federally published geometry. **Gates public hosting, not analysis.**
+
+3. **The whale model's season definition is unconfirmed.** The survey basis is July–November; a redistributor describes the same models' predictions as late June to early December. [ADR 0005](decisions/0005-analytical-period.md) uses the conservative July–November reading and would need revisiting if the publisher states otherwise.
+
+4. **The datum of the published VSR coordinates is unstated.** Assumed WGS 84, consistent with the geometry being served in EPSG:4326, but the program says nothing. At these latitudes a NAD 27 confusion would be on the order of 100 m.
+
+5. **Deferred to M3 rather than blocking M2**, but named so they are not rediscovered: the AIS retrieval route (AccessAIS preferred but unexercised, guarded bulk fallback permitted — see [../data/README.md](../data/README.md)); whether AccessAIS can filter by vessel type server-side; and whether a length threshold is applied on top of the vessel-type filter, and at what value.
+
+### What M3 may safely begin, and what must wait
+
+**May begin now.** None of these depends on where the reporting boundary lands, and the work has to happen regardless:
+
+- AIS retrieval and the route decision, over the full map extent.
+- Cleaning, deduplication, sentinel handling, and vessel-class filtering.
+- Reprojection of all three inputs to EPSG:3310.
+- Construction of the 5 km grid and the per-cell water geometries.
+- Area-weighted transfer of the whale model onto the grid, conserving abundance.
+- The fractional-intersection machinery and its synthetic tests ([ADR 0004](decisions/0004-analysis-grid-resolution.md)).
+- Vessel aggregation onto the grid.
+
+Doing this work is also how the evidence to settle item 1 gets produced: the spatial distribution of commercial transits over a real 153-day period is a far better basis for judging the offshore coverage question than five half-hour windows.
+
+**Must wait for the analytical domain.**
+
+- Any published inside-versus-outside figure.
+- Any exposure surface presented as covering the full map extent.
+- Any statement in the application about offshore vessel activity.
+
+**Must wait for the redistribution question.** Hosting the VSR geometry as a project-owned layer. Displaying it by referencing the publisher's service does not.
+
+### What was established
 
 Detail is in [data-sources.md](data-sources.md); this is the summary that changes later work.
 
 - **The whale model is vector polygons, not a raster** — 12,257 cells in EPSG:4326 on a 0.1° equal-angle grid, values in animals per km², with a coefficient of variation per cell. It is a **single summer–fall multi-year average, not a time series**, which removes any possibility of seasonal claims from this input.
-- **AIS carries no gross tonnage**, so the VSR program's 300 GT criterion cannot be applied directly and any size filter is a project assumption. Speed is present, in knots, and reliable.
-- **AIS coverage is publisher-stated as unavailable beyond 40–50 miles from shore**, and the sampled record density falls off in a way consistent with that. The VSR zone extends well past it. The sample cannot distinguish sparse reception from low traffic, so low offshore record density cannot be read as low vessel activity. **This is the most important limitation found, and it has reopened the analytical-domain decision** — see [ADR 0002](decisions/0002-southern-california-study-area-extent.md).
-- **AIS broadcast points are published only through 2024.** The 2026 season cannot be analysed.
-- **The VSR zone's eight published points do not define a polygon** — they are the seaward boundary only — but a closed geometry is published separately and matches them.
-- **Commercial vessel types are only ~18% of Southern California AIS records**, making vessel-class filtering the most consequential processing choice for that input.
+- **AIS carries no gross tonnage**, so the VSR program's 300 GT criterion cannot be applied directly and any size filter is a project assumption.
+- **NOAA states AIS coverage is unavailable beyond 40–50 miles from shore**, and the sampled record density falls off in a way consistent with that. The VSR zone extends well past it. This is the most consequential finding of the milestone and it is what reopened item 1 above.
+- **AIS broadcast points are published only through 2024** — the bulk index returns 404 for 2025 and 2026. The 2026 season cannot be analysed, so Version 1 pairs the current zone with 2024 traffic and says so.
+- **The VSR zone's eight published points do not define a polygon** — they are the seaward boundary only — but a closed geometry is published separately and matches them at seven of eight vertices, the eighth by 455 m.
+- **Commercial vessel types were 18.2–20.7% of Southern California records** across five sampled windows. A snapshot result, and taken at 17:00–17:34 Pacific, which if anything understates the daily figure. What it supports is the conclusion that **vessel-class filtering is the most consequential processing choice for this input**, which does not depend on the exact share.
 
 **Decisions recorded**
 
-**Accepted:** [0003](decisions/0003-projected-coordinate-system.md) EPSG:3310 · [0004](decisions/0004-analysis-grid-resolution.md) 5 km grid · [0005](decisions/0005-analytical-period.md) 1 July – 30 November 2024 · [0006](decisions/0006-report-vessel-speed-separately.md) speed reported separately.
+**Accepted:** [0003](decisions/0003-projected-coordinate-system.md) EPSG:3310 · [0004](decisions/0004-analysis-grid-resolution.md) 5 km grid with fractional VSR-boundary accounting · [0005](decisions/0005-analytical-period.md) 1 July – 30 November 2024 · [0006](decisions/0006-report-vessel-speed-separately.md) speed reported separately.
 
-**Proposed, not accepted:** [0002](decisions/0002-southern-california-study-area-extent.md) study area. Its map and context extent is settled; its **analytical and statistical domain is open**, because the AIS coverage question above is unresolved. No inside-versus-outside statistic may be published until it is.
-
-**What remains in M2**
-
-1. **Settle redistribution of the VSR zone geometry.** Either obtain permission from BWBS/CMSF, or decide to reference the published service rather than copy it, or substitute a federally published geometry. Must be settled before public hosting, not at release.
-2. **Confirm the whale model's season definition.** The survey basis is July–November; a redistributor describes the same models' predictions as late June to early December. [ADR 0005](decisions/0005-analytical-period.md) uses the conservative July–November reading, and would need revisiting if the publisher states otherwise.
-3. **Confirm the datum of the published VSR coordinates.** Assumed WGS 84; the program states none.
-
-None of these prevents M3 from beginning.
+**Proposed, not accepted:** [0002](decisions/0002-southern-california-study-area-extent.md) study area. Map and context extent settled; **analytical and statistical domain open.**
 
 **Risks and open questions**
 
-- ~~The whale distribution model may not be published at a resolution or in a format that is directly usable.~~ **Resolved:** it is directly usable, though as vector polygons rather than the raster the architecture also allowed for.
-- ~~AIS volume for the study area may be large enough to force a narrower analytical period or a coarser aggregation.~~ **Partly realised:** volume is large — ~60 GB of transfer for the chosen period — but the period was narrowed by data availability rather than by volume.
+- ~~The whale distribution model may not be published at a resolution or in a format that is directly usable.~~ **Resolved:** directly usable, though as vector polygons rather than the raster the architecture also allowed for.
+- ~~AIS volume for the study area may be large enough to force a narrower analytical period or a coarser aggregation.~~ **Partly realised:** volume is large — an estimated ≈56 GB of transfer for the chosen period — but the period was narrowed by data availability rather than by volume.
 - ~~The authoritative VSR boundary may only be published as text coordinates or as a map image.~~ **Resolved:** a downloadable closed geometry exists.
-- ~~Whale-model and AIS temporal coverage may not overlap cleanly.~~ **Realised, differently than expected:** the whale model has no time dimension at all, so there is nothing to overlap. Version 1 pairs a climatological surface with a fixed traffic window and states both vintages.
-- **Licensing may restrict redistribution of a processed derivative.** **Still open**, and now specific: it is the VSR zone geometry, not the NOAA data, that is unresolved.
-- **New:** AIS coverage falls off offshore, so results in the western part of the study area describe receiver coverage as much as vessel behaviour. This constrains how offshore results may be worded and is carried into M6 and M7 rather than discovered there.
+- ~~Whale-model and AIS temporal coverage may not overlap cleanly.~~ **Realised, differently than expected:** the whale model has no time dimension at all, so there was nothing to overlap. Version 1 pairs a climatological surface with a fixed traffic window and states both vintages.
+- **Licensing may restrict redistribution of a processed derivative.** **Still open**, and now specific: it is the VSR zone geometry, not the NOAA data.
+- **AIS coverage offshore is unestablished, and it constrains the analytical domain rather than merely the wording.** This was recorded during discovery as a limitation and, on audit, upgraded to an open decision. It is the milestone's principal unfinished item.
+- **New:** discovery findings can be written more confidently than the evidence behind them supports. Five such overstatements were found by audit in this milestone alone. The provenance manifest and [`tools/m2_verify.py`](../tools/m2_verify.py) exist so the next reader can check a number rather than trust it.
 
 ---
 
