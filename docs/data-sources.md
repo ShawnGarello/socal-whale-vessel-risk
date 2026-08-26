@@ -302,7 +302,7 @@ NOAA's own terms are the standard 17 U.S.C. § 403 public-domain statement.
 
 - **Which retrieval route the project uses** — bulk daily files versus chunked AccessAIS requests. Both work; the trade is transfer volume against request management. A processing-milestone decision.
 - **Whether a length threshold is applied on top of the type-group filter**, and at what value. The data support a defensible cut but not the program's actual 300 GT criterion.
-- **Whether the analytical period is one VSR season or several**, which multiplies the volume above.
+- ~~Whether the analytical period is one VSR season or several.~~ Resolved in [ADR 0005](decisions/0005-analytical-period.md): 1 July to 30 November 2024, because AIS is not published beyond 2024.
 - Whether AccessAIS can filter by vessel type server-side, which would change the volume arithmetic substantially. Not established — the tool is interactive and was not exercised in this session.
 
 ### Anticipated limitations
@@ -311,7 +311,7 @@ NOAA's own terms are the standard 17 U.S.C. § 403 public-domain statement.
 - Vessel-type coding is self-reported, though AVID now corrects 10–15% of records.
 - Aggregating records to a grid conflates transit frequency with time spent in a cell. Whichever measure is used has to be named precisely — a vessel stopped at anchor emits roughly as many positions as one under way, so a naive point count measures presence, not passage.
 - `Heading` is unavailable in over half of records and `COG` in a sixth; neither can be relied on.
-- Speed is present and usable — `SOG` is populated, in knots, with a single well-documented sentinel and no negative or implausible values in the sample. **Whether speed enters the exposure index or is reported separately is a separate question**, and is not settled by this entry.
+- Speed is present and usable — `SOG` is populated, in knots, with a single well-documented sentinel and no negative or implausible values in the sample. **Whether speed enters the exposure index or is reported separately is a separate question**, settled in [ADR 0006](decisions/0006-report-vessel-speed-separately.md): reported separately.
 
 ---
 

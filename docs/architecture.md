@@ -4,7 +4,9 @@
 
 > **Status: accepted as the initial architecture.** Recorded in [ADR 0001](decisions/0001-accept-initial-architecture.md).
 >
-> Accepted means this is the direction implementation follows. It does not mean it is proven. Nothing described here is implemented yet, and several parts still depend on facts that data discovery has not established — actual dataset formats, sizes, resolutions, licensing, and ArcGIS Online account capabilities. The deferred decisions at the end of this document remain deferred, and the ArcGIS Online capability gate remains unverified.
+> Accepted means this is the direction implementation follows. It does not mean it is proven. Nothing described here is implemented yet.
+>
+> Data discovery has since established the dataset formats, resolutions, and licensing that several parts depended on — see [data-sources.md](data-sources.md) — and three of the deferred decisions at the end of this document are now resolved, across five decision records. The rest, including **the ArcGIS Online capability gate, remain deferred and unverified.**
 >
 > Changes to an accepted architecture are recorded as decision records under [decisions/](decisions/README.md) rather than made silently.
 >
@@ -213,7 +215,7 @@ socal-whale-vessel-risk/
 ├── analysis/              # Python analysis package  [proposed]
 │   ├── src/               #   retrieval, cleaning, gridding, exposure, statistics
 │   └── tests/             #   tests over analytical logic
-├── data/                  # local data root, Git-ignored  [proposed]
+├── data/                  # local data root, Git-ignored  (exists)
 │   ├── raw/               #   untouched source downloads
 │   ├── interim/           #   intermediate processing outputs
 │   └── derived/           #   validated outputs for publication
@@ -234,12 +236,12 @@ Deferred on purpose. Each should be resolved by evidence — real data, real mea
 
 | Decision | Deferred until | Why it is not decided now |
 |---|---|---|
-| Study area extent, projected CRS, and analysis grid resolution | Data discovery | Depends on the native resolution and extent of the whale model and the AIS density needed. |
-| Analytical period for Version 1 | Data discovery | Depends on the temporal coverage the whale model and AIS records actually share. |
+| ~~Study area extent, projected CRS, and analysis grid resolution~~ | **Resolved by data discovery** | Extent in [ADR 0002](decisions/0002-southern-california-study-area-extent.md), projection in [ADR 0003](decisions/0003-projected-coordinate-system.md), grid in [ADR 0004](decisions/0004-analysis-grid-resolution.md). |
+| ~~Analytical period for Version 1~~ | **Resolved by data discovery** | [ADR 0005](decisions/0005-analytical-period.md). The whale model turned out not to be a time series at all, and AIS is only published through 2024. |
 | Exposure index formula, normalization, and weighting | After both inputs are inspected | Cannot be defined responsibly before the units and value distributions of the inputs are known. |
 | High-exposure threshold definition | After the exposure surface exists | Should be chosen against the real value distribution and tested for sensitivity. |
 | Raster versus vector representation for the exposure layer | After resolution is chosen and account capabilities are verified | Drives both publishing method and client performance, and is constrained by what the ArcGIS Online account can actually publish. |
-| Whether vessel speed is used in the index or reported separately | Data discovery | Depends on whether AIS speed data supports reliable summarization. |
+| ~~Whether vessel speed is used in the index or reported separately~~ | **Resolved by data discovery** | [ADR 0006](decisions/0006-report-vessel-speed-separately.md). AIS speed is reliable; it is reported separately rather than weighted into the index. |
 | Split of work between ArcGIS Pro and Python for each processing step | Processing workflow | Depends on which operations turn out to be awkward in code. |
 | Hosting platform for the deployed application | Application foundation | Constraints are known; the specific platform is not yet chosen. |
 | ArcGIS Online account capability and publishing feasibility — organization access, publishing privileges, public sharing, hosted imagery and tile support, credits, storage | Application foundation, before the deployment path is treated as proven | Unverified against a real account. It gates what can be published at all, and therefore constrains the layer representation and the hosting approach. |
