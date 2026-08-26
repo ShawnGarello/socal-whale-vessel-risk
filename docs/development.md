@@ -2,7 +2,7 @@
 
 **Owns:** the engineering workflow — how work is done, recorded, verified, and reviewed in this repository.
 
-> No application or analysis package has been scaffolded yet. The one exception is [../tools/](../tools/README.md), which holds a verification utility for data discovery and is not the analysis package. Sections that would contain commands are marked **pending implementation** and must be filled in by the milestone that creates the thing they describe. Do not invent commands here for code that does not exist.
+> The **web application is scaffolded and its commands are real** — they are recorded below and were run to write them down. The repository also contains the [M2 verification utility](../tools/README.md), which is not the analysis package. The analysis package and the ArcGIS Pro project are **not** built; sections describing them stay marked **pending implementation** until the milestone that creates them fills them in. Do not invent commands here for code that does not exist.
 
 ---
 
@@ -29,14 +29,85 @@ If two documents contradict each other, the owner above wins and the other is co
 
 ## Local development
 
-**Pending implementation.** This section fills in as each part is built.
+This section fills in as each part is built. The **web application exists**; the
+analysis package and the ArcGIS Pro project do not.
 
-Expected shape once the milestones that create them are complete:
+### Application (Next.js / TypeScript) — implemented
 
-- **Analysis (Python)** — a pinned, reproducible environment; a documented setup command; a documented way to run the processing path end to end. Created in the processing-workflow milestone.
-- **Application (Next.js / TypeScript)** — a documented install, dev-server, build, and type-check command. Created in the application-foundation milestone.
-- **ArcGIS Pro** — a documented project location and the version used, since Pro projects are version-sensitive.
-- **Prerequisites** — the specific tool versions the project actually requires, recorded once they are known rather than guessed now.
+The application lives in [`../web/`](../web/). It is a presentation layer only:
+no backend, no database, and no analysis. Run every command below from `web/`.
+
+**Prerequisites**
+
+| Tool | Required | Verified against |
+|---|---|---|
+| Node.js | `>=20.9.0` (enforced by `web/package.json` `engines`, and required by Next.js 16) | 22.16.0 |
+| npm | Ships with Node.js | 10.9.2 |
+
+npm is the package manager and `web/package-lock.json` is committed. Do not
+install with pnpm, Yarn, or Bun — see [ADR 0007](decisions/0007-use-npm-for-the-web-application.md).
+
+**Commands**
+
+| Command | What it does |
+|---|---|
+| `npm install` | Installs dependencies from the committed lockfile. |
+| `npm run dev` | Development server on <http://localhost:3000>. |
+| `npm run lint` | ESLint, using `eslint-config-next` flat config. |
+| `npm run typecheck` | `tsc --noEmit` over the whole project. |
+| `npm test` | Vitest, run once. `npm run test:watch` for watch mode. |
+| `npm run format` | Rewrites files with Prettier. |
+| `npm run format:check` | Fails if anything is unformatted. |
+| `npm run build` | Production build **and static export**. |
+
+There is no `npm start`. `next start` serves a Node build, and this application
+is exported as static files, so the script would only mislead.
+
+**Static output**
+
+`npm run build` writes a complete static site to `web/out/` — HTML, CSS, and
+JavaScript with no server component. Serve that directory with any static file
+server to check the real build locally; opening the files directly over
+`file://` will not work, because the application fetches its own JavaScript
+chunks over HTTP.
+
+`web/out/` and `web/.next/` are Git-ignored and must never be committed.
+
+The export is roughly 30 MB on disk, almost all of it ArcGIS Maps SDK chunks.
+That is the on-disk size, not the download: the SDK is code-split and the
+browser fetches only what the current map needs. Check any host's file-count and
+size limits against this before choosing one.
+
+**Environment variables**
+
+| Name | Required | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_ARCGIS_API_KEY` | Yes, for the map to render | Access token the browser sends to the ArcGIS basemap styles service. |
+| `NEXT_PUBLIC_ARCGIS_BASEMAP` | No | Basemap style id. Defaults to `arcgis/oceans`. |
+
+Names and their constraints are documented in
+[`../web/.env.example`](../web/.env.example). Copy it to `web/.env.local` — which
+is Git-ignored — and fill in values there.
+
+`NEXT_PUBLIC_` variables are inlined into the JavaScript bundle **at build
+time**. They are public, and they are baked into the deployed files, so changing
+one requires a rebuild, not just a restart.
+
+Without a key the application still loads and reports the problem in the
+interface rather than failing silently: it names the unset variable and shows the
+service's own response. That behaviour is verified. A **successful** basemap
+render has **not** been verified — see [roadmap.md](roadmap.md) M4.
+
+### Analysis (Python) — not built
+
+Pending implementation. A pinned, reproducible environment, a documented setup
+command, and a documented way to run the processing path end to end. Created in
+the processing-workflow milestone.
+
+### ArcGIS Pro — not built
+
+Pending implementation. A documented project location and the version used,
+since Pro projects are version-sensitive.
 
 Whoever creates each of these updates this section in the same branch.
 
@@ -49,6 +120,154 @@ Whoever creates each of these updates this section in the same branch.
 - ArcGIS Online publishing credentials stay on the author's machine. Publishing is a local, authenticated operation and is never automated from the repository in Version 1.
 - A committed secret is treated as compromised. Rotate it first; clean history second. Do not reverse that order.
 - Before every commit, check the diff for values that look like credentials. This is a habit, not a tool.
+
+## Deploying the application
+
+**Status: not deployed.** Nothing has been published to any host. The
+requirements below are what a host must satisfy; the platform itself is still an
+open decision in [architecture.md](architecture.md).
+
+**Requirements**
+
+- Serves static files over **HTTPS** from a **stable public URL** — the ArcGIS
+  API key is restricted by referrer, so the origin has to stop changing.
+- Build command `npm install && npm run build` with the project root at `web/`,
+  publishing the `out/` directory. Or build locally and upload `out/`.
+- Node.js `>=20.9.0` available in the build environment.
+- Build-time environment variables, because `NEXT_PUBLIC_` values are inlined
+  during the build and cannot be injected afterwards.
+- Tolerates roughly 30 MB and several hundred files of build output.
+- Serves `out/<route>/index.html` for directory URLs. The build sets
+  `trailingSlash: true` so this works on hosts that do not rewrite
+  extensionless paths.
+
+**Before calling a deployment done**
+
+A deployment is not proven by a successful build. Open the public URL in a
+browser with no existing session — a private window, or a different device —
+and confirm the map renders and the console is clean. Until that has been done,
+the deployment is unverified and must be described that way.
+
+## ArcGIS Online capability check and publishing
+
+Everything in this section is an **authenticated, author-run action**. An agent
+does not perform any of it: it does not sign in, publish items, change sharing,
+alter organization settings, or spend credits. The steps are written so the
+author can run them and record the findings.
+
+Run them in order. Record each answer in [roadmap.md](roadmap.md) under M4, and
+record anything that turns out to be unavailable as a constraint carried into
+the core-input-layers milestone.
+
+### 1. Identify the account and organization
+
+1. Sign in at <https://www.arcgis.com/> (or the ArcGIS Location Platform
+   dashboard at <https://location.arcgis.com/>).
+2. Open the account menu → **My settings**, and record:
+   - the **organization name and URL** (`https://<org>.maps.arcgis.com`), or that
+     the account is a Location Platform account with no organization;
+   - the **user type** (for example Creator, Professional, Viewer);
+   - the **role** (Administrator, Publisher, User, or custom).
+
+The user type and role together determine what can be published. A Viewer user
+type cannot create content at all. Location Platform accounts can issue API keys
+and use basemaps but are not the same as an ArcGIS Online organization; if that
+is what exists, hosted-layer publishing needs checking specifically rather than
+assumed.
+
+### 2. Confirm privileges
+
+In **Organization → Members**, open the account, or check **My settings →
+Licenses**. Record whether each of these is present:
+
+- **Create, update, and delete content** — required to publish anything.
+- **Publish hosted feature layers** — required for vector layers.
+- **Publish hosted tile layers** — required for pre-rendered raster or tiled
+  delivery.
+- **Publish hosted imagery layers** — required if the exposure surface is
+  delivered as imagery rather than features or tiles. This is the one most
+  likely to be missing, and it constrains how the derived layer can be
+  represented.
+- **Share with everyone (public)** — required for anonymous visitors.
+
+Also check **Organization → Settings → Sharing** for an organization-level
+policy that blocks public sharing regardless of individual privilege. If public
+sharing is blocked, the delivery path in
+[architecture.md](architecture.md) does not hold and needs a decision record.
+
+### 3. Record credits and storage
+
+- **Organization → Credits** (or the Location Platform dashboard usage page):
+  record remaining credits and any per-member budget.
+- **Organization → Status → Content** or the storage summary: record storage
+  used against quota.
+
+Publishing, storing, and tile generation consume credits. Record the current
+figures before publishing anything so later consumption can be attributed.
+
+### 4. Publish a minimally scoped public test item
+
+The point is to prove the publish-and-serve path end to end while risking
+nothing. Use throwaway data — **not** project data, and nothing derived from a
+dataset whose redistribution terms are still unverified.
+
+1. Create a CSV with a handful of arbitrary points inside the Southern
+   California Bight, for example three rows of `name,latitude,longitude`.
+2. **Content → New item → Your device**, upload the CSV, and choose to publish
+   it as a **hosted feature layer**.
+3. Name it so it is obviously disposable and dated, for example
+   `m4-publish-path-test-<yyyy-mm-dd>`. Add a description saying it is a
+   temporary capability test to be deleted.
+4. Open the item → **Share** → **Everyone (public)**.
+5. Record: whether publishing succeeded, whether public sharing was permitted,
+   the item id, and the credits consumed.
+
+If any step is refused, record exactly which one and the message shown. That
+refusal is the finding — it is more valuable than a success.
+
+### 5. Verify anonymous access
+
+Do not skip this. An item can appear shared and still not be reachable.
+
+1. Copy the layer's **service URL** from the item page.
+2. Open a **private/incognito window** with no ArcGIS session and request
+   `<service URL>/0?f=pjson`.
+3. Confirm JSON comes back rather than a token or sign-in response.
+4. Then load the item in the application to close the loop end to end.
+
+### 6. Configure the API key
+
+1. In the developer credentials area, create **API key credentials**.
+2. Scope the key to the minimum needed: basemap styles, plus read access to the
+   public test item. **No publishing, content-management, or
+   account-management privilege** — those belong to the author's interactive
+   sign-in, never to a key shipped to a browser.
+3. Set **referrer URLs** to `http://localhost:3000` and the deployed origin.
+   A browser-delivered key is public by definition; referrer restriction is what
+   limits its use.
+4. Put the key in `web/.env.local` as `NEXT_PUBLIC_ARCGIS_API_KEY`. Never in
+   `.env.example`, never in a commit, never in a screenshot.
+5. Set the same variable in the hosting platform's build environment.
+
+Record the key's expiry. API keys are valid for up to a year, and an expired key
+takes the deployed map down.
+
+### 7. Deploy and verify
+
+Follow "Deploying the application" above, then verify from a clean browser
+session as described there.
+
+### 8. Clean up the test item
+
+Once the path is proven and recorded:
+
+1. Delete the hosted feature layer and its source CSV item.
+2. If the API key was scoped to that item, remove that scope.
+3. Record the deletion, so a later reader does not go looking for an item that
+   was removed on purpose.
+
+Leaving a stray public item costs storage and creates something publicly shared
+that nothing documents.
 
 ## Raw data
 
@@ -78,11 +297,17 @@ In practice:
 - **Visual inspection is mandatory** for every derived spatial layer. Some errors — a wrong projection, an off-by-one grid, a flipped sign — are only visible on a map. Passing tests do not substitute for looking at the result.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
-Test commands: **pending implementation.**
+**Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0005](decisions/0005-use-vitest-for-typescript-tests.md).
+
+**Analysis (Python).** Pending implementation.
 
 ## Formatting and linting
 
-**Pending implementation.** Tooling is chosen when the first code of each kind is written, and recorded here at that point. The expectations that will hold regardless:
+**Application (TypeScript).** Prettier formats, ESLint lints, and `tsc` type-checks. Configuration is in `web/.prettierrc.json` and `web/eslint.config.mjs`; commands are in the table above. Run `npm run lint`, `npm run typecheck`, and `npm run format:check` before proposing a branch.
+
+**Analysis (Python).** Pending implementation. Tooling is chosen when the first Python code is written, and recorded here at that point.
+
+The expectations that hold for both:
 
 - Formatting is automated and not argued about in review.
 - Linting and type checking run locally before a branch is proposed for review.
