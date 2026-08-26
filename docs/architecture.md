@@ -6,7 +6,11 @@
 >
 > Accepted means this is the direction implementation follows. It does not mean it is proven. **Nothing described in this document is implemented yet** — no application, no analysis package, no published layer. The repository does contain one verification utility, [tools/](../tools/README.md), which re-checks the evidence behind data discovery; it is not part of the architecture described here and is not the analysis package.
 >
-> Data discovery has since established the dataset formats, resolutions, and licensing that several parts depended on — see [data-sources.md](data-sources.md) — and some of the deferred decisions at the end of this document are now resolved, across five decision records. Two things remain open and both gate delivery: **the analytical and statistical domain** ([ADR 0002](decisions/0002-southern-california-study-area-extent.md), still Proposed, because AIS coverage offshore is unestablished) and **the ArcGIS Online capability gate**, still unverified.
+> Data discovery has since established the dataset formats and resolutions several parts depended on, and the licensing position for both NOAA sources — see [data-sources.md](data-sources.md) — and some of the deferred decisions at the end of this document are now resolved, across five decision records. **Three things remain open, and each gates a different part of delivery:**
+>
+> 1. **The analytical and statistical domain** — [ADR 0002](decisions/0002-southern-california-study-area-extent.md), still Proposed, because AIS coverage offshore is unestablished. Gates the exposure statistics.
+> 2. **Redistribution of the VSR zone geometry** — publicly shared by BWBS/CMSF with attribution, but with no redistribution grant, and the publisher is not a federal agency. Gates hosting that geometry as a project-owned layer. **Referencing the publisher's own service from the application remains available and is not affected**, so this constrains the hosting approach rather than the delivery.
+> 3. **The ArcGIS Online capability gate** — still unverified.
 >
 > Changes to an accepted architecture are recorded as decision records under [decisions/](decisions/README.md) rather than made silently.
 >
@@ -155,7 +159,7 @@ This model has two halves, and only one of them is about the web host. The appli
 - Git LFS is **not** planned for Version 1. If a real need appears, it gets a decision record first.
 - Every dataset the project depends on must be *retrievable*: the register in [data-sources.md](data-sources.md) records the source, retrieval method, and retrieval date so that an uncommitted file can be obtained again.
 - The AIS extract is scoped to the study area and analytical period as early as the chosen route allows. **The route itself is an M3 decision**: NOAA's AccessAIS tool returns a spatial and temporal subset directly and is preferred, but it was not exercised during discovery, and the only confirmed route is the bulk daily national files. Bulk retrieval is therefore permitted under the guard in [data/README.md](../data/README.md) — one day at a time, filtered immediately, national copy discarded once a validated scoped output exists. **What is prohibited in every case is staging an entire national season locally.**
-- Actual data volumes are unknown until discovery. If they turn out to be large enough to break this model, that finding gets recorded and the model gets revised.
+- Data volumes are now estimated rather than unknown: discovery puts the study-area extract at order 10⁸ records and ≈56 GB of transfer for the analytical period, as an order-of-magnitude planning figure scaled from a small sample. **The measured volume is not known and will not be until M3 retrieval runs.** If it turns out large enough to break this model, that finding gets recorded and the model gets revised.
 
 ## Testing boundaries
 

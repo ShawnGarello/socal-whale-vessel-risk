@@ -88,7 +88,12 @@ Obtain and inspect the actual candidate datasets, and determine what analysis th
 | **The analytical and statistical domain over which headline results can be defended has been accepted** | **Not met.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md) is Proposed. The map extent is settled; the domain is not, because AIS coverage offshore is unestablished and cannot be established from the broadcast points themselves. This criterion is not in the original M1 list — it was added on audit, because the milestone cannot honestly be called done while the region the statistics describe is undecided |
 | Anything that cannot be verified is explicitly recorded as unresolved rather than assumed | **Met**, and this is what the audit repaired. Several things previously stated as established are now recorded as unresolved |
 
-**M2 is not complete.** Three criteria are unsatisfied or qualified, and one deliverable — the study-area definition — is only half done. **The blocking item is the analytical domain, not the licensing question.**
+**M2 is not complete.** Three criteria are unsatisfied or qualified, and one deliverable — the study-area definition — is only half done. **Two separate things are unfinished, and they block different work:**
+
+- **The analytical domain blocks the analysis.** No exposure statistic and no inside-versus-outside figure can be produced or published until it is accepted.
+- **VSR redistribution blocks project-hosted public sharing**, and keeps its own completion criterion unmet. It does not block the analysis: the statistics can be computed against the geometry either way, and the application can reference the publisher's service instead of hosting a copy.
+
+Neither is more important than the other for calling M2 done — both criteria are unmet. The domain is the one that stops downstream work.
 
 ### Open items, in order of how much they constrain the work
 
