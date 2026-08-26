@@ -10,7 +10,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 
 | # | Milestone | Status |
 |---|-----------|--------|
-| M1 | Project foundation | In progress |
+| M1 | Project foundation | Complete |
 | M2 | Data discovery and validation | Not started |
 | M3 | Processing workflow | Not started |
 | M4 | GIS application foundation | Not started |
@@ -24,7 +24,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 
 ## M1 — Project foundation
 
-**Status:** In progress
+**Status:** Complete
 
 **Objective**
 Establish the documentation baseline that everything else is built against: scope, sequencing, proposed architecture, source register, and working process. Get the project to a state where the next decision is a data decision rather than a scoping decision.
