@@ -65,6 +65,12 @@ responses. Deterministic — rerunning it reproduces byte-identical files, which
 is what makes the `.csv` checksums in the manifest meaningful. Only needed if a
 sample is missing or you want to confirm the extraction step itself.
 
+It reads the partial responses from `data/raw/noaa-ais-2024/` and writes the
+samples to `data/interim/m2-inspection/`. The split is deliberate: `raw/` holds
+bytes a publisher sent, and this extraction is lossy — it drops the truncated
+final record — so its output is a generated file. See
+[data/README.md](../data/README.md).
+
 ### Versions this was run against
 
 Recorded because GDAL and shapely versions can change geometry results at the

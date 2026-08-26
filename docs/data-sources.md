@@ -75,15 +75,15 @@ Paths are relative to the repository root. Verify with
 | 5 | `data/raw/noaa-ais-2024/docs/marinecadastre_ais_faq.pdf` | 506349 | `1dcd64e439618d482878435d6c5ce0bcbf0791f99006a3974dd0757b467691c3` | As downloaded |
 | 6 | `data/raw/noaa-ais-2024/docs/VesselTypeCodes2018.pdf` | 117526 | `e10c70bd5aaa25d11acbe09b351a340470614c0ba749059344a7f7f2f17d72be` | As downloaded |
 | 7 | `data/raw/noaa-ais-2024/AIS_2024_07_15.head8MB.part` | 8388608 | `eaa212da534842a61400dd8d68359e73329ce4892b4af2f195840d65bbade797` | Partial HTTP 206 response, first 8 MiB of the daily zip |
-| 8 | `data/raw/noaa-ais-2024/AIS_2024_07_15.head_sample.csv` | 22723368 | `228247d2d6ede6c9d38602f388577b78c59697a19059918bcbcf69495b309e6d` | **Derived from #7** by `m2_verify.py extract`. 207,849 data rows |
+| 8 | `data/interim/m2-inspection/AIS_2024_07_15.head_sample.csv` | 22723368 | `228247d2d6ede6c9d38602f388577b78c59697a19059918bcbcf69495b309e6d` | **Derived from #7** by `m2_verify.py extract`. 207,849 data rows |
 | 9 | `data/raw/noaa-ais-2024/AIS_2024_08_15.head8MB.part` | 8388608 | `3072ddd38249129b8a9a50798aff3bdae3ba07de49863bb20656a5079ca2be12` | Partial HTTP 206 response |
-| 10 | `data/raw/noaa-ais-2024/AIS_2024_08_15.head_sample.csv` | 22671033 | `d3eda3dfca6cb9c7cf45eef05f34f86c27156f9ecf0f7311bb106040e54608c5` | **Derived from #9.** 207,420 data rows |
+| 10 | `data/interim/m2-inspection/AIS_2024_08_15.head_sample.csv` | 22671033 | `d3eda3dfca6cb9c7cf45eef05f34f86c27156f9ecf0f7311bb106040e54608c5` | **Derived from #9.** 207,420 data rows |
 | 11 | `data/raw/noaa-ais-2024/AIS_2024_09_16.head8MB.part` | 8388608 | `b1998980f54a9eed29bd4e2dd66eebc8ceb62c5f617e1b30d7896792c78f74e8` | Partial HTTP 206 response |
-| 12 | `data/raw/noaa-ais-2024/AIS_2024_09_16.head_sample.csv` | 22586931 | `7b8451bc83aa1f7080052965d62c53bfe3ee9451ddb50182877a2ac32b254b79` | **Derived from #11.** 205,322 data rows |
+| 12 | `data/interim/m2-inspection/AIS_2024_09_16.head_sample.csv` | 22586931 | `7b8451bc83aa1f7080052965d62c53bfe3ee9451ddb50182877a2ac32b254b79` | **Derived from #11.** 205,322 data rows |
 | 13 | `data/raw/noaa-ais-2024/AIS_2024_10_15.head8MB.part` | 8388608 | `ee868ee0097fc83bd925928f7a277f301250cfae838973f1924a810ca69b43c7` | Partial HTTP 206 response |
-| 14 | `data/raw/noaa-ais-2024/AIS_2024_10_15.head_sample.csv` | 22620135 | `3e925b56a1555935b9379d428b76a94eb0db3c30aa830b832a1d91967911f8b3` | **Derived from #13.** 204,861 data rows |
+| 14 | `data/interim/m2-inspection/AIS_2024_10_15.head_sample.csv` | 22620135 | `3e925b56a1555935b9379d428b76a94eb0db3c30aa830b832a1d91967911f8b3` | **Derived from #13.** 204,861 data rows |
 | 15 | `data/raw/noaa-ais-2024/AIS_2024_11_15.head8MB.part` | 8388608 | `7a72e3cdcd92b605133cd6f17274c1c4b89eeb2b71f25f277978fe2e1fc3ec51` | Partial HTTP 206 response |
-| 16 | `data/raw/noaa-ais-2024/AIS_2024_11_15.head_sample.csv` | 22807974 | `937f028539cd8d79b15700217a5fed3f6f91f3d8285a236245220ae32cc3799c` | **Derived from #15.** 207,129 data rows |
+| 16 | `data/interim/m2-inspection/AIS_2024_11_15.head_sample.csv` | 22807974 | `937f028539cd8d79b15700217a5fed3f6f91f3d8285a236245220ae32cc3799c` | **Derived from #15.** 207,129 data rows |
 
 Total local footprint: roughly 300 MB, of which about 90 MB is downloaded bytes
 and the rest is extracted geodatabases and decompressed samples.

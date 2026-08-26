@@ -98,8 +98,17 @@ def inflate_prefix(part_path: Path) -> str:
 
 
 def sample_paths(date: str) -> tuple[Path, Path]:
-    base = REPO / "data" / "raw" / "noaa-ais-2024"
-    return base / f"AIS_{date}.head8MB.part", base / f"AIS_{date}.head_sample.csv"
+    """Return (retrieved partial response, generated inspection sample).
+
+    The `.part` file is bytes the server sent and lives under `data/raw/`.
+    The `.csv` is produced by `extract` — it drops the truncated final record
+    and normalises line endings — so it is a derived product and lives under
+    `data/interim/`. See data/README.md.
+    """
+    return (
+        REPO / "data" / "raw" / "noaa-ais-2024" / f"AIS_{date}.head8MB.part",
+        REPO / "data" / "interim" / "m2-inspection" / f"AIS_{date}.head_sample.csv",
+    )
 
 
 # --------------------------------------------------------------------------
@@ -122,6 +131,7 @@ def cmd_extract() -> int:
         text = inflate_prefix(part)
         lines = text.split("\n")
         body = lines[:-1]           # drop the truncated final record
+        csv.parent.mkdir(parents=True, exist_ok=True)
         csv.write_text("\n".join(body), encoding="utf-8", newline="\n")
         print(f"  {csv.relative_to(REPO)}  rows={len(body) - 1}  bytes={csv.stat().st_size}")
     print("\n  Rerun 'verify' to confirm the rebuilt files match the manifest.")
@@ -146,7 +156,7 @@ def parse_manifest() -> list[dict]:
         digests = [c for c in cells if SHA_RE.match(c)]
         if not digests:
             continue
-        paths = [c for c in cells if c.startswith("data/raw/")]
+        paths = [c for c in cells if c.startswith("data/")]
         sizes = [c for c in cells
                  if c.replace(",", "").isdigit() and len(c.replace(",", "")) >= 4]
         if not paths or not sizes:
