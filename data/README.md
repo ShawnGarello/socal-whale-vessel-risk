@@ -75,9 +75,14 @@ explicit path, against the default ignore, and records what produced it and when
 3. **Never commit a file whose redistribution status is unknown.** Not knowing
    the terms is a reason to leave it out, not a reason to guess.
 4. **Git LFS is not in use.** Large binaries would need a decision record first.
-5. **Extract only what the study area and analytical period need.** Do not
-   download a national dataset and filter locally.
-6. **Do not delete `raw/` to save space** while results derived from it are still
+5. **Extract only what the study area and analytical period need**, by the
+   narrowest route that works. For AIS specifically, see the retrieval policy
+   below — the rule is not an absolute ban on touching a national file, because
+   for one candidate route that is unavoidable.
+6. **Never stage an entire national season locally.** This is the rule that
+   actually protects the machine and the reader. Whatever route is used, the
+   local footprint stays at the scale of the study area, not the country.
+7. **Do not delete `raw/` to save space** while results derived from it are still
    being reported. If space forces it, record the checksums first so the same
    inputs can be re-obtained and verified.
 
@@ -98,3 +103,52 @@ python tools/m2_verify.py verify
 See [`../tools/README.md`](../tools/README.md). A mismatch means either the file
 was modified or the upstream product changed, and both are worth knowing before
 anything is derived from it.
+
+---
+
+## AIS retrieval policy
+
+**The final retrieval route is a processing-milestone (M3) decision. It is not
+settled here.** What is settled is the constraint every route has to satisfy.
+
+Two routes exist. Both are documented in
+[`../docs/data-sources.md`](../docs/data-sources.md).
+
+**Preferred: AccessAIS.** NOAA's extract tool takes a bounding box and a time
+period and returns only what was asked for, which is the right shape for this
+project. Its documented limits are a 2 GB cap per request, a five-year rolling
+window, new data every 90 days with a 145–165 day lag, and links that expire
+after 14 days or five accesses. At the estimated row size a full analytical
+period for the study area would exceed the cap and need splitting into chunks.
+
+**It has not been exercised.** No order was placed during data discovery, and
+whether it can filter by vessel type server-side is unknown. Nothing in this
+repository should describe AccessAIS as verified until someone has actually
+run a request through it and recorded the result.
+
+**Permitted fallback: guarded bulk retrieval.** The bulk daily files are the
+only route confirmed working, and they are national — there is no way to ask
+that server for a subset. Using them is allowed **only** under all of these
+conditions:
+
+1. **One daily file at a time.** Never a batch, never a season.
+2. **Verify what arrived** against the server's `Content-Length`, and record the
+   checksum of anything retained.
+3. **Filter to the study area immediately**, as a step in the same run rather
+   than as a later manual pass.
+4. **Discard the national copy** once a validated scoped output exists for that
+   day. "Validated" means the scoped output has been checked to be non-empty and
+   within the expected bounds — not merely that a file was written.
+5. **Record the day as processed**, so an interrupted run resumes rather than
+   restarting.
+
+Peak local footprint under this route is one national daily file plus the
+accumulated scoped outputs. That is the point of the guard: it keeps the
+constraint in rule 6 above true even though the transfer is national.
+
+**Why this is not simply forbidden.** An earlier version of this document banned
+downloading a national file and filtering locally, while the source register
+described the bulk route as the confirmed one. Both statements could not stand.
+The ban was aimed at the real hazard — a national archive sitting on disk, or
+committed by accident — and that hazard is addressed directly by rules 1 and 6
+rather than by prohibiting a route the project may have to use.

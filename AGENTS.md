@@ -30,6 +30,7 @@ Update the owner, not a copy. If two documents disagree, the owner is right and 
 | Milestones, progress, version direction | [docs/roadmap.md](docs/roadmap.md) |
 | System design and boundaries | [docs/architecture.md](docs/architecture.md) |
 | Dataset provenance and discovery status | [docs/data-sources.md](docs/data-sources.md) |
+| Local data-handling and retrieval policy | [data/README.md](data/README.md) |
 | Engineering workflow | [docs/development.md](docs/development.md) |
 | Historical decisions | [docs/decisions/](docs/decisions/README.md) |
 | Agent instructions | this file |

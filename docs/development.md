@@ -2,7 +2,7 @@
 
 **Owns:** the engineering workflow — how work is done, recorded, verified, and reviewed in this repository.
 
-> No application, analysis package, or tooling has been scaffolded yet. Sections that would contain commands are marked **pending implementation** and must be filled in by the milestone that creates the thing they describe. Do not invent commands here for code that does not exist.
+> No application or analysis package has been scaffolded yet. The one exception is [../tools/](../tools/README.md), which holds a verification utility for data discovery and is not the analysis package. Sections that would contain commands are marked **pending implementation** and must be filled in by the milestone that creates the thing they describe. Do not invent commands here for code that does not exist.
 
 ---
 
@@ -17,6 +17,8 @@ Each kind of information has exactly one owning document. When information chang
 | [roadmap.md](roadmap.md) | Milestones, sequencing, progress, version direction |
 | [architecture.md](architecture.md) | System design, component boundaries, deferred design decisions |
 | [data-sources.md](data-sources.md) | Dataset provenance, source register, discovery status |
+| [../data/README.md](../data/README.md) | Local data-handling policy, including the AIS retrieval policy |
+| [../tools/README.md](../tools/README.md) | Verification utilities and the versions they were run against |
 | [development.md](development.md) | Engineering workflow — this document |
 | [project-vision-and-learning-plan.md](project-vision-and-learning-plan.md) | Original project vision and GIS learning reference |
 | [decisions/](decisions/README.md) | Historical architectural decisions and their rationale |
@@ -51,7 +53,7 @@ Whoever creates each of these updates this section in the same branch.
 ## Raw data
 
 - **Raw source data is never committed.** It lives under a Git-ignored local data root — see the proposed layout in [architecture.md](architecture.md).
-- Extract only what the study area and analytical period need. Do not download national datasets and filter afterwards.
+- Extract only what the study area and analytical period need. **Retrieval rules for large sources live in [../data/README.md](../data/README.md)**, which owns the local data-handling policy — including the AIS retrieval policy and the standing prohibition on staging an entire national season locally. Do not restate those rules here; they have already drifted once.
 - Every raw dataset must be *re-obtainable*: its source, retrieval method, parameters, and retrieval date are recorded in [data-sources.md](data-sources.md) at the time of retrieval, not from memory later.
 - Do not modify files in the raw directory. Cleaning produces new files elsewhere; the raw copy stays as downloaded so processing can be rerun from a known starting point.
 - Git LFS is not in use. If large binaries ever seem necessary, that needs a decision record before anything is added.

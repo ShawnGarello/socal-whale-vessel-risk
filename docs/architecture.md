@@ -154,7 +154,7 @@ This model has two halves, and only one of them is about the web host. The appli
 - Derived datasets are published to ArcGIS Online rather than committed, except where a derived output is genuinely small and benefits from being versioned — for example the summary-statistics file the application reads.
 - Git LFS is **not** planned for Version 1. If a real need appears, it gets a decision record first.
 - Every dataset the project depends on must be *retrievable*: the register in [data-sources.md](data-sources.md) records the source, retrieval method, and retrieval date so that an uncommitted file can be obtained again.
-- The AIS extract should be scoped to the study area and analytical period at download time, not filtered down after downloading a national dataset.
+- The AIS extract is scoped to the study area and analytical period as early as the chosen route allows. **The route itself is an M3 decision**: NOAA's AccessAIS tool returns a spatial and temporal subset directly and is preferred, but it was not exercised during discovery, and the only confirmed route is the bulk daily national files. Bulk retrieval is therefore permitted under the guard in [data/README.md](../data/README.md) — one day at a time, filtered immediately, national copy discarded once a validated scoped output exists. **What is prohibited in every case is staging an entire national season locally.**
 - Actual data volumes are unknown until discovery. If they turn out to be large enough to break this model, that finding gets recorded and the model gets revised.
 
 ## Testing boundaries
