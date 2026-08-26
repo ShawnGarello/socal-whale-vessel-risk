@@ -4,7 +4,11 @@
 
 This directory holds Architecture Decision Records (ADRs). An ADR is a short note explaining a choice that constrains later work: what the situation was, what was decided, and what that decision costs.
 
-There are no ADRs yet. That is correct — the project has not made a decision worth recording. This file will not be padded with a placeholder record.
+## Records
+
+| # | Decision | Status |
+|---|---|---|
+| [0001](0001-accept-initial-architecture.md) | Accept the initial project architecture | Accepted |
 
 ## Why these exist
 

@@ -2,9 +2,11 @@
 
 **Owns:** system design, component boundaries, and deferred design decisions.
 
-> **Status: proposed, and subject to review.**
+> **Status: accepted as the initial architecture.** Recorded in [ADR 0001](decisions/0001-accept-initial-architecture.md).
 >
-> Nothing described here is implemented. This document records the intended direction so it can be reviewed and challenged *before* code exists. Several parts of it depend on facts that data discovery has not yet established — actual dataset formats, sizes, resolutions, and licensing. Expect this document to change once real data has been inspected, and expect the changes to be recorded as decision records under [decisions/](decisions/README.md).
+> Accepted means this is the direction implementation follows. It does not mean it is proven. Nothing described here is implemented yet, and several parts still depend on facts that data discovery has not established — actual dataset formats, sizes, resolutions, licensing, and ArcGIS Online account capabilities. The deferred decisions at the end of this document remain deferred, and the ArcGIS Online capability gate remains unverified.
+>
+> Changes to an accepted architecture are recorded as decision records under [decisions/](decisions/README.md) rather than made silently.
 >
 > The source-code layout proposed near the end of this document has deliberately **not** been created.
 

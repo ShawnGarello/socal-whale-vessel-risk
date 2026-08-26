@@ -36,7 +36,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Area | State |
 |---|---|
 | Project scope and roadmap | Documented |
-| Architecture | Proposed, pending review |
+| Architecture | Accepted as the initial direction; nothing built against it yet |
 | Data sources | Identified, **not yet verified or downloaded** |
 | Processing workflow | Not started |
 | Analysis and derived layers | Not started |
@@ -45,7 +45,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 
 ## Technology direction
 
-Proposed and subject to review: ArcGIS Pro and Python for offline data preparation and spatial analysis → ArcGIS Online for hosted layers and web maps → a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/).
+Accepted as the initial direction: ArcGIS Pro and Python for offline data preparation and spatial analysis → ArcGIS Online for hosted layers and web maps → a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/).
 
 All analysis happens offline and is published as a result. The browser displays and filters; it does not compute exposure. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md).
 

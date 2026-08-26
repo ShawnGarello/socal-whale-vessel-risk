@@ -36,7 +36,9 @@ Update the owner, not a copy. If two documents disagree, the owner is right and 
 
 ## Current state
 
-The repository contains documentation only. No application, analysis package, tests, or CI exist yet, and the architecture is proposed rather than accepted. Do not scaffold implementation directories, and do not create data contracts, API contracts, layer contracts, analytical schemas, or the exposure formula. Those come after architecture review and inspection of real datasets.
+The repository contains documentation only. No application, analysis package, tests, or CI exist yet. The architecture has been accepted as an initial direction ([ADR 0001](docs/decisions/0001-accept-initial-architecture.md)), but nothing has been built against it, and its data-dependent decisions are still deferred.
+
+Do not scaffold implementation directories ahead of the milestone that needs them, and do not create data contracts, API contracts, layer contracts, analytical schemas, or the exposure formula at all yet. Those wait for inspection of real datasets, which has not happened.
 
 ## Version 1 scope
 

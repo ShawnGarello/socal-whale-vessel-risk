@@ -41,7 +41,7 @@ None.
 
 **Completion criteria**
 - The Version 1 question, scope, and non-goals are written down in one authoritative place.
-- The proposed architecture is documented and explicitly marked as pending review.
+- The initial architecture is documented, reviewed, and accepted, with its data-dependent decisions explicitly deferred.
 - Every intended data source is registered with its verification status.
 - No implementation directories, contracts, or schemas have been created.
 - Documents do not contradict each other.
