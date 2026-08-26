@@ -113,7 +113,7 @@ Obtain and inspect the actual candidate datasets, and determine what analysis th
 - The fractional-intersection machinery and its synthetic tests ([ADR 0004](decisions/0004-analysis-grid-resolution.md)).
 - Vessel aggregation onto the grid.
 
-Doing this work is also how the evidence to settle item 1 gets produced: the spatial distribution of commercial transits over a real 153-day period is a far better basis for judging the offshore coverage question than five half-hour windows.
+Doing this work gives a far better picture of the traffic the receivers recorded than five half-hour windows do. **It does not settle item 1**, and an earlier version of this roadmap wrongly implied it would. No amount of the same broadcast-point data reveals vessels no receiver heard, so the coverage question has to be answered from outside it — from NOAA's published limit, from the geometry of the receiver network, or from an independent source. See [ADR 0002](decisions/0002-southern-california-study-area-extent.md).
 
 **Must wait for the analytical domain.**
 

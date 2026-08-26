@@ -72,7 +72,7 @@ The form it takes — a hard clip, a mask rendered as a distinct "outside reliab
 
 - **M2 cannot be complete while this is open.** The roadmap records it as one of the outstanding items, and it is the one that gates the analysis rather than the publication.
 - **M3 is not blocked.** Retrieval, cleaning, vessel-class filtering, reprojection, gridding, and the whale-model transfer are all independent of where the reporting boundary ends up, and can proceed over the full map extent. Only the exposure statistics wait.
-- Processing over the full map extent and restricting at the reporting step is the right order: it keeps the domain decision reversible, and it means the evidence needed to settle it — the actual spatial distribution of commercial transits over a real period — is produced by work that has to happen anyway.
+- Processing over the full map extent and restricting at the reporting step is the right order: it keeps the domain decision reversible, so accepting a domain later is a change to one reporting step rather than a reprocessing run. **It does not produce the evidence needed to settle the domain** — see "Why same-source comparison cannot settle this" below.
 - The analysis reports on the **Southern California portion of the 2026 VSR zone, not the whole zone**, under any candidate. Every statistic must say so.
 - The map extent **truncates the zone at 35.0°N**, where the zone continues north. Exposure near that edge is an artefact of the extent and results must not be read across it.
 - Using the whale model's coverage as the water mask means the analysis domain and the biological input share a footprint, so no cell can carry vessel activity without a whale value. It also means the study area inherits the model's coastline, which is a modelling product rather than an authoritative shoreline. **This is one reason a real coastline dataset is needed before a distance-from-shore criterion can be applied** — see alternative 1.
@@ -95,7 +95,16 @@ Compute over the full map extent, but classify each cell by whether the vessel i
 
 - **For:** keeps the full zone visible and in the analysis, while refusing to present unqualified numbers over it. Probably the most informative option for a reader.
 - **Against:** two sets of numbers is exactly the framing that invites a reader to quote the more convenient one. It also requires defining the mask, which is alternative 1's problem plus a presentation problem.
-- **Evidence needed to accept:** a defensible basis for the mask. The most promising is the **AIS Vessel Transit Counts** product — it is derived from tracks rather than points, is NOAA-computed at 100 m, and covers whole years, so comparing its offshore behaviour with this project's own point aggregation over a real period would show whether the falloff is a reception artefact or a traffic pattern. Receiver locations are also published as the AIS Base Stations dataset, which would allow a range-based rather than distance-from-shore mask.
+- **Evidence needed to accept:** a defensible basis for the mask, drawn from **outside the broadcast-point data itself.** Two candidates. First, NOAA's published 40–50 mile statement, used to derive a distance-from-coastline mask — the same requirement as alternative 1, differing only in what is done with the water beyond it. Second, the **AIS Base Stations** dataset, which publishes receiver locations and would support a range-from-receiver mask, closer to the actual physical constraint than distance from shore. A range mask would have to state its limitations plainly: it models where reception is *plausible* from geometry alone, and takes no account of antenna height, terrain shadowing, transmitter power, sea state, or the tropospheric ducting the FAQ says carries some signals far beyond normal range. It bounds the problem; it does not measure coverage.
+- **What cannot supply this evidence:** any comparison against another product derived from the same land-receiver feed — see the note below.
+
+### Why same-source comparison cannot settle this
+
+An earlier version of this record proposed comparing NOAA's **AIS Vessel Transit Counts** against this project's own aggregation to distinguish reception loss from a real traffic pattern. **That reasoning is circular and is withdrawn.** Transit counts are built from the same U.S. Coast Guard land-receiver broadcast points this project uses. A vessel no receiver heard is absent from both, so the two agreeing offshore says only that they share an input — it is a check on this project's aggregation arithmetic, which is worth having, and nothing at all about coverage.
+
+The same objection applies to scale. Processing the full 153-day period gives a much better sample of the traffic the receivers *did* hear, and it is worth doing for its own sake, **but no quantity of the same data reveals vessels that were never recorded.** A gap that is uniform across five half-hour windows and a gap that is uniform across 153 days are equally consistent with empty water and with a dead spot.
+
+Evidence about coverage has to come from outside the broadcast-point record: from the publisher's own statement of its limits, from the physical geometry of the receiver network, or from an independent observation of the same vessels.
 
 ### 3. A vessel source with defensible offshore coverage
 
@@ -103,7 +112,7 @@ Replace or supplement the input with satellite AIS.
 
 - **For:** it is the only option that actually resolves the question rather than working around it. Offshore traffic would be observed rather than assumed.
 - **Against:** NOAA cannot distribute satellite AIS, so this means a commercial provider — cost, licensing, and a redistribution position that would have to be established before anything derived from it could be published. The project has no budget line and Version 1 has a date.
-- **Evidence needed to accept:** an available source, its terms, and confirmation that a derived aggregate may be published. **Not investigated.** Recorded because it is the honest answer to "what would settle this properly", not because it is expected to be taken up in Version 1.
+- **Evidence needed to accept:** an available source, its terms, and confirmation that a derived aggregate may be published. **Not investigated.** Recorded because it is the honest answer to "what would settle this properly" — it is the only one of the three that observes the offshore vessels rather than reasoning about whether they could have been heard — not because it is expected to be taken up in Version 1.
 
 ### Extents rejected as the map window
 
