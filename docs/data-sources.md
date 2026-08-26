@@ -24,6 +24,104 @@ Verification status now differs between entries and is stated at the top of each
 
 ---
 
+## Retrieval provenance and local artifacts
+
+**Owns the provenance manifest for M2.** Every finding in this register was read
+from one of the artifacts below. They are **not committed** — they live under the
+ignored local data root described in [../data/README.md](../data/README.md) —
+so this table is what makes them re-obtainable and what proves a local copy is
+the same file that was inspected.
+
+The sizes and checksums here are load-bearing, not decorative.
+[`tools/m2_verify.py`](../tools/m2_verify.py) parses the *Local artifacts* table
+below and checks every row against the file on disk. If this document and the
+data disagree, the tool fails. Do not edit a size or checksum by hand.
+
+### How each artifact was retrieved
+
+All retrievals were anonymous HTTPS GETs. **No credential, token, or API key was
+used or required for any of them.**
+
+| # | Artifact | Source URL or endpoint | Method and parameters | Retrieved |
+|---|---|---|---|---|
+| 1 | Whale model, selected product (2020b) | `https://www.arcgis.com/sharing/rest/content/items/566b4ad31f1d40eeb65b8cf3a4f087ca/data` | `GET`, no parameters. Item is the distribution link named by InPort record [64349](https://www.fisheries.noaa.gov/inport/item/64349) and is shared publicly by a NOAA account | 2026-08-25 |
+| 2 | Whale model, comparison product (2020) | `https://www.arcgis.com/sharing/rest/content/items/96ae05c033a540bf83e0f6c00a25cf5a/data` | `GET`, no parameters. Retrieved only to justify not selecting it | 2026-08-25 |
+| 3 | VSR zone geometry | `https://services5.arcgis.com/4biRnCjZju47bNvA/arcgis/rest/services/WhaleAtlas_2026/FeatureServer/0/query` | `GET` with `where=FID=126`, `outFields=*`, `returnGeometry=true`, `outSR=4326`, `f=geojson` | 2026-08-25 |
+| 4 | 2026 VSR zone map | `https://bluewhalesblueskies.org/wp-content/uploads/2026-VSR-Zone-Map_July-2026.pdf` | `GET` with a browser `User-Agent`; the site returns HTTP 403 to a default `curl` agent | 2026-08-25 |
+| 5 | Marine Cadastre AIS FAQ (May 2026) | `https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf` | `GET`, no parameters | 2026-08-25 |
+| 6 | AIS Vessel Type and Group Codes | `https://coast.noaa.gov/data/marinecadastre/ais/VesselTypeCodes2018.pdf` | `GET`, no parameters | 2026-08-25 |
+| 7 | AIS daily prefixes, five dates | `https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/AIS_<date>.zip` | `GET` with header `Range: bytes=0-8388607`, returning HTTP 206. **Only the first 8 MiB of each file was transferred.** Dates: `2024_07_15`, `2024_08_15`, `2024_09_16`, `2024_10_15`, `2024_11_15` | 2026-08-25 (`2024_07_15`), 2026-08-26 (the other four) |
+
+**Why the AIS retrieval looks unusual.** Each daily file is a zip containing one
+CSV, and is 330–420 MB. Retrieving five of them in full would be 1.8 GB for a
+schema inspection. Instead the zip local file header at offset 0 was parsed to
+locate the start of the deflate stream, and that stream was inflated as far as
+the retrieved bytes allow. This is exactly what
+`python tools/m2_verify.py extract` does, and it is deterministic: re-running it
+reproduces the `.csv` files below byte for byte, which is why their checksums
+are meaningful despite being derived rather than downloaded.
+
+### Local artifacts
+
+Paths are relative to the repository root. Verify with
+`python tools/m2_verify.py verify`.
+
+| # | Local file | Bytes | SHA-256 | Relationship |
+|---|---|---|---|---|
+| 1 | `data/raw/noaa-swfsc-becker-2020b/swfsc_cce_becker_et_al_2020b.gdb.zip` | 16136589 | `5677b95178b507337d2bdf048c9ad69383b0b48f7c7a1cd829774eeecd8c7a5d` | As downloaded. Extracted in place to `swfsc_cce_becker_et_al_2020b.gdb/` (67 MB), which is what GDAL reads |
+| 2 | `data/raw/noaa-swfsc-becker-2020/swfsc_cce_becker_et_al_2020.gdb.zip` | 22263387 | `ba772bcb209c1455d657d9deec6ac047686fbfd22fc05362dd75de75646fda0e` | As downloaded. Extracted in place to `swfsc_cce_becker_et_al_2020.gdb/` |
+| 3 | `data/raw/bwbs-vsr-2026/bwbs_ca_vsr_zone_2026.geojson` | 1591003 | `2358bd39df3f3ca084b8ef8c3ea3321c7d93fe9bec76f5a2d61e01370549c783` | The query response body, unmodified |
+| 4 | `data/raw/bwbs-vsr-2026/2026-VSR-Zone-Map_July-2026.pdf` | 1750275 | `fb16fb49a6ca3ed59aa3c0a3d2c3f40f20c70ea77adac65eea6d8de2e23df375` | As downloaded |
+| 5 | `data/raw/noaa-ais-2024/docs/marinecadastre_ais_faq.pdf` | 506349 | `1dcd64e439618d482878435d6c5ce0bcbf0791f99006a3974dd0757b467691c3` | As downloaded |
+| 6 | `data/raw/noaa-ais-2024/docs/VesselTypeCodes2018.pdf` | 117526 | `e10c70bd5aaa25d11acbe09b351a340470614c0ba749059344a7f7f2f17d72be` | As downloaded |
+| 7 | `data/raw/noaa-ais-2024/AIS_2024_07_15.head8MB.part` | 8388608 | `eaa212da534842a61400dd8d68359e73329ce4892b4af2f195840d65bbade797` | Partial HTTP 206 response, first 8 MiB of the daily zip |
+| 8 | `data/raw/noaa-ais-2024/AIS_2024_07_15.head_sample.csv` | 22723368 | `228247d2d6ede6c9d38602f388577b78c59697a19059918bcbcf69495b309e6d` | **Derived from #7** by `m2_verify.py extract`. 207,849 data rows |
+| 9 | `data/raw/noaa-ais-2024/AIS_2024_08_15.head8MB.part` | 8388608 | `3072ddd38249129b8a9a50798aff3bdae3ba07de49863bb20656a5079ca2be12` | Partial HTTP 206 response |
+| 10 | `data/raw/noaa-ais-2024/AIS_2024_08_15.head_sample.csv` | 22671033 | `d3eda3dfca6cb9c7cf45eef05f34f86c27156f9ecf0f7311bb106040e54608c5` | **Derived from #9.** 207,420 data rows |
+| 11 | `data/raw/noaa-ais-2024/AIS_2024_09_16.head8MB.part` | 8388608 | `b1998980f54a9eed29bd4e2dd66eebc8ceb62c5f617e1b30d7896792c78f74e8` | Partial HTTP 206 response |
+| 12 | `data/raw/noaa-ais-2024/AIS_2024_09_16.head_sample.csv` | 22586931 | `7b8451bc83aa1f7080052965d62c53bfe3ee9451ddb50182877a2ac32b254b79` | **Derived from #11.** 205,322 data rows |
+| 13 | `data/raw/noaa-ais-2024/AIS_2024_10_15.head8MB.part` | 8388608 | `ee868ee0097fc83bd925928f7a277f301250cfae838973f1924a810ca69b43c7` | Partial HTTP 206 response |
+| 14 | `data/raw/noaa-ais-2024/AIS_2024_10_15.head_sample.csv` | 22620135 | `3e925b56a1555935b9379d428b76a94eb0db3c30aa830b832a1d91967911f8b3` | **Derived from #13.** 204,861 data rows |
+| 15 | `data/raw/noaa-ais-2024/AIS_2024_11_15.head8MB.part` | 8388608 | `7a72e3cdcd92b605133cd6f17274c1c4b89eeb2b71f25f277978fe2e1fc3ec51` | Partial HTTP 206 response |
+| 16 | `data/raw/noaa-ais-2024/AIS_2024_11_15.head_sample.csv` | 22807974 | `937f028539cd8d79b15700217a5fed3f6f91f3d8285a236245220ae32cc3799c` | **Derived from #15.** 207,129 data rows |
+
+Total local footprint: roughly 300 MB, of which about 90 MB is downloaded bytes
+and the rest is extracted geodatabases and decompressed samples.
+
+**Full compressed size of each sampled AIS day**, read from the server's
+`Content-Length` on the retrieval date. Used only to scale the volume estimate,
+and recorded because those files were deliberately *not* retrieved in full:
+
+| Day | Compressed size |
+|---|---|
+| `AIS_2024_07_15.zip` | 395,954,655 bytes |
+| `AIS_2024_08_15.zip` | 417,410,095 bytes |
+| `AIS_2024_09_16.zip` | 367,566,530 bytes |
+| `AIS_2024_10_15.zip` | 333,802,661 bytes |
+| `AIS_2024_11_15.zip` | 329,394,301 bytes |
+
+### Reproducing the M2 statistics
+
+Every computed figure in this register and in decision records
+[0002](decisions/0002-southern-california-study-area-extent.md) through
+[0006](decisions/0006-report-vessel-speed-separately.md) is regenerated by:
+
+```
+python tools/m2_verify.py verify
+```
+
+This checks the manifest above against the local files and then recomputes the
+schema and feature counts, value ranges and percentiles, AIS row populations and
+filters, geographic subset counts, VSR geometry checks and area, and the study-area
+candidate comparison. Tool versions and the exact invocation are recorded in
+[../tools/README.md](../tools/README.md).
+
+**Figures that are not regenerable are not quoted.** Where a value in this
+register came from a publisher's webpage or PDF rather than from a computation,
+the source is named at the point of use.
+
+---
+
 ## 1. Modeled blue-whale distribution
 
 **Analytical role**

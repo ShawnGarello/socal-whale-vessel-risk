@@ -36,7 +36,7 @@ Update the owner, not a copy. If two documents disagree, the owner is right and 
 
 ## Current state
 
-The repository contains documentation only. No application, analysis package, tests, or CI exist yet. The architecture has been accepted as an initial direction ([ADR 0001](docs/decisions/0001-accept-initial-architecture.md)), but nothing has been built against it, and its data-dependent decisions are still deferred.
+The repository is documentation plus one verification utility. No application, analysis package, tests, or CI exist yet. The exception is [tools/](tools/README.md), which holds a single script that re-checks the evidence behind data discovery; it verifies claims the documents already make and is explicitly not the analysis package. The architecture has been accepted as an initial direction ([ADR 0001](docs/decisions/0001-accept-initial-architecture.md)), but nothing has been built against it, and several of its data-dependent decisions remain open.
 
 Do not scaffold implementation directories ahead of the milestone that needs them, and do not create data contracts, API contracts, layer contracts, analytical schemas, or the exposure formula at all yet. Those wait for inspection of real datasets, which has not happened.
 

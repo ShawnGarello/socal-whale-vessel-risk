@@ -83,6 +83,18 @@ explicit path, against the default ignore, and records what produced it and when
 
 ## Current contents
 
-Local-only samples retrieved during data discovery are listed, with their sizes
-and checksums, in [`../docs/data-sources.md`](../docs/data-sources.md). That
-document is the register; this one is the handling policy.
+Local-only samples retrieved during data discovery are listed — with their
+source URL, retrieval method and parameters, retrieval date, byte size, and
+SHA-256 — in the *Retrieval provenance and local artifacts* section of
+[`../docs/data-sources.md`](../docs/data-sources.md). That document is the
+register; this one is the handling policy.
+
+To confirm that a local copy is the same file that was inspected:
+
+```
+python tools/m2_verify.py verify
+```
+
+See [`../tools/README.md`](../tools/README.md). A mismatch means either the file
+was modified or the upstream product changed, and both are worth knowing before
+anything is derived from it.
