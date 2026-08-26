@@ -132,7 +132,8 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 
 **Deliverables**
 - A documented, ordered processing path from raw inputs to derived datasets, implemented as scripts or as recorded tooling steps.
-- Clipping, reprojection, and normalization of each input onto the common study area and analysis grid.
+- Clipping, reprojection, and normalization of each input onto the common study area and analysis grid, in EPSG:3310 ([ADR 0003](decisions/0003-projected-coordinate-system.md)) on the 5 km grid ([ADR 0004](decisions/0004-analysis-grid-resolution.md)).
+- **A per-cell water geometry and its area**, produced by intersecting each grid cell with the water mask. This is an input to the fractional boundary accounting in M6, not a by-product, and the mask it comes from must be named and inspected.
 - Vessel-activity aggregation from AIS records, with vessel-class filtering applied and documented.
 - Vessel-speed summarization, if M2 confirmed it is supportable.
 - Input-validation checks: geometry validity, CRS correctness, extent coverage, null and outlier handling.
@@ -142,6 +143,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 - Each derived dataset can be regenerated from raw inputs by following the documented process.
 - Rerunning the process on unchanged inputs produces equivalent outputs.
 - Every filtering and aggregation choice is documented with its rationale.
+- Per-cell water areas are computed from actual intersected geometry, not from a nominal cell size.
 - Intermediate outputs have been inspected visually, not only programmatically.
 
 **Risks and open questions**
@@ -232,7 +234,8 @@ Produce the project's own analytical result: a documented relative exposure laye
 **Deliverables**
 - A written definition of the relative exposure calculation: inputs, normalization, weighting, combination method, and units.
 - The derived exposure or hotspot layer over the study area.
-- Inside-versus-outside VSR statistics: share of total relative exposure, share of high-exposure area, and the threshold definitions used.
+- Inside-versus-outside VSR statistics: share of total relative exposure, share of high-exposure area, and the threshold definitions used. **Computed by fractional area intersection** — each cell's water geometry is intersected with the VSR polygon and its exposure split by the resulting area fractions. Whole-cell, centroid, and majority-area assignment are all excluded; see [ADR 0004](decisions/0004-analysis-grid-resolution.md).
+- **Tests of the fractional accounting** against the synthetic cases in ADR 0004, whose answers are known by construction, including the cell 45% inside the zone that centroid assignment scores as fully outside.
 - Identification of the largest concentrations of exposure outside the zone.
 - A sensitivity check showing how the reported statistics respond to the main arbitrary choices, particularly the high-exposure threshold and the normalization method.
 - An assumptions-and-limitations record covering what the exposure index does and does not represent.
@@ -240,6 +243,8 @@ Produce the project's own analytical result: a documented relative exposure laye
 **Completion criteria**
 - The exposure calculation is reproducible from the derived inputs.
 - Every reported statistic states its basis — area, total exposure, or cell count — and its threshold.
+- Boundary-derived statistics are computed fractionally, the synthetic cases pass, and the uniform-exposure-within-cell assumption is stated wherever such a statistic is reported.
+- **The analytical domain has been accepted** ([ADR 0002](decisions/0002-southern-california-study-area-extent.md) is still Proposed). No inside-versus-outside figure is published before it is.
 - The results are described in the vocabulary required by the project brief, with no risk or probability language.
 - The sensitivity check is documented, including any case where a conclusion is not robust.
 - The layer and the statistics are consistent: the numbers are computed from the published layer, not from a different intermediate.
@@ -248,7 +253,7 @@ Produce the project's own analytical result: a documented relative exposure laye
 - Combining a modeled density surface with an observed traffic measure implies choices about units and scaling that have no single correct answer; whatever is chosen must be justified and tested.
 - Threshold-based "high exposure" statistics are sensitive to the threshold. Reporting a single number without sensitivity context would overstate certainty.
 - Differing native resolutions between whale and vessel data force a resampling decision that can bias results toward one input.
-- Edge effects at the study-area boundary may distort inside/outside comparisons near the VSR zone edge.
+- Edge effects at the **study-area** boundary may distort inside/outside comparisons where the extent truncates the zone at 35.0°N. This is separate from the **VSR zone** boundary, whose treatment is settled: fractional area accounting per [ADR 0004](decisions/0004-analysis-grid-resolution.md).
 
 ---
 

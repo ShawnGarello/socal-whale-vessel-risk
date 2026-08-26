@@ -76,7 +76,7 @@ Summary statistics follow the same path: they are computed offline in the proces
 - Cleaning and filtering: vessel-class selection, implausible-position and implausible-speed removal, deduplication.
 - Aggregation onto the analysis grid.
 - The relative exposure calculation itself — this is the project's own analytical contribution and should live in code that can be read, reviewed, and rerun.
-- Computation of the inside-versus-outside VSR summary statistics.
+- Computation of the inside-versus-outside VSR summary statistics. **These are computed by fractional area intersection, not by classifying cells.** Each grid cell is intersected with the water mask, that water geometry is intersected with the VSR polygon, and the cell's exposure is split by the resulting area fractions. A boundary cell is never assigned whole to one side, by centroid or by majority area — doing so would make the headline statistic depend on grid origin and cell size. See [ADR 0004](decisions/0004-analysis-grid-resolution.md), which also records the assumption this introduces and the synthetic cases that must verify it.
 - Validation checks over inputs and outputs.
 - Emission of lineage metadata alongside each derived dataset.
 
@@ -161,7 +161,7 @@ This model has two halves, and only one of them is about the web host. The appli
 
 Testing effort follows consequence, not coverage.
 
-- **Analytical code (Python)** — the highest-value target. Aggregation, normalization, the exposure calculation, and the inside/outside statistics should be tested with small synthetic inputs whose correct answers are known by construction. A geometry whose area is known, a grid whose totals are known, a case where a cell falls exactly on the zone boundary.
+- **Analytical code (Python)** — the highest-value target. Aggregation, normalization, the exposure calculation, and the inside/outside statistics should be tested with small synthetic inputs whose correct answers are known by construction. A geometry whose area is known, a grid whose totals are known, and — specifically — the fractional boundary cases set out in [ADR 0004](decisions/0004-analysis-grid-resolution.md), including the case of a cell 45% inside the zone that centroid and majority-area assignment both score as entirely outside.
 - **Validation checks** — CRS correctness, extent coverage, null handling, and value ranges are asserted as part of processing rather than as a separate test suite.
 - **Application code (TypeScript)** — type checking and linting, plus tests for any non-trivial presentational logic such as number formatting or classification. UI tests are not a Version 1 priority.
 - **Not tested** — third-party libraries, the ArcGIS SDK, ArcGIS Online itself, and the correctness of upstream datasets. Upstream data is *inspected and documented*, not unit-tested.
