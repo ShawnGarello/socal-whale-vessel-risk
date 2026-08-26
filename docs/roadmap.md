@@ -72,19 +72,49 @@ Obtain and inspect the actual candidate datasets, and determine what analysis th
 - Architecture decision records for choices that constrain later work.
 
 **Completion criteria**
-- Every Version 1 input has an identified, retrievable, authoritative source with recorded provenance.
-- The whale model layer's values are understood well enough to state what they mean in the application legend.
-- The AIS extract needed for the study area and analytical period has been scoped, and its volume is known.
-- The VSR boundary geometry is confirmed as obtainable from an authoritative source, or a documented derivation from published coordinates is agreed on.
-- Redistribution terms are known for each dataset, so it is clear what may be committed or hosted publicly.
-- Anything that cannot be verified is explicitly recorded as unresolved rather than assumed.
+
+| Criterion | State |
+|---|---|
+| Every Version 1 input has an identified, retrievable, authoritative source with recorded provenance | **Met.** All three retrieved and inspected on 2026-08-25, with direct retrieval methods, checksums, and sizes recorded |
+| The whale model layer's values are understood well enough to state what they mean in the application legend | **Met.** `DENSITY` is animals per km², publisher-defined, with a per-cell coefficient of variation |
+| The AIS extract needed for the study area and analytical period has been scoped, and its volume is known | **Met, with a caveat.** Scoped to the study area for 1 July – 30 November 2024 and estimated at ≈87 million records and ~60 GB of transfer. The figure is an extrapolation from a 34-minute sample, not a measurement |
+| The VSR boundary geometry is confirmed as obtainable from an authoritative source, or a documented derivation from published coordinates is agreed on | **Met.** A closed, land-clipped polygon is retrievable, and seven of the program's eight published points lie exactly on its boundary |
+| Redistribution terms are known for each dataset, so it is clear what may be committed or hosted publicly | **Not met.** Clear for both NOAA sources. **Not clear for the VSR zone geometry** — publicly shared with attribution, but with no redistribution grant, and BWBS/CMSF is not a federal publisher |
+| Anything that cannot be verified is explicitly recorded as unresolved rather than assumed | **Met** |
+
+**M2 stays in progress on the fifth criterion alone.** Everything else is done. It is not marked blocked, because nothing external prevents progress — the question needs a decision or an email, and it does not stop M3 from starting, since computing an inside/outside statistic does not require republishing the boundary.
+
+**What was established**
+
+Detail is in [data-sources.md](data-sources.md); this is the summary that changes later work.
+
+- **The whale model is vector polygons, not a raster** — 12,257 cells in EPSG:4326 on a 0.1° equal-angle grid, values in animals per km², with a coefficient of variation per cell. It is a **single summer–fall multi-year average, not a time series**, which removes any possibility of seasonal claims from this input.
+- **AIS carries no gross tonnage**, so the VSR program's 300 GT criterion cannot be applied directly and any size filter is a project assumption. Speed is present, in knots, and reliable.
+- **AIS coverage is publisher-stated as unavailable beyond 40–50 miles from shore**, and the sample confirms it. The VSR zone extends well past that, so apparent low activity offshore may be receiver coverage rather than vessel behaviour. This is the most important limitation found.
+- **AIS broadcast points are published only through 2024.** The 2026 season cannot be analysed.
+- **The VSR zone's eight published points do not define a polygon** — they are the seaward boundary only — but a closed geometry is published separately and matches them.
+- **Commercial vessel types are only ~18% of Southern California AIS records**, making vessel-class filtering the most consequential processing choice for that input.
+
+**Decisions recorded**
+
+[0002](decisions/0002-southern-california-study-area-extent.md) study area extent · [0003](decisions/0003-projected-coordinate-system.md) EPSG:3310 · [0004](decisions/0004-analysis-grid-resolution.md) 5 km grid · [0005](decisions/0005-analytical-period.md) 1 July – 30 November 2024 · [0006](decisions/0006-report-vessel-speed-separately.md) speed reported separately.
+
+**What remains in M2**
+
+1. **Settle redistribution of the VSR zone geometry.** Either obtain permission from BWBS/CMSF, or decide to reference the published service rather than copy it, or substitute a federally published geometry. Must be settled before public hosting, not at release.
+2. **Confirm the whale model's season definition.** The survey basis is July–November; a redistributor describes the same models' predictions as late June to early December. [ADR 0005](decisions/0005-analytical-period.md) uses the conservative July–November reading, and would need revisiting if the publisher states otherwise.
+3. **Confirm the datum of the published VSR coordinates.** Assumed WGS 84; the program states none.
+
+None of these prevents M3 from beginning.
 
 **Risks and open questions**
-- The whale distribution model may not be published at a resolution or in a format that is directly usable, or may cover a different region or period than needed.
-- AIS volume for the study area may be large enough to force a narrower analytical period or a coarser aggregation.
-- The authoritative VSR boundary may only be published as text coordinates or as a map image rather than as a downloadable geometry.
-- Whale-model and AIS temporal coverage may not overlap cleanly, which would constrain the analytical period.
-- Licensing may restrict redistribution of a processed derivative.
+
+- ~~The whale distribution model may not be published at a resolution or in a format that is directly usable.~~ **Resolved:** it is directly usable, though as vector polygons rather than the raster the architecture also allowed for.
+- ~~AIS volume for the study area may be large enough to force a narrower analytical period or a coarser aggregation.~~ **Partly realised:** volume is large — ~60 GB of transfer for the chosen period — but the period was narrowed by data availability rather than by volume.
+- ~~The authoritative VSR boundary may only be published as text coordinates or as a map image.~~ **Resolved:** a downloadable closed geometry exists.
+- ~~Whale-model and AIS temporal coverage may not overlap cleanly.~~ **Realised, differently than expected:** the whale model has no time dimension at all, so there is nothing to overlap. Version 1 pairs a climatological surface with a fixed traffic window and states both vintages.
+- **Licensing may restrict redistribution of a processed derivative.** **Still open**, and now specific: it is the VSR zone geometry, not the NOAA data, that is unresolved.
+- **New:** AIS coverage falls off offshore, so results in the western part of the study area describe receiver coverage as much as vessel behaviour. This constrains how offshore results may be worded and is carried into M6 and M7 rather than discovered there.
 
 ---
 

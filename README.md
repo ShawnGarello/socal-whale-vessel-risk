@@ -37,7 +37,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 |---|---|
 | Project scope and roadmap | Documented |
 | Architecture | Accepted as the initial direction; nothing built against it yet |
-| Data sources | Identified, **not yet verified or downloaded** |
+| Data sources | Downloaded and inspected; properties, licensing, and limits recorded. One licensing question open |
 | Processing workflow | Not started |
 | Analysis and derived layers | Not started |
 | Web application | Not started |
@@ -51,7 +51,7 @@ All analysis happens offline and is published as a result. The browser displays 
 
 ## Data sources
 
-Identified source categories. None has been downloaded, inspected, or verified yet; formats, resolutions, coverage, and licensing are all open questions tracked in [docs/data-sources.md](docs/data-sources.md).
+All three Version 1 inputs have now been retrieved and inspected: the NOAA/SWFSC modeled blue-whale density surface, NOAA Marine Cadastre AIS vessel records, and the 2026 BWBS Vessel Speed Reduction zone. Formats, coordinate systems, resolutions, value meanings, coverage, volume, and terms of use are recorded — along with what remains unresolved — in [docs/data-sources.md](docs/data-sources.md).
 
 - **Modeled blue-whale distribution** — [NOAA Fisheries species distribution models](https://www.fisheries.noaa.gov/west-coast/science-data/species-distribution-models)
 - **Commercial vessel activity** — [NOAA / USCG AIS vessel traffic](https://coast.noaa.gov/digitalcoast/tools/ais.html)
