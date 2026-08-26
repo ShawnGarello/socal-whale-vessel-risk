@@ -6,7 +6,7 @@
 >
 > Accepted means this is the direction implementation follows. It does not mean it is proven. Nothing described here is implemented yet.
 >
-> Data discovery has since established the dataset formats, resolutions, and licensing that several parts depended on — see [data-sources.md](data-sources.md) — and three of the deferred decisions at the end of this document are now resolved, across five decision records. The rest, including **the ArcGIS Online capability gate, remain deferred and unverified.**
+> Data discovery has since established the dataset formats, resolutions, and licensing that several parts depended on — see [data-sources.md](data-sources.md) — and some of the deferred decisions at the end of this document are now resolved, across five decision records. Two things remain open and both gate delivery: **the analytical and statistical domain** ([ADR 0002](decisions/0002-southern-california-study-area-extent.md), still Proposed, because AIS coverage offshore is unestablished) and **the ArcGIS Online capability gate**, still unverified.
 >
 > Changes to an accepted architecture are recorded as decision records under [decisions/](decisions/README.md) rather than made silently.
 >
@@ -236,7 +236,7 @@ Deferred on purpose. Each should be resolved by evidence — real data, real mea
 
 | Decision | Deferred until | Why it is not decided now |
 |---|---|---|
-| ~~Study area extent, projected CRS, and analysis grid resolution~~ | **Resolved by data discovery** | Extent in [ADR 0002](decisions/0002-southern-california-study-area-extent.md), projection in [ADR 0003](decisions/0003-projected-coordinate-system.md), grid in [ADR 0004](decisions/0004-analysis-grid-resolution.md). |
+| Study area extent, projected CRS, and analysis grid resolution | **Partly resolved** | Projection settled in [ADR 0003](decisions/0003-projected-coordinate-system.md) and grid in [ADR 0004](decisions/0004-analysis-grid-resolution.md). Extent is **split and only half settled** in [ADR 0002](decisions/0002-southern-california-study-area-extent.md), which is Proposed: the map and context extent is fixed, the **analytical and statistical domain is not**, because AIS coverage offshore is unestablished. |
 | ~~Analytical period for Version 1~~ | **Resolved by data discovery** | [ADR 0005](decisions/0005-analytical-period.md). The whale model turned out not to be a time series at all, and AIS is only published through 2024. |
 | Exposure index formula, normalization, and weighting | After both inputs are inspected | Cannot be defined responsibly before the units and value distributions of the inputs are known. |
 | High-exposure threshold definition | After the exposure surface exists | Should be chosen against the real value distribution and tested for sensitivity. |

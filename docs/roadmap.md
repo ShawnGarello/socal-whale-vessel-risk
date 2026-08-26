@@ -90,14 +90,16 @@ Detail is in [data-sources.md](data-sources.md); this is the summary that change
 
 - **The whale model is vector polygons, not a raster** — 12,257 cells in EPSG:4326 on a 0.1° equal-angle grid, values in animals per km², with a coefficient of variation per cell. It is a **single summer–fall multi-year average, not a time series**, which removes any possibility of seasonal claims from this input.
 - **AIS carries no gross tonnage**, so the VSR program's 300 GT criterion cannot be applied directly and any size filter is a project assumption. Speed is present, in knots, and reliable.
-- **AIS coverage is publisher-stated as unavailable beyond 40–50 miles from shore**, and the sample confirms it. The VSR zone extends well past that, so apparent low activity offshore may be receiver coverage rather than vessel behaviour. This is the most important limitation found.
+- **AIS coverage is publisher-stated as unavailable beyond 40–50 miles from shore**, and the sampled record density falls off in a way consistent with that. The VSR zone extends well past it. The sample cannot distinguish sparse reception from low traffic, so low offshore record density cannot be read as low vessel activity. **This is the most important limitation found, and it has reopened the analytical-domain decision** — see [ADR 0002](decisions/0002-southern-california-study-area-extent.md).
 - **AIS broadcast points are published only through 2024.** The 2026 season cannot be analysed.
 - **The VSR zone's eight published points do not define a polygon** — they are the seaward boundary only — but a closed geometry is published separately and matches them.
 - **Commercial vessel types are only ~18% of Southern California AIS records**, making vessel-class filtering the most consequential processing choice for that input.
 
 **Decisions recorded**
 
-[0002](decisions/0002-southern-california-study-area-extent.md) study area extent · [0003](decisions/0003-projected-coordinate-system.md) EPSG:3310 · [0004](decisions/0004-analysis-grid-resolution.md) 5 km grid · [0005](decisions/0005-analytical-period.md) 1 July – 30 November 2024 · [0006](decisions/0006-report-vessel-speed-separately.md) speed reported separately.
+**Accepted:** [0003](decisions/0003-projected-coordinate-system.md) EPSG:3310 · [0004](decisions/0004-analysis-grid-resolution.md) 5 km grid · [0005](decisions/0005-analytical-period.md) 1 July – 30 November 2024 · [0006](decisions/0006-report-vessel-speed-separately.md) speed reported separately.
+
+**Proposed, not accepted:** [0002](decisions/0002-southern-california-study-area-extent.md) study area. Its map and context extent is settled; its **analytical and statistical domain is open**, because the AIS coverage question above is unresolved. No inside-versus-outside statistic may be published until it is.
 
 **What remains in M2**
 

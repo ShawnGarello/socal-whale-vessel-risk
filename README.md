@@ -37,7 +37,8 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 |---|---|
 | Project scope and roadmap | Documented |
 | Architecture | Accepted as the initial direction; nothing built against it yet |
-| Data sources | Downloaded and inspected; properties, licensing, and limits recorded. One licensing question open |
+| Data sources | Downloaded and inspected; properties, licensing, and limits recorded, with a reproducible provenance manifest |
+| Study area | Map extent proposed; **the analytical domain for statistics is still open** — see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) |
 | Processing workflow | Not started |
 | Analysis and derived layers | Not started |
 | Web application | Not started |
@@ -51,7 +52,9 @@ All analysis happens offline and is published as a result. The browser displays 
 
 ## Data sources
 
-All three Version 1 inputs have now been retrieved and inspected: the NOAA/SWFSC modeled blue-whale density surface, NOAA Marine Cadastre AIS vessel records, and the 2026 BWBS Vessel Speed Reduction zone. Formats, coordinate systems, resolutions, value meanings, coverage, volume, and terms of use are recorded — along with what remains unresolved — in [docs/data-sources.md](docs/data-sources.md).
+All three Version 1 inputs have been retrieved and inspected: the NOAA/SWFSC modeled blue-whale density surface, NOAA Marine Cadastre AIS vessel records, and the 2026 BWBS Vessel Speed Reduction zone. Formats, coordinate systems, resolutions, value meanings, coverage, volume, and terms of use are recorded — with a provenance manifest that can be re-checked against the local files — in [docs/data-sources.md](docs/data-sources.md).
+
+Two findings are worth knowing before reading anything else. The AIS records come from land-based receivers and NOAA states coverage is unavailable more than 40–50 miles offshore, which is inside the area this project cares about; until that is resolved, the region over which statistics can be defended is an open question. And the vessel data is published only through 2024, so Version 1 pairs the current (2026) speed-reduction zone with 2024 traffic. What remains unresolved is listed in [docs/roadmap.md](docs/roadmap.md).
 
 - **Modeled blue-whale distribution** — [NOAA Fisheries species distribution models](https://www.fisheries.noaa.gov/west-coast/science-data/species-distribution-models)
 - **Commercial vessel activity** — [NOAA / USCG AIS vessel traffic](https://coast.noaa.gov/digitalcoast/tools/ais.html)
