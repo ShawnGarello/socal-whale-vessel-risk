@@ -427,7 +427,8 @@ def check_ais(zone) -> None:
     print("  Daylight Time, so the sample covers five dates but ONE time of day.")
 
     frames = {}
-    print(f"\n  {'date':<12}{'total rows':>12}{'in window':>11}{'after cutoff':>14}{'out-of-order':>14}")
+    print(f"\n  {'date':<12}{'total rows':>12}{'in window':>11}{'after cutoff':>14}"
+          f"{'out-of-order':>14}{'natl M/day':>12}")
     for date in AIS_DATES:
         df = load_ais(date)
         if df is None:
@@ -439,7 +440,10 @@ def check_ais(zone) -> None:
         t0 = df["dt"].min()
         late = int(((after["dt"] - t0).dt.total_seconds() > 3600).sum())
         frames[date] = (df, win)
-        print(f"  {date:<12}{len(df):>12,}{len(win):>11,}{len(after):>14,}{late:>14,}")
+        print(f"  {date:<12}{len(df):>12,}{len(win):>11,}{len(after):>14,}{late:>14,}"
+              f"{len(win) * (1440 / 34) / 1e6:>12.2f}")
+    print("  'out-of-order' counts rows after the cutoff whose timestamp is more than")
+    print("  an hour past the first record, i.e. records the file did not emit in order.")
 
     if not frames:
         return

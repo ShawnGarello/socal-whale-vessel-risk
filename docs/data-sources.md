@@ -231,7 +231,9 @@ The distribution item is shared publicly by a NOAA account and carries no access
 **Analytical role**
 The vessel input to the exposure analysis: where large commercial vessels travel within the study area, how much traffic there is, and — if the data supports it — how fast they are moving.
 
-**Verification status: schema, values and data quality verified by inspection of downloaded records; field semantics, units, coverage and terms verified from the publisher's own documentation** (retrieved 2026-08-25). Volume figures are **extrapolations from a 34-minute sample** and are labelled as estimates throughout, not measurements.
+**Verification status: schema, field semantics, units, coverage statements and terms of use verified from the publisher's own documentation. Data properties verified by inspection of a small, stratified sample.** Retrieved 2026-08-25 and 2026-08-26; provenance in the [manifest](#retrieval-provenance-and-local-artifacts). Every quantity below is labelled with the population it was computed from, because the sample has several and mixing them has already caused one error in this document.
+
+**What the sample is, and is not.** Five daily files were sampled, one per month across the analytical period. Each sample is a **nationwide-scope snapshot of the records present in the source during the retained time window** — not a complete census of vessel activity, and not a period long enough to describe a day, a month or a season. Findings from it are stated as sample results throughout.
 
 ### Selected product
 
@@ -239,14 +241,42 @@ The vessel input to the exposure analysis: where large commercial vessels travel
 |---|---|
 | **Product** | AIS Broadcast Points, daily nationwide files |
 | **Publisher** | NOAA Office for Coastal Management (Marine Cadastre), from U.S. Coast Guard Nationwide AIS (NAIS) |
-| **Bulk directory** | `https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{year}/` — one `AIS_YYYY_MM_DD.zip` per day, 365/366 per year |
-| **Custom extracts** | AccessAIS — <https://coast.noaa.gov/digitalcoast/tools/ais.html> |
+| **Bulk directory** | `https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{year}/` — one `AIS_YYYY_MM_DD.zip` per day |
+| **Custom extracts** | AccessAIS — <https://coast.noaa.gov/digitalcoast/tools/ais.html>. **Not exercised in this session**; see "Retrieval route" below |
 | **Documentation** | AIS FAQ (May 2026) — <https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf>; Vessel Type and Group Codes — <https://coast.noaa.gov/data/marinecadastre/ais/VesselTypeCodes2018.pdf> |
-| **Retrieved** | 2026-08-25 |
+| **Years verified available** | Bulk year index and daily files return HTTP 200 for **2019–2024** and **404 for 2025 and 2026**, checked 2026-08-25. The FAQ gives 2009 as the earliest year and 2015 as the start of the flat CSV format |
 
 **Requested citation** (from the FAQ): "NOAA Office for Coastal Management. ([Year]). [Title of Dataset]. Marine Cadastre. https://marinecadastre.gov."
 
-**What was actually downloaded.** No national dataset was retrieved. `AIS_2024_07_15.zip` is 395,954,655 bytes and expands to 1,077,218,608 bytes. The server supports byte ranges, so **only the first 8 MB was requested** and the deflate stream was decompressed in place, yielding 207,849 real records. The records are ordered by time, so this prefix is a **nationwide snapshot covering 34 complete minutes** — spatially complete, temporally tiny. That is what every finding below was read from.
+### How the sample was taken, and what it cannot show
+
+Each daily file is 330–420 MB compressed and expands to roughly 1 GB. Retrieving five in full would mean moving 1.8 GB to inspect a schema. Instead **only the first 8 MiB of each was retrieved** by HTTP range request and the deflate stream inflated as far as those bytes allow. Records are emitted in approximate time order, so each prefix covers the first half-hour or so of the file's day.
+
+Two limits follow directly from that method, and they constrain every AIS finding below:
+
+- **The sample covers five dates but one time of day.** A zip deflate stream can only be read from its start, so every prefix begins at 00:00 UTC. **00:00–00:34 UTC is 17:00–17:34 Pacific Daylight Time** — a late-afternoon window. In Southern California that is a busy period for recreational boating, which would inflate the pleasure-craft share and correspondingly deflate the commercial share. **The commercial share reported below is therefore more likely to be an underestimate than an overestimate of a 24-hour figure**, and nothing here samples night, dawn, or midday.
+- **The retained window may under-count slightly.** The file is not strictly time-ordered, so a record timestamped inside the window can appear later in the file than the 8 MiB cut. The measured out-of-order population is 160–417 records per date, well under 0.25% of each sample.
+
+### Which rows each statistic uses
+
+This document previously alternated between two record counts without saying why. There are two populations and they are not interchangeable:
+
+| Population | Definition | Used for |
+|---|---|---|
+| **Full decompressed sample** | Every row recovered from the 8 MiB prefix | Schema, duplicates, coordinate validity, MMSI validity, missing-value rates, sentinel rates on `Heading` and `COG` |
+| **Retained window** | Rows whose `BaseDateTime` is **strictly before `<date>T00:34:00`** | Everything rate-based or comparative: national and Southern California counts, vessel-type shares, reporting interval, speed, longitude profile, volume scaling |
+
+The cutoff is 00:34:00 because per-minute counts show minutes 0–33 complete on every sampled date, with the prefix ending part-way through a later minute. Discarding the partial minute and everything after it keeps the five dates directly comparable, at the cost of throwing away some complete minutes on the quieter dates.
+
+| Date | Full sample rows | Retained window | After cutoff | Of those, out of order | Implied national rows/day |
+|---|---|---|---|---|---|
+| 2024-07-15 | 207,849 | **202,530** | 5,319 | 374 | 8.58 M |
+| 2024-08-15 | 207,420 | **206,961** | 459 | 271 | 8.77 M |
+| 2024-09-16 | 205,322 | **183,991** | 21,331 | 417 | 7.79 M |
+| 2024-10-15 | 204,861 | **170,118** | 34,743 | 160 | 7.21 M |
+| 2024-11-15 | 207,129 | **180,616** | 26,513 | 298 | 7.65 M |
+
+The two figures previously quoted without explanation were 207,849 — the full 15 July sample — and 202,530 — its retained window. Both are correct; they answer different questions.
 
 ### Verified schema
 
@@ -264,66 +294,136 @@ MMSI,BaseDateTime,LAT,LON,SOG,COG,Heading,VesselName,IMO,CallSign,VesselType,Sta
 | `SOG` | Speed over ground in **knots**. **102.3 is the "not available" sentinel** | FAQ; sentinel confirmed in file |
 | `COG` | Course over ground, degrees. **360.0 means unavailable and should be ignored** | FAQ; confirmed in file |
 | `Heading` | Degrees. **511 means not available** | FAQ; confirmed in file |
-| `VesselType` | AIS ship-and-cargo-type code, 0–99 standard NMEA. Grouped into Cargo, Tanker, Passenger, Tug Tow, Fishing, Pleasure Craft/Sailing, Military, Other by the published code table | Vessel Type and Group Codes PDF |
+| `VesselType` | AIS ship-and-cargo-type code, 0–99 standard NMEA, grouped into Cargo, Tanker, Passenger, Tug Tow, Fishing, Pleasure Craft/Sailing, Military, Other | Vessel Type and Group Codes PDF |
 | `Status` | AIS navigational status code | AIS standard |
 | `Length`, `Width` | Metres | FAQ |
 | `Draft` | Metres at 1/10 m resolution for 2015-present | FAQ |
 | `Cargo` | "For practical purposes, cargo codes are identical to vessel types" | FAQ |
-| `TransceiverClass` | `A` or `B`. Class B is present from 2015 and the designation is provided per record after 2017 | FAQ; both values present in file |
+| `TransceiverClass` | `A` or `B`. Class B present from 2015; designation provided per record after 2017 | FAQ; both values present in file |
 
-**Gross tonnage is not present, and cannot be.** The FAQ is explicit: *"Are parameters like tonnage, horsepower, or fuel type included? No, these parameters are not part of the standard AIS broadcast."* The VSR program's 300 GT threshold therefore **cannot be applied directly to these data** — see "Defining the commercial-vessel population" below.
+**Gross tonnage is not present, and cannot be.** The FAQ is explicit: *"Are parameters like tonnage, horsepower, or fuel type included? No, these parameters are not part of the standard AIS broadcast."* The VSR program's 300 GT threshold therefore **cannot be applied directly to these data**.
 
-**Vessel attributes are corrected, not raw.** Since January 2024 the AIS Vessel Identification Database (AVID) populates nulls and fixes gross errors in vessel-dependent fields, "correcting approximately 10–15 percent of records". The 2024 sample inspected here is AVID-corrected. Between 2015 and 2023 the predecessor AVIS did the same, and the uncorrected `vessel_type` for that period survives in the `Cargo` field.
+**Vessel attributes are corrected, not raw.** Since January 2024 the AIS Vessel Identification Database (AVID) populates nulls and fixes gross errors in vessel-dependent fields, "correcting approximately 10–15 percent of records". The 2024 samples inspected here are AVID-corrected.
 
-### Verified data quality
+### Data quality in the inspected sample
 
-Measured on the 34-minute national window (202,530 records) and on its Southern California subset — lon −122.5 to −117.0, lat 32.0 to 35.2 — of 13,483 records.
+Computed on the **full decompressed 15 July sample, 207,849 rows.**
 
 | Check | Result |
 |---|---|
-| Coordinate sentinels | **None.** No `LAT`=91, no `LON`=181, no (0,0), nothing outside ±90/±180. LAT spans 14.20–49.67, LON −159.65 to −63.10 |
-| Fully identical duplicate rows | 3 in 207,849 — 0.001% |
+| Coordinate sentinels | **None.** No `LAT`=91, no `LON`=181, no (0,0), nothing outside ±90/±180. LAT spans 14.19860–49.67238, LON −159.64754 to −63.10286 |
+| Fully identical duplicate rows | 3 — 0.001% |
 | Duplicate `(MMSI, BaseDateTime)` | 16 — 0.008% |
-| Malformed MMSI | 50 records not 9 digits; 26 beginning with `0` — together 0.024% |
-| Missing values | `LAT`, `LON`, `SOG`, `COG`, `Heading`, `MMSI`, `BaseDateTime`, `TransceiverClass` are **never** missing. `IMO` missing 37.3%, `Status` 32.6%, `Draft` 32.6%, `Cargo` 32.5%, `CallSign` 14.4%, `Width` 2.9%, `Length` 1.6%, `VesselType` 0.1% |
-| `SOG` sentinel in the SoCal subset | 66 records at 102.3; no negative values; no other value above 40 knots |
-| `Heading` unavailable | 52.6% of national records are 511 |
-| `COG` unavailable | 16.5% of national records are 360.0 |
-| Sort order | Time-ordered but **not strictly**: 374 records in the sample carry timestamps 12+ hours later than their neighbours. Any processing that assumes monotonic time within a file will be wrong |
+| Malformed MMSI | 50 not 9 digits; 26 with a leading zero — 0.024% together |
+| Never missing | `MMSI`, `BaseDateTime`, `LAT`, `LON`, `SOG`, `COG`, `Heading`, `TransceiverClass` |
+| Missing rates | `IMO` 37.3%, `Status` 32.6%, `Draft` 32.5%, `Cargo` 32.5%, `CallSign` 14.4%, `Width` 2.9%, `Length` 1.6%, `VesselName` 0.3%, `VesselType` 0.1% |
+| `Heading` unavailable | 109,262 rows are 511 — 52.6% |
+| `COG` unavailable | 34,309 rows are 360.0 — 16.5% |
+| Sort order | Time-ordered but not strictly; see the out-of-order counts above |
 
-**The obvious position errors have already been removed upstream.** This is better than the register anticipated: no invalid-coordinate cleaning rule is needed for gross errors. Plausibility filtering against vessel behaviour is still the project's responsibility.
+**Gross position errors appear to have been removed upstream in this sample.** No invalid-coordinate sentinel or out-of-range value occurred in 207,849 rows. That is a property of the inspected sample, not a guarantee about the full analytical period, and it does not remove the need for behavioural plausibility filtering — implausible speeds and impossible inter-position jumps are a separate problem this check does not address.
 
-### Verified reporting interval
+### Reporting interval
 
-Time between consecutive records for the same MMSI, Southern California subset:
+Computed on the **retained window, 15 July, Southern California box.**
 
-| Population | Median gap |
-|---|---|
-| All vessels | 175 s |
-| Commercial (types 60–89) | 71 s |
-| Commercial and moving (SOG ≥ 1 kn) | 70 s |
+| Population | Median gap | n |
+|---|---|---|
+| All vessels | 175 s | 12,220 |
+| Commercial (types 60–89) | 71 s | 2,294 |
+| Commercial and moving (`SOG` ≥ 1 kn) | 70 s | 968 |
 
-Gaps cluster near 60–70 s, 180 s and 360 s. This is consistent with the FAQ's statement that raw NMEA is down-sampled to the nearest whole minute, with the longer clusters representing reception gaps rather than a different transmission rate. **Roughly one position per minute per moving commercial vessel is the practical resolution.**
+Gaps cluster near 60–70 s, 180 s and 360 s, consistent with the FAQ's statement that raw NMEA is down-sampled to the nearest whole minute, with the longer clusters representing reception gaps. **Roughly one position per minute per moving commercial vessel** is the practical resolution in this sample.
 
-### Verified volume — estimates, not measurements
+### Southern California sample results
 
-Extrapolated from the 34-minute window. Rates are linear extrapolations and take no account of diurnal or seasonal variation.
+Computed on the **retained window** of each date, over the box lon −122.5 to −117.0, lat 32.0 to 35.2. That box is the ADR 0002 candidate study area widened slightly so the coverage falloff is visible.
+
+| Date | SoCal rows | Share of national | Distinct MMSI | Commercial 60–89 | Commercial share | Commercial ≥100 m |
+|---|---|---|---|---|---|---|
+| 2024-07-15 | 13,483 | 6.66% | 1,263 | 2,448 | 18.2% | 1,253 |
+| 2024-08-15 | 12,128 | 5.86% | 1,202 | 2,476 | 20.4% | 1,306 |
+| 2024-09-16 | 10,868 | 5.91% | 1,229 | 2,125 | 19.6% | 1,145 |
+| 2024-10-15 | 9,357 | 5.50% | 1,150 | 1,755 | 18.8% | 934 |
+| 2024-11-15 | 11,928 | 6.60% | 1,110 | 2,470 | 20.7% | 1,307 |
+
+**The commercial share is a snapshot result: 18.2% to 20.7% across the five sampled windows, mean 19.5%.** It is stable across the five dates, which is mildly reassuring, but all five windows are the same late-afternoon half-hour, so the stability says nothing about the rest of the day. Given that the window falls in peak recreational boating hours, a 24-hour figure would plausibly be higher.
+
+What the sample does support: **commercial traffic is a minority of Southern California AIS records by a wide margin**, with types 30–39 — fishing, towing, sailing and pleasure craft — accounting for 67.4% of the 15 July window. **Vessel-class filtering is therefore the most consequential processing choice for this input.** That conclusion does not depend on the exact share.
+
+Full type-band breakdown, 15 July retained window, 13,483 rows:
+
+| Band | Rows | Share |
+|---|---|---|
+| 30–39 fishing / towing / sailing / pleasure | 9,088 | 67.4% |
+| 60–69 passenger | 1,075 | 8.0% |
+| 50–59 special craft | 1,007 | 7.5% |
+| other | 720 | 5.3% |
+| 70–79 cargo | 717 | 5.3% |
+| 80–89 tanker | 656 | 4.9% |
+| 0 not available | 147 | 1.1% |
+| missing | 73 | 0.5% |
+
+### Volume — order-of-magnitude planning estimate
+
+**These are planning estimates, not measurements.** Each is produced by scaling a 34-minute late-afternoon window to 24 hours, which assumes a constant rate that certainly does not hold. They are recorded to size the retrieval problem, and nothing analytical should rest on them.
 
 | Quantity | Estimate |
 |---|---|
-| National records per day | **≈ 8.6 million** |
-| Cross-check | 1,077,218,608 uncompressed bytes ÷ 8.6 M ≈ 125 bytes/record — consistent with the observed row width |
-| Southern California box, share of national | 6.66% |
-| Southern California box, records per day | **≈ 571,000** |
-| Southern California box, over a 254-day VSR season | **≈ 145 million records** |
-| Distinct MMSI in the box during 34 minutes | 1,263 |
+| National rows per day | **7.2 – 8.8 million** across the five dates |
+| Cross-check on 15 July | declared uncompressed size 1,077,218,608 bytes ÷ 8.58 M rows ≈ 125.6 bytes/row, consistent with the observed row width |
+| Southern California rows per day | **≈ 0.4 – 0.6 million** (396,000 to 571,000; mean 489,000) |
+| Southern California rows over the 153-day analytical period | **of order 10⁸ — roughly 60 to 90 million** |
+| Compressed size of a daily national file | 330–420 MB over the five sampled days; mean 369 MB |
+| Transfer to cover 153 days via the bulk route | **≈ 56 GB** |
 
-**This is the volume constraint the roadmap anticipated, and it binds.** Two retrieval routes exist and neither is comfortable:
+### Coverage — a publisher statement, and a sample pattern consistent with it
 
-- **Bulk download.** Getting one VSR season for the study area means downloading 254 national daily files at ~396 MB each — **roughly 100 GB of transfer** to keep ~2% of it. Filtering happens locally.
-- **AccessAIS.** Requests are capped: *"For requests under 2 GB, use the AccessAIS application."* At ~125 bytes/record, 145 million records is on the order of **18 GB**, so a full season for the study area **cannot be a single AccessAIS request** and would need splitting. AccessAIS also holds only a five-year rolling window, adds data every 90 days with a 145–165 day lag, and its links expire after 14 days or five accesses.
+**The publisher's statement is the finding here.** The FAQ: *"Coverage is currently unavailable for remote Pacific territories, foreign waters, or waters extending more than 40 to 50 miles from the coast."* The data come from roughly 200 land-based receiving stations; **there is no satellite AIS in this product** — federal agencies that buy satellite AIS "are restricted from distributing satellite data to the public".
 
-Either route is workable but neither is trivial, and the choice belongs to the processing milestone.
+The sample shows a pattern consistent with that statement. Records per 0.5° longitude band, retained windows, all five dates combined — 57,764 Southern California rows, 11,274 of them commercial:
+
+| Longitude band | All rows | Commercial 60–89 |
+|---|---|---|
+| −122.5 to −122.0 | 140 | 121 |
+| −122.0 to −121.5 | 211 | 211 |
+| −121.5 to −121.0 | 282 | 154 |
+| −121.0 to −120.5 | 352 | 203 |
+| −120.5 to −120.0 | 843 | 685 |
+| −120.0 to −119.5 | 2,561 | 952 |
+| −119.5 to −119.0 | 6,068 | 1,403 |
+| −119.0 to −118.5 | 1,485 | 334 |
+| −118.5 to −118.0 | 23,252 | 4,632 |
+| −118.0 to −117.5 | 6,857 | 817 |
+| −117.5 to −117.0 | 15,713 | 1,762 |
+
+Only **985 of 57,764 Southern California rows — 1.71% — lie west of −120.5.**
+
+**This does not establish the cause, and must not be reported as though it does.** A low record count offshore is equally consistent with sparse reception, with genuinely low vessel traffic, or with both at once, and a five-window snapshot cannot separate them. What can be said is that the observed falloff is **consistent with NOAA's published coverage limitation**, and that the limitation alone is sufficient reason not to treat offshore record density as a measure of offshore vessel activity.
+
+**Consequence:** low record density in the western part of the study area cannot be interpreted as low vessel activity. This is the evidence gap that reopened the analytical-domain decision — see [ADR 0002](decisions/0002-southern-california-study-area-extent.md), now **Proposed** rather than accepted.
+
+For orientation only: across the five retained windows, 93.3% of Southern California rows and 87.2% of commercial rows fell inside the 2026 VSR zone. **A snapshot, not an analytical result** — recorded as evidence that the vessel data and the zone geometry line up sensibly in space, nothing more.
+
+### Speed
+
+**`SOG` is present, documented, and appears usable in the inspected sample.** That is the whole of the claim; it is not a demonstration of reliability across the analytical period, which no sample of five half-hours could provide.
+
+Measured on the **retained window, 15 July, Southern California commercial vessels — 2,448 rows:**
+
+| Property | Result |
+|---|---|
+| `SOG` missing | 0 |
+| `SOG` = 102.3, the documented "not available" sentinel | **22 rows — 0.90%** |
+| Non-sentinel min / median / max | 0.0 / 0.2 / 24.1 knots |
+| Negative values | 0 |
+| Values above 40 knots excluding the sentinel | 0 |
+
+For the same window across all Southern California vessels rather than commercial only, the sentinel occurred in 66 of 13,483 rows — 0.49%. **The two figures differ because the populations differ**; earlier drafts of this register quoted one of them without its denominator.
+
+**The sentinel is not optional to handle.** 102.3 is a valid stored value meaning "no data", and treating it as a speed would put a 102-knot vessel in the study area. Any use of `SOG` must exclude it explicitly, and that exclusion must appear in the processing path rather than being assumed. Behavioural plausibility filtering — speeds inconsistent with consecutive positions — is a separate requirement that this sample does not address and does not discharge.
+
+Whether speed enters the exposure index or is reported separately is settled in [ADR 0006](decisions/0006-report-vessel-speed-separately.md): reported separately.
 
 ### Defining the commercial-vessel population
 
@@ -335,9 +435,7 @@ Either route is workable but neither is trivial, and the choice belongs to the p
 | Tanker | Tanker | 80–89 |
 | Passenger (incl. cruise, new for 2026) | Passenger | 60–69 |
 
-Measured on the Southern California subset, types 60–89 are **2,448 of 13,483 records — 18.2%**, from 154 distinct MMSI. The other 82% is dominated by pleasure craft (type 37, 39.7%) and sailing (type 36, 16.1%). **Vessel-class filtering is therefore the single most consequential processing choice for this input**, far more than any later smoothing or aggregation decision.
-
-**The 300 GT threshold has no direct equivalent and must be approximated.** `Length` is the only size attribute available. Among the 153 distinct commercial MMSI with a length, the distribution is strongly bimodal:
+**The 300 GT threshold has no direct equivalent and must be approximated.** `Length` is the only size attribute available. Among the 153 distinct commercial MMSI carrying a length in the 15 July retained window, the distribution is strongly bimodal:
 
 | Length band (m) | Distinct MMSI |
 |---|---|
@@ -350,24 +448,18 @@ Measured on the Southern California subset, types 60–89 are **2,448 of 13,483 
 | 250–300 | 22 |
 | 300–400 | 25 |
 
-There is a near-empty gap between 50 m and 150 m separating small harbour and passenger craft from oceangoing ships. That gap is a convenient place to cut, **but it is not 300 GT** — 300 GT corresponds to a far smaller vessel than 100 m, so a length cut at the gap is more restrictive than the program's own criterion. **Any length threshold used is a project assumption, not the program's threshold, and must be labelled as such and tested for sensitivity.** Whether to apply one at all, on top of the type-group filter, is a processing-milestone decision.
+There is a near-empty gap between 50 m and 150 m separating small harbour and passenger craft from oceangoing ships. That gap is a convenient place to cut, **but it is not 300 GT** — 300 GT corresponds to a far smaller vessel than 100 m, so a length cut at the gap is more restrictive than the program's own criterion. **Any length threshold used is a project assumption, not the program's threshold**, and must be labelled as such and tested for sensitivity. Whether to apply one at all, on top of the type-group filter, is a processing-milestone decision.
 
-### Verified coverage limitation
+### Retrieval route
 
-**This is the most important limitation of this input, and it is stated by the publisher.** The FAQ: *"Coverage is currently unavailable for remote Pacific territories, foreign waters, or waters extending more than 40 to 50 miles from the coast."* The data come from roughly 200 land-based receiving stations; **there is no satellite AIS in this product** — federal agencies that buy satellite AIS "are restricted from distributing satellite data to the public".
+**Undecided, and explicitly an M3 decision.** Both routes are real; neither has been exercised end to end.
 
-The sample bears this out. Records per 0.5° longitude band in the Southern California box:
+- **Bulk daily files.** Verified working — this is how the samples were taken, including the range-request behaviour. Covering the analytical period means moving ≈56 GB of national data to keep a small fraction of it.
+- **AccessAIS.** Documented as accepting requests "under 2 GB" for a custom geographic area and time period, holding a five-year rolling window, adding data every 90 days with a 145–165 day lag, and issuing links that expire after 14 days or five accesses. **None of this was exercised**: the tool is interactive and asynchronous, and no order was placed. Whether it can filter by vessel type server-side — which would change the volume arithmetic substantially — is **not established**.
 
-| Longitude band | All records | Commercial 60–89 |
-|---|---|---|
-| −122.5 to −120.5 | 103 | 62 |
-| −120.5 to −117.0 | 13,380 | 2,386 |
+At ≈125.6 bytes per row, an estimated 60–90 million rows is on the order of 8–11 GB, so a full period for the study area could not be a single AccessAIS request regardless and would need splitting.
 
-Traffic effectively disappears west of about −120.5. **The VSR zone extends far beyond that** — its vertex at (33.30, −121.21) sits hundreds of kilometres offshore — so the offshore portion of the zone is in water where AIS coverage is thin by construction. The FAQ notes that records *do* appear beyond normal radio range through tropospheric ducting and high-elevation receivers, and that these "should not be viewed as erroneous", but they are not a uniform sample.
-
-**Consequence:** apparent low vessel activity in the offshore part of the study area may reflect receiver coverage rather than vessel behaviour. This must be stated wherever an offshore result is reported, and it is an argument for keeping the Version 1 study area within the well-covered nearshore band rather than extending it to the full offshore reach of the zone.
-
-For orientation only, in the 34-minute snapshot 87.6% of Southern California commercial records fell inside the 2026 VSR zone (82.7% for vessels ≥100 m). **This is a snapshot, not an analytical result**, and is recorded here as evidence that the data and the zone geometry line up sensibly — not as a finding about traffic.
+The handling policy that follows from this is in [../data/README.md](../data/README.md) and is deliberately written so that both routes remain open. What it forbids is staging an entire national season locally, which neither route requires.
 
 ### Licensing, attribution, and redistribution
 
@@ -392,24 +484,25 @@ NOAA's own terms are the standard 17 U.S.C. § 403 public-domain statement.
 
 | Candidate | Assessment |
 |---|---|
-| **AIS Vessel Transit Counts** — NOAA OCM, 2009–2025, 100 m cells, defined as "the actual number of unique vessel tracks passing through a specified cell". Services at `https://coast.noaa.gov/arcgis/rest/services/MarineCadastre/AISVesselTransitCounts{year}/MapServer`; public domain | **Rejected as the primary input, retained as a cross-check.** It is annual, so it cannot be restricted to the VSR season; it is published "All Vessels", so it cannot be filtered to the BWBS-eligible types that matter most; and it carries no speed. The service inspected is a rendered raster layer, not a value-queryable one. Its virtue is that it is a NOAA-computed traffic surface at 100 m, which makes it a good independent check on the project's own aggregation. |
+| **AIS Vessel Transit Counts** — NOAA OCM, 2009–2025, 100 m cells, defined as "the actual number of unique vessel tracks passing through a specified cell". Services at `https://coast.noaa.gov/arcgis/rest/services/MarineCadastre/AISVesselTransitCounts{year}/MapServer`; public domain | **Rejected as the primary input, retained as a cross-check.** Annual, so it cannot be restricted to the analytical period; published "All Vessels", so it cannot be filtered to the BWBS-eligible types that matter most; and it carries no speed. The service inspected is a rendered raster layer, not a value-queryable one. Its virtue is that it is a NOAA-computed traffic surface at 100 m, which makes it a useful independent check on the project's own aggregation — and, because it is derived from tracks rather than points, a possible cross-check on the offshore coverage question. |
 | **AIS Broadcast Points 2009–2015** | Different structure — three related tables rather than one flat CSV — and older. No reason to use it when 2015-onward flat files exist. |
-| **Satellite AIS** | Not available. The publisher cannot distribute it. |
+| **Satellite AIS** | Not available. The publisher cannot distribute it. A commercial satellite-AIS source is the one option that would resolve the offshore coverage gap; it has not been costed or investigated, and is recorded as an alternative in [ADR 0002](decisions/0002-southern-california-study-area-extent.md). |
 
 ### Remaining unresolved
 
-- **Which retrieval route the project uses** — bulk daily files versus chunked AccessAIS requests. Both work; the trade is transfer volume against request management. A processing-milestone decision.
-- **Whether a length threshold is applied on top of the type-group filter**, and at what value. The data support a defensible cut but not the program's actual 300 GT criterion.
-- ~~Whether the analytical period is one VSR season or several.~~ Resolved in [ADR 0005](decisions/0005-analytical-period.md): 1 July to 30 November 2024, because AIS is not published beyond 2024.
-- Whether AccessAIS can filter by vessel type server-side, which would change the volume arithmetic substantially. Not established — the tool is interactive and was not exercised in this session.
+- **Whether the offshore part of the study area can be analysed at all**, which depends on distinguishing coverage from behaviour. This is the open question that keeps [ADR 0002](decisions/0002-southern-california-study-area-extent.md) at Proposed.
+- **Which retrieval route the project uses.** An M3 decision; AccessAIS capability is documented but unexercised.
+- **Whether AccessAIS can filter by vessel type server-side.** Not established.
+- **Whether a length threshold is applied** on top of the type-group filter, and at what value.
+- **Whether the sample's clean coordinate result holds across the period.** 207,849 rows is a small fraction of ~10⁸.
 
 ### Anticipated limitations
 
-- **Coverage is not uniform and degrades offshore** (verified above). This is the dominant caveat.
+- **Coverage is not uniform and the publisher states it degrades offshore.** This is the dominant caveat and it constrains the analytical domain, not just the wording.
 - Vessel-type coding is self-reported, though AVID now corrects 10–15% of records.
-- Aggregating records to a grid conflates transit frequency with time spent in a cell. Whichever measure is used has to be named precisely — a vessel stopped at anchor emits roughly as many positions as one under way, so a naive point count measures presence, not passage.
+- Aggregating records to a grid conflates transit frequency with time spent in a cell. Whichever measure is used has to be named precisely — a vessel at anchor emits roughly as many positions as one under way, so a naive point count measures presence, not passage.
 - `Heading` is unavailable in over half of records and `COG` in a sixth; neither can be relied on.
-- Speed is present and usable — `SOG` is populated, in knots, with a single well-documented sentinel and no negative or implausible values in the sample. **Whether speed enters the exposure index or is reported separately is a separate question**, settled in [ADR 0006](decisions/0006-report-vessel-speed-separately.md): reported separately.
+- The `SOG` sentinel must be excluded explicitly, and behavioural speed filtering is still required.
 
 ---
 
