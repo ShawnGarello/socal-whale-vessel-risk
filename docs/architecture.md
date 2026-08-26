@@ -4,7 +4,7 @@
 
 > **Status: accepted as the initial architecture.** Recorded in [ADR 0001](decisions/0001-accept-initial-architecture.md).
 >
-> Accepted means this is the direction implementation follows. It does not mean it is proven. Nothing described here is implemented yet.
+> Accepted means this is the direction implementation follows. It does not mean it is proven. **Nothing described in this document is implemented yet** — no application, no analysis package, no published layer. The repository does contain one verification utility, [tools/](../tools/README.md), which re-checks the evidence behind data discovery; it is not part of the architecture described here and is not the analysis package.
 >
 > Data discovery has since established the dataset formats, resolutions, and licensing that several parts depended on — see [data-sources.md](data-sources.md) — and some of the deferred decisions at the end of this document are now resolved, across five decision records. Two things remain open and both gate delivery: **the analytical and statistical domain** ([ADR 0002](decisions/0002-southern-california-study-area-extent.md), still Proposed, because AIS coverage offshore is unestablished) and **the ArcGIS Online capability gate**, still unverified.
 >
@@ -241,7 +241,7 @@ Deferred on purpose. Each should be resolved by evidence — real data, real mea
 | Exposure index formula, normalization, and weighting | After both inputs are inspected | Cannot be defined responsibly before the units and value distributions of the inputs are known. |
 | High-exposure threshold definition | After the exposure surface exists | Should be chosen against the real value distribution and tested for sensitivity. |
 | Raster versus vector representation for the exposure layer | After resolution is chosen and account capabilities are verified | Drives both publishing method and client performance, and is constrained by what the ArcGIS Online account can actually publish. |
-| ~~Whether vessel speed is used in the index or reported separately~~ | **Resolved by data discovery** | [ADR 0006](decisions/0006-report-vessel-speed-separately.md). AIS speed is reliable; it is reported separately rather than weighted into the index. |
+| ~~Whether vessel speed is used in the index or reported separately~~ | **Resolved by data discovery** | [ADR 0006](decisions/0006-report-vessel-speed-separately.md). `SOG` is present, documented, and appears usable in the inspected sample — not established across the full period — and is reported separately rather than weighted into the index, because weighting it would require a lethality assumption the brief forbids. |
 | Split of work between ArcGIS Pro and Python for each processing step | Processing workflow | Depends on which operations turn out to be awkward in code. |
 | Hosting platform for the deployed application | Application foundation | Constraints are known; the specific platform is not yet chosen. |
 | ArcGIS Online account capability and publishing feasibility — organization access, publishing privileges, public sharing, hosted imagery and tile support, credits, storage | Application foundation, before the deployment path is treated as proven | Unverified against a real account. It gates what can be published at all, and therefore constrains the layer representation and the hosting approach. |

@@ -85,9 +85,10 @@ Obtain and inspect the actual candidate datasets, and determine what analysis th
 | The AIS extract needed for the study area and analytical period has been scoped, and its volume is known | **Met, with the volume qualified.** The period is fixed and the retrieval footprint is bounded, but the volume is an **order-of-magnitude planning estimate** — 60 to 90 million study-area records, ≈56 GB of transfer — extrapolated from five 34-minute windows all at the same time of day. It is not a measurement and nothing analytical rests on it |
 | The VSR boundary geometry is confirmed as obtainable from an authoritative source, or a documented derivation from published coordinates is agreed on | **Met.** A closed, land-clipped polygon is retrievable, and seven of the program's eight published points lie exactly on its boundary |
 | Redistribution terms are known for each dataset, so it is clear what may be committed or hosted publicly | **Not met.** Clear for both NOAA sources. **Not clear for the VSR zone geometry** — publicly shared with attribution, but with no redistribution grant, and BWBS/CMSF is not a federal publisher |
+| **The analytical and statistical domain over which headline results can be defended has been accepted** | **Not met.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md) is Proposed. The map extent is settled; the domain is not, because AIS coverage offshore is unestablished and cannot be established from the broadcast points themselves. This criterion is not in the original M1 list — it was added on audit, because the milestone cannot honestly be called done while the region the statistics describe is undecided |
 | Anything that cannot be verified is explicitly recorded as unresolved rather than assumed | **Met**, and this is what the audit repaired. Several things previously stated as established are now recorded as unresolved |
 
-**M2 is not complete.** Two criteria are unsatisfied or qualified, and one deliverable — the study-area definition — is only half done. **The blocking item is the analytical domain, not the licensing question.**
+**M2 is not complete.** Three criteria are unsatisfied or qualified, and one deliverable — the study-area definition — is only half done. **The blocking item is the analytical domain, not the licensing question.**
 
 ### Open items, in order of how much they constrain the work
 
@@ -160,7 +161,7 @@ Detail is in [data-sources.md](data-sources.md); this is the summary that change
 Turn raw source data into validated, derived geospatial datasets through an ordered, repeatable process.
 
 **Dependencies**
-- M2 (data confirmed, study area and grid defined, analytical period chosen).
+- M2 **in part.** Data confirmed, projection and grid defined, analytical period chosen. The **analytical and statistical domain is not defined** — [ADR 0002](decisions/0002-southern-california-study-area-extent.md) is Proposed — so M3 proceeds over the map extent and the exposure statistics in M6 wait. See the M2 entry for the split of what may begin now.
 
 **Deliverables**
 - A documented, ordered processing path from raw inputs to derived datasets, implemented as scripts or as recorded tooling steps.

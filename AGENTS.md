@@ -39,7 +39,7 @@ Update the owner, not a copy. If two documents disagree, the owner is right and 
 
 The repository is documentation plus one verification utility. No application, analysis package, tests, or CI exist yet. The exception is [tools/](tools/README.md), which holds a single script that re-checks the evidence behind data discovery; it verifies claims the documents already make and is explicitly not the analysis package. The architecture has been accepted as an initial direction ([ADR 0001](docs/decisions/0001-accept-initial-architecture.md)), but nothing has been built against it, and several of its data-dependent decisions remain open.
 
-Do not scaffold implementation directories ahead of the milestone that needs them, and do not create data contracts, API contracts, layer contracts, analytical schemas, or the exposure formula at all yet. Those wait for inspection of real datasets, which has not happened.
+Do not scaffold implementation directories ahead of the milestone that needs them. Real datasets **have** now been inspected and their properties recorded in [docs/data-sources.md](docs/data-sources.md), but data contracts, API contracts, layer contracts, analytical schemas, and the exposure formula are **still not to be written**. Those wait until the discovery findings have been audited and the analytical domain is settled — see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md), which is still Proposed. Inspecting the data lifted the reason for the ban; it did not lift the ban.
 
 ## Version 1 scope
 
