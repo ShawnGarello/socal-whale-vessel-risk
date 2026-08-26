@@ -1,0 +1,81 @@
+.frame {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  /* The map element sizes to its container; a container without a resolved
+     height collapses to zero and renders nothing. */
+  min-height: 0;
+}
+
+.map {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  text-align: center;
+  background: var(--shell-bg);
+  color: var(--shell-fg);
+}
+
+.overlayTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.overlayBody {
+  margin: 0;
+  max-width: 44ch;
+  color: var(--shell-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.notice {
+  position: absolute;
+  /* Above the loading overlay, so a configuration problem is visible while the
+     map is still trying rather than only after it gives up. */
+  z-index: 2;
+  right: 0.75rem;
+  bottom: 2.5rem;
+  left: 0.75rem;
+  max-width: 34rem;
+  margin-left: auto;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--shell-error-border);
+  border-radius: 0.375rem;
+  background: var(--shell-panel);
+  color: var(--shell-error);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.noticeTitle {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+}
+
+.reasons {
+  margin: 0;
+  padding-left: 1.1rem;
+  max-width: 60ch;
+  color: var(--shell-error);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.reasons li + li {
+  margin-top: 0.25rem;
+}

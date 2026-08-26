@@ -1,0 +1,40 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  flex: 0 0 auto;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--shell-border);
+  background: var(--shell-panel);
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  max-width: 76ch;
+  color: var(--shell-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* `min-height: 0` lets this flex child shrink so the map fills the remaining
+   space instead of overflowing the viewport. */
+.main {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+@media (min-width: 48rem) {
+  .header {
+    padding: 0.875rem 1.25rem;
+  }
+}
