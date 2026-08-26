@@ -53,8 +53,17 @@ Run from the repository root.
 python tools/m2_verify.py verify
 ```
 
-Checks the manifest, then prints every regenerated statistic. Exit status `0`
-means every artifact matched its recorded size and checksum.
+Checks three gates in order — dependencies, the manifest, and the required
+local inputs — then recomputes every statistic.
+
+**Exit status `0` means all three gates passed and the statistics were
+regenerated.** Any other status means they were not, and the tool says which
+prerequisite is missing and how to obtain it. It never prints the
+"statistics above regenerate" line unless it actually ran them: a green run is
+the only signal this tool offers, so it must not be cheap.
+
+A missing third-party package is reported by name with the `pip install` line
+that fixes it, rather than as a traceback.
 
 ```
 python tools/m2_verify.py extract

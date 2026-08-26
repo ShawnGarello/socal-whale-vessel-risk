@@ -111,6 +111,32 @@ def sample_paths(date: str) -> tuple[Path, Path]:
     )
 
 
+# Third-party packages every statistic depends on, with the import name.
+REQUIRED_DEPENDENCIES = ["numpy", "pandas", "shapely", "pyproj", "pyogrio"]
+
+
+def required_inputs() -> list[tuple[str, Path, str]]:
+    """Every local input the statistics need: (label, path, how to obtain it)."""
+    items: list[tuple[str, Path, str]] = [
+        ("whale model 2020b (extracted)",
+         REPO / "data/raw/noaa-swfsc-becker-2020b/swfsc_cce_becker_et_al_2020b.gdb",
+         "unzip swfsc_cce_becker_et_al_2020b.gdb.zip in place"),
+        ("whale model 2020 comparison (extracted)",
+         REPO / "data/raw/noaa-swfsc-becker-2020/swfsc_cce_becker_et_al_2020.gdb",
+         "unzip swfsc_cce_becker_et_al_2020.gdb.zip in place"),
+        ("VSR zone geometry",
+         REPO / "data/raw/bwbs-vsr-2026/bwbs_ca_vsr_zone_2026.geojson",
+         "re-run the query recorded in docs/data-sources.md"),
+    ]
+    for date in AIS_DATES:
+        part, csv = sample_paths(date)
+        items.append((f"AIS partial response {date}", part,
+                      "re-run the ranged GET recorded in docs/data-sources.md"))
+        items.append((f"AIS inspection sample {date}", csv,
+                      "python tools/m2_verify.py extract"))
+    return items
+
+
 # --------------------------------------------------------------------------
 # extract
 # --------------------------------------------------------------------------
@@ -123,10 +149,12 @@ def cmd_extract() -> int:
     verbatim with newline endings, which makes the output reproducible.
     """
     rule("extract: rebuilding AIS inspection samples from partial responses")
+    missing = []
     for date in AIS_DATES:
         part, csv = sample_paths(date)
         if not part.exists():
             print(f"  MISSING  {part.relative_to(REPO)}")
+            missing.append(part)
             continue
         text = inflate_prefix(part)
         lines = text.split("\n")
@@ -134,6 +162,10 @@ def cmd_extract() -> int:
         csv.parent.mkdir(parents=True, exist_ok=True)
         csv.write_text("\n".join(body), encoding="utf-8", newline="\n")
         print(f"  {csv.relative_to(REPO)}  rows={len(body) - 1}  bytes={csv.stat().st_size}")
+    if missing:
+        print(f"\n  FAILED - {len(missing)} partial response(s) absent. Retrieve them with the")
+        print("  ranged GET recorded in docs/data-sources.md, then rerun.")
+        return 1
     print("\n  Rerun 'verify' to confirm the rebuilt files match the manifest.")
     return 0
 
@@ -210,9 +242,6 @@ def check_whale() -> None:
 
     gdb_b = REPO / "data/raw/noaa-swfsc-becker-2020b/swfsc_cce_becker_et_al_2020b.gdb"
     rule("whale model — Becker et al. 2020b, layer Blue_whale_summer_fall")
-    if not gdb_b.exists():
-        print("  extracted geodatabase not present; run the retrieval steps first")
-        return
 
     info = read_info(gdb_b, layer="Blue_whale_summer_fall")
     print(f"  driver                {info['driver']}")
@@ -280,17 +309,16 @@ def check_whale() -> None:
           f"({100 * abund[sub].sum() / abund.sum():.1f}% of the model total)")
 
     gdb_a = REPO / "data/raw/noaa-swfsc-becker-2020/swfsc_cce_becker_et_al_2020.gdb"
-    if gdb_a.exists():
-        print("\n  comparison product (2020, not selected):")
-        for layer in ("Blue_whale_summer_fall", "Blue_whale_winter_spring"):
-            m, _, _, d = read(gdb_a, layer=layer, read_geometry=False)
-            c = dict(zip(list(m["fields"]), d))
-            u = c["UNCERTAINTY"].astype("float64")
-            print(f"    {layer}")
-            print(f"      STUDY       {sorted(set(c['STUDY'].astype(str)))}")
-            print(f"      MODEL_TYPE  {sorted(set(c['MODEL_TYPE'].astype(str)))}")
-            print(f"      abundance   {c['ABUNDANCE'].astype('float64').sum():.1f}")
-            print(f"      CV median {np.nanmedian(u):.3g}  max {np.nanmax(u):.3g}")
+    print("\n  comparison product (2020, not selected):")
+    for layer in ("Blue_whale_summer_fall", "Blue_whale_winter_spring"):
+        m, _, _, d = read(gdb_a, layer=layer, read_geometry=False)
+        c = dict(zip(list(m["fields"]), d))
+        u = c["UNCERTAINTY"].astype("float64")
+        print(f"    {layer}")
+        print(f"      STUDY       {sorted(set(c['STUDY'].astype(str)))}")
+        print(f"      MODEL_TYPE  {sorted(set(c['MODEL_TYPE'].astype(str)))}")
+        print(f"      abundance   {c['ABUNDANCE'].astype('float64').sum():.1f}")
+        print(f"      CV median {np.nanmedian(u):.3g}  max {np.nanmax(u):.3g}")
 
 
 # --------------------------------------------------------------------------
@@ -306,9 +334,6 @@ def check_vsr():
 
     path = REPO / "data/raw/bwbs-vsr-2026/bwbs_ca_vsr_zone_2026.geojson"
     rule("VSR zone — BWBS/CMSF WhaleAtlas_2026, FID 126")
-    if not path.exists():
-        print("  geometry not present; run the retrieval steps first")
-        return None
 
     doc = json.loads(path.read_text(encoding="utf-8"))
     feat = doc["features"][0]
@@ -375,9 +400,6 @@ def check_study_area(zone) -> None:
 
     gdb = REPO / "data/raw/noaa-swfsc-becker-2020b/swfsc_cce_becker_et_al_2020b.gdb"
     rule("study-area candidates — water mask is the whale model's own coverage")
-    if zone is None or not gdb.exists():
-        print("  inputs not present")
-        return
 
     _, _, geom, _ = read(gdb, layer="Blue_whale_summer_fall", read_geometry=True)
     water = unary_union(shapely.from_wkb(geom))
@@ -419,8 +441,6 @@ def check_study_area(zone) -> None:
 def load_ais(date: str):
     import pandas as pd
     _, csv = sample_paths(date)
-    if not csv.exists():
-        return None
     df = pd.read_csv(csv)
     df["dt"] = pd.to_datetime(df["BaseDateTime"])
     return df
@@ -441,9 +461,6 @@ def check_ais(zone) -> None:
           f"{'out-of-order':>14}{'natl M/day':>12}")
     for date in AIS_DATES:
         df = load_ais(date)
-        if df is None:
-            print(f"  {date:<12}  sample missing — run 'extract'")
-            continue
         cutoff = pd.Timestamp(f"{date.replace('_', '-')}{WINDOW_CUTOFF}")
         win = df[df["dt"] < cutoff]
         after = df[df["dt"] >= cutoff]
@@ -454,9 +471,6 @@ def check_ais(zone) -> None:
               f"{len(win) * (1440 / 34) / 1e6:>12.2f}")
     print("  'out-of-order' counts rows after the cutoff whose timestamp is more than")
     print("  an hour past the first record, i.e. records the file did not emit in order.")
-
-    if not frames:
-        return
 
     primary = "2024_07_15"
     df, win = frames[primary]
@@ -570,14 +584,13 @@ def check_ais(zone) -> None:
     print("  This pattern is CONSISTENT WITH NOAA's published 40-50 mile coverage")
     print("  limit. It does not by itself distinguish poor reception from low traffic.")
 
-    if zone is not None:
-        pts = shapely.points(allsc.LON.values, allsc.LAT.values)
-        inz = shapely.contains(zone, pts)
-        cpts = shapely.points(allcm.LON.values, allcm.LAT.values)
-        cinz = shapely.contains(zone, cpts)
-        print(f"\n  in the 2026 VSR zone (snapshot orientation only, NOT a result):")
-        print(f"    all SoCal rows     {int(inz.sum()):,} of {len(allsc):,}  ({100 * inz.mean():.1f}%)")
-        print(f"    commercial 60-89   {int(cinz.sum()):,} of {len(allcm):,}  ({100 * cinz.mean():.1f}%)")
+    pts = shapely.points(allsc.LON.values, allsc.LAT.values)
+    inz = shapely.contains(zone, pts)
+    cpts = shapely.points(allcm.LON.values, allcm.LAT.values)
+    cinz = shapely.contains(zone, cpts)
+    print(f"\n  in the 2026 VSR zone (snapshot orientation only, NOT a result):")
+    print(f"    all SoCal rows     {int(inz.sum()):,} of {len(allsc):,}  ({100 * inz.mean():.1f}%)")
+    print(f"    commercial 60-89   {int(cinz.sum()):,} of {len(allcm):,}  ({100 * cinz.mean():.1f}%)")
 
     # -------- volume --------
     print("\n  --- volume, order-of-magnitude planning estimate ---")
@@ -602,32 +615,90 @@ def check_ais(zone) -> None:
 # main
 # --------------------------------------------------------------------------
 
+def check_dependencies():
+    """Import each required package. Returns (versions, missing names)."""
+    versions, missing = {}, []
+    for name in REQUIRED_DEPENDENCIES:
+        try:
+            mod = __import__(name)
+        except ImportError:
+            missing.append(name)
+            continue
+        version = getattr(mod, "__version__", "unknown")
+        if name == "pyogrio":
+            version = f"{version}  (GDAL {getattr(mod, '__gdal_version_string__', 'unknown')})"
+        versions[name] = version
+    return versions, missing
+
+
+def missing_required_inputs():
+    """Required local inputs that are absent. An empty list means all present."""
+    return [item for item in required_inputs() if not item[1].exists()]
+
+
 def cmd_verify() -> int:
-    import numpy, pandas, pyogrio, pyproj, shapely
+    """Check prerequisites, then regenerate the statistics.
+
+    Every stage is a gate. If a dependency is missing, an artifact does not
+    match the manifest, or a required input is absent, this reports what is
+    wrong, returns non-zero, and does **not** claim the statistics were
+    regenerated. Skipping a calculation and still exiting 0 would make the
+    tool worse than useless, because a green run is the whole signal it
+    offers.
+    """
     rule("tool versions")
-    print(f"  python   {sys.version.split()[0]}")
-    print(f"  numpy    {numpy.__version__}")
-    print(f"  pandas   {pandas.__version__}")
-    print(f"  shapely  {shapely.__version__}")
-    print(f"  pyproj   {pyproj.__version__}")
-    print(f"  pyogrio  {pyogrio.__version__}  (GDAL {pyogrio.__gdal_version_string__})")
+    print(f"  {'python':<9}{sys.version.split()[0]}")
+    versions, missing_deps = check_dependencies()
+    for name in REQUIRED_DEPENDENCIES:
+        print(f"  {name:<9}{versions.get(name, 'NOT INSTALLED')}")
 
     ok, bad = cmd_verify_manifest()
-    zone = None
+
+    rule("verify: required computational inputs")
+    required = required_inputs()
+    absent = missing_required_inputs()
+    if absent:
+        for label, path, how in absent:
+            print(f"  MISSING   {label}")
+            print(f"            {path.relative_to(REPO)}")
+            print(f"            obtain with: {how}")
+    else:
+        print(f"  all {len(required)} required input(s) present")
+
+    if missing_deps or absent or bad:
+        rule("result")
+        print("  FAILED - the statistics were NOT regenerated.")
+        if missing_deps:
+            print()
+            print(f"  Missing {len(missing_deps)} dependency/dependencies: "
+                  f"{', '.join(missing_deps)}")
+            print(f"  Install with:  pip install {' '.join(missing_deps)}")
+        if bad:
+            print()
+            print(f"  {bad} artifact(s) did not match the recorded size or SHA-256.")
+            print("  Either a local file changed, or the register was edited by hand.")
+        if absent:
+            print()
+            print(f"  Missing {len(absent)} of {len(required)} required input(s), "
+                  "listed above with how to obtain each.")
+        print()
+        print("  Nothing above this line should be read as a regenerated statistic.")
+        return 1
+
     try:
         check_whale()
         zone = check_vsr()
         check_study_area(zone)
         check_ais(zone)
     except ImportError as exc:
-        print(f"\n  a dependency is missing: {exc}")
-        return 2
+        rule("result")
+        print(f"  FAILED - the statistics were NOT regenerated: {exc}")
+        print("  A dependency is installed but incomplete. Reinstall it and rerun.")
+        return 1
 
     rule("result")
-    if bad:
-        print(f"  FAILED — {bad} artifact(s) did not match the manifest.")
-        return 1
     print(f"  Manifest OK: {ok} artifact(s) matched recorded size and SHA-256.")
+    print(f"  Inputs OK:   {len(required)} required input(s) present.")
     print("  Statistics above regenerate the values quoted in docs/data-sources.md")
     print("  and in the M2 decision records. Compare them by eye; this tool does")
     print("  not assert the documents are correct, only that the inputs are.")
