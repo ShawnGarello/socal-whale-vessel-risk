@@ -178,50 +178,118 @@ To be verified. Terms of use, attribution requirements, and any restriction on r
 **Analytical role**
 The management input: the geographic boundary against which exposure is summarized inside versus outside, plus the season and vessel-size conditions that define what the program asks for.
 
-**Publisher**
-Protecting Blue Whales and Blue Skies (BWBS) program; California Ocean Protection Council for state-level program description.
+**Verification status: program terms verified from the official BWBS webpage and the program's own 2026 zone map PDF; geometry verified by inspection of a downloaded dataset** (retrieved 2026-08-25). The two are separate standards and are labelled separately below.
 
-**Source**
-- BWBS program — <https://bluewhalesblueskies.org/>
-- Ship operator and VSR zone information — <https://bluewhalesblueskies.org/operators/>
-- Methods and monitoring — <https://bluewhalesblueskies.org/operators/methods-and-monitoring/>
-- Program impact — <https://bluewhalesblueskies.org/impact/>
-- California Ocean Protection Council overview — <https://opc.ca.gov/2026/05/protecting-whales-from-ship-strikes/>
+### Program terms — verified
 
-**Expected data type**
-A polygon boundary, or the coordinates from which one can be constructed, together with descriptive season and speed-request information. Whether a downloadable geometry exists is **to be verified**.
+Every claim carried forward from the original project plan has now been checked. All four were correct.
 
-**Verification status**
-Not verified. The following program details appear in the original project plan and are carried here **as claims to check, not as established facts**:
+| Claim carried from the original plan | Outcome | Source |
+|---|---|---|
+| The 2026 season runs April 22 through December 31 | **Confirmed.** "The 2026 voluntary Vessel Speed Reduction (VSR) Season will be in effect April 22 through December 31, 2026 off the coast of California." | [bluewhalesblueskies.org/operators/](https://bluewhalesblueskies.org/operators/); repeated on the 2026 zone map PDF |
+| Vessels of at least 300 gross tons are asked to participate | **Confirmed, with a wording difference worth noting.** The FAQ says "Vessels greater than 300 gross tons are asked to reduce their speed"; the eligibility answer says "300 gross registered tons or larger"; the map PDF says "Oceangoing vessels 300 gross tons or larger". The program uses *greater than* and *or larger* interchangeably. The project should describe the threshold as approximately 300 GT and not lean on the boundary case. | Same page; map PDF |
+| The requested speed is 10 knots or less | **Confirmed.** "reduce their speed to 10 knots or less". | Same page; map PDF |
+| Designated zones exist in California waters, including a Southern California zone | **Superseded for 2026.** There is now a **single** California VSR zone, not separate northern and southern zones. The program states the 2026 zone "is optimized for both conservation benefit, and to provide a simplified zone more straightforward for navigation purposes." Southern California is a *portion* of one statewide zone. | Same page |
 
-| Claim recorded in the original plan | Status |
+**Voluntary status — confirmed.** The program describes "voluntary Vessel Speed Reduction zones" and a "voluntary Vessel Speed Reduction (VSR) Season" throughout. The map PDF frames it as a request: vessels "are asked to travel at 10 knots or less".
+
+**Eligible vessel types — verified.** "Bulk, tanker, auto carrier, container ships and passenger vessels 300 gross registered tons or larger are eligible to participate in the BWBS program." The 2026 season is the first in which cruise ships are eligible.
+
+**An exclusion that matters to the analysis.** The map PDF states that vessels in coastal or internal waters requiring a state-licensed or federally-endorsed pilot "are not subject to the voluntary VSR", because the pilot retains navigational authority. Speeds above 10 knots on pilotage grounds are removed from a fleet's end-of-season calculation. The zone polygon nonetheless extends into those waters — a point inside Los Angeles inner harbour tests as inside the zone. **An "inside the zone" statistic therefore includes water where the speed request does not actually apply.** This is a limitation of any inside/outside summary and must be stated wherever one is reported.
+
+### Published zone points — verified
+
+The program publishes eight points under the heading "2026 VSR Zone Points", with the column heading "Point. Latitude, Longitude" — **coordinate order is explicitly latitude then longitude.**
+
+| # | Latitude | Longitude |
+|---|---|---|
+| 1 | 41.97 | −125.46 |
+| 2 | 40.34 | −125.18 |
+| 3 | 37.69 | −124.11 |
+| 4 | 36.32 | −123.00 |
+| 5 | 35.50 | −123.00 |
+| 6 | 35.05 | −122.10 |
+| 7 | 33.30 | −121.21 |
+| 8 | 32.55 | −117.13 |
+
+**No coordinate reference system or datum is stated anywhere on the page or the map.** WGS 84 is the only reasonable assumption for published marine coordinates, and the downloaded geometry is served in EPSG:4326, which is consistent with it — but **the program has not stated a datum, and this remains an assumption rather than a verified fact.** At these latitudes a NAD 27 / WGS 84 confusion would be on the order of 100 m, which is small against the zone but not nothing.
+
+**Do the eight points alone define a polygon? No — verified.** They describe only the **seaward** boundary. They run from offshore northern California south-east to the coast at the Mexican border, and closing them into an area requires the California coastline on the landward side plus a northern closing segment. Constructing a polygon from these points alone would require the project to supply a shoreline and to decide how to close the north end — both of which would be project assumptions affecting exactly the inside/outside edge the analysis reports on.
+
+**That construction is not necessary**, because an authoritative closed geometry exists.
+
+### Zone geometry — verified by inspection
+
+| | |
 |---|---|
-| The 2026 season runs April 22 through December 31 | To be verified against the program's own published statement |
-| Vessels of at least 300 gross tons are asked to participate | To be verified |
-| The requested speed is 10 knots or less | To be verified |
-| Designated zones exist in California waters, including a Southern California zone | To be verified, including which zone or zones the study area should use |
+| **Feature** | `California Voluntary Vessel Speed Reduction Zone` (FID 126) in the `WhaleAtlas_2026` layer |
+| **Attributes as published** | `Season` = "April 22 - December 31, 2026"; `ShipReq` = "Vessels 300 gross tons or larger are requested to reduce speeds to 10 knots or less when transiting through the CA VSR Zone"; `Source` = "Protecting Blue Whales & Blue Skies Coalition"; `Species` = "Blue Whale, Fin Whale, and Humpback Whale" |
+| **Publisher** | Danielle Alvarez, California Marine Sanctuary Foundation (CMSF) and BWBS — the same person listed as a BWBS contact on the official 2026 zone map PDF |
+| **Item** | ArcGIS Online `b400c7f418b04dc5a9d7ce5015adae32`, public |
+| **Service** | `https://services5.arcgis.com/4biRnCjZju47bNvA/arcgis/rest/services/WhaleAtlas_2026/FeatureServer/0` |
+| **Retrieval** | Anonymous `query` with `where=FID=126`, `outSR=4326`, `f=geojson`. No account or token |
+| **Retrieved** | 2026-08-25 |
 
-Nothing in the analysis or the application may state these until they have been confirmed against the source, and each must carry the season year it applies to.
+| Property | Finding |
+|---|---|
+| **Format** | Feature service, queryable as GeoJSON; also offered as a shapefile item |
+| **Geometry** | Single valid `Polygon` — outer ring of 37,239 vertices plus **104 interior rings** |
+| **CRS** | Service is stored in EPSG:3857; requested and returned as EPSG:4326 |
+| **Extent** | lon −125.46 to −117.104, lat 32.5498 to 41.9985 |
+| **Area** | **142,155 km²**, computed in EPSG:3310 (California Albers, equal-area) |
+| **Interior rings** | Islands, excluded from the zone. Areas match published island areas: 250.3 km² at (−119.75, 34.01) = Santa Cruz; 214.7 at (−120.11, 33.97) = Santa Rosa; 193.8 at (−118.43, 33.38) = Santa Catalina; 146.7 at (−118.49, 32.90) = San Clemente; 58.6 at (−119.51, 33.25) = San Nicolas; 38.5 at (−120.37, 34.04) = San Miguel; 2.6 at (−119.04, 33.48) = Santa Barbara Island. Total hole area 916.8 km² |
+| **Landward boundary** | Follows the coastline. The 37,239-vertex outer ring and the island holes together confirm the polygon is already land-clipped — **the project does not need to supply a shoreline or make a closure assumption** |
 
-**Discovery questions**
-- Is the zone boundary published as a downloadable geometry, as a service, or only as coordinates or a map image?
-- If only coordinates are published, what is the exact list, and what assumptions does constructing a polygon from them require?
-- Which zone or zones fall within the intended Southern California study area?
-- Do the boundaries differ between seasons, and which season does Version 1 use?
-- Are the season dates, vessel-size threshold, and requested speed stated authoritatively, and where?
-- Is the program voluntary in the period analyzed, and is that stated precisely enough to describe correctly in the application?
-- Does a state or federal agency republish the boundary in an authoritative GIS format that would be preferable to reconstructing it?
+**The geometry was checked against the published points and matches.** Distance from each published point to the polygon's outer boundary, measured in EPSG:3310:
 
-**Provenance expectations**
-Record the page or document the boundary came from, the retrieval date, the season year it applies to, and — if the polygon was constructed rather than downloaded — the exact source coordinates and the construction steps, including the assumed coordinate reference system. A constructed boundary is a derived dataset and must be labeled as one.
+| Point | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Distance | 0 m | 0 m | 0 m | 0 m | 0 m | 0 m | **455 m** | 0 m |
 
-**Licensing and redistribution**
-To be verified. The BWBS program is not a federal data publisher, so reuse terms for its published boundary need explicit checking before the geometry is redistributed as a hosted layer.
+Seven of the eight published points lie exactly on the boundary. Point 7 (33.30, −121.21) is 455 m from it. The map PDF gives a finer value for the same point — 33°18.066′, −121°12.7234′ — which is 377 m from the boundary, so the discrepancy is not simply the webpage's two-decimal rounding. **It is a real, small inconsistency between the published point list and the published geometry.** At 455 m against a 142,155 km² zone it does not affect any statistic this project will report, but it is recorded rather than smoothed over, and the geometry — not the point list — is what the analysis uses.
 
-**Anticipated limitations**
-- Season definitions and boundaries can change between years; results must state the season they describe.
-- A boundary reconstructed from published coordinates may differ slightly from the official geometry, and that difference matters most exactly where it is used — at the inside/outside edge.
-- The program is a voluntary request rather than an enforced rule, which limits what its boundary implies about actual vessel behavior.
+### Which portion applies to the Southern California study area
+
+There is one zone, so the question is which part of it the study area must contain rather than which zone to pick.
+
+- The portion of the zone south of 35°N covers **56,011 km², 39.4% of the whole zone.**
+- Its bounds are lon −122.07 to −117.10, lat 32.5498 to 35.0.
+- Point tests confirm the zone includes the Santa Barbara Channel, the Point Conception approach, Santa Monica Bay, the San Pedro Channel and Long Beach outer anchorage, the Catalina offshore lane, and the San Diego approach.
+- Point tests confirm it **excludes** Tanner/Cortes Bank (−119.10, 32.75) and the waters well offshore of the Bight.
+
+That last result is directly relevant to the research question: Tanner/Cortes Bank sits outside the zone and carries a modeled blue-whale density of 0.00352 animals/km², above the study-area median.
+
+### Licensing, attribution, and redistribution
+
+**This is the weakest licensing position of the three sources, and it is not fully resolved.**
+
+- The BWBS webpage carries **no copyright notice, no terms of use, and no data-use statement.** A search of the page text for copyright, licence, terms and attribution language returned nothing.
+- The zone map PDF states "This map is not to be used for navigational purposes" and credits "Map source: Jess Morten/NOAA ONMS".
+- The ArcGIS Online item's licence field is a **use disclaimer, not a licence grant**: the layer "should not be used for navigation purposes", mariners should operate at their own discretion, and "these measures may not be comprehensive and lack of inclusion does not indicate the absence of a VSR Zone, ATBA, or TSS". Attribution is given as "Created by Danielle Alvarez, with CMSF and BWBS."
+- The item is shared publicly and is queryable anonymously.
+
+**Assessment:** public sharing plus a stated attribution and no redistribution prohibition is a reasonable basis for using the geometry in this analysis and displaying it with attribution. It is **not** an explicit redistribution grant, and BWBS/CMSF is a non-profit coalition rather than a federal data publisher, so the public-domain reasoning that applies to the NOAA sources does not apply here. **Unresolved: whether republishing this geometry as a project-hosted layer is permitted.** Until that is settled, the safer options are to reference the BWBS service directly rather than copy it, or to ask the program. This must be decided before any public hosting, not at release.
+
+### Considered and not selected
+
+| Candidate | Why not selected |
+|---|---|
+| Constructing a polygon from the eight published points plus a coastline | Unnecessary, and worse. It would require the project to choose a shoreline dataset and a northern closure, both of which would be project assumptions at exactly the inside/outside boundary the analysis reports on. The published geometry already resolves both. |
+| **Northern California Vessel Speed Reduction Zone — Greater Farallones** (ArcGIS Online, owner `anastasia.kunz_noaa`, NOAA) | A NOAA-published VSR geometry, but for northern California only. Not applicable to the Southern California study area. Noted because it is a federally published alternative if a NOAA-sourced geometry is ever preferred for licensing reasons. |
+| Previous-season zone geometries (`WhaleAtlas_2025`) | Version 1 analyses one season. The 2026 zone is a redesign, so mixing seasons would be wrong. |
+
+### Remaining unresolved
+
+- **Redistribution permission for the zone geometry** (above). This is the one licensing question in the project that is genuinely open.
+- **The datum of the published coordinates.** Assumed WGS 84; not stated by the program.
+- **The 455 m discrepancy at point 7** between the published point list and the published geometry. Recorded, not explained.
+- Whether NOAA ONMS, which produced the map, publishes the 2026 statewide zone as a federal GIS layer. Only the Greater Farallones northern zone was found under a NOAA account.
+
+### Anticipated limitations
+
+- Season definitions and boundaries change between years — the 2026 zone is itself a redesign that merged the previous separate zones. Results must state the season they describe.
+- The program is a voluntary request rather than an enforced rule, which limits what the boundary implies about actual vessel behaviour.
+- The zone extends into pilotage waters where the request does not apply, so "inside the zone" is not the same as "where ships are asked to slow down".
 
 ---
 
