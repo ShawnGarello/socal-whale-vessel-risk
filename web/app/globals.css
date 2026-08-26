@@ -1,0 +1,41 @@
+/*
+ * Application shell styles.
+ *
+ * `height: 100%` on the document chain is required by the ArcGIS map
+ * component: it sizes itself to its container, and a container with no
+ * resolved height collapses to zero and renders nothing.
+ */
+
+:root {
+  --shell-bg: #10161c;
+  --shell-fg: #e8edf2;
+  --shell-muted: #9aa7b4;
+  --shell-border: #263241;
+  --shell-panel: #17202a;
+  --shell-error: #ffb4a8;
+  --shell-error-border: #7a3b32;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--shell-bg);
+  color: var(--shell-fg);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
