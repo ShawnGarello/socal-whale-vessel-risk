@@ -254,7 +254,7 @@ Each daily file is 330–420 MB compressed and expands to roughly 1 GB. Retrievi
 
 Two limits follow directly from that method, and they constrain every AIS finding below:
 
-- **The sample covers five dates but one time of day.** A zip deflate stream can only be read from its start, so every prefix begins at 00:00 UTC. **00:00–00:34 UTC is 17:00–17:34 Pacific Daylight Time** — a late-afternoon window. In Southern California that is a busy period for recreational boating, which would inflate the pleasure-craft share and correspondingly deflate the commercial share. **The commercial share reported below is therefore more likely to be an underestimate than an overestimate of a 24-hour figure**, and nothing here samples night, dawn, or midday.
+- **The sample covers five dates but one time of day.** A zip deflate stream can only be read from its start, so every prefix begins at 00:00 UTC. **00:00–00:34 UTC is 17:00–17:34 Pacific Daylight Time.** Nothing here samples night, dawn, or midday. **The direction of any daily bias is unknown**: the sample contains no other time of day, so it cannot show whether the commercial share is higher or lower over 24 hours, and this register does not guess. Any composition figure below describes that half-hour window and no other.
 - **The retained window may under-count slightly.** The file is not strictly time-ordered, so a record timestamped inside the window can appear later in the file than the 8 MiB cut. The measured out-of-order population is 160–417 records per date, well under 0.25% of each sample.
 
 ### Which rows each statistic uses
@@ -347,7 +347,7 @@ Computed on the **retained window** of each date, over the box lon −122.5 to �
 | 2024-10-15 | 9,357 | 5.50% | 1,150 | 1,755 | 18.8% | 934 |
 | 2024-11-15 | 11,928 | 6.60% | 1,110 | 2,470 | 20.7% | 1,307 |
 
-**The commercial share is a snapshot result: 18.2% to 20.7% across the five sampled windows, mean 19.5%.** It is stable across the five dates, which is mildly reassuring, but all five windows are the same late-afternoon half-hour, so the stability says nothing about the rest of the day. Given that the window falls in peak recreational boating hours, a 24-hour figure would plausibly be higher.
+**The commercial share is a snapshot result: 18.2% to 20.7% across the five sampled windows, mean 19.5%.** It is stable across the five dates, which is mildly reassuring about date-to-date variation, but all five windows are the same half-hour of the day, so the stability says nothing about the rest of it. **How a 24-hour figure would compare is unknown, in either direction.**
 
 What the sample does support: **commercial traffic is a minority of Southern California AIS records by a wide margin**, with types 30–39 — fishing, towing, sailing and pleasure craft — accounting for 67.4% of the 15 July window. **Vessel-class filtering is therefore the most consequential processing choice for this input.** That conclusion does not depend on the exact share.
 

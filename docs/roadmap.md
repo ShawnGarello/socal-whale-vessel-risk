@@ -132,7 +132,7 @@ Detail is in [data-sources.md](data-sources.md); this is the summary that change
 - **NOAA states AIS coverage is unavailable beyond 40–50 miles from shore**, and the sampled record density falls off in a way consistent with that. The VSR zone extends well past it. This is the most consequential finding of the milestone and it is what reopened item 1 above.
 - **AIS broadcast points are published only through 2024** — the bulk index returns 404 for 2025 and 2026. The 2026 season cannot be analysed, so Version 1 pairs the current zone with 2024 traffic and says so.
 - **The VSR zone's eight published points do not define a polygon** — they are the seaward boundary only — but a closed geometry is published separately and matches them at seven of eight vertices, the eighth by 455 m.
-- **Commercial vessel types were 18.2–20.7% of Southern California records** across five sampled windows. A snapshot result, and taken at 17:00–17:34 Pacific, which if anything understates the daily figure. What it supports is the conclusion that **vessel-class filtering is the most consequential processing choice for this input**, which does not depend on the exact share.
+- **Commercial vessel types were 18.2–20.7% of Southern California records** across five sampled windows. A snapshot result: five dates, one time of day, and the direction of any daily bias is unknown. What it supports is the conclusion that **vessel-class filtering is the most consequential processing choice for this input**, which holds across the sampled range and does not depend on the exact share.
 
 **Decisions recorded**
 
