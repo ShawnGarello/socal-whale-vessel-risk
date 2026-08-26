@@ -4,9 +4,9 @@
 
 > **Status: accepted as the initial architecture.** Recorded in [ADR 0001](decisions/0001-accept-initial-architecture.md).
 >
-> Accepted means this is the direction implementation follows. It does not mean it is proven. **Nothing described in this document is implemented yet** — no application, no analysis package, no published layer. The repository does contain one verification utility, [tools/](../tools/README.md), which re-checks the evidence behind data discovery; it is not part of the architecture described here and is not the analysis package.
+> Accepted means this is the direction implementation follows. It does not mean it is proven. Only the application shell is implemented — see M4 in the [roadmap](roadmap.md); the offline processing, the derived layers, and the hosting half of this design are not. The repository also contains one data-discovery verification utility, [tools/](../tools/README.md), which is not the analysis package.
 >
-> Data discovery has since established the dataset formats and resolutions several parts depended on, and the licensing position for both NOAA sources — see [data-sources.md](data-sources.md) — and some of the deferred decisions at the end of this document are now resolved, across five decision records. **Three things remain open, and each gates a different part of delivery:**
+> Data discovery has established the dataset formats and resolutions several parts depended on, and the licensing position for both NOAA sources — see [data-sources.md](data-sources.md) — and some of the deferred decisions at the end of this document are now resolved. **Three things remain open, and each gates a different part of delivery:**
 >
 > 1. **The analytical and statistical domain** — [ADR 0002](decisions/0002-southern-california-study-area-extent.md), still Proposed, because AIS coverage offshore is unestablished. Gates the exposure statistics.
 > 2. **Redistribution of the VSR zone geometry** — publicly shared by BWBS/CMSF with attribution, but with no redistribution grant, and the publisher is not a federal agency. Gates hosting that geometry as a project-owned layer. **Referencing the publisher's own service from the application remains available and is not affected**, so this constrains the hosting approach rather than the delivery.
@@ -14,7 +14,7 @@
 >
 > Changes to an accepted architecture are recorded as decision records under [decisions/](decisions/README.md) rather than made silently.
 >
-> The source-code layout proposed near the end of this document has deliberately **not** been created.
+> Of the source-code layout proposed near the end of this document, only `web/` has been created. The rest is deliberately still uncreated.
 
 ---
 
@@ -171,7 +171,7 @@ Testing effort follows consequence, not coverage.
 - **Not tested** — third-party libraries, the ArcGIS SDK, ArcGIS Online itself, and the correctness of upstream datasets. Upstream data is *inspected and documented*, not unit-tested.
 - **Manual verification remains part of the process.** Some spatial errors are only visible on a map. Visual inspection of each derived layer is a required step, not a substitute for tests.
 
-No test framework has been chosen. Commands are pending implementation.
+TypeScript tests run on Vitest — see [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md) and the commands in [development.md](development.md). The Python framework is still unchosen, because the analysis package does not exist yet.
 
 ## Reproducibility and data lineage
 
@@ -210,7 +210,7 @@ Each of these would add operational surface without serving the Version 1 questi
 
 ## Proposed future repository structure
 
-Proposed only. **These directories are intentionally not created yet**; they will be created when the milestone that needs them begins.
+`web/` now exists, created by the application-foundation milestone; the answer to the open question below about its placement is that it stayed in a subdirectory. **Everything else here is proposed only and intentionally not created yet**; each is created when the milestone that needs it begins.
 
 ```
 socal-whale-vessel-risk/
@@ -224,11 +224,11 @@ socal-whale-vessel-risk/
 │   ├── interim/           #   intermediate processing outputs
 │   └── derived/           #   validated outputs for publication
 ├── arcgis/                # ArcGIS Pro project and exported tools  [proposed]
-├── web/                   # Next.js + TypeScript application  [proposed]
-│   ├── app/               #   routes and pages
-│   ├── components/        #   map and UI components
-│   ├── lib/               #   layer configuration, formatting helpers
-│   └── public/            #   static assets
+├── web/                   # Next.js + TypeScript application  (exists)
+│   ├── app/               #   routes and pages  (exists)
+│   ├── components/        #   map and UI components  (exists)
+│   ├── lib/               #   configuration and formatting helpers  (exists)
+│   └── types/             #   ambient type declarations  (exists)
 └── results/               # small committed outputs the app reads  [proposed]
 ```
 
@@ -247,10 +247,10 @@ Deferred on purpose. Each should be resolved by evidence — real data, real mea
 | Raster versus vector representation for the exposure layer | After resolution is chosen and account capabilities are verified | Drives both publishing method and client performance, and is constrained by what the ArcGIS Online account can actually publish. |
 | ~~Whether vessel speed is used in the index or reported separately~~ | **Resolved by data discovery** | [ADR 0006](decisions/0006-report-vessel-speed-separately.md). `SOG` is present, documented, and appears usable in the inspected sample — not established across the full period — and is reported separately rather than weighted into the index, because weighting it would require a lethality assumption the brief forbids. |
 | Split of work between ArcGIS Pro and Python for each processing step | Processing workflow | Depends on which operations turn out to be awkward in code. |
-| Hosting platform for the deployed application | Application foundation | Constraints are known; the specific platform is not yet chosen. |
+| Hosting platform for the deployed application | Still open | The requirements a host must satisfy are now written down in [development.md](development.md), so the choice is constrained. The platform itself is still not chosen, and nothing is deployed. |
 | ArcGIS Online account capability and publishing feasibility — organization access, publishing privileges, public sharing, hosted imagery and tile support, credits, storage | Application foundation, before the deployment path is treated as proven | Unverified against a real account. It gates what can be published at all, and therefore constrains the layer representation and the hosting approach. |
 | ArcGIS Online sharing model and API-key scoping | Application foundation | Depends on the account and licensing available, and on the capability check above. |
-| Test framework and toolchain for both Python and TypeScript | When the first code is written | Choosing a framework before there is code to test is premature. |
+| Test framework and toolchain for Python | When the first Python code is written | Choosing a framework before there is code to test is premature. The TypeScript half is resolved: Vitest, in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md). |
 | Layer schemas, field names, and any data or API contract | **Partly resolved.** Source, processing, grid, whale-input and vessel-input contracts may be written when M3 needs them, since the datasets they describe have been inspected. The exposure-layer, statistics and results-file contracts wait on [ADR 0002](decisions/0002-southern-california-study-area-extent.md) | Contracts written against imagined data are wrong contracts — and contracts written against an undecided reporting domain are wrong for the same reason. |
 
 The last row matters most, and its rule has moved on now that the data has been inspected: **a contract may be written when the data it describes has been inspected and settling the analytical domain could not change it.** The exposure formula and every reporting-domain-dependent contract still wait. The operative wording is in [../AGENTS.md](../AGENTS.md).

@@ -2,8 +2,8 @@
 
 A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
 
-> **Status: in development — documentation and planning stage.**
-> The analysis and the web application described below are defined but **not yet implemented**. Nothing in this repository is a result yet.
+> **Status: in development.**
+> The web application's foundation exists — an ArcGIS map shell over Southern California, with a basemap and nothing else. The analysis described below is defined but **not yet implemented**: no data has been downloaded, no layer has been published, and nothing in this repository is a result yet.
 
 ## Why
 
@@ -36,12 +36,12 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Area | State |
 |---|---|
 | Project scope and roadmap | Documented |
-| Architecture | Accepted as the initial direction; nothing built against it yet |
+| Architecture | Accepted as the initial direction; the application shell is the first thing built against it |
 | Data sources | Downloaded and inspected; properties, licensing, and limits recorded, with a reproducible provenance manifest |
 | Study area | Map extent proposed; **the analytical domain for statistics is still open** — see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) |
 | Processing workflow | Not started |
 | Analysis and derived layers | Not started |
-| Web application | Not started |
+| Web application | **Foundation built** — Next.js and TypeScript with an ArcGIS map shell over Southern California. Basemap only; no project layers, no analysis |
 | Deployment | Not started |
 
 ## Technology direction

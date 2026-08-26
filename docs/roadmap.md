@@ -13,7 +13,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 | M1 | Project foundation | Complete |
 | M2 | Data discovery and validation | In progress |
 | M3 | Processing workflow | Not started |
-| M4 | GIS application foundation | Not started |
+| M4 | GIS application foundation | In progress |
 | M5 | Core input layers | Not started |
 | M6 | Whale–vessel exposure analysis | Not started |
 | M7 | Application integration | Not started |
@@ -193,10 +193,11 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 
 ## M4 — GIS application foundation
 
-**Status:** Not started
+**Status:** In progress
 
 **Objective**
-Stand up the web application shell — the framework, the map, and the deployment path — before there is analytical content to put in it.
+Stand up the web application shell — the framework, the map, and the deployment
+path — before there is analytical content to put in it.
 
 **Dependencies**
 - M1 (architecture reviewed and accepted).
@@ -219,11 +220,128 @@ Stand up the web application shell — the framework, the map, and the deploymen
 - **The ArcGIS Online capability check is complete and recorded.** Publishing privileges, public sharing, imagery and tile support, credits, and storage are each confirmed or confirmed unavailable. The deployment path is not considered proven until a publicly shared item loads in the deployed application.
 - Any capability found unavailable is recorded as a constraint on layer representation and hosting, and carried into the core-input-layers milestone rather than discovered there.
 
+### Progress
+
+Built on the `feat/web-foundation` branch. The application is in
+[`../web/`](../web/); its commands and required environment variables are in
+[development.md](development.md).
+
+**Done and verified**
+
+- Next.js 16.3.3 and TypeScript application scaffolded under `web/`, App Router,
+  no backend, no database, no server-side analytical processing.
+- Static export configured and verified: `npm run build` produces a complete
+  static site in `web/out/`, which was served locally and loaded in Chrome.
+- ArcGIS map shell with a basemap, an initial viewpoint over the Southern
+  California Bight, a zoom control, a loading state, an initialization-error
+  state, and SDK teardown on unmount. No project layers and no analytical
+  content.
+- Formatting (Prettier), linting (ESLint), type checking (`tsc --noEmit`), and
+  tests (Vitest, 12 passing) configured and run.
+- Credential handling: `web/.env.example` carries variable names only, all other
+  `.env*` files are ignored, and no credential is tracked.
+- Build output (`web/out/`, `web/.next/`) and `node_modules/` are ignored and
+  are not committed.
+- Responsive layout checked in Chrome at 390, 820, and 1440 CSS pixels wide: the
+  shell fills the viewport with no horizontal overflow at any of them.
+- Decisions recorded as [ADR 0007](decisions/0007-use-npm-for-the-web-application.md),
+  [0008](decisions/0008-deliver-the-application-as-a-static-export.md),
+  [0009](decisions/0009-mount-arcgis-through-client-only-map-components.md), and
+  [0010](decisions/0010-use-vitest-for-typescript-tests.md).
+
+**Not done — every item below requires the author's ArcGIS account**
+
+- The ArcGIS Online capability check. Nothing about the account has been
+  established: not the organization, the user type, the role, publishing
+  privileges, public-sharing permission, hosted feature, tile, or imagery
+  support, credits, or storage. All of it remains **unverified**.
+- The public test item, and loading it from the application.
+- Any deployment. The application has never been deployed anywhere, and there is
+  no public URL.
+- **A successful basemap render.** This is verified only to the point of
+  failing correctly: with no API key the shell reports the problem in the
+  interface. That the map renders, pans, and zooms with a valid key has **not**
+  been observed.
+
+The ordered steps for all of the above are in
+[development.md](development.md#arcgis-online-capability-check-and-publishing).
+
+### Completion criteria status
+
+| Criterion | State |
+|---|---|
+| Builds locally | **Verified.** `npm run build` succeeds; the export was served and loaded. |
+| Builds in the deployment environment | **Unverified.** No deployment environment exists yet. |
+| Map renders, pans, and zooms | **Unverified.** Requires an API key. The failure path is verified; the success path is not. |
+| No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored. |
+| Deployment reachable and reflecting main | **Unverified.** Not deployed, and this branch is not merged. |
+| ArcGIS Online capability check complete and recorded | **Unverified.** Not started; requires the author's account. |
+| Unavailable capabilities recorded as constraints for M5 | **Not applicable yet.** Nothing has been checked, so nothing has been found unavailable. |
+
+M4 is not complete and must not be marked complete until the six unverified
+rows above are resolved.
+
+### Findings
+
+Recorded because they are version-dependent, were established by running the
+tooling rather than reading about it, and constrain later work.
+
+**Toolchain, as verified on the author's machine**
+
+| Component | Version |
+|---|---|
+| Node.js | 22.16.0 (Next.js 16 requires `>=20.9.0`) |
+| npm | 10.9.2 — the only package manager present |
+| Next.js | 16.3.3 |
+| React | 19.2.8 |
+| ArcGIS Maps SDK for JavaScript | 5.1.20 (`@arcgis/core`, `@arcgis/map-components`, `@esri/calcite-components`) |
+| Vitest | 4.1.11 |
+
+**The SDK's widgets are deprecated as of 5.0**, and its web components are the
+supported path forward. The shell uses components. Later milestones should not
+reach for widgets when adding legends, layer lists, or popups.
+
+**SDK assets load from the ArcGIS CDN by default.** Since 4.34 the npm packages
+load their own styles and assets from `js.arcgis.com`, so no copy step is
+needed. The deployed application therefore depends on that host being reachable.
+A disconnected or network-restricted deployment would need assets copied locally
+and `assetsPath` configured.
+
+**A browser-delivered API key is required for the basemap.** Without one, the
+basemap styles service returns 401 "Token Required". This is the whole reason
+the capability check gates delivery: the deployed application does not work at
+all until a key exists and is origin-restricted.
+
+**The SDK prompts for a sign-in by default, and this is wrong for this
+application.** Left at its default, a rejected request opens the SDK's own
+username and password dialog and waits — so a missing key looked like an
+indefinite loading state with a sign-in prompt over it. The shell sets
+`esriConfig.request.useIdentity = false`. Any later work that adds a secured
+layer must not undo this without deciding, deliberately, that the application
+should ask visitors to sign in.
+
+**The SDK does not time out on its own,** and not every failure raises an event.
+Initialization is bounded explicitly in the shell.
+
+**Bundle size — the early look this milestone's risk list asked for.** The
+static export is roughly 30 MB across about 830 files, almost entirely ArcGIS
+SDK chunks. That is on-disk size, not download size: the SDK is code-split and a
+basemap-only page fetches a small fraction of it. Two consequences: any hosting
+platform's file-count and size limits must be checked before it is chosen, and
+initial load time should be measured on the real deployment rather than inferred
+from this number. First development-server compile of the map route takes
+40–55 seconds; subsequent compiles are fast.
+
+**`next dev` generates its own agent guidance.** It writes `AGENTS.md` and
+`CLAUDE.md` into the application directory on startup, which would compete with
+this repository's own. Disabled with `agentRules: false`.
+
 **Risks and open questions**
-- **ArcGIS Online account capabilities are unverified and gate delivery.** If the available account cannot publish hosted imagery or tiles, cannot share publicly, or lacks credits or storage, the layer representation and possibly the whole hosting approach have to change. This is cheaper to discover here than at release.
-- Credit consumption for publishing and storage is not yet understood and could constrain how often layers are republished during iteration.
-- ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment.
-- Bundle size and initial load time of the SDK need an early look rather than a late one.
+- **ArcGIS Online account capabilities are unverified and gate delivery.** If the available account cannot publish hosted imagery or tiles, cannot share publicly, or lacks credits or storage, the layer representation and possibly the whole hosting approach have to change. This is cheaper to discover here than at release. **Still entirely open** — the check has not been started.
+- Credit consumption for publishing and storage is not yet understood and could constrain how often layers are republished during iteration. **Still open.**
+- ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Partly resolved:** a browser-delivered, origin-restricted API key is required for the basemap, and the requirements for scoping it are recorded in [development.md](development.md). What the account can actually issue is unverified.
+- Bundle size and initial load time of the SDK need an early look rather than a late one. **Resolved for size** — see the findings above. Load time still needs measuring on a real deployment.
+- The hosting platform is still unchosen. Its requirements are now written down in [development.md](development.md), so the choice is constrained rather than open-ended.
 
 ---
 
