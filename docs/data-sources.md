@@ -242,7 +242,7 @@ The vessel input to the exposure analysis: where large commercial vessels travel
 | **Product** | AIS Broadcast Points, daily nationwide files |
 | **Publisher** | NOAA Office for Coastal Management (Marine Cadastre), from U.S. Coast Guard Nationwide AIS (NAIS) |
 | **Bulk directory** | `https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{year}/` — one `AIS_YYYY_MM_DD.zip` per day |
-| **Custom extracts** | AccessAIS — <https://coast.noaa.gov/digitalcoast/tools/ais.html>. **Not exercised in this session**; see "Retrieval route" below |
+| **Custom extracts** | AccessAIS — <https://coast.noaa.gov/digitalcoast/tools/ais.html>. Read-only status, limit, and size-estimate endpoints were exercised on 2026-08-27; **no order or delivery was exercised**. See "Retrieval route" below |
 | **Documentation** | AIS FAQ (May 2026) — <https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf>; Vessel Type and Group Codes — <https://coast.noaa.gov/data/marinecadastre/ais/VesselTypeCodes2018.pdf> |
 | **Years verified available** | Bulk year index and daily files return HTTP 200 for **2019–2024** and **404 for 2025 and 2026**, checked 2026-08-25. The FAQ gives 2009 as the earliest year and 2015 as the start of the flat CSV format |
 
@@ -452,14 +452,27 @@ There is a near-empty gap between 50 m and 150 m separating small harbour and pa
 
 ### Retrieval route
 
-**Undecided, and explicitly an M3 decision.** Both routes are real; neither has been exercised end to end.
+**Proposed in [ADR 0017](decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md), not accepted.** The preferred design is five sequential monthly AccessAIS extracts over the map/context bounds, with a guarded one-day-at-a-time bulk fallback. No order was placed and no complete day was downloaded, so neither route has been exercised end to end.
 
-- **Bulk daily files.** Verified working — this is how the samples were taken, including the range-request behaviour. Covering the analytical period means moving ≈56 GB of national data to keep a small fraction of it.
-- **AccessAIS.** Documented as accepting requests "under 2 GB" for a custom geographic area and time period, holding a five-year rolling window, adding data every 90 days with a 145–165 day lag, and issuing links that expire after 14 days or five accesses. **None of this was exercised**: the tool is interactive and asynchronous, and no order was placed. Whether it can filter by vessel type server-side — which would change the volume arithmetic substantially — is **not established**.
+**Verified from official documentation.** AccessAIS provides point data for a selected area and period, limits orders to 2 GB and one active order per user, and expires a delivery after 14 days or five accesses. NOAA cannot restart an expired or failed order. The [AccessAIS help sheet](https://coast.noaa.gov/data/marinecadastre/ais/accessais-help.pdf) and [AIS FAQ](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf) are the sources. The FAQ also says AccessAIS and bulk outputs differ slightly in format and structure; current compatibility with the exact 17-column cleaner is therefore unverified.
 
-At ≈125.6 bytes per row, an estimated 60–90 million rows is on the order of 8–11 GB, so a full period for the study area could not be a single AccessAIS request regardless and would need splitting.
+**Observed through read-only official endpoints on 2026-08-27.** The AccessAIS [status endpoint](https://marinecadastre.gov/accessais/api/v1/status) returned HTTP 200. Its [limit endpoint](https://marinecadastre.gov/accessais/api/v1/search/limit) reported a 2 GB cap, one active order and a date range containing 2024. Size-estimate POST requests used WGS 84 bounds longitude −122 to −117 and latitude 32 to 35:
 
-The handling policy that follows from this is in [../data/README.md](../data/README.md) and is deliberately written so that both routes remain open. What it forbids is staging an entire national season locally, which neither route requires.
+| Requested dates | Estimated records | Estimated bytes |
+|---|---:|---:|
+| 2024-07-01 through 2024-07-31 | 18,000,749 | 1,851,070,153 |
+| 2024-08-01 through 2024-08-31 | 18,286,289 | 1,880,613,226 |
+| 2024-09-01 through 2024-09-30 | 15,639,769 | 1,608,194,156 |
+| 2024-10-01 through 2024-10-31 | 16,356,927 | 1,681,834,982 |
+| 2024-11-01 through 2024-11-30 | 14,343,702 | 1,474,632,980 |
+
+The five estimates total **82,627,436 records and 8,496,345,497 bytes**. They are service estimates, not delivered counts. A full-period estimate request returned HTTP 413. A one-day 15 July request estimated 582,454 records and 59,895,276 bytes. The exact request bodies and the acceptance gate are recorded in ADR 0017. The documented interface exposes area and time, not a vessel-type selector; no server-side vessel-type filter is assumed.
+
+**Bulk metadata verification on 2026-08-27.** The official [2024 bulk index](https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/) listed all 366 daily filenames; comparison against the 153-date analytical calendar found zero missing names. HEAD requests for the first, a middle, and the last analytical date returned HTTP 200, byte lengths, validators and byte-range support. Together with the five M2 prefix transfers, this verifies listing and partial-transfer behavior. It does **not** verify a complete archive, ZIP CRC, daily semantics or observational completeness.
+
+**Still unverified.** AccessAIS order creation, delivery schema, source filename, archive layout, range-resume behavior, identifier semantics and cleaner compatibility; complete bulk-file integrity; and any authoritative expected per-date record count. NOAA documents collection interruptions, so a small or empty day requires review and cannot automatically be labelled incomplete or low traffic.
+
+The local handling and manifest policy is in [../data/README.md](../data/README.md). The next bounded evidence step is an author-submitted AccessAIS order for 15 July only. No full-period transfer begins before that gate passes.
 
 ### Licensing, attribution, and redistribution
 
@@ -491,8 +504,8 @@ NOAA's own terms are the standard 17 U.S.C. § 403 public-domain statement.
 ### Remaining unresolved
 
 - **Whether the offshore part of the study area can be analysed at all**, which depends on distinguishing coverage from behaviour. This is the open question that keeps [ADR 0002](decisions/0002-southern-california-study-area-extent.md) at Proposed. It **cannot** be answered from these broadcast points, at any sample size, because a vessel no receiver heard leaves no trace in them.
-- **Which retrieval route the project uses.** An M3 decision; AccessAIS capability is documented but unexercised.
-- **Whether AccessAIS can filter by vessel type server-side.** Not established.
+- **Whether the Proposed AccessAIS route can be accepted.** Metadata endpoints and monthly size estimates were exercised, but no order or delivery was. Cleaner compatibility and delivery semantics remain unverified; see ADR 0017.
+- **Whether AccessAIS can filter by vessel type server-side.** No documented selector was found; not established and not assumed.
 - **Whether a length threshold is applied** on top of the type-group filter, and at what value.
 - **Whether the sample's clean coordinate result holds across the period.** 207,849 rows is a small fraction of ~10⁸.
 
