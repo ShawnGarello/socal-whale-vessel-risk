@@ -94,8 +94,14 @@ tolerance are recorded in dataset metadata.
   107,728.695924 km² of model-footprint water inside the configured context
   extent. It removed 25 cells and 2,970.781272 km² that the earlier grid-bounds-
   only implementation retained outside that extent. Programmatic geometry and
-  read-back checks passed, but visual map inspection is unfinished; these
-  numbers do not substitute for opening the derived layer in a GIS.
+  read-back checks passed. On 2026-08-27, headless QGIS 4.2.1 with GDAL 3.13.2
+  opened the exact GeoParquet directly and rendered five views against
+  OpenStreetMap, the NOAA source footprint, and the configured context polygon.
+  Inspection confirmed the correct Southern California location and axis order,
+  source alignment, boundary clipping, plausible coastline/island gaps, correct
+  grid orientation, and no unexplained geometry or projection artifacts. The
+  inspected output SHA-256 was
+  `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
 
 ## Alternatives considered
 

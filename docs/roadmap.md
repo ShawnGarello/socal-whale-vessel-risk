@@ -270,6 +270,15 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   an explicit-overwrite rerun reproduced the output checksum and deterministic
   run ID while recording different execution timestamps. Generated files
   remain under ignored `data/interim/`.
+- Visual verification passed on 2026-08-27 in headless QGIS 4.2.1 with GDAL
+  3.13.2. QGIS opened the exact GeoParquet directly, confirmed its EPSG:3310
+  CRS, 4,516 MultiPolygon features, expected extent and area, and row/column
+  orientation, then rendered five ignored high-resolution views. Inspection
+  confirmed the correct Southern California location and axis order, alignment
+  with the NOAA footprint and configured context boundary, clipped boundary
+  cells, plausible coastline/island gaps, and no unexplained geometry or
+  projection artifacts. The inspected output SHA-256 was
+  `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
 
 **Not implemented**
 
@@ -284,12 +293,6 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   driver attempted to load a missing `duckdb.dll`. PyArrow read-back and
   GeoParquet metadata validation passed, but ArcGIS compatibility remains
   unverified.
-- **Map-based visual inspection of the derived grid.** ArcGIS Pro and QGIS were
-  unavailable. This is explicitly unfinished, so the derived layer is not
-  merge-ready even though programmatic validation passed. Open
-  `data/interim/m3-spatial-grid/noaa-whale-footprint-water-grid.parquet` and
-  verify EPSG:3310, configured-boundary alignment, boundary-cell clipping,
-  coastline/island geometry, row orientation, and unexpected gaps or slivers.
 - Lineage beyond the one-extract AIS bundle and projected water grid, or an
   end-to-end analytical-period rerun. The cleaned AIS output and water grid are
   processing inputs, not analytical results.

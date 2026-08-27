@@ -40,7 +40,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Data sources | Downloaded and inspected; properties, licensing, and limits recorded, with a reproducible provenance manifest |
 | Study area | Map extent proposed; **the analytical domain for statistics is still open** — see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) |
 | Processing workflow | **In progress** — locked Python package, DuckDB engine, contracts, validators, a tested one-extract AIS cleaning command, and deterministic projected water-grid generation; no retrieval, whale transfer, vessel aggregation, or exposure processing yet |
-| Analysis and derived layers | **In progress** — the projected per-cell water grid is generated and programmatically verified; visual GIS inspection and later analytical layers remain unfinished |
+| Analysis and derived layers | **In progress** — the projected per-cell water grid is generated, programmatically verified, and visually verified in QGIS 4.2.1; later analytical layers remain unfinished |
 | Web application | **Foundation built** — Next.js and TypeScript with an ArcGIS map shell over Southern California. Basemap configured but successful keyed rendering still unverified; no project layers or analysis |
 | Deployment | Not started |
 

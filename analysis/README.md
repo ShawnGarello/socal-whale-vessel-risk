@@ -203,7 +203,7 @@ under ignored `data/interim/m3-spatial-grid/`. The 2026-08-27 run produced:
 | CRS and geometry | EPSG:3310; Polygon and MultiPolygon WKB; 0 null, empty, invalid, or out-of-extent outputs |
 | Output | 437,466 bytes; SHA-256 `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031` |
 | Rerun | Explicit-overwrite rerun reproduced the same output checksum and deterministic run ID; execution timestamps and lineage checksum changed |
-| Visual inspection | **Not completed.** Open `data/interim/m3-spatial-grid/noaa-whale-footprint-water-grid.parquet` in ArcGIS Pro or QGIS and check EPSG:3310, alignment with the WGS84 −122/−117/32/35 boundary, clipped boundary cells, coastline/island geometry, row orientation, and unexpected gaps or slivers. The layer is not merge-ready until that check is recorded. |
+| Visual inspection | **Passed 2026-08-27 in headless QGIS 4.2.1 (GDAL 3.13.2).** QGIS opened this exact GeoParquet directly through OGR; no conversion was used. Five QGIS-rendered images confirmed the correct Southern California location and axis order, NOAA-footprint alignment, context-boundary clipping, plausible coastline/island gaps, south-to-north rows, west-to-east columns, and no unexplained gaps, spikes, slivers, displacement, or projection artifacts. |
 
 ## Re-running the large-tabular benchmark
 

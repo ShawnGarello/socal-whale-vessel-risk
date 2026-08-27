@@ -252,12 +252,23 @@ PyArrow read-back and GeoParquet metadata validation passed. ArcGIS publishing
 compatibility is unverified. GDAL/Pyogrio read-back on the current machine
 failed because its Parquet driver could not load `duckdb.dll`; this is recorded
 as a local driver limitation, not silently treated as format verification.
-ArcGIS Pro and QGIS were unavailable, so visual map inspection is explicitly
-unfinished and the derived layer is not merge-ready. A reviewer must open
-`data/interim/m3-spatial-grid/noaa-whale-footprint-water-grid.parquet` and check
-EPSG:3310, alignment with the configured WGS84 boundary, clipped boundary
-cells, coastline/island geometry, row orientation, and unexpected gaps or
-slivers.
+Visual map inspection passed on 2026-08-27 in headless QGIS 4.2.1 with GDAL
+3.13.2. QGIS opened the exact ignored
+`data/interim/m3-spatial-grid/noaa-whale-footprint-water-grid.parquet` directly
+through OGR as Parquet; no conversion was used. The inspected file's SHA-256
+was `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
+QGIS confirmed EPSG:3310, 4,516 MultiPolygon features, the expected extent and
+area, zero null/empty/invalid geometry, negligible numerical outside-context
+area, and south-to-north row and west-to-east column progression. Five
+2200×1400 QGIS renders under the ignored
+`data/interim/m3-spatial-grid/qgis-verification/` directory were inspected:
+`full-context.png`, `northern-boundary.png`, `southern-boundary.png`,
+`coast-and-islands.png`, and `grid-detail.png`. They showed the correct Southern
+California location and axis order, alignment with the NOAA whale footprint,
+visibly clipped boundary cells, plausible coastline and island gaps, correct
+index orientation, and no unexplained gaps, spikes, slivers, displaced cells,
+or projection artifacts. The renders, temporary QGIS project, and evidence
+report remain ignored and are not project deliverables.
 
 **Large-tabular evidence benchmark**
 
