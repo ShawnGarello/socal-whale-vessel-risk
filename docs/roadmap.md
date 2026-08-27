@@ -12,7 +12,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 |---|-----------|--------|
 | M1 | Project foundation | Complete |
 | M2 | Data discovery and validation | In progress |
-| M3 | Processing workflow | Not started |
+| M3 | Processing workflow | In progress |
 | M4 | GIS application foundation | In progress |
 | M5 | Core input layers | Not started |
 | M6 | Whale–vessel exposure analysis | Not started |
@@ -160,13 +160,62 @@ Detail is in [data-sources.md](data-sources.md); this is the summary that change
 
 ## M3 — Processing workflow
 
-**Status:** Not started
+**Status:** In progress
 
 **Objective**
 Turn raw source data into validated, derived geospatial datasets through an ordered, repeatable process.
 
 **Dependencies**
 - M2 **in part.** Data confirmed, projection and grid defined, analytical period chosen. The **analytical and statistical domain is not defined** — [ADR 0002](decisions/0002-southern-california-study-area-extent.md) is Proposed — so M3 proceeds over the map extent and the exposure statistics in M6 wait. See the M2 entry for the split of what may begin now.
+
+### Progress
+
+**Foundation implemented and verified**
+
+- A Python 3.13 src package exists under [`../analysis/`](../analysis/) with a
+  committed `pyproject.toml` and `uv.lock`. uv sync/lock, Ruff format/lint,
+  strict mypy, pytest, package build, and the module CLI boundary are configured.
+  The toolchain is recorded in [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md).
+- DuckDB is the single production large-tabular engine. A parameterized,
+  read-only benchmark compared it with Polars on the same 22.7 MB M2 AIS sample
+  and equivalent operation; both returned 13,800 filtered rows in 35 groups.
+  The five-run evidence and its half-hour-sample limits are in
+  [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md).
+- Versioned contracts now cover configurable source locators, the proposed ADR
+  0002 map/context extent, EPSG:3310, the accepted 5 km grid, the exact inspected
+  AIS header and sentinels, the selected 2020b blue-whale layer and its value
+  relationships, the VSR source geometry, and deterministic provenance/lineage
+  and run metadata.
+- The configuration represents the analytical domain only as **unresolved** and
+  rejects any other status. There is no exposure formula, exposure/statistics
+  contract, or application-results contract.
+- Read-only CLI commands validate configuration and supplied AIS CSV, whale
+  File Geodatabase, and VSR GeoJSON paths. They produce JSON diagnostics and no
+  analytical output.
+- The self-contained suite has 36 passing tests using temporary synthetic CSVs
+  and in-memory records. It covers accepted/rejected configuration, source
+  schemas, all documented AIS sentinels, whale abundance consistency, CRS/grid
+  invariants, deterministic hashes, source locators, and the CLI boundary.
+- Manual smoke checks against the read-only M2 artifacts passed for the selected
+  whale layer (12,257 features) and VSR polygon (one valid feature). The raw AIS
+  prefix was correctly reported as not yet processing-ready because it contains
+  malformed/missing source values; no source file was changed.
+
+**Not implemented**
+
+- AccessAIS ordering or the final retrieval-route decision; no full daily AIS
+  file or analytical-period extract has been retrieved.
+- AIS cleaning, deduplication, behavioural plausibility filtering,
+  commercial-vessel selection, any length threshold, vessel aggregation, or
+  speed summaries.
+- Reprojection runs, final water-mask selection, grid/water geometry generation,
+  area-weighted whale abundance transfer, or any derived spatial dataset.
+- Emission of lineage beside a derived dataset, end-to-end rerun, or map-based
+  visual inspection. The structures exist; no derived run exists to record or
+  inspect.
+- Anything gated by the unresolved analytical/statistical domain: the exposure
+  calculation and surface, inside-versus-outside statistics, and their output
+  contracts.
 
 **Deliverables**
 - A documented, ordered processing path from raw inputs to derived datasets, implemented as scripts or as recorded tooling steps.

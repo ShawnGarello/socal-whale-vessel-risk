@@ -4,7 +4,7 @@
 
 > **Status: accepted as the initial architecture.** Recorded in [ADR 0001](decisions/0001-accept-initial-architecture.md).
 >
-> Accepted means this is the direction implementation follows. It does not mean it is proven. Only the application shell is implemented — see M4 in the [roadmap](roadmap.md); the offline processing, the derived layers, and the hosting half of this design are not. The repository also contains one data-discovery verification utility, [tools/](../tools/README.md), which is not the analysis package.
+> Accepted means this is the direction implementation follows. It does not mean it is proven. The application shell and Python processing foundation are implemented — see M3 and M4 in the [roadmap](roadmap.md). Retrieval, derived processing, derived layers, deployment, and the hosting half of this design are not. The repository also contains one data-discovery verification utility, [tools/](../tools/README.md), which is separate from the analysis package.
 >
 > Data discovery has established the dataset formats and resolutions several parts depended on, and the licensing position for both NOAA sources — see [data-sources.md](data-sources.md) — and some of the deferred decisions at the end of this document are now resolved. **Three things remain open, and each gates a different part of delivery:**
 >
@@ -14,7 +14,7 @@
 >
 > Changes to an accepted architecture are recorded as decision records under [decisions/](decisions/README.md) rather than made silently.
 >
-> Of the source-code layout proposed near the end of this document, only `web/` has been created. The rest is deliberately still uncreated.
+> Of the source-code layout near the end of this document, `web/` and `analysis/` now exist. `arcgis/` and `results/` remain deliberately uncreated.
 
 ---
 
@@ -75,6 +75,18 @@ Summary statistics follow the same path: they are computed offline in the proces
 **Constraint:** anything done in Pro that affects a published result must be reproducible. A sequence of manual clicks that cannot be repeated is not an acceptable production step. Pro work that shapes results should be either recorded as an ordered, parameter-level written procedure, or exported to a script or model that can be rerun.
 
 ### Python
+
+**Implemented foundation.** The src-based package under [`analysis/`](../analysis/README.md)
+has a uv-locked Python 3.13 environment, a module/console entry point, versioned
+map/grid/source/whale/AIS/VSR/lineage contracts, and read-only source validators.
+It does not yet retrieve data or implement the cleaning, reprojection, gridding,
+whale transfer, vessel aggregation, relative exposure, or statistics steps
+described below.
+
+DuckDB is the single primary engine for large AIS tables, selected by the
+equivalent-operation benchmark in [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md).
+Polars remains only in a benchmark dependency group and is not a second
+production pipeline.
 
 - Retrieval and bulk handling of AIS records, which are too large and too repetitive for manual work.
 - Cleaning and filtering: vessel-class selection, implausible-position and implausible-speed removal, deduplication.
@@ -161,6 +173,14 @@ This model has two halves, and only one of them is about the web host. The appli
 - The AIS extract is scoped to the study area and analytical period as early as the chosen route allows. **The route itself is an M3 decision**: NOAA's AccessAIS tool returns a spatial and temporal subset directly and is preferred, but it was not exercised during discovery, and the only confirmed route is the bulk daily national files. Bulk retrieval is therefore permitted under the guard in [data/README.md](../data/README.md) — one day at a time, filtered immediately, national copy discarded once a validated scoped output exists. **What is prohibited in every case is staging an entire national season locally.**
 - Data volumes are now estimated rather than unknown: discovery puts the study-area extract at order 10⁸ records and ≈56 GB of transfer for the analytical period, as an order-of-magnitude planning figure scaled from a small sample. **The measured volume is not known and will not be until M3 retrieval runs.** If it turns out large enough to break this model, that finding gets recorded and the model gets revised.
 
+**The tabular engine is now settled; the retrieval route is not.** DuckDB is the
+production scan/filter/aggregation boundary per [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md).
+On the 22.7 MB M2 AIS prefix it produced the same grouped result as Polars with
+a lower median elapsed time and peak RSS. That half-hour benchmark chooses one
+foundation engine; it does not establish full-day or full-period performance.
+At least one complete scoped day must be measured before resource behavior is
+described as established.
+
 ## Testing boundaries
 
 Testing effort follows consequence, not coverage.
@@ -171,14 +191,14 @@ Testing effort follows consequence, not coverage.
 - **Not tested** — third-party libraries, the ArcGIS SDK, ArcGIS Online itself, and the correctness of upstream datasets. Upstream data is *inspected and documented*, not unit-tested.
 - **Manual verification remains part of the process.** Some spatial errors are only visible on a map. Visual inspection of each derived layer is a required step, not a substitute for tests.
 
-TypeScript tests run on Vitest — see [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md) and the commands in [development.md](development.md). The Python framework is still unchosen, because the analysis package does not exist yet.
+TypeScript tests run on Vitest — see [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md). Python tests run on pytest, with Ruff for formatting/linting and strict mypy for package source — see [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md). Exact commands for both packages are in [development.md](development.md).
 
 ## Reproducibility and data lineage
 
 Reproducibility is a Version 1 requirement, not a nice-to-have. It rests on three practices:
 
 1. **Recorded provenance.** For each source: publisher, exact URL or tool used, retrieval date, any query parameters or extract bounds, and dataset version or vintage where one is published.
-2. **An ordered processing path.** Each derived dataset records the steps that produced it, in order, with the parameters used. Steps performed in ArcGIS Pro are written down at parameter level. Code is not self-documenting for this purpose — source alone does not capture how it was run — so a coded step is reproducible only when all of the following exist: version-controlled code; configuration and parameters that are themselves versioned rather than passed ad hoc; a documented invocation or entrypoint; a pinned or recorded environment, including runtime and dependency versions; and run metadata tying that execution to the specific input datasets and output datasets it consumed and produced. No workflow engine or tooling is chosen for this yet.
+2. **An ordered processing path.** Each derived dataset records the steps that produced it, in order, with the parameters used. Steps performed in ArcGIS Pro are written down at parameter level. Code is not self-documenting for this purpose — source alone does not capture how it was run — so a coded step is reproducible only when all of the following exist: version-controlled code; configuration and parameters that are themselves versioned rather than passed ad hoc; a documented invocation or entrypoint; a pinned or recorded environment, including runtime and dependency versions; and run metadata tying that execution to the specific input datasets and output datasets it consumed and produced. The foundation now supplies the locked environment, versioned configuration with a deterministic digest, CLI boundary, and run-metadata structures. The ordered retrieval-to-derived workflow itself is not implemented, and no workflow engine has been selected.
 3. **Traceable outputs.** Each published layer and each reported statistic maps back to the derived dataset and processing step that produced it. Nothing is published whose origin cannot be stated.
 
 The intended test of all this is simple: rerun the process from raw inputs and compare against the published layers. That check happens in M8 of the [roadmap](roadmap.md).
@@ -208,17 +228,21 @@ For Version 1, the project deliberately does **not** introduce:
 
 Each of these would add operational surface without serving the Version 1 question. Any of them may be introduced later if a concrete, demonstrated need appears — and if it does, it gets a decision record explaining the need before it gets an implementation.
 
-## Proposed future repository structure
+## Current and planned repository structure
 
-`web/` now exists, created by the application-foundation milestone; the answer to the open question below about its placement is that it stayed in a subdirectory. **Everything else here is proposed only and intentionally not created yet**; each is created when the milestone that needs it begins.
+`web/` and `analysis/` now exist, created by their respective foundation work.
+The analysis package has only foundation modules and tests; the processing
+responsibilities listed below are its intended boundaries, not a claim that all
+of them are implemented. `arcgis/` and `results/` remain proposed and are not
+created before a milestone needs them.
 
 ```
 socal-whale-vessel-risk/
 ├── docs/                  # documentation (exists)
 │   └── decisions/         # architecture decision records (exists)
-├── analysis/              # Python analysis package  [proposed]
-│   ├── src/               #   retrieval, cleaning, gridding, exposure, statistics
-│   └── tests/             #   tests over analytical logic
+├── analysis/              # Python analysis package  (exists)
+│   ├── src/               #   contracts, validators, CLI, benchmark  (exists)
+│   └── tests/             #   synthetic foundation tests  (exists)
 ├── data/                  # local data root, Git-ignored  (exists)
 │   ├── raw/               #   untouched source downloads
 │   ├── interim/           #   intermediate processing outputs
@@ -232,7 +256,11 @@ socal-whale-vessel-risk/
 └── results/               # small committed outputs the app reads  [proposed]
 ```
 
-Open questions about this layout: whether `web/` should sit at the repository root instead of in a subdirectory; whether `results/` is distinct enough from `data/derived/` to justify existing; and whether the ArcGIS Pro project belongs in the repository at all given its file sizes. These are settled at the milestone that needs them.
+Open questions about the uncreated portion: whether `results/` is distinct
+enough from `data/derived/` to justify existing, and whether the ArcGIS Pro
+project belongs in the repository at all given its file sizes. These are settled
+at the milestone that needs them. The placement of both implemented packages in
+root subdirectories is settled by their existing layouts.
 
 ## Explicitly deferred decisions
 
@@ -250,7 +278,7 @@ Deferred on purpose. Each should be resolved by evidence — real data, real mea
 | Hosting platform for the deployed application | Still open | The requirements a host must satisfy are now written down in [development.md](development.md), so the choice is constrained. The platform itself is still not chosen, and nothing is deployed. |
 | ArcGIS Online account capability and publishing feasibility — organization access, publishing privileges, public sharing, hosted imagery and tile support, credits, storage | Application foundation, before the deployment path is treated as proven | Unverified against a real account. It gates what can be published at all, and therefore constrains the layer representation and the hosting approach. |
 | ArcGIS Online sharing model and API-key scoping | Application foundation | Depends on the account and licensing available, and on the capability check above. |
-| Test framework and toolchain for Python | When the first Python code is written | Choosing a framework before there is code to test is premature. The TypeScript half is resolved: Vitest, in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md). |
-| Layer schemas, field names, and any data or API contract | **Partly resolved.** Source, processing, grid, whale-input and vessel-input contracts may be written when M3 needs them, since the datasets they describe have been inspected. The exposure-layer, statistics and results-file contracts wait on [ADR 0002](decisions/0002-southern-california-study-area-extent.md) | Contracts written against imagined data are wrong contracts — and contracts written against an undecided reporting domain are wrong for the same reason. |
+| ~~Test framework and toolchain for Python~~ | **Resolved by the processing foundation** | uv, Ruff, mypy, pytest, and Hatchling are recorded in [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md). The TypeScript half remains Vitest in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md). |
+| Layer schemas, field names, and any data or API contract | **Partly resolved.** The M3 foundation implements source, processing, grid, whale-input, AIS-input, VSR-source, and lineage contracts under `analysis/`. The exposure-layer, statistics, and results-file contracts still wait on [ADR 0002](decisions/0002-southern-california-study-area-extent.md). | Contracts written against imagined data are wrong contracts — and contracts written against an undecided reporting domain are wrong for the same reason. |
 
 The last row matters most, and its rule has moved on now that the data has been inspected: **a contract may be written when the data it describes has been inspected and settling the analytical domain could not change it.** The exposure formula and every reporting-domain-dependent contract still wait. The operative wording is in [../AGENTS.md](../AGENTS.md).

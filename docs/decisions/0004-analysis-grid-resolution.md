@@ -67,7 +67,10 @@ The assumption is labelled wherever a boundary-derived statistic is reported, pe
 
 ### Planned verification
 
-Not yet implemented — the analysis package does not exist. These cases are recorded now so the implementation has a target it must hit, and are written in EPSG:3310 metres with answers known by construction.
+Not yet implemented — the analysis package now has a tested foundation, but it
+deliberately does not include grid generation or fractional-boundary machinery.
+These cases remain the target for the later grid/analysis slice, and are written
+in EPSG:3310 metres with answers known by construction.
 
 Let cell `C` be the square from (0, 0) to (5000, 5000): area 25,000,000 m².
 

@@ -2,10 +2,10 @@
 
 **Owns:** small utilities that verify evidence recorded elsewhere in this repository.
 
-This directory is **not** the analysis package. The Python analysis package
-proposed in [architecture.md](../docs/architecture.md) does not exist yet and is
-created by the processing-workflow milestone (M3). Nothing here processes data
-for the analysis, produces a derived dataset, or writes anything that a result
+This directory is **not** the analysis package. The Python processing foundation
+now exists under [`analysis/`](../analysis/README.md); it has its own locked
+environment, contracts, validators, CLI, and tests. Nothing here processes data
+for that package, produces a derived dataset, or writes anything that a result
 depends on.
 
 Anything added here has to earn its place by checking a claim the repository
@@ -95,10 +95,11 @@ margins, and because "it worked on my machine" is not provenance.
 | pyogrio | 0.13.0 |
 | GDAL (via pyogrio) | 3.12.4 |
 
-These were installed with `pip` into the author's user environment. **No pinned
-environment file is committed yet**, because the project has no Python package
-to pin one against — that arrives with the analysis package in M3, and this
-table is the interim record.
+These were installed with `pip` into the author's user environment. The M3
+analysis package now has a committed uv lock, but this M2 evidence utility
+remains deliberately separate: its pandas/pyproj inspection dependencies are
+not production requirements of the foundation. This table remains the exact
+environment record for the utility run described here.
 
 ### Reading the output
 

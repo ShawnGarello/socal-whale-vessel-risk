@@ -37,7 +37,12 @@ Update the owner, not a copy. If two documents disagree, the owner is right and 
 
 ## Current state
 
-The repository is documentation plus one verification utility. No application, analysis package, tests, or CI exist yet. The exception is [tools/](tools/README.md), which holds a single script that re-checks the evidence behind data discovery; it verifies claims the documents already make and is explicitly not the analysis package. The architecture has been accepted as an initial direction ([ADR 0001](docs/decisions/0001-accept-initial-architecture.md)), but nothing has been built against it, and several of its data-dependent decisions remain open.
+The repository now contains two implemented foundations in addition to the documentation and [M2 verification utility](tools/README.md):
+
+- [web/](web/README.md) is the M4 Next.js/TypeScript application shell. M4 remains **In progress** because successful external map rendering, a deployment, and the ArcGIS Online capability and publish-and-serve checks are unfinished.
+- [analysis/](analysis/README.md) is the M3 Python processing foundation. It has a committed uv environment, DuckDB as the selected large-tabular engine, versioned spatial/source/lineage contracts, read-only input validators, a CLI, and synthetic tests. M3 remains **In progress** because retrieval, cleaning, reprojection, grid/water construction, whale transfer, vessel aggregation, derived outputs, and visual inspection are not implemented.
+
+The architecture has been accepted as an initial direction ([ADR 0001](docs/decisions/0001-accept-initial-architecture.md)), and these two foundations are the parts built against it. The repository still has no CI or ArcGIS Pro project. [tools/](tools/README.md) remains a data-discovery evidence utility, not the analysis package.
 
 Do not scaffold implementation directories ahead of the milestone that needs them.
 

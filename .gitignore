@@ -86,3 +86,13 @@ __pycache__/
 .venv/
 venv/
 .ipynb_checkpoints/
+
+# Python analysis build and quality-tool output.
+analysis/build/
+analysis/dist/
+*.egg-info/
+.coverage
+.coverage.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

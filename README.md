@@ -3,7 +3,7 @@
 A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
 
 > **Status: in development.**
-> The web application's foundation exists — an ArcGIS map shell over Southern California, with a basemap and nothing else. The analysis described below is defined but **not yet implemented**: no data has been downloaded, no layer has been published, and nothing in this repository is a result yet.
+> The web application shell and Python processing foundation exist. The Python package validates the inspected input contracts and supplies reproducible configuration and lineage structures, but it does not yet retrieve or process the analytical period. No derived layer has been produced or published, and nothing in this repository is a result yet.
 
 ## Why
 
@@ -36,17 +36,17 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Area | State |
 |---|---|
 | Project scope and roadmap | Documented |
-| Architecture | Accepted as the initial direction; the application shell is the first thing built against it |
+| Architecture | Accepted as the initial direction; the application and processing foundations are built against it |
 | Data sources | Downloaded and inspected; properties, licensing, and limits recorded, with a reproducible provenance manifest |
 | Study area | Map extent proposed; **the analytical domain for statistics is still open** — see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) |
-| Processing workflow | Not started |
+| Processing workflow | **Foundation in progress** — locked Python package, DuckDB engine decision, permitted contracts, read-only validators, CLI, and synthetic tests; no retrieval or derived processing yet |
 | Analysis and derived layers | Not started |
-| Web application | **Foundation built** — Next.js and TypeScript with an ArcGIS map shell over Southern California. Basemap only; no project layers, no analysis |
+| Web application | **Foundation built** — Next.js and TypeScript with an ArcGIS map shell over Southern California. Basemap configured but successful keyed rendering still unverified; no project layers or analysis |
 | Deployment | Not started |
 
 ## Technology direction
 
-Accepted as the initial direction: ArcGIS Pro and Python for offline data preparation and spatial analysis → ArcGIS Online for hosted layers and web maps → a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/).
+Accepted as the initial direction: ArcGIS Pro and Python for offline data preparation and spatial analysis → ArcGIS Online for hosted layers and web maps → a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The Python foundation uses uv for its locked environment and DuckDB as the primary large-tabular engine.
 
 All analysis happens offline and is published as a result. The browser displays and filters; it does not compute exposure. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md).
 
@@ -64,7 +64,7 @@ Two findings are worth knowing before reading anything else. The AIS records com
 
 This is an exploratory, decision-support spatial analysis. It does **not** predict individual whale strikes, calculate validated collision probability, or identify objectively optimal VSR boundaries, and it makes no policy recommendations. Its outputs describe *relative exposure* — where habitat and traffic coincide — not risk in any validated sense.
 
-Any modeled distribution is an estimate, not observed whale locations. Potential AIS limitations — including coverage variation and self-reported vessel attributes — will be evaluated during data discovery. Analytical choices such as thresholds, weightings, and time windows are documented as choices, with their rationale, wherever their results appear.
+Any modeled distribution is an estimate, not observed whale locations. AIS limitations identified during data discovery — including the publisher's offshore coverage limit and self-reported vessel attributes — must remain visible through processing and reporting. Analytical choices such as thresholds, weightings, and time windows are documented as choices, with their rationale, wherever their results appear.
 
 ## Results
 
@@ -84,7 +84,7 @@ Any modeled distribution is an estimate, not observed whale locations. Potential
 |---|---|
 | [docs/project-brief.md](docs/project-brief.md) | Authoritative scope: Version 1 definition, non-goals, success criteria |
 | [docs/roadmap.md](docs/roadmap.md) | Dependency-ordered milestones, progress, and version direction |
-| [docs/architecture.md](docs/architecture.md) | Proposed system design and deferred decisions |
+| [docs/architecture.md](docs/architecture.md) | Accepted system design, implemented boundaries, and deferred decisions |
 | [docs/data-sources.md](docs/data-sources.md) | Source register, provenance, and verification status |
 | [docs/development.md](docs/development.md) | Engineering workflow |
 | [docs/decisions/](docs/decisions/README.md) | Architecture decision records |

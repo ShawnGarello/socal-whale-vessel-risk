@@ -2,7 +2,7 @@
 
 **Owns:** the engineering workflow — how work is done, recorded, verified, and reviewed in this repository.
 
-> The **web application is scaffolded and its commands are real** — they are recorded below and were run to write them down. The repository also contains the [M2 verification utility](../tools/README.md), which is not the analysis package. The analysis package and the ArcGIS Pro project are **not** built; sections describing them stay marked **pending implementation** until the milestone that creates them fills them in. Do not invent commands here for code that does not exist.
+> The **web application and Python analysis foundation are scaffolded and their commands are real** — they are recorded below and were run to write them down. The repository also contains the [M2 verification utility](../tools/README.md), which is separate from the analysis package. The ArcGIS Pro project is **not** built. The analysis foundation validates source inputs and configuration; it does not yet implement retrieval or derived processing.
 
 ---
 
@@ -29,8 +29,8 @@ If two documents contradict each other, the owner above wins and the other is co
 
 ## Local development
 
-This section fills in as each part is built. The **web application exists**; the
-analysis package and the ArcGIS Pro project do not.
+This section fills in as each part is built. The **web application shell and
+Python analysis foundation exist**; the ArcGIS Pro project does not.
 
 ### Application (Next.js / TypeScript) — implemented
 
@@ -98,11 +98,74 @@ interface rather than failing silently: it names the unset variable and shows th
 service's own response. That behaviour is verified. A **successful** basemap
 render has **not** been verified — see [roadmap.md](roadmap.md) M4.
 
-### Analysis (Python) — not built
+### Analysis (Python) — foundation implemented
 
-Pending implementation. A pinned, reproducible environment, a documented setup
-command, and a documented way to run the processing path end to end. Created in
-the processing-workflow milestone.
+The src-based package lives in [`../analysis/`](../analysis/). It currently
+owns versioned processing/source/lineage contracts, the selected DuckDB
+large-tabular boundary, read-only AIS/whale/VSR validators, a CLI, and synthetic
+tests. It does **not** retrieve, clean, reproject, grid, aggregate, or produce a
+derived analytical dataset. Run every command below from `analysis/`.
+
+**Prerequisites**
+
+| Tool | Required | Verified against |
+|---|---|---|
+| Python | `>=3.13,<3.14` (enforced by `analysis/pyproject.toml`) | 3.13.7 |
+| uv | 0.12 or later, invoked as `python -m uv` | 0.12.6 |
+
+uv is the environment and dependency manager; `analysis/uv.lock` is committed.
+Do not infer dependencies from an existing `.venv`. Runtime requirements are
+declared separately from development and benchmark groups. A default sync
+includes both local-only groups so all checks and the evidence benchmark can be
+re-run; the built package declares only runtime requirements.
+
+**Setup and quality commands**
+
+| Command | What it does |
+|---|---|
+| `python -m uv sync --locked` | Creates or updates the ignored environment from the committed lock without changing it. |
+| `python -m uv lock --check` | Fails if `pyproject.toml` and `uv.lock` disagree. |
+| `python -m uv run ruff format .` | Rewrites Python, TOML, and test files to the configured format. |
+| `python -m uv run ruff format --check .` | Checks formatting without rewriting. |
+| `python -m uv run ruff check .` | Runs Ruff linting. |
+| `python -m uv run mypy src/whale_vessel_analysis` | Strictly type-checks package source. |
+| `python -m uv run pytest` | Runs the self-contained synthetic test suite. |
+| `python -m uv build` | Builds the source distribution and wheel. `analysis/dist/` is generated and must not be committed. |
+| `python -m uv run python -m whale_vessel_analysis --help` | Proves the package module and command boundary load. |
+
+The toolchain decision is [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md).
+
+**Read-only validation**
+
+Input paths are always supplied at runtime. Omitting `--config` uses the
+version-controlled packaged configuration.
+
+```text
+python -m uv run python -m whale_vessel_analysis validate-config
+python -m uv run python -m whale_vessel_analysis validate-config --config <config.toml>
+python -m uv run python -m whale_vessel_analysis validate-ais <ais.csv>
+python -m uv run python -m whale_vessel_analysis validate-whale <model.gdb>
+python -m uv run python -m whale_vessel_analysis validate-vsr <zone.geojson>
+```
+
+The commands print JSON and write no analytical output. Exit 0 means the
+supplied artifact passed the implemented contract; exit 2 means a configuration,
+schema, or value check failed. Raw AIS is expected to contain records that later
+cleaning must reject, so a non-zero source inspection is recorded rather than
+"fixed" in place.
+
+**Large-tabular evidence benchmark**
+
+The parameterized command supporting [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md)
+accepts a local AIS CSV and prints JSON to standard output:
+
+```text
+python -m uv run python -m whale_vessel_analysis.benchmark --input <ais-csv> --runs 5
+```
+
+It compares DuckDB and Polars in isolated processes and fails unless their
+grouped results agree. Polars and psutil are benchmark-only dependencies;
+DuckDB is the sole production large-tabular engine.
 
 ### ArcGIS Pro — not built
 
@@ -271,7 +334,7 @@ that nothing documents.
 
 ## Raw data
 
-- **Raw source data is never committed.** It lives under a Git-ignored local data root — see the proposed layout in [architecture.md](architecture.md).
+- **Raw source data is never committed.** It lives under the Git-ignored local data root described in [../data/README.md](../data/README.md).
 - Extract only what the study area and analytical period need. **Retrieval rules for large sources live in [../data/README.md](../data/README.md)**, which owns the local data-handling policy — including the AIS retrieval policy and the standing prohibition on staging an entire national season locally. Do not restate those rules here; they have already drifted once.
 - Every raw dataset must be *re-obtainable*: its source, retrieval method, parameters, and retrieval date are recorded in [data-sources.md](data-sources.md) at the time of retrieval, not from memory later.
 - Do not modify files in the raw directory. Cleaning produces new files elsewhere; the raw copy stays as downloaded so processing can be rerun from a known starting point.
@@ -299,13 +362,24 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** Pending implementation.
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs tests over
+project logic with values known by construction: accepted and rejected spatial
+configuration, the exact AIS header and documented sentinels, invalid source
+values, whale schema and abundance consistency, VSR source schema, deterministic
+lineage/configuration hashing, configurable source locators, and the CLI help
+boundary. Tests create temporary CSVs or data in memory; the ignored M2
+artifacts are not test prerequisites. Third-party libraries are not themselves
+unit-tested.
 
 ## Formatting and linting
 
 **Application (TypeScript).** Prettier formats, ESLint lints, and `tsc` type-checks. Configuration is in `web/.prettierrc.json` and `web/eslint.config.mjs`; commands are in the table above. Run `npm run lint`, `npm run typecheck`, and `npm run format:check` before proposing a branch.
 
-**Analysis (Python).** Pending implementation. Tooling is chosen when the first Python code is written, and recorded here at that point.
+**Analysis (Python).** Ruff formats and lints, and mypy type-checks package source
+in strict mode. Configuration is in `analysis/pyproject.toml`; exact commands
+are in the analysis table above. The untyped third-party geospatial boundaries
+are isolated behind explicit mypy overrides and typed project contracts rather
+than weakening strict checking for project modules.
 
 The expectations that hold for both:
 
