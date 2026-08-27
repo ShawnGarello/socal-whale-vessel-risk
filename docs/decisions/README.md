@@ -22,6 +22,7 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | [0012](0012-use-duckdb-for-large-tabular-processing.md) | Use DuckDB for large-tabular processing | Accepted |
 | [0013](0013-remove-conflicting-ais-key-records.md) | Remove conflicting AIS key records | Accepted |
 | [0014](0014-select-the-grid-water-mask.md) | Use the NOAA whale-model footprint as the grid water mask | Accepted |
+| [0015](0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md) | Adopt a hybrid open-source and Esri GIS toolchain | Accepted |
 
 ## Why these exist
 
