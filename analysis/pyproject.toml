@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "socal-whale-vessel-analysis"
+version = "0.1.0"
+description = "Offline processing foundation for Southern California whale-vessel overlap analysis"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = []
+
+[project.scripts]
+whale-vessel-analysis = "whale_vessel_analysis.cli:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.3,<3",
+    "pytest>=9.1,<10",
+    "ruff>=0.13,<0.14",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/whale_vessel_analysis"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["src/whale_vessel_analysis"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers -ra"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]

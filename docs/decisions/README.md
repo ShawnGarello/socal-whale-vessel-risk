@@ -18,6 +18,7 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | [0008](0008-deliver-the-application-as-a-static-export.md) | Deliver the application as a static Next.js export | Accepted |
 | [0009](0009-mount-arcgis-through-client-only-map-components.md) | Mount the ArcGIS SDK through client-only map components | Accepted |
 | [0010](0010-use-vitest-for-typescript-tests.md) | Use Vitest for TypeScript tests | Accepted |
+| [0011](0011-use-uv-for-the-python-analysis-toolchain.md) | Use uv for the Python analysis toolchain | Accepted |
 
 ## Why these exist
 
