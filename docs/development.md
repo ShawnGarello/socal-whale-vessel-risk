@@ -398,10 +398,14 @@ agent does not sign in, publish, change sharing, alter organization settings,
 enable billing, add a payment method, or spend money. A test is not attempted
 if it could exceed an already available free tier or consume paid capacity.
 
-Record capability outcomes under M4 in [roadmap.md](roadmap.md) without
-committing account identifiers, credentials, billing details, or item ids.
-Carry unavailable or unsuitable capabilities into M5 as evidence for the
-publication-format and route decision.
+Record capability outcomes under M4 in [roadmap.md](roadmap.md). Record only the
+non-sensitive billing mode: `free-tier-only` or `pay-as-you-go already enabled`.
+Never commit payment information, subscription identifiers, balances, invoices,
+or temporary capability-test item IDs. A future public production item ID or
+service URL may be committed when the application requires it; that public
+identifier is configuration and provenance, not a credential. Carry unavailable
+or unsuitable capabilities into M5 as evidence for the publication-format and
+route decision.
 
 ### 1. Identify the account type
 
