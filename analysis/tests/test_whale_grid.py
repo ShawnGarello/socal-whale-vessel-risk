@@ -355,6 +355,27 @@ def test_source_polygon_interior_overlap_is_rejected(tmp_path: Path) -> None:
         )
 
 
+def test_sub_square_metre_source_overlap_is_reported_as_numerical(
+    tmp_path: Path,
+) -> None:
+    water = _cell_geometry(34, 38)
+    min_x, min_y, max_x, max_y = water.bounds
+    overlap_width = 0.5 / (max_y - min_y)
+    west = box(min_x, min_y, min_x + 2_500 + overlap_width, max_y)
+    east = box(min_x + 2_500, min_y, max_x, max_y)
+
+    dataset, _source_input, _target_input = _transfer(
+        tmp_path,
+        [(1.0, west), (1.0, east)],
+        [_target_cell(34, 38, water)],
+    )
+
+    assert dataset.diagnostics.source_overlap_pair_count_within_tolerance == 1
+    assert dataset.diagnostics.source_overlap_area_m2_within_tolerance == pytest.approx(
+        0.5, abs=1e-6
+    )
+
+
 def test_target_grid_checksum_and_contract_are_validated(tmp_path: Path) -> None:
     config = load_default_config()
     path = _valid_grid_path(tmp_path)
