@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import csv
 import json
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 
 import duckdb
@@ -59,6 +61,11 @@ def _report(output: Path) -> dict[str, object]:
     return json.loads((output / QUALITY_REPORT_FILENAME).read_text(encoding="utf-8"))
 
 
+def _clock(*timestamps: datetime) -> Callable[[], datetime]:
+    values = iter(timestamps)
+    return lambda: next(values)
+
+
 def test_cleaning_filters_and_normalizations_are_counted(tmp_path: Path) -> None:
     source = tmp_path / "day.csv"
     exact = _row(
@@ -111,7 +118,19 @@ def test_cleaning_filters_and_normalizations_are_counted(tmp_path: Path) -> None
         RUN_METADATA_FILENAME,
     }
     report = _report(output)
-    assert report["input"]["utc_day"] == "2024-07-15"
+    assert report["contract"] == "noaa_marine_cadastre_ais_extract_v2"
+    assert report["temporal_coverage"] == {
+        "observed_utc_date": "2024-07-15",
+        "earliest_valid_observed_at_utc": "2024-07-15T00:00:00Z",
+        "latest_valid_observed_at_utc": "2024-07-15T00:11:00Z",
+        "completeness": {
+            "status": "unverified",
+            "reason": (
+                "the supplied CSV carries no retained retrieval metadata that "
+                "proves complete UTC-day coverage"
+            ),
+        },
+    }
     assert report["configuration"]["analytical_domain_status"] == "unresolved"
     assert report["counts"]["removals"] == {
         "conflicting_mmsi_timestamp_rows": 2,
@@ -208,9 +227,16 @@ def test_output_and_metadata_are_deterministic_for_the_same_invocation(
     _write_csv(source, [_row()])
     output = tmp_path / "bundle"
 
-    first = process_ais_csv(source, output, load_default_config())
+    fixed = datetime(2026, 8, 27, 12, tzinfo=UTC)
+    first = process_ais_csv(source, output, load_default_config(), clock=lambda: fixed)
     first_bytes = {name: (output / name).read_bytes() for name in _BUNDLE_NAMES}
-    second = process_ais_csv(source, output, load_default_config(), overwrite=True)
+    second = process_ais_csv(
+        source,
+        output,
+        load_default_config(),
+        overwrite=True,
+        clock=lambda: fixed,
+    )
 
     assert first.run_id == second.run_id
     assert first.output_sha256 == second.output_sha256
@@ -259,7 +285,37 @@ def test_output_under_raw_data_is_refused(
     assert not output.exists()
 
 
-def test_failed_multi_day_run_leaves_no_output_bundle(tmp_path: Path) -> None:
+def test_header_only_input_is_rejected(tmp_path: Path) -> None:
+    source = tmp_path / "header-only.csv"
+    _write_csv(source, [])
+    output = tmp_path / "bundle"
+
+    with pytest.raises(AISProcessingError, match="contains no data rows"):
+        process_ais_csv(source, output, load_default_config())
+
+    assert not output.exists()
+
+
+def test_input_with_zero_valid_timestamps_is_rejected(tmp_path: Path) -> None:
+    source = tmp_path / "invalid-timestamps.csv"
+    _write_csv(
+        source,
+        [
+            _row(BaseDateTime="malformed"),
+            _row(MMSI="223456789", BaseDateTime="2024-99-99T00:00:00"),
+        ],
+    )
+    output = tmp_path / "bundle"
+
+    with pytest.raises(AISProcessingError, match="zero valid UTC timestamps"):
+        process_ais_csv(source, output, load_default_config())
+
+    assert not output.exists()
+
+
+def test_multiple_utc_dates_are_rejected_without_an_output_bundle(
+    tmp_path: Path,
+) -> None:
     source = tmp_path / "two-days.csv"
     _write_csv(
         source,
@@ -267,10 +323,58 @@ def test_failed_multi_day_run_leaves_no_output_bundle(tmp_path: Path) -> None:
     )
     output = tmp_path / "bundle"
 
-    with pytest.raises(AISProcessingError, match="multiple UTC days"):
+    with pytest.raises(AISProcessingError, match="multiple UTC dates"):
         process_ais_csv(source, output, load_default_config())
 
     assert not output.exists()
+
+
+def test_partial_day_extract_reports_unverified_temporal_coverage(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "partial-day.csv"
+    _write_csv(
+        source,
+        [
+            _row(BaseDateTime="2024-07-15T06:15:00"),
+            _row(MMSI="223456789", BaseDateTime="2024-07-15T06:45:00"),
+        ],
+    )
+    output = tmp_path / "bundle"
+
+    process_ais_csv(source, output, load_default_config())
+
+    coverage = _report(output)["temporal_coverage"]
+    assert coverage["observed_utc_date"] == "2024-07-15"
+    assert coverage["earliest_valid_observed_at_utc"] == "2024-07-15T06:15:00Z"
+    assert coverage["latest_valid_observed_at_utc"] == "2024-07-15T06:45:00Z"
+    assert coverage["completeness"]["status"] == "unverified"
+
+
+def test_run_metadata_records_real_injected_execution_timestamps(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "extract.csv"
+    _write_csv(source, [_row()])
+    output = tmp_path / "bundle"
+    started_at = datetime(2026, 8, 27, 14, 30, 5, tzinfo=UTC)
+    completed_at = datetime(2026, 8, 27, 14, 30, 8, tzinfo=UTC)
+
+    process_ais_csv(
+        source,
+        output,
+        load_default_config(),
+        clock=_clock(started_at, completed_at),
+    )
+
+    metadata = json.loads((output / RUN_METADATA_FILENAME).read_text(encoding="utf-8"))
+    assert metadata["run"]["started_at"] == "2026-08-27T14:30:05Z"
+    assert metadata["run"]["completed_at"] == "2026-08-27T14:30:08Z"
+    assert metadata["analytical_period"] == {
+        "start_date": "2024-07-01",
+        "end_date": "2024-11-30",
+    }
+    assert "real UTC execution timestamps" in metadata["execution_timestamp_semantics"]
 
 
 def test_empty_cleaned_result_has_the_stable_parquet_schema(tmp_path: Path) -> None:
