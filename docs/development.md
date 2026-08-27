@@ -9,9 +9,10 @@
 > ArcGIS Pro is optional and unnecessary for Version 1; no ArcGIS Pro project
 > is planned as a repository component. The analysis package validates source
 > inputs and configuration, processes one explicitly supplied AIS extract into
-> an atomic local bundle, and generates the projected per-cell water grid.
-> QGIS is the local inspection and visual-verification tool. Retrieval and all
-> other derived processing remain unfinished.
+> an atomic local bundle, generates the projected per-cell water grid, and
+> transfers the selected modeled blue-whale density surface to that grid by
+> abundance-conserving area weighting. QGIS is the local inspection and visual-
+> verification tool. Retrieval and later derived processing remain unfinished.
 
 ---
 
@@ -108,15 +109,16 @@ interface rather than failing silently: it names the unset variable and shows th
 service's own response. That behaviour is verified. A **successful** basemap
 render has **not** been verified — see [roadmap.md](roadmap.md) M4.
 
-### Analysis (Python) — AIS extract and water-grid processing implemented
+### Analysis (Python) — AIS extract, water grid, and whale transfer implemented
 
 The src-based package lives in [`../analysis/`](../analysis/). It owns versioned
 processing/source/lineage contracts, the selected DuckDB large-tabular boundary,
 read-only AIS/whale/VSR validators, CLI boundaries, deterministic processing of
 one supplied NOAA AIS flat CSV extract, the deterministic EPSG:3310 water-grid
-process, and synthetic tests. It does **not** retrieve AIS, transfer whale
-values, aggregate vessels, or produce an exposure dataset or statistics. Run
-every command below from `analysis/`.
+process, abundance-conserving transfer of modeled blue-whale density to that
+grid, and synthetic tests. It does **not** retrieve AIS, aggregate vessels, or
+produce an exposure dataset or statistics. Run every command below from
+`analysis/`.
 
 **Prerequisites**
 
@@ -144,6 +146,7 @@ re-run; the built package declares only runtime requirements.
 | `python -m uv run pytest` | Runs the self-contained synthetic test suite. |
 | `python -m uv build` | Builds the source distribution and wheel. `analysis/dist/` is generated and must not be committed. |
 | `python -m uv run python -m whale_vessel_analysis --help` | Proves the package module and command boundary load. |
+| `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help` | Proves the separate whale-grid transfer boundary loads. |
 
 The toolchain decision is [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md).
 
@@ -310,6 +313,48 @@ reveals a needed clip, repair, field calculation, reprojection, classification,
 or other result-changing operation, implement it in Python with configuration,
 tests, and lineage, then generate and inspect a new artifact. Do not carry an
 unrecorded QGIS-edited file forward to publication.
+
+**Modeled blue-whale grid transfer**
+
+The focused command requires the selected NOAA/SWFSC layer, an existing
+`projected_water_grid_v1` GeoParquet, and a new output path:
+
+```text
+python -m uv run python -m whale_vessel_analysis.whale_grid_cli --whale-input <model.gdb> --whale-layer Blue_whale_summer_fall --grid-input <water-grid.parquet> --expected-grid-sha256 <sha256> --output <whale-grid.parquet> [--config <config.toml>] [--overwrite]
+```
+
+The expected grid checksum is optional for general use and was supplied for the
+verified run. The command validates both versioned input contracts, projects
+longitude/latitude with explicit x/y order, rejects material source-interior
+overlap, and allocates source modeled density by actual EPSG:3310 overlap area.
+It derives per-cell modeled density from allocated abundance divided by full
+cell water area. Coverage status exposes incomplete support rather than
+renormalizing it away. The output preserves target IDs, bounds, water areas,
+row order, and WKB geometry exactly.
+
+The exact output contract, units, tolerances, method limitations, and verified
+smoke results are in [`../analysis/README.md`](../analysis/README.md). In
+particular, `UNCERTAINTY` is not propagated, no values are normalized to 0–1,
+and the 5 km output is a reporting grid rather than a new biological model.
+
+On 2026-08-27 the read-only real run validated 12,257 source polygons and the
+4,516-cell target whose SHA-256 is
+`7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
+It made 9,981 positive-area intersections, allocated 344.1406562623342 modeled
+animals with a zero conservation difference, and classified all 4,516 cells as
+complete support. Two clean outputs were byte-identical at 523,986 bytes with
+SHA-256 `421dc7bf837de1b328328d61944bfb7fa0c7e3c77ac0489ab47506a060520c62`.
+
+QGIS 4.2.1 with GDAL 3.13.2 opened the exact ignored
+`data/interim/m3-whale-grid-transfer/blue-whale-density-grid-a.parquet`
+directly through OGR as Parquet. Five checksum-recorded renders were inspected
+for full extent, north and south boundaries, coast and islands, and cell-scale
+detail. Location and axis order, source/grid alignment, boundary behavior,
+coastline and island gaps, and the broad source-scale density pattern were
+correct; no unexplained hole, sliver, displacement, or projection artifact was
+visible. This passed evidence is tied to output SHA-256
+`421dc7bf837de1b328328d61944bfb7fa0c7e3c77ac0489ab47506a060520c62`.
+The renders, report, and rendering script remain ignored local evidence.
 
 **Large-tabular evidence benchmark**
 
@@ -563,14 +608,17 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 87 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 110 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
 deterministic lineage/configuration hashing, configurable source locators, the
 exact grid and water-area invariants, configured-extent clipping, deterministic
 spatial serialization and content identity, truthful execution timestamps,
-raw-output refusal, atomic-write failure behavior, and both CLI boundaries.
+raw-output refusal, atomic-write failure behavior, abundance-conserving whale
+transfer, source-overlap detection, explicit support coverage, target-contract
+validation, deterministic whale-grid serialization and lineage, and all CLI
+boundaries.
 Tests create temporary CSVs and geometry or use data in memory; the ignored M2
 artifacts are not test prerequisites. Third-party libraries are not themselves
 unit-tested.

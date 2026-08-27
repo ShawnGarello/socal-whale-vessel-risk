@@ -23,7 +23,7 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | [0013](0013-remove-conflicting-ais-key-records.md) | Remove conflicting AIS key records | Accepted |
 | [0014](0014-select-the-grid-water-mask.md) | Use the NOAA whale-model footprint as the grid water mask | Accepted |
 | [0015](0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md) | Adopt a hybrid open-source and Esri GIS toolchain | Accepted |
-| [0016](0016-transfer-whale-density-by-area-weighted-abundance.md) | Transfer whale density by area-weighted abundance | Proposed |
+| [0016](0016-transfer-whale-density-by-area-weighted-abundance.md) | Transfer whale density by area-weighted abundance | Accepted |
 
 ## Why these exist
 

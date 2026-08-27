@@ -1,6 +1,6 @@
 # 0016 — Transfer whale density by area-weighted abundance
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-08-27
 
 ## Context
@@ -31,9 +31,12 @@ grid by **abundance-conserving area weighting** in EPSG:3310:
    and validate the target through the versioned projected-water-grid contract.
 2. Reproject source polygons from EPSG:4326 to EPSG:3310 with longitude and
    latitude explicitly treated as x and y.
-3. Reject missing, non-finite, or negative modeled density and reject any
-   unexplained positive-area overlap between projected source-polygon
-   interiors. Boundary contact with zero intersection area is allowed.
+3. Reject missing, non-finite, or negative modeled density. Reject any
+   projected source-interior overlap larger than 1 m². Positive-area residuals
+   at or below 1 m² are treated as projection/topology tolerances, but their
+   pair count and total area are retained in output metadata and lineage rather
+   than silently ignored. Boundary contact with zero intersection area is
+   allowed.
 4. Intersect each source polygon with each target cell's actual water geometry.
    For every positive-area intersection, calculate
    `source DENSITY × overlap area in km²`.
@@ -66,9 +69,9 @@ until a scientifically supported propagation method is established.
 - Coastal and partial source cells contribute according to their actual
   projected geometry and the target's actual water geometry.
 - Coverage gaps and numerical residuals remain visible per cell and in lineage.
-- Rejecting positive-area source overlap prevents unexplained double counting;
-  a future source with intentional overlapping model components would need a
-  separate combination rule and decision.
+- Rejecting material positive-area source overlap prevents unexplained double
+  counting; a future source with intentional overlapping model components
+  would need a separate combination rule and decision.
 - The 5 km output changes the **reporting grid only**. It is not a new 5 km
   biological model and does not add precision beyond the approximately 0.1°
   source model. Adjacent target cells may share very similar values because
@@ -80,6 +83,12 @@ until a scientifically supported propagation method is established.
 - This whale-input contract does not choose an analytical/reporting domain,
   normalize values to 0–1, define relative exposure, choose weights or hotspot
   thresholds, or calculate VSR statistics.
+- The real source scan found three positive-area pairs totaling
+  0.311235765 m²; two were near machine precision and none exceeded 1 m². The
+  accepted 1 m² tolerance is 0.000004% of one nominal 25 km² target cell. These
+  residuals remain reported while contributions follow the source polygons as
+  stored; the method does not invent an unsupported rule for assigning a
+  sub-square-metre residual to one source value.
 
 ## Alternatives considered
 
