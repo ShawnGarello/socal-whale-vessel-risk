@@ -66,10 +66,13 @@ def build_parser() -> argparse.ArgumentParser:
     _add_config_argument(ais_parser)
 
     process_ais_parser = commands.add_parser(
-        "process-ais", help="clean one supplied NOAA Marine Cadastre AIS CSV"
+        "process-ais", help="clean one supplied NOAA Marine Cadastre AIS CSV extract"
     )
     process_ais_parser.add_argument(
-        "--input", type=Path, required=True, help="one AIS flat-CSV path"
+        "--input",
+        type=Path,
+        required=True,
+        help="one single-UTC-date AIS flat-CSV extract path",
     )
     process_ais_parser.add_argument(
         "--output-dir",

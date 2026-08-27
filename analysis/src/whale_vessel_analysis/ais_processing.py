@@ -7,9 +7,10 @@ import json
 import os
 import platform
 import tempfile
+from collections.abc import Callable
 from contextlib import suppress
 from dataclasses import dataclass
-from datetime import UTC, datetime, time
+from datetime import UTC, datetime, timedelta
 from importlib.metadata import version
 from pathlib import Path
 from typing import Final
@@ -25,8 +26,8 @@ from whale_vessel_analysis.lineage import (
     ValidationRecord,
 )
 
-AIS_PROCESSING_CONTRACT: Final = "noaa_marine_cadastre_ais_day_v1"
-AIS_PROCESSING_VERSION: Final = "1.0.0"
+AIS_PROCESSING_CONTRACT: Final = "noaa_marine_cadastre_ais_extract_v2"
+AIS_PROCESSING_VERSION: Final = "2.0.0"
 CLEANED_FILENAME: Final = "cleaned.parquet"
 QUALITY_REPORT_FILENAME: Final = "quality-report.json"
 RUN_METADATA_FILENAME: Final = "run-metadata.json"
@@ -37,6 +38,7 @@ _BUNDLE_FILENAMES: Final = (
 )
 _PROJECT_ROOT: Final = Path(__file__).resolve().parents[3]
 _PROJECT_RAW_ROOT: Final = (_PROJECT_ROOT / "data" / "raw").resolve()
+_LEGACY_OVERWRITE_CONTRACTS: Final = frozenset({"noaa_marine_cadastre_ais_day_v1"})
 
 _OUTPUT_SCHEMA: Final = (
     ("mmsi", "VARCHAR", True),
@@ -53,7 +55,30 @@ _OUTPUT_SCHEMA: Final = (
 
 
 class AISProcessingError(ValueError):
-    """Raised when a supplied AIS day cannot be processed safely."""
+    """Raised when a supplied AIS extract cannot be processed safely."""
+
+
+@dataclass(frozen=True, slots=True)
+class AISTemporalCoverage:
+    """Observed timestamp bounds without an unsupported completeness claim."""
+
+    observed_utc_date: str
+    earliest_valid_observed_at_utc: str
+    latest_valid_observed_at_utc: str
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "observed_utc_date": self.observed_utc_date,
+            "earliest_valid_observed_at_utc": self.earliest_valid_observed_at_utc,
+            "latest_valid_observed_at_utc": self.latest_valid_observed_at_utc,
+            "completeness": {
+                "status": "unverified",
+                "reason": (
+                    "the supplied CSV carries no retained retrieval metadata that "
+                    "proves complete UTC-day coverage"
+                ),
+            },
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,11 +132,13 @@ def _sql_string(value: Path) -> str:
 def _processing_parameters(config: ProcessingConfig) -> dict[str, object]:
     extent = config.spatial.map_extent
     return {
-        "input_scope": "one explicitly supplied flat CSV",
+        "input_scope": "one explicitly supplied flat CSV extract",
         "timestamp": {
             "source_format": "%Y-%m-%dT%H:%M:%S",
             "timezone": "UTC",
-            "multiple_utc_days_allowed": False,
+            "required_valid_utc_dates": 1,
+            "complete_day_required": False,
+            "completeness_default": "unverified",
         },
         "map_extent": extent.to_dict(),
         "commercial_vessel_types": {
@@ -282,7 +309,7 @@ def _collect_counts(
     connection: duckdb.DuckDBPyConnection,
     config: ProcessingConfig,
     input_path: Path,
-) -> tuple[dict[str, int], dict[str, int], dict[str, int], str | None]:
+) -> tuple[dict[str, int], dict[str, int], dict[str, int], AISTemporalCoverage]:
     ctes = _pipeline_ctes(config, input_path)
     query = f"""
         WITH {ctes}
@@ -303,6 +330,10 @@ def _collect_counts(
                 AS first_utc_day,
             (SELECT max(cast(observed_at_utc AS DATE)) FROM timestamp_valid)
                 AS last_utc_day,
+            (SELECT strftime(min(observed_at_utc), '%Y-%m-%dT%H:%M:%SZ')
+                FROM timestamp_valid) AS earliest_valid_observed_at_utc,
+            (SELECT strftime(max(observed_at_utc), '%Y-%m-%dT%H:%M:%SZ')
+                FROM timestamp_valid) AS latest_valid_observed_at_utc,
             (SELECT count(*) FROM sog_valid
                 WHERE VesselType IS NULL OR trim(VesselType) = '')
                 AS missing_vessel_type_removed,
@@ -352,18 +383,25 @@ def _collect_counts(
     distinct_days = int(values[10])
     first_day = None if values[11] is None else str(values[11])
     last_day = None if values[12] is None else str(values[12])
+    earliest_observed = None if values[13] is None else str(values[13])
+    latest_observed = None if values[14] is None else str(values[14])
+    if stages["source_rows"] == 0:
+        raise AISProcessingError("AIS input contains no data rows")
+    if stages["after_valid_timestamp"] == 0:
+        raise AISProcessingError("AIS input contains zero valid UTC timestamps")
     if distinct_days > 1:
         raise AISProcessingError(
-            "AIS input contains multiple UTC days; supply exactly one day per run "
+            "AIS input contains multiple UTC dates; supply one UTC-date extract "
             f"(found {first_day} through {last_day})"
         )
-    if first_day is not None:
-        start = config.analytical_period.start_date.isoformat()
-        end = config.analytical_period.end_date.isoformat()
-        if not start <= first_day <= end:
-            raise AISProcessingError(
-                f"AIS UTC day {first_day} is outside configured period {start} to {end}"
-            )
+    if first_day is None or earliest_observed is None or latest_observed is None:
+        raise AISProcessingError("AIS timestamp coverage query returned no bounds")
+    start = config.analytical_period.start_date.isoformat()
+    end = config.analytical_period.end_date.isoformat()
+    if not start <= first_day <= end:
+        raise AISProcessingError(
+            f"AIS UTC date {first_day} is outside configured period {start} to {end}"
+        )
     removals = {
         "invalid_timestamp_rows": stages["source_rows"]
         - stages["after_valid_timestamp"],
@@ -374,9 +412,9 @@ def _collect_counts(
         "invalid_mmsi_rows": stages["after_map_extent"] - stages["after_valid_mmsi"],
         "invalid_reported_sog_rows": stages["after_valid_mmsi"]
         - stages["after_valid_reported_sog"],
-        "missing_vessel_type_rows": int(values[13]),
-        "malformed_vessel_type_rows": int(values[14]),
-        "unavailable_vessel_type_rows": int(values[15]),
+        "missing_vessel_type_rows": int(values[15]),
+        "malformed_vessel_type_rows": int(values[16]),
+        "unavailable_vessel_type_rows": int(values[17]),
         "noncommercial_vessel_type_rows": stages["after_valid_vessel_type"]
         - stages["after_commercial_type"],
         "exact_duplicate_rows": stages["after_commercial_type"]
@@ -385,16 +423,25 @@ def _collect_counts(
         - stages["final_rows"],
     }
     normalizations = {
-        "sog_sentinel_to_null_rows": int(values[16]),
-        "cog_sentinel_to_null_rows": int(values[17]),
-        "heading_sentinel_to_null_rows": int(values[18]),
-        "invalid_cog_to_null_rows": int(values[19]),
-        "invalid_heading_to_null_rows": int(values[20]),
-        "unavailable_or_invalid_length_to_null_rows": int(values[21]),
+        "sog_sentinel_to_null_rows": int(values[18]),
+        "cog_sentinel_to_null_rows": int(values[19]),
+        "heading_sentinel_to_null_rows": int(values[20]),
+        "invalid_cog_to_null_rows": int(values[21]),
+        "invalid_heading_to_null_rows": int(values[22]),
+        "unavailable_or_invalid_length_to_null_rows": int(values[23]),
     }
     if sum(removals.values()) != stages["source_rows"] - stages["final_rows"]:
         raise AISProcessingError("AIS cleaning counts do not conserve input rows")
-    return stages, removals, normalizations, first_day
+    return (
+        stages,
+        removals,
+        normalizations,
+        AISTemporalCoverage(
+            observed_utc_date=first_day,
+            earliest_valid_observed_at_utc=earliest_observed,
+            latest_valid_observed_at_utc=latest_observed,
+        ),
+    )
 
 
 def _write_cleaned_parquet(
@@ -489,7 +536,8 @@ def _validate_output_target(output_directory: Path, overwrite: bool) -> None:
         raise AISProcessingError(
             "existing run-metadata.json is not a readable AIS bundle marker"
         ) from exc
-    if metadata.get("contract") != AIS_PROCESSING_CONTRACT:
+    accepted_contracts = {AIS_PROCESSING_CONTRACT, *_LEGACY_OVERWRITE_CONTRACTS}
+    if metadata.get("contract") not in accepted_contracts:
         raise AISProcessingError(
             "existing output is not marked as this AIS processing contract"
         )
@@ -524,14 +572,27 @@ def _publish_bundle(temporary: Path, target: Path, overwrite: bool) -> None:
     _cleanup_bundle_directory(backup)
 
 
+def _utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+def _clock_timestamp(clock: Callable[[], datetime], name: str) -> datetime:
+    value = clock()
+    if value.utcoffset() != timedelta(0):
+        raise AISProcessingError(f"{name} execution timestamp must be UTC")
+    return value.astimezone(UTC)
+
+
 def process_ais_csv(
     input_path: Path,
     output_directory: Path,
     config: ProcessingConfig,
     *,
     overwrite: bool = False,
+    clock: Callable[[], datetime] = _utc_now,
 ) -> AISProcessingResult:
-    """Clean one explicit AIS CSV into an atomic Parquet/report/lineage bundle."""
+    """Clean one single-UTC-date AIS extract into an atomic output bundle."""
+    started_at = _clock_timestamp(clock, "start")
     input_path = input_path.resolve()
     output_directory = output_directory.resolve()
     read_header(input_path)
@@ -554,7 +615,7 @@ def process_ais_csv(
         try:
             with duckdb.connect(str(temporary / "work.duckdb")) as connection:
                 connection.execute("SET TimeZone = 'UTC'")
-                stages, removals, normalizations, utc_day = _collect_counts(
+                stages, removals, normalizations, temporal_coverage = _collect_counts(
                     connection, config, input_path
                 )
                 _write_cleaned_parquet(
@@ -592,13 +653,14 @@ def process_ais_csv(
                 "path": str(input_path),
                 "bytes": input_path.stat().st_size,
                 "sha256": input_sha256,
-                "utc_day": utc_day,
             },
             "configuration": {
                 "version": config.schema_version,
                 "sha256": config.digest(),
+                "analytical_period": config.analytical_period.to_dict(),
                 "analytical_domain_status": (config.spatial.analytical_domain_status),
             },
+            "temporal_coverage": temporal_coverage.to_dict(),
             "processing_parameters": parameters,
             "counts": {
                 "stage_rows": stages,
@@ -619,18 +681,16 @@ def process_ais_csv(
         }
         _write_json(quality_temporary, quality_payload)
         quality_sha256 = _sha256(quality_temporary)
-        logical_timestamp = datetime.combine(
-            config.analytical_period.start_date, time.min, tzinfo=UTC
-        )
+        completed_at = _clock_timestamp(clock, "completion")
         foundation_metadata = RunMetadata(
             run_id=run_id,
-            started_at=logical_timestamp,
-            completed_at=logical_timestamp,
+            started_at=started_at,
+            completed_at=completed_at,
             configuration_version=config.schema_version,
             configuration_sha256=config.digest(),
             steps=(
                 ProcessingStep("validate-noaa-flat-csv-header", "1.0.0"),
-                ProcessingStep("clean-and-scope-ais-day", AIS_PROCESSING_VERSION),
+                ProcessingStep("clean-and-scope-ais-extract", AIS_PROCESSING_VERSION),
                 ProcessingStep("write-deterministic-parquet", "1.0.0"),
             ),
             inputs=(
@@ -667,12 +727,13 @@ def process_ais_csv(
         metadata_payload = {
             "contract": AIS_PROCESSING_CONTRACT,
             "run": foundation_metadata.to_dict(),
+            "analytical_period": config.analytical_period.to_dict(),
             "processing_parameters": parameters,
             "runtime": _runtime(),
-            "timestamp_semantics": (
-                "started_at and completed_at are a deterministic logical timestamp "
-                "anchored to the configured analytical-period start; wall-clock "
-                "timing is intentionally excluded from reproducible metadata"
+            "execution_timestamp_semantics": (
+                "started_at and completed_at are real UTC execution timestamps; "
+                "they are separate from the configured analytical period and are "
+                "excluded from the deterministic run identifier"
             ),
         }
         _write_json(metadata_temporary, metadata_payload)
