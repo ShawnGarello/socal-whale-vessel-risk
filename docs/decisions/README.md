@@ -19,6 +19,7 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | [0009](0009-mount-arcgis-through-client-only-map-components.md) | Mount the ArcGIS SDK through client-only map components | Accepted |
 | [0010](0010-use-vitest-for-typescript-tests.md) | Use Vitest for TypeScript tests | Accepted |
 | [0011](0011-use-uv-for-the-python-analysis-toolchain.md) | Use uv for the Python analysis toolchain | Accepted |
+| [0012](0012-use-duckdb-for-large-tabular-processing.md) | Use DuckDB for large-tabular processing | Accepted |
 
 ## Why these exist
 

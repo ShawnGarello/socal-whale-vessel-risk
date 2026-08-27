@@ -32,3 +32,18 @@ python -m uv run python -m whale_vessel_analysis --help
 environment from that lock and fails instead of changing it. Runtime packages
 belong in `project.dependencies`; test, lint, and type-check tools belong in the
 `dev` dependency group.
+
+## Re-running the large-tabular benchmark
+
+The benchmark supporting the primary-engine decision is parameterized; no
+sample path or output path is built into it. Supply an AIS CSV with the exact
+published header:
+
+```text
+python -m uv run python -m whale_vessel_analysis.benchmark --input <ais-csv> --runs 5
+```
+
+The command reads only the supplied file and writes a JSON report to standard
+output. It runs DuckDB and Polars in separate processes, samples process RSS,
+and fails unless their grouped results are equivalent. Polars and psutil are
+benchmark-group dependencies; Polars is not a production dependency.
