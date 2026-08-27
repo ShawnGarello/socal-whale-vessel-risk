@@ -41,16 +41,15 @@ separate descriptive output under
   gives additional speed- and equipment-dependent intervals. NOAA's one-minute
   down-sampling reduces the raw frequency but does not make every vessel or
   receiver produce one equally spaced observation per minute.
-- NOAA's [Track Builder user
-  guide](https://coast.noaa.gov/data/marinecadastre/ais/AISTrackBuilder.pdf)
-  requires a maximum time and distance when it splits sequential points. Its
-  defaults demonstrate that track construction requires explicit choices; they
-  are not evidence that those defaults fit this source, grid or question.
+- The [NOAA AIS FAQ](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf)
+  says NOAA track products are defined by MMSI, start/stop times and distance
+  gaps. This establishes that track breaks require explicit choices; it does
+  not select a gap that fits this source, grid or question.
 - The [NOAA AIS FAQ](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf)
   defines its annual transit-count grid as the number of unique tracks passing
-  through a cell, not the number of AIS messages. Because NOAA's Track Builder
-  requires explicit break rules, sensitivity of a transit count to track
-  segmentation is an inference rather than a source-defined invariant.
+  through a cell, not the number of AIS messages. Because the track definition
+  uses break rules, sensitivity of a transit count to track segmentation is an
+  inference rather than a source-defined invariant.
 
 ### Verified from authoritative or peer-reviewed methods
 
