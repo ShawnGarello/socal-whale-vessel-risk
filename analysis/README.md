@@ -2,7 +2,7 @@
 
 This directory is the Python package for the M3 offline-processing workflow. It
 provides versioned spatial and source-input contracts, read-only validators,
-deterministic lineage metadata, and a real one-extract AIS cleaning command. It does
+traceable lineage metadata, and a real one-extract AIS cleaning command. It does
 not retrieve AIS, process a season implicitly, aggregate vessel activity onto
 the analysis grid, calculate relative exposure, or report inside-versus-outside
 statistics.

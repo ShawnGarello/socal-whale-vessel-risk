@@ -185,8 +185,8 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   0002 map/context extent, the accepted 1 July–30 November 2024 analytical
   period, EPSG:3310, the accepted 5 km grid, the exact inspected AIS header and
   sentinels, the selected 2020b blue-whale layer and its value relationships,
-  the VSR source geometry, and deterministic provenance/lineage and run
-  metadata.
+  the VSR source geometry, and versioned provenance/lineage and run-metadata
+  contracts.
 - The configuration represents the analytical domain only as **unresolved** and
   rejects any other status. There is no exposure formula, exposure/statistics
   contract, or application-results contract.
