@@ -3,7 +3,7 @@
 A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
 
 > **Status: in development.**
-> The web application shell and Python processing foundation exist. The Python package validates the inspected input contracts and can clean one explicitly supplied, single-UTC-date NOAA AIS CSV extract into a local Parquet/report/lineage bundle, but it neither proves complete-day coverage nor retrieves or processes the analytical period. No derived layer has been produced or published, and nothing in this repository is an exposure result yet.
+> The web application shell and Python processing foundation exist. The Python package validates the inspected input contracts, can clean one explicitly supplied single-UTC-date NOAA AIS CSV extract into a local Parquet/report/lineage bundle, and has produced the deterministic projected water grid. QGIS 4.2.1 visually verified that exact local grid. No exposure layer or public project layer exists, and nothing in this repository is an exposure result yet.
 
 ## Why
 
@@ -46,9 +46,9 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 
 ## Technology direction
 
-Accepted as the initial direction: ArcGIS Pro and Python for offline data preparation and spatial analysis → ArcGIS Online for hosted layers and web maps → a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The Python foundation uses uv for its locked environment and DuckDB as the primary large-tabular engine.
+The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). ArcGIS Location Platform services, accessed with a properly scoped browser API key, are the intended basemap/service integration where available. ArcGIS Online hosted layers remain a conditional publication option if real account capabilities support them; otherwise a later evidence-based decision will select another public representation the SDK can consume. No fallback has been implemented.
 
-All analysis happens offline and is published as a result. The browser displays and filters; it does not compute exposure. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md).
+Python produces the analysis and lineage; QGIS does not replace that production path. The browser displays and filters public results but does not compute exposure. ArcGIS Pro is optional and unnecessary for Version 1. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md) and [ADR 0015](docs/decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md).
 
 ## Data sources
 
@@ -76,7 +76,7 @@ Any modeled distribution is an estimate, not observed whale locations. AIS limit
 
 ## Screenshots
 
-**Not yet available.** Added once the application renders real layers.
+**Not yet available.** No screenshots are included with this architecture update; they will be added only after the application renders real layers.
 
 ## Documentation
 

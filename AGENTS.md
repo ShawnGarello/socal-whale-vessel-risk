@@ -39,10 +39,10 @@ Update the owner, not a copy. If two documents disagree, the owner is right and 
 
 The repository now contains two implemented foundations in addition to the documentation and [M2 verification utility](tools/README.md):
 
-- [web/](web/README.md) is the M4 Next.js/TypeScript application shell. M4 remains **In progress** because successful external map rendering, a deployment, and the ArcGIS Online capability and publish-and-serve checks are unfinished.
+- [web/](web/README.md) is the M4 Next.js/TypeScript application shell. M4 remains **In progress** because successful API-key-backed map rendering, a deployment, the real account-capability check, and the conditional ArcGIS Online publish-and-serve check are unfinished.
 - [analysis/](analysis/README.md) is the M3 Python processing package. It has a committed uv environment, DuckDB as the selected large-tabular engine, versioned spatial/source/lineage contracts, read-only input validators, CLI boundaries, deterministic one-extract AIS cleaning, and deterministic construction of the EPSG:3310 grid and per-cell water geometry from an explicit mask. The water grid was visually verified in QGIS 4.2.1 on 2026-08-27. M3 remains **In progress** because retrieval, whale transfer, vessel aggregation, and later derived outputs are not implemented.
 
-The architecture has been accepted as an initial direction ([ADR 0001](docs/decisions/0001-accept-initial-architecture.md)), and these two foundations are the parts built against it. The repository still has no CI or ArcGIS Pro project. [tools/](tools/README.md) remains a data-discovery evidence utility, not the analysis package.
+The initial architecture ([ADR 0001](docs/decisions/0001-accept-initial-architecture.md)) is refined by the accepted hybrid GIS toolchain ([ADR 0015](docs/decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md)): Python owns reproducible processing, QGIS owns local inspection and visual verification, and the public Next.js map retains direct Esri integration. ArcGIS Pro is optional and unnecessary for Version 1. The repository still has no CI. [tools/](tools/README.md) remains a data-discovery evidence utility, not the analysis package.
 
 Do not scaffold implementation directories ahead of the milestone that needs them.
 
@@ -93,7 +93,11 @@ Most of this repository describes work that does not exist. Never blur that line
 - Never commit credentials, API keys, tokens, or connection strings — including in examples, fixtures, notebooks, or screenshots. Check the diff before committing.
 - Keys that reach the browser are public: scoped and origin-restricted only, never with publishing rights.
 - Git LFS is not in use. Large binaries need a decision record before they are added.
-- Derived datasets are published to ArcGIS Online, not committed, except small results the application reads.
+- Validated derived datasets cross the provider-neutral publication boundary to
+  the selected public delivery route. ArcGIS Online hosted layers are
+  conditional on verified account capabilities; another public representation
+  must be selected later if needed. Derived data is not committed, except small
+  results the application reads.
 
 ## Concurrent sessions
 
