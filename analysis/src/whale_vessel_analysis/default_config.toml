@@ -1,0 +1,17 @@
+schema_version = 1
+
+[spatial]
+projected_crs = "EPSG:3310"
+grid_cell_size_m = 5000
+grid_x_min_m = -190000
+grid_y_min_m = -670000
+grid_x_max_m = 285000
+grid_y_max_m = -330000
+analytical_domain_status = "unresolved"
+
+[spatial.map_extent]
+crs = "EPSG:4326"
+lon_min = -122.0
+lat_min = 32.0
+lon_max = -117.0
+lat_max = 35.0

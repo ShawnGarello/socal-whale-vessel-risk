@@ -1,10 +1,11 @@
 # Analysis
 
 This directory is the Python package for the M3 offline-processing foundation.
-It currently provides a runnable command-line boundary and the reproducible
-toolchain that later retrieval, whale-processing, grid/water, and
-vessel-aggregation work will use. It does not yet retrieve data, produce
-derived datasets, calculate relative exposure, or report inside-versus-outside
+It provides versioned spatial and source-input contracts, deterministic lineage
+metadata, read-only input validation commands, and the reproducible toolchain
+that later retrieval, whale-processing, grid/water, and vessel-aggregation work
+will use. It does not retrieve data, clean or aggregate AIS, produce derived
+datasets, calculate relative exposure, or report inside-versus-outside
 statistics.
 
 Run all commands below from this directory.
@@ -32,6 +33,31 @@ python -m uv run python -m whale_vessel_analysis --help
 environment from that lock and fails instead of changing it. Runtime packages
 belong in `project.dependencies`; test, lint, and type-check tools belong in the
 `dev` dependency group.
+
+## Validation commands
+
+Every input location is supplied at runtime. Omitting `--config` uses the
+version-controlled `default_config.toml` packaged with the module.
+
+```text
+python -m uv run python -m whale_vessel_analysis validate-config
+python -m uv run python -m whale_vessel_analysis validate-config --config <config.toml>
+python -m uv run python -m whale_vessel_analysis validate-ais <ais.csv>
+python -m uv run python -m whale_vessel_analysis validate-whale <model.gdb>
+python -m uv run python -m whale_vessel_analysis validate-vsr <zone.geojson>
+```
+
+The validators print JSON and do not write analytical output. Exit status 0
+means the supplied source satisfies the implemented contract; status 2 means a
+schema, configuration, or value check failed. Source data is expected to need
+later cleaning, so a non-zero raw-AIS result is an audit finding rather than a
+request to edit the source.
+
+The packaged configuration records the proposed ADR 0002 map/context extent,
+EPSG:3310, and the accepted 5,000 m grid. It deliberately represents the
+analytical domain only as `unresolved`; this foundation contains no exposure,
+inside-versus-outside statistics, exposure-layer, or application-results
+contract.
 
 ## Re-running the large-tabular benchmark
 

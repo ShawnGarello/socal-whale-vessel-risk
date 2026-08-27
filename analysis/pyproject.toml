@@ -8,7 +8,12 @@ version = "0.1.0"
 description = "Offline processing foundation for Southern California whale-vessel overlap analysis"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-dependencies = ["duckdb>=1.5.5,<2"]
+dependencies = [
+    "duckdb>=1.5.5,<2",
+    "pyarrow>=25,<26",
+    "pyogrio>=0.13,<0.14",
+    "shapely>=2.1.2,<3",
+]
 
 [project.scripts]
 whale-vessel-analysis = "whale_vessel_analysis.cli:main"
@@ -31,10 +36,17 @@ default-groups = ["dev", "benchmark"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/whale_vessel_analysis"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/whale_vessel_analysis/default_config.toml" = "whale_vessel_analysis/default_config.toml"
+
 [tool.mypy]
 python_version = "3.13"
 strict = true
 files = ["src/whale_vessel_analysis"]
+
+[[tool.mypy.overrides]]
+module = ["pyarrow", "pyarrow.*", "pyogrio", "pyogrio.*", "shapely", "shapely.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = "--strict-config --strict-markers -ra"
