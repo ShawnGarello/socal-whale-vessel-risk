@@ -18,6 +18,7 @@ def test_module_help_works() -> None:
     )
 
     assert completed.returncode == 0
+    assert "process-ais" in completed.stdout
     assert "validate-ais" in completed.stdout
     assert "validate-whale" in completed.stdout
     assert completed.stderr == ""
