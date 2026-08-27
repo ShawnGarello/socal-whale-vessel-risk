@@ -262,7 +262,10 @@ def validate_ais_csv(path: Path, extent: GeographicExtent) -> AISValidationResul
                 WHERE heading_degrees IS NULL
                    OR NOT isfinite(heading_degrees)
                    OR heading_degrees < 0.0
-                   OR heading_degrees > 511.0
+                   OR (
+                        (heading_degrees > 359.0)
+                        AND heading_degrees != 511.0
+                   )
             ) AS invalid_heading_rows,
             count(*) FILTER (
                 WHERE VesselType IS NULL OR trim(VesselType) = ''
@@ -270,7 +273,8 @@ def validate_ais_csv(path: Path, extent: GeographicExtent) -> AISValidationResul
             count(*) FILTER (
                 WHERE VesselType IS NOT NULL AND trim(VesselType) != ''
                   AND (
-                    vessel_type_code IS NULL
+                    NOT regexp_full_match(trim(VesselType), '[0-9]+')
+                    OR vessel_type_code IS NULL
                     OR vessel_type_code NOT BETWEEN 0 AND 99
                   )
             ) AS invalid_vessel_type_rows

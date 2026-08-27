@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import pytest
 
 from whale_vessel_analysis.whale import (
@@ -7,9 +9,17 @@ from whale_vessel_analysis.whale import (
     WHALE_PUBLISHED_FIELDS,
     WHALE_SOURCE_CRS,
     WhaleSchemaError,
+    WhaleValidationResult,
     validate_whale_attributes,
+    validate_whale_geometries,
     validate_whale_schema,
 )
+
+
+@dataclass(frozen=True)
+class _Geometry:
+    is_empty: bool
+    is_valid: bool
 
 
 def _record(**updates: object) -> dict[str, object]:
@@ -79,3 +89,38 @@ def test_whale_surface_is_not_a_time_series() -> None:
     assert not result.passed
     assert result.wrong_season_rows == 1
     assert result.populated_month_rows == 1
+
+
+def test_geometry_validation_counts_null_empty_and_invalid_values() -> None:
+    result = validate_whale_geometries(
+        [None, _Geometry(is_empty=True, is_valid=True), _Geometry(False, False)]
+    )
+
+    assert not result.passed
+    assert result.null_geometry_rows == 1
+    assert result.empty_geometry_rows == 1
+    assert result.invalid_geometry_rows == 1
+
+
+def test_whale_result_reports_geometry_failures_in_messages_and_json() -> None:
+    result = WhaleValidationResult(
+        path="synthetic.gdb",
+        layer="Blue_whale_summer_fall",
+        feature_count=1,
+        attribute_row_count=1,
+        null_geometry_rows=1,
+        empty_geometry_rows=0,
+        invalid_geometry_rows=0,
+        missing_required_value_rows=0,
+        invalid_density_rows=0,
+        invalid_area_rows=0,
+        invalid_abundance_rows=0,
+        inconsistent_abundance_rows=0,
+        invalid_uncertainty_rows=0,
+        wrong_season_rows=0,
+        populated_month_rows=0,
+    )
+
+    assert not result.passed
+    assert result.messages() == ["1 row(s) have null geometries"]
+    assert result.to_dict()["counts"]["null_geometry_rows"] == 1

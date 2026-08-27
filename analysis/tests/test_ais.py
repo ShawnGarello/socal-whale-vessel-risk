@@ -140,6 +140,25 @@ def test_reports_invalid_values_by_construction(tmp_path: Path) -> None:
     assert len(result.messages()) == 8
 
 
+@pytest.mark.parametrize(
+    ("updates", "attribute"),
+    [
+        ({"VesselType": "70.5"}, "invalid_vessel_type_rows"),
+        ({"Heading": "400"}, "invalid_heading_rows"),
+    ],
+)
+def test_rejects_malformed_numeric_codes(
+    tmp_path: Path, updates: dict[str, str], attribute: str
+) -> None:
+    path = tmp_path / "malformed-codes.csv"
+    _write_csv(path, [_row(**updates)])
+
+    result = validate_ais_csv(path, load_default_config().spatial.map_extent)
+
+    assert not result.passed
+    assert getattr(result, attribute) == 1
+
+
 def test_empty_data_file_is_not_a_success(tmp_path: Path) -> None:
     path = tmp_path / "header-only.csv"
     _write_csv(path, [])

@@ -6,11 +6,13 @@ import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, cast
+from typing import Final, Protocol, cast
 
 import pyarrow as pa
 import pyogrio
 from pyogrio.errors import DataLayerError, DataSourceError, FieldError
+from shapely import from_wkb
+from shapely.errors import ShapelyError
 
 WHALE_LAYER_NAME: Final = "Blue_whale_summer_fall"
 WHALE_SOURCE_CRS: Final = "EPSG:4326"
@@ -61,6 +63,60 @@ class WhaleSchemaError(WhaleValidationError):
     """Raised when layer, fields, geometry type, or CRS do not match."""
 
 
+class _GeometryLike(Protocol):
+    @property
+    def is_empty(self) -> bool: ...
+
+    @property
+    def is_valid(self) -> bool: ...
+
+
+class _InvalidGeometry:
+    is_empty = False
+    is_valid = False
+
+
+@dataclass(frozen=True, slots=True)
+class WhaleGeometryValidation:
+    """Counts from validating the selected whale geometry values."""
+
+    null_geometry_rows: int
+    empty_geometry_rows: int
+    invalid_geometry_rows: int
+
+    @property
+    def passed(self) -> bool:
+        return not any(
+            (
+                self.null_geometry_rows,
+                self.empty_geometry_rows,
+                self.invalid_geometry_rows,
+            )
+        )
+
+
+def validate_whale_geometries(
+    geometries: Sequence[_GeometryLike | None],
+) -> WhaleGeometryValidation:
+    """Count null, empty, and invalid geometry values in one layer."""
+    null_geometry = 0
+    empty_geometry = 0
+    invalid_geometry = 0
+    for geometry in geometries:
+        if geometry is None:
+            null_geometry += 1
+            continue
+        if geometry.is_empty:
+            empty_geometry += 1
+        if not geometry.is_valid:
+            invalid_geometry += 1
+    return WhaleGeometryValidation(
+        null_geometry_rows=null_geometry,
+        empty_geometry_rows=empty_geometry,
+        invalid_geometry_rows=invalid_geometry,
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class WhaleAttributeValidation:
     """Counts from validating selected whale-model attribute records."""
@@ -98,6 +154,9 @@ class WhaleValidationResult:
     layer: str
     feature_count: int
     attribute_row_count: int
+    null_geometry_rows: int
+    empty_geometry_rows: int
+    invalid_geometry_rows: int
     missing_required_value_rows: int
     invalid_density_rows: int
     invalid_area_rows: int
@@ -114,6 +173,9 @@ class WhaleValidationResult:
             and self.feature_count == self.attribute_row_count
             and not any(
                 (
+                    self.null_geometry_rows,
+                    self.empty_geometry_rows,
+                    self.invalid_geometry_rows,
                     self.missing_required_value_rows,
                     self.invalid_density_rows,
                     self.invalid_area_rows,
@@ -135,6 +197,9 @@ class WhaleValidationResult:
                 "geometry feature count does not match the validated attribute rows"
             )
         checks = (
+            (self.null_geometry_rows, "null geometries"),
+            (self.empty_geometry_rows, "empty geometries"),
+            (self.invalid_geometry_rows, "invalid geometries"),
             (self.missing_required_value_rows, "missing required numeric values"),
             (self.invalid_density_rows, "invalid DENSITY values"),
             (self.invalid_area_rows, "invalid AREA_SQKM values"),
@@ -166,6 +231,9 @@ class WhaleValidationResult:
             "counts": {
                 "feature_count": self.feature_count,
                 "attribute_row_count": self.attribute_row_count,
+                "null_geometry_rows": self.null_geometry_rows,
+                "empty_geometry_rows": self.empty_geometry_rows,
+                "invalid_geometry_rows": self.invalid_geometry_rows,
                 "missing_required_value_rows": self.missing_required_value_rows,
                 "invalid_density_rows": self.invalid_density_rows,
                 "invalid_area_rows": self.invalid_area_rows,
@@ -272,6 +340,17 @@ def validate_whale_attributes(
     )
 
 
+def _geometry_from_wkb(value: object) -> _GeometryLike | None:
+    if value is None:
+        return None
+    if not isinstance(value, bytes):
+        return _InvalidGeometry()
+    try:
+        return cast(_GeometryLike, from_wkb(value))
+    except ShapelyError:
+        return _InvalidGeometry()
+
+
 def validate_whale_input(
     path: Path, layer: str = WHALE_LAYER_NAME
 ) -> WhaleValidationResult:
@@ -288,22 +367,34 @@ def validate_whale_input(
         geometry_type = str(info["geometry_type"])
         crs = str(info["crs"])
         validate_whale_schema(fields, geometry_type, crs)
-        _metadata, raw_table = pyogrio.read_arrow(
+        metadata, raw_table = pyogrio.read_arrow(
             path,
             layer=layer,
             columns=list(WHALE_VALIDATION_FIELDS),
-            read_geometry=False,
+            read_geometry=True,
         )
     except (DataLayerError, DataSourceError, FieldError) as exc:
         raise WhaleValidationError(f"could not read whale input {path}: {exc}") from exc
     table = cast(pa.Table, raw_table)
     records = cast(list[dict[str, object]], table.to_pylist())
+    geometry_name = str(metadata.get("geometry_name", ""))
+    if not geometry_name or geometry_name not in table.column_names:
+        raise WhaleValidationError(
+            f"whale input {path} did not provide a WKB geometry column"
+        )
+    geometry_values = [
+        _geometry_from_wkb(record.get(geometry_name)) for record in records
+    ]
+    geometry_counts = validate_whale_geometries(geometry_values)
     counts = validate_whale_attributes(records)
     return WhaleValidationResult(
         path=str(path),
         layer=layer,
         feature_count=int(cast(int, info["features"])),
         attribute_row_count=table.num_rows,
+        null_geometry_rows=geometry_counts.null_geometry_rows,
+        empty_geometry_rows=geometry_counts.empty_geometry_rows,
+        invalid_geometry_rows=geometry_counts.invalid_geometry_rows,
         missing_required_value_rows=counts.missing_required_value_rows,
         invalid_density_rows=counts.invalid_density_rows,
         invalid_area_rows=counts.invalid_area_rows,
