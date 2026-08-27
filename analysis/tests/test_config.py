@@ -79,6 +79,14 @@ def test_rejects_invalid_period_date() -> None:
         config_from_mapping(document)
 
 
+def test_rejects_noncanonical_iso_period_date() -> None:
+    document = _document()
+    document["analytical_period"]["start_date"] = "20240701"
+
+    with pytest.raises(ConfigurationError, match="must be an ISO date"):
+        config_from_mapping(document)
+
+
 @pytest.mark.parametrize(
     ("key", "value", "message"),
     [

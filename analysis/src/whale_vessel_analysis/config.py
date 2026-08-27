@@ -244,11 +244,14 @@ def _date(table: Mapping[str, object], key: str, table_name: str) -> date:
     if not isinstance(value, str):
         raise ConfigurationError(f"{table_name}.{key} must be an ISO date string")
     try:
-        return date.fromisoformat(value)
+        parsed = date.fromisoformat(value)
     except ValueError as exc:
         raise ConfigurationError(
             f"{table_name}.{key} must be an ISO date (YYYY-MM-DD)"
         ) from exc
+    if parsed.isoformat() != value:
+        raise ConfigurationError(f"{table_name}.{key} must be an ISO date (YYYY-MM-DD)")
+    return parsed
 
 
 def config_from_mapping(document: Mapping[str, object]) -> ProcessingConfig:
