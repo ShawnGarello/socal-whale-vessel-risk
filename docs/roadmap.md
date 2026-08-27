@@ -170,7 +170,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 
 ### Progress
 
-**Foundation implemented and verified**
+**Foundation and first AIS processing slice implemented and verified**
 
 - A Python 3.13 src package exists under [`../analysis/`](../analysis/) with a
   committed `pyproject.toml` and `uv.lock`. uv sync/lock, Ruff format/lint,
@@ -193,29 +193,49 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 - Read-only CLI commands validate configuration and supplied AIS CSV, whale
   File Geodatabase, and VSR GeoJSON paths. They produce JSON diagnostics and no
   analytical output.
-- The self-contained suite has 50 passing tests using temporary synthetic CSVs
+- `process-ais` cleans one explicitly supplied NOAA flat CSV into an atomic
+  bundle containing deterministic Parquet, a quality report, and lineage/run
+  metadata. It validates the inspected header; parses UTC timestamps,
+  coordinates, MMSI, reported SOG, and vessel types; scopes positions to the
+  ADR 0002 map extent; selects passenger 60–69, cargo 70–79, and tanker 80–89;
+  normalizes documented sentinels; and records every removal. Exact duplicates
+  and conflicting MMSI/timestamp records follow
+  [ADR 0013](decisions/0013-remove-conflicting-ais-key-records.md). The command
+  refuses multi-day input, raw-directory output, arbitrary overwrite, and
+  incomplete publication.
+- Length filtering and behavioral plausibility filtering are explicitly
+  disabled and recorded as unresolved project assumptions. No length value is
+  presented as equivalent to the BWBS approximately 300 GT condition, and no
+  universal speed or implied-speed threshold has been selected.
+- The self-contained suite has 60 passing tests using temporary synthetic CSVs
   and in-memory records. It covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
   geometry and abundance consistency, CRS/grid invariants, deterministic
-  hashes, source locators, benchmark result checks, and the CLI boundary.
+  hashes, source locators, benchmark result checks, AIS filter and duplicate
+  invariants, deterministic bundle replacement, failed-run atomicity, empty
+  output, and CLI success/failure boundaries.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
   whale layer (12,257 features, with zero null, empty, or invalid geometries)
-  and VSR polygon (one valid feature). The raw AIS prefix was correctly reported
-  as not yet processing-ready because it contains malformed/missing source
-  values; no source file was changed.
+  and VSR polygon (one valid feature). The required 15 July AIS prefix smoke run
+  read 207,849 rows, retained 13,800 in the map extent, selected 2,495 commercial
+  rows before deduplication, and wrote 2,490 cleaned rows. It normalized the SOG
+  sentinel in 22 retained rows, removed one additional exact duplicate and four
+  conflicting-key rows, and wrote only to ignored `data/interim/`. This is
+  evidence from the approximately half-hour M2 sample, not a full-day or
+  period-wide result; the shared input was not changed.
 
 **Not implemented**
 
 - AccessAIS ordering or the final retrieval-route decision; no full daily AIS
   file or analytical-period extract has been retrieved.
-- AIS cleaning, deduplication, behavioural plausibility filtering,
-  commercial-vessel selection, any length threshold, vessel aggregation, or
-  speed summaries.
+- Behavioral plausibility filtering, any length threshold, vessel aggregation,
+  or speed summaries. The first two remain disabled rather than silently
+  receiving provisional thresholds.
 - Reprojection runs, final water-mask selection, grid/water geometry generation,
   area-weighted whale abundance transfer, or any derived spatial dataset.
-- Emission of lineage beside a derived dataset, end-to-end rerun, or map-based
-  visual inspection. The structures exist; no derived run exists to record or
-  inspect.
+- Lineage beyond the one-CSV AIS bundle, an end-to-end analytical-period rerun,
+  or map-based visual inspection. The cleaned AIS output is a tabular input to
+  later aggregation, not a spatial layer and not an analytical result.
 - Anything gated by the unresolved analytical/statistical domain: the exposure
   calculation and surface, inside-versus-outside statistics, and their output
   contracts.

@@ -4,7 +4,7 @@
 
 > **Status: accepted as the initial architecture.** Recorded in [ADR 0001](decisions/0001-accept-initial-architecture.md).
 >
-> Accepted means this is the direction implementation follows. It does not mean it is proven. The application shell and Python processing foundation are implemented — see M3 and M4 in the [roadmap](roadmap.md). Retrieval, derived processing, derived layers, deployment, and the hosting half of this design are not. The repository also contains one data-discovery verification utility, [tools/](../tools/README.md), which is separate from the analysis package.
+> Accepted means this is the direction implementation follows. It does not mean it is proven. The application shell, Python processing foundation, and first one-CSV AIS cleaning slice are implemented — see M3 and M4 in the [roadmap](roadmap.md). Retrieval, spatial aggregation, exposure processing, derived layers, deployment, and the hosting half of this design are not. The repository also contains one data-discovery verification utility, [tools/](../tools/README.md), which is separate from the analysis package.
 >
 > Data discovery has established the dataset formats and resolutions several parts depended on, and the licensing position for both NOAA sources — see [data-sources.md](data-sources.md) — and some of the deferred decisions at the end of this document are now resolved. **Three things remain open, and each gates a different part of delivery:**
 >
@@ -76,14 +76,17 @@ Summary statistics follow the same path: they are computed offline in the proces
 
 ### Python
 
-**Implemented foundation.** The src-based package under [`analysis/`](../analysis/README.md)
-has a uv-locked Python 3.13 environment, a module/console entry point, versioned
-analytical-period, map/grid/source/whale/AIS/VSR/lineage contracts, and read-only
-source validators. The configuration records the accepted 1 July–30 November
-2024 period while keeping the analytical/statistical domain unresolved.
-It does not yet retrieve data or implement the cleaning, reprojection, gridding,
-whale transfer, vessel aggregation, relative exposure, or statistics steps
-described below.
+**Implemented foundation and first AIS slice.** The src-based package under
+[`analysis/`](../analysis/README.md) has a uv-locked Python 3.13 environment, a
+module/console entry point, versioned analytical-period,
+map/grid/source/whale/AIS/VSR/lineage contracts, read-only source validators,
+and deterministic processing for one explicitly supplied NOAA AIS flat CSV.
+That command emits an atomic cleaned Parquet/report/lineage bundle over the map
+extent and applies the duplicate policy in
+[ADR 0013](decisions/0013-remove-conflicting-ais-key-records.md). The
+configuration keeps the analytical/statistical domain unresolved. Retrieval,
+reprojection, gridding, whale transfer, vessel aggregation, relative exposure,
+and statistics are not implemented.
 
 DuckDB is the single primary engine for large AIS tables, selected by the
 equivalent-operation benchmark in [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md).
@@ -200,7 +203,7 @@ TypeScript tests run on Vitest — see [ADR 0010](decisions/0010-use-vitest-for-
 Reproducibility is a Version 1 requirement, not a nice-to-have. It rests on three practices:
 
 1. **Recorded provenance.** For each source: publisher, exact URL or tool used, retrieval date, any query parameters or extract bounds, and dataset version or vintage where one is published.
-2. **An ordered processing path.** Each derived dataset records the steps that produced it, in order, with the parameters used. Steps performed in ArcGIS Pro are written down at parameter level. Code is not self-documenting for this purpose — source alone does not capture how it was run — so a coded step is reproducible only when all of the following exist: version-controlled code; configuration and parameters that are themselves versioned rather than passed ad hoc; a documented invocation or entrypoint; a pinned or recorded environment, including runtime and dependency versions; and run metadata tying that execution to the specific input datasets and output datasets it consumed and produced. The foundation now supplies the locked environment, versioned configuration with a deterministic digest, CLI boundary, and run-metadata structures. The ordered retrieval-to-derived workflow itself is not implemented, and no workflow engine has been selected.
+2. **An ordered processing path.** Each derived dataset records the steps that produced it, in order, with the parameters used. Steps performed in ArcGIS Pro are written down at parameter level. Code is not self-documenting for this purpose — source alone does not capture how it was run — so a coded step is reproducible only when all of the following exist: version-controlled code; configuration and parameters that are themselves versioned rather than passed ad hoc; a documented invocation or entrypoint; a pinned or recorded environment, including runtime and dependency versions; and run metadata tying that execution to the specific input datasets and output datasets it consumed and produced. The locked environment, versioned configuration with a deterministic digest, CLI boundary, and run-metadata structures now support a real one-CSV AIS cleaning step. The complete retrieval-to-derived workflow is not implemented, and no workflow engine has been selected.
 3. **Traceable outputs.** Each published layer and each reported statistic maps back to the derived dataset and processing step that produced it. Nothing is published whose origin cannot be stated.
 
 The intended test of all this is simple: rerun the process from raw inputs and compare against the published layers. That check happens in M8 of the [roadmap](roadmap.md).
@@ -233,9 +236,9 @@ Each of these would add operational surface without serving the Version 1 questi
 ## Current and planned repository structure
 
 `web/` and `analysis/` now exist, created by their respective foundation work.
-The analysis package has only foundation modules and tests; the processing
-responsibilities listed below are its intended boundaries, not a claim that all
-of them are implemented. `arcgis/` and `results/` remain proposed and are not
+The analysis package has foundation modules, one-CSV AIS processing, and tests;
+the other processing responsibilities listed below remain intended boundaries,
+not implemented claims. `arcgis/` and `results/` remain proposed and are not
 created before a milestone needs them.
 
 ```
@@ -243,8 +246,8 @@ socal-whale-vessel-risk/
 ├── docs/                  # documentation (exists)
 │   └── decisions/         # architecture decision records (exists)
 ├── analysis/              # Python analysis package  (exists)
-│   ├── src/               #   contracts, validators, CLI, benchmark  (exists)
-│   └── tests/             #   synthetic foundation tests  (exists)
+│   ├── src/               #   contracts, validators, AIS processing, CLI  (exists)
+│   └── tests/             #   synthetic foundation/processing tests  (exists)
 ├── data/                  # local data root, Git-ignored  (exists)
 │   ├── raw/               #   untouched source downloads
 │   ├── interim/           #   intermediate processing outputs

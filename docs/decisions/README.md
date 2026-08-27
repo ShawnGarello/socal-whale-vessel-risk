@@ -20,6 +20,7 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | [0010](0010-use-vitest-for-typescript-tests.md) | Use Vitest for TypeScript tests | Accepted |
 | [0011](0011-use-uv-for-the-python-analysis-toolchain.md) | Use uv for the Python analysis toolchain | Accepted |
 | [0012](0012-use-duckdb-for-large-tabular-processing.md) | Use DuckDB for large-tabular processing | Accepted |
+| [0013](0013-remove-conflicting-ais-key-records.md) | Remove conflicting AIS key records | Accepted |
 
 ## Why these exist
 

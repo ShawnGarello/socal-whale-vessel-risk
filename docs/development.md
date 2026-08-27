@@ -2,7 +2,7 @@
 
 **Owns:** the engineering workflow — how work is done, recorded, verified, and reviewed in this repository.
 
-> The **web application and Python analysis foundation are scaffolded and their commands are real** — they are recorded below and were run to write them down. The repository also contains the [M2 verification utility](../tools/README.md), which is separate from the analysis package. The ArcGIS Pro project is **not** built. The analysis foundation validates source inputs and configuration; it does not yet implement retrieval or derived processing.
+> The **web application shell and Python analysis package exist, and their commands are real** — they are recorded below and were run to write them down. The repository also contains the [M2 verification utility](../tools/README.md), which is separate from the analysis package. The ArcGIS Pro project is **not** built. The analysis package validates source inputs and configuration and processes one explicitly supplied AIS CSV into an atomic local bundle. It does not retrieve AIS, aggregate vessel activity, or produce an exposure result.
 
 ---
 
@@ -98,13 +98,14 @@ interface rather than failing silently: it names the unset variable and shows th
 service's own response. That behaviour is verified. A **successful** basemap
 render has **not** been verified — see [roadmap.md](roadmap.md) M4.
 
-### Analysis (Python) — foundation implemented
+### Analysis (Python) — foundation and AIS day processing implemented
 
-The src-based package lives in [`../analysis/`](../analysis/). It currently
-owns versioned processing/source/lineage contracts, the selected DuckDB
-large-tabular boundary, read-only AIS/whale/VSR validators, a CLI, and synthetic
-tests. It does **not** retrieve, clean, reproject, grid, aggregate, or produce a
-derived analytical dataset. Run every command below from `analysis/`.
+The src-based package lives in [`../analysis/`](../analysis/). It owns versioned
+processing/source/lineage contracts, the selected DuckDB large-tabular boundary,
+read-only AIS/whale/VSR validators, a CLI, synthetic tests, and deterministic
+processing of one supplied NOAA AIS flat CSV. It does **not** retrieve AIS,
+reproject or grid spatial inputs, aggregate vessel activity, or produce a
+relative-exposure result. Run every command below from `analysis/`.
 
 **Prerequisites**
 
@@ -153,6 +154,48 @@ supplied artifact passed the implemented contract; exit 2 means a configuration,
 schema, or value check failed. Raw AIS is expected to contain records that later
 cleaning must reject, so a non-zero source inspection is recorded rather than
 "fixed" in place.
+
+**One-CSV AIS processing**
+
+The processing command requires both paths and never discovers a day, directory,
+or season on its own:
+
+```text
+python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <new-output-directory>
+python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <new-output-directory> --config <config.toml>
+```
+
+The output directory must not exist. To repeat the identical invocation into a
+bundle previously created by this command:
+
+```text
+python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <existing-bundle> --overwrite
+```
+
+`--overwrite` refuses arbitrary directories and replaces only a complete bundle
+whose metadata identifies the AIS processing contract. The command publishes
+`cleaned.parquet`, `quality-report.json`, and `run-metadata.json` together by an
+atomic directory rename. A failure before publication leaves no completed target
+bundle. Outputs belong under the ignored `data/interim/` or `data/derived/`
+roots, never `data/raw/`; the command enforces the repository raw-data boundary.
+
+The output and cleaning contract, including the disabled length and behavioral
+thresholds, is in [`../analysis/README.md`](../analysis/README.md). The duplicate
+policy is [ADR 0013](decisions/0013-remove-conflicting-ais-key-records.md).
+
+The required local M2-sample smoke invocation is:
+
+```text
+python -m uv run whale-vessel-analysis process-ais --input C:\Users\teche\socal-whale-vessel-risk-data-discovery\data\interim\m2-inspection\AIS_2024_07_15.head_sample.csv --output-dir ..\data\interim\ais-ingestion-smoke
+```
+
+That path is specific to the author's worktrees. Use `--overwrite` only to
+repeat it after the first successful bundle. On 2026-08-27 the command processed
+the unchanged 22.7 MB M2 prefix extracted by the M2 utility from 15 July 2024: it
+read 207,849 source rows, retained 13,800 in the map extent, selected 2,495
+commercial rows before deduplication, and wrote 2,490 cleaned rows. This is
+sample evidence from an approximately half-hour prefix, not a complete day or
+analytical-period result.
 
 **Large-tabular evidence benchmark**
 
