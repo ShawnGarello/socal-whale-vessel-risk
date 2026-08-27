@@ -648,6 +648,10 @@ Not analytical inputs. Used for methodology, framing, and terminology.
 | [BWBS methods and monitoring](https://bluewhalesblueskies.org/operators/methods-and-monitoring/) | How the program itself frames speed, strike risk, noise, and emissions; a guide to careful language. |
 | [BWBS / Scripps underwater-noise report (PDF)](https://bluewhalesblueskies.org/wp-content/uploads/BWBS_2025_ZoBell_Report_final.pdf) | Background for any future noise proxy. Not used in Version 1. |
 | [NOAA blue whale hot spots](https://www.fisheries.noaa.gov/west-coast/marine-mammal-protection/blue-whale-hot-spots) | Context on frequently used blue-whale areas off Southern California. |
+| [USCG Class A AIS position reports](https://www.navcen.uscg.gov/ais-class-a-reports) and [Class A/Class B comparison](https://www.navcen.uscg.gov/sites/default/files/pdf/AIS_Comparison_By_Class.pdf) | Official reporting-interval evidence used to assess point-count bias in [ADR 0018](decisions/0018-use-vessel-kilometres-for-grid-activity.md). |
+| [IWC technical paper on AIS shipping-density measures](https://iwc.int/public/documents/1Y-Rv/SC-63-BC4.pdf) | Authoritative definitions of vessel density, transit rate and distance-travelled density; supports the traffic-measure comparison only. |
+| [Kim et al. 2022](https://doi.org/10.3390/app122111246) | Peer-reviewed segment-to-cell vessel-hours method and discussion of irregular AIS intervals. |
+| [Kapsar et al. 2022](https://doi.org/10.1016/j.dib.2022.108531) | Peer-reviewed comparison of unique-vessel, operating-day and track-distance grid metrics. |
 | [ArcGIS Living Atlas](https://livingatlas.arcgis.com/) | Discovery aid for existing published layers — **not** an authority in itself. Anything found there must be traced to its originating publisher, and that publisher recorded as the source. |
 
 ## Rules for adding a source
