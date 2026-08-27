@@ -8,13 +8,13 @@
 /**
  * Initial map viewpoint, in WGS 84 decimal degrees.
  *
- * **This is a display setting, not the study area.** It positions the initial
- * view roughly over the Southern California Bight so the empty shell opens
- * somewhere relevant. The project's actual study-area extent, projected
- * coordinate system, and analysis grid are a deliberately deferred decision
- * (see docs/architecture.md, "Explicitly deferred decisions") and are settled
- * during data discovery. Do not read an analytical boundary into these numbers,
- * and do not reuse them as one.
+ * **This display setting is not an analytical boundary.** It positions the
+ * initial view roughly over the Southern California Bight so the empty shell
+ * opens somewhere relevant. The map and context extent is settled enough to
+ * build against, and data discovery accepted EPSG:3310 and a 5 km analysis grid
+ * (ADRs 0003 and 0004). The analytical and statistical domain remains open in
+ * ADR 0002. These coordinates do not define it and must not be reused as an
+ * analytical boundary.
  */
 export const INITIAL_VIEWPOINT = {
   /** Longitude, latitude. */

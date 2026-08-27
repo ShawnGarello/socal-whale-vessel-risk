@@ -249,19 +249,22 @@ Built on the `feat/web-foundation` branch. The application is in
   [0009](decisions/0009-mount-arcgis-through-client-only-map-components.md), and
   [0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Not done — every item below requires the author's ArcGIS account**
+**Not done**
+
+- **The static-shell deployment.** This can proceed independently of an ArcGIS
+  account. The application has never been deployed anywhere, and there is no
+  public URL.
+- **A successful basemap render.** This requires a valid, scoped API key. The
+  shell is verified only to the point of failing correctly: with no API key it
+  reports the problem in the interface. That the map renders, pans, and zooms
+  with a valid key has **not** been observed.
 
 - The ArcGIS Online capability check. Nothing about the account has been
   established: not the organization, the user type, the role, publishing
   privileges, public-sharing permission, hosted feature, tile, or imagery
   support, credits, or storage. All of it remains **unverified**.
-- The public test item, and loading it from the application.
-- Any deployment. The application has never been deployed anywhere, and there is
-  no public URL.
-- **A successful basemap render.** This is verified only to the point of
-  failing correctly: with no API key the shell reports the problem in the
-  interface. That the map renders, pans, and zooms with a valid key has **not**
-  been observed.
+- The public test item, and loading it from the application. Both this and the
+  capability check require the author's real account and its privileges.
 
 The ordered steps for all of the above are in
 [development.md](development.md#arcgis-online-capability-check-and-publishing).
@@ -278,8 +281,10 @@ The ordered steps for all of the above are in
 | ArcGIS Online capability check complete and recorded | **Unverified.** Not started; requires the author's account. |
 | Unavailable capabilities recorded as constraints for M5 | **Not applicable yet.** Nothing has been checked, so nothing has been found unavailable. |
 
-M4 is not complete and must not be marked complete until the six unverified
-rows above are resolved.
+M4 is not complete and must not be marked complete until the deployed
+application, successful map rendering, and the ArcGIS Online publish-and-serve
+path are verified. Any unavailable account capabilities must also be recorded
+as constraints for M5.
 
 ### Findings
 
@@ -324,7 +329,7 @@ should ask visitors to sign in.
 Initialization is bounded explicitly in the shell.
 
 **Bundle size — the early look this milestone's risk list asked for.** The
-static export is roughly 30 MB across about 830 files, almost entirely ArcGIS
+static export is roughly 28 MiB across about 900 files, almost entirely ArcGIS
 SDK chunks. That is on-disk size, not download size: the SDK is code-split and a
 basemap-only page fetches a small fraction of it. Two consequences: any hosting
 platform's file-count and size limits must be checked before it is chosen, and
