@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, cast
@@ -59,6 +59,35 @@ class WhaleValidationError(ValueError):
 
 class WhaleSchemaError(WhaleValidationError):
     """Raised when layer, fields, geometry type, or CRS do not match."""
+
+
+@dataclass(frozen=True, slots=True)
+class WhaleAttributeValidation:
+    """Counts from validating selected whale-model attribute records."""
+
+    missing_required_value_rows: int
+    invalid_density_rows: int
+    invalid_area_rows: int
+    invalid_abundance_rows: int
+    inconsistent_abundance_rows: int
+    invalid_uncertainty_rows: int
+    wrong_season_rows: int
+    populated_month_rows: int
+
+    @property
+    def passed(self) -> bool:
+        return not any(
+            (
+                self.missing_required_value_rows,
+                self.invalid_density_rows,
+                self.invalid_area_rows,
+                self.invalid_abundance_rows,
+                self.inconsistent_abundance_rows,
+                self.invalid_uncertainty_rows,
+                self.wrong_season_rows,
+                self.populated_month_rows,
+            )
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -188,7 +217,10 @@ def _float(value: object) -> float | None:
         return math.nan
 
 
-def _validate_records(records: list[dict[str, object]]) -> tuple[int, ...]:
+def validate_whale_attributes(
+    records: Sequence[Mapping[str, object]],
+) -> WhaleAttributeValidation:
+    """Validate density, area, abundance, uncertainty, and temporal semantics."""
     missing_required = 0
     invalid_density = 0
     invalid_area = 0
@@ -228,15 +260,15 @@ def _validate_records(records: list[dict[str, object]]) -> tuple[int, ...]:
             wrong_season += 1
         if record["MONTH_NUMB"] is not None or record["MONTH_NAME"] is not None:
             populated_month += 1
-    return (
-        missing_required,
-        invalid_density,
-        invalid_area,
-        invalid_abundance,
-        inconsistent_abundance,
-        invalid_uncertainty,
-        wrong_season,
-        populated_month,
+    return WhaleAttributeValidation(
+        missing_required_value_rows=missing_required,
+        invalid_density_rows=invalid_density,
+        invalid_area_rows=invalid_area,
+        invalid_abundance_rows=invalid_abundance,
+        inconsistent_abundance_rows=inconsistent_abundance,
+        invalid_uncertainty_rows=invalid_uncertainty,
+        wrong_season_rows=wrong_season,
+        populated_month_rows=populated_month,
     )
 
 
@@ -266,18 +298,18 @@ def validate_whale_input(
         raise WhaleValidationError(f"could not read whale input {path}: {exc}") from exc
     table = cast(pa.Table, raw_table)
     records = cast(list[dict[str, object]], table.to_pylist())
-    counts = _validate_records(records)
+    counts = validate_whale_attributes(records)
     return WhaleValidationResult(
         path=str(path),
         layer=layer,
         feature_count=int(cast(int, info["features"])),
         attribute_row_count=table.num_rows,
-        missing_required_value_rows=counts[0],
-        invalid_density_rows=counts[1],
-        invalid_area_rows=counts[2],
-        invalid_abundance_rows=counts[3],
-        inconsistent_abundance_rows=counts[4],
-        invalid_uncertainty_rows=counts[5],
-        wrong_season_rows=counts[6],
-        populated_month_rows=counts[7],
+        missing_required_value_rows=counts.missing_required_value_rows,
+        invalid_density_rows=counts.invalid_density_rows,
+        invalid_area_rows=counts.invalid_area_rows,
+        invalid_abundance_rows=counts.invalid_abundance_rows,
+        inconsistent_abundance_rows=counts.inconsistent_abundance_rows,
+        invalid_uncertainty_rows=counts.invalid_uncertainty_rows,
+        wrong_season_rows=counts.wrong_season_rows,
+        populated_month_rows=counts.populated_month_rows,
     )
