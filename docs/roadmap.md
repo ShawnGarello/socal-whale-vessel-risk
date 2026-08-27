@@ -281,11 +281,12 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
 - The generated lineage sidecar truthfully records
   `visual_inspection_status: not_completed` because it was written before the
-  QGIS check. Generation lineage is immutable evidence of that run; the later
+  QGIS check. Generation-time lineage must not be manually edited; the later
   QGIS report and documentation are separate evidence tied to the exact output
-  checksum. A formal reusable verification record or command that captures the
-  checksum, date, GIS tool/version, inspected views/checks, result, and relevant
-  observations is **not implemented** and remains M3/M8 follow-up work.
+  checksum. An explicitly authorized overwrite currently replaces the output
+  and sidecar without automatically retaining prior run evidence. A formal
+  reusable verification record or command, plus append-only or versioned
+  lineage, is **not implemented** and remains M3/M8 follow-up work.
 
 **Not implemented**
 
@@ -348,15 +349,17 @@ path — before there is analytical content to put in it.
 - Application scaffold created following the reviewed architecture.
 - A working map view of the study area using the ArcGIS Maps SDK for JavaScript.
 - Environment-variable and credential handling in place, with nothing secret committed.
-- **A verified account-capability check**, recording ArcGIS Online organization
-  access; content-creation and publishing privileges; permission to share items
-  publicly; hosted feature, tile, and imagery support; credits; and storage.
-  The evidence constrains the later publication route; it does not assume that
-  ArcGIS Online hosting is required.
-- **When the account supports public hosted-layer publishing**, a minimal test
-  item published, shared publicly, and loaded from the application to prove that
-  candidate route end to end. If it does not, the refusal is recorded and the
-  public-layer end-to-end test waits for the selected fallback route.
+- **A verified account-type capability check.** For ArcGIS Location Platform,
+  record limited feature/vector-tile/map-tile service support, public access,
+  storage, bandwidth, monthly free-tier headroom, and billing status. For
+  ArcGIS Online, record organization access, publishing/public-sharing
+  privileges, hosted feature/tile/imagery support, credits, and storage. The
+  check does not enable pay-as-you-go or authorize spending.
+- **When either Esri account type safely supports public hosted-feature
+  publishing without paid usage**, a minimal test item published, shared
+  publicly, and loaded from the application to prove that candidate route end
+  to end. If neither does, the outcome is recorded and the public-layer
+  end-to-end test waits for the selected non-Esri fallback route.
 - A working deployment of the empty shell.
 - Formatting, linting, and type-checking configured.
 
@@ -365,13 +368,14 @@ path — before there is analytical content to put in it.
 - The map renders, pans, and zooms over the study area.
 - No API keys or credentials appear in the repository or in committed build output.
 - The deployment is reachable and reflects the current main branch state.
-- **The account-capability check is complete and recorded.** Publishing
-  privileges, public sharing, imagery and tile support, credits, and storage are
-  each confirmed or confirmed unavailable.
-- If public hosted-layer publishing is available, anonymous loading of the
-  temporary hosted item is verified. If it is unavailable, that outcome is
-  carried into M5 as evidence requiring a later publication-route decision;
-  M4 does not invent or verify a fallback.
+- **The applicable account-type checks are complete and recorded.** Location
+  Platform's limited data-service, storage, bandwidth, free-tier, and billing
+  status and ArcGIS Online's organization privileges, public sharing, service
+  types, credits, and storage are each confirmed or confirmed unavailable.
+- If either Esri-hosted route safely supports the test, anonymous loading of the
+  temporary hosted item is verified. Otherwise the outcome is carried into M5
+  as evidence requiring a non-Esri publication-route decision; M4 does not
+  invent or verify that fallback.
 
 ### Progress
 
@@ -412,17 +416,18 @@ Built on the `feat/web-foundation` branch. The application is in
   reports the problem in the interface. That the map renders, pans, and zooms
   with a valid key has **not** been observed.
 
-- The ArcGIS Online capability check. Nothing about the account has been
-  established: not the organization, the user type, the role, publishing
-  privileges, public-sharing permission, hosted feature, tile, or imagery
-  support, credits, or storage. All of it remains **unverified**.
-- The conditional public hosted test item and loading it from the application.
-  This is attempted only if the capability check establishes the necessary
-  publishing and public-sharing privileges. The check itself requires the
-  author's real account.
+- The account-type capability checks. Nothing has been established about
+  Location Platform data-service support, public access, storage, bandwidth,
+  monthly free-tier headroom, or billing status. ArcGIS Online organization,
+  user type, role, publishing/public-sharing privileges, hosted service types,
+  credits, and storage are also unverified.
+- The conditional Esri-hosted test item and loading it from the application.
+  This is attempted only if the applicable account branch establishes public
+  hosted-feature support and enough no-cost capacity. The check requires the
+  author's real account and never enables billing or authorizes spending.
 
 The ordered steps for all of the above are in
-[development.md](development.md#arcgis-service-access-and-conditional-arcgis-online-publishing).
+[development.md](development.md#arcgis-account-type-capability-checks-and-service-access).
 
 ### Completion criteria status
 
@@ -432,17 +437,18 @@ The ordered steps for all of the above are in
 | Builds in the deployment environment | **Unverified.** No deployment environment exists yet. |
 | Map renders, pans, and zooms | **Unverified.** Requires an API key. The failure path is verified; the success path is not. |
 | No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored. |
-| Deployment reachable and reflecting main | **Unverified.** Not deployed, and this branch is not merged. |
-| Account-capability check complete and recorded | **Unverified.** Not started; requires the author's account. |
-| Conditional ArcGIS Online publish-and-serve test | **Unverified.** Attempt only if the account check verifies the required publishing and public-sharing capabilities. |
+| Deployment reachable and reflecting main | **Unverified.** No deployment exists; main has not been deployed or verified. |
+| Account-type capability checks complete and recorded | **Unverified.** Location Platform and ArcGIS Online checks have not started; they require the author's account. |
+| Conditional Esri-hosted publish-and-serve test | **Unverified.** Attempt only if an applicable account branch verifies public hosted-feature support and enough no-cost capacity. |
 | Unavailable capabilities recorded as constraints for M5 | **Not applicable yet.** Nothing has been checked, so nothing has been found unavailable. |
 
 M4 is not complete and must not be marked complete until the deployed
-application, successful API-key-backed map rendering, and the real account
-capability check are verified. The ArcGIS Online publish-and-serve test is also
-required when the account supports it. Any unavailable capabilities must be
-recorded as publication constraints for M5; selection and end-to-end testing of
-another public layer route happen in later milestones after real layers exist.
+application, successful API-key-backed map rendering, and the real account-type
+capability checks are verified. An Esri-hosted publish-and-serve test is also
+required when either account type safely supports it without paid usage. Any
+unavailable capabilities must be recorded as publication constraints for M5;
+selection and end-to-end testing of a non-Esri route happen in later milestones
+after real layers exist.
 
 ### Findings
 
@@ -471,10 +477,11 @@ A disconnected or network-restricted deployment would need assets copied locally
 and `assetsPath` configured.
 
 **A browser-delivered API key is required for the basemap.** Without one, the
-basemap styles service returns 401 "Token Required". This ArcGIS Location
-Platform/service-access boundary is distinct from ArcGIS Online organization
-hosting. The deployed map is not proven until a scoped, origin-restricted key
-works from the real origin.
+basemap styles service returns 401 "Token Required". ArcGIS Location Platform
+accounts have API-key management privileges by default; ArcGIS Online accounts
+have different user-type and privilege requirements. Neither a configured key
+nor a successful basemap request proves project-layer hosting. The deployed map
+is not proven until a scoped, origin-restricted key works from the real origin.
 
 **The SDK prompts for a sign-in by default, and this is wrong for this
 application.** Left at its default, a rejected request opens the SDK's own
@@ -501,13 +508,16 @@ from this number. First development-server compile of the map route takes
 this repository's own. Disabled with `agentRules: false`.
 
 **Risks and open questions**
-- **ArcGIS Online account capabilities are unverified and constrain the
-  publication route.** If the account cannot publish the required service type,
-  share publicly, or support the needed credits/storage, ArcGIS Online hosting
-  cannot be assumed and a later decision must select and verify a public
-  fallback. **Still entirely open** — the check has not been started.
-- Credit consumption for publishing and storage is not yet understood and could constrain how often layers are republished during iteration. **Still open.**
-- ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Partly resolved:** a browser-delivered, origin-restricted API key is required for the basemap, and the requirements for scoping it are recorded in [development.md](development.md). What the account can actually issue is unverified.
+- **Both Esri-hosted routes are unverified and constrain publication.** Location
+  Platform is limited to feature, vector-tile, and map-tile services and must be
+  checked for public access, storage, bandwidth, free-tier headroom, and billing
+  status. ArcGIS Online must be checked for organization privileges, service
+  types, public sharing, credits, and storage. If neither fits, a later decision
+  must select and verify a non-Esri public fallback. **Still entirely open.**
+- Location Platform storage/bandwidth usage and ArcGIS Online credit/storage
+  consumption could constrain iteration. The project does not enable
+  pay-as-you-go or authorize spending. **Still open.**
+- ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Partly resolved:** a browser-delivered, origin-restricted API key is required for the basemap, Location Platform accounts have API-key privileges by default, and the requirements for scoping a browser key are recorded in [development.md](development.md). The real account and successful service access remain unverified.
 - Bundle size and initial load time of the SDK need an early look rather than a late one. **Resolved for size** — see the findings above. Load time still needs measuring on a real deployment.
 - The hosting platform is still unchosen. Its requirements are now written down in [development.md](development.md), so the choice is constrained rather than open-ended.
 
@@ -523,15 +533,17 @@ in the application through the evidence-selected publication route.
 
 **Dependencies**
 - M3 (validated derived datasets exist).
-- M4 (application shell exists and account-capability evidence is recorded).
+- M4 (application shell exists and account-type capability evidence is recorded).
 
 **Deliverables**
 - Study area, VSR boundary, whale density, and vessel activity prepared in a
   selected public representation based on measured output size, browser
   performance, redistribution terms, and real account capabilities.
-- ArcGIS Online hosted layers and a web map when the verified account supports
-  the selected representation, or a documented public delivery route selected
-  later when it does not. No fallback is implemented yet.
+- ArcGIS Location Platform feature/vector-tile/map-tile services when its
+  verified free-tier capacity and service support fit; ArcGIS Online hosted
+  layers and a web map when verified organization capabilities fit; or a
+  documented non-Esri public route selected later when neither does. No route
+  is implemented yet.
 - The ArcGIS Maps SDK application assembling the public layers with symbology
   chosen for legibility, not decoration.
 - Layer visibility control and legends in the application.
@@ -542,9 +554,9 @@ in the application through the evidence-selected publication route.
 
 **Completion criteria**
 - Each layer renders at the study-area scale within an acceptable load time.
-- Anonymous access works end to end from the application. When ArcGIS Online
-  hosting is unavailable, this criterion is verified later against the selected
-  fallback route rather than waived.
+- Anonymous access works end to end from the application. When neither Esri
+  hosting route is suitable, this criterion is verified later against the
+  selected non-Esri fallback rather than waived.
 - Every layer's legend states its units and the meaning of its values.
 - Every layer names its source and its retrieval or processing date somewhere the user can reach.
 - Layer geometry visually aligns across layers; no projection mismatch is visible.
@@ -688,12 +700,15 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 - Version 1 scope items in [project-brief.md](project-brief.md) are all satisfied or explicitly recorded as reduced, with the reason.
 
 **Risks and open questions**
-- **Public delivery depends on a verified publication route.** ArcGIS Online is
-  used if the real account supports the selected representation. If it does not,
-  a public fallback must be selected and verified end to end before release;
-  none is implemented today.
-- Credits and storage are consumable if ArcGIS Online hosting is selected. Any
-  alternative host will have its own measured limits and operating constraints.
+- **Public delivery depends on a verified publication route.** ArcGIS Location
+  Platform limited data services or ArcGIS Online organization hosting may be
+  used if the applicable account evidence supports the selected representation.
+  If neither does, a non-Esri public fallback must be selected and verified end
+  to end before release; none is implemented today.
+- Location Platform storage/bandwidth limits and billing status or ArcGIS Online
+  credits/storage are constraints if those routes are selected. The project
+  does not enable pay-as-you-go or authorize spending. Any non-Esri host will
+  have its own measured limits and operating constraints.
 - Deployment hosting and any ArcGIS credential requirements must be settled before release, not at release.
 - Screenshots and headline numbers go stale if the analysis is later revised; they need a stated "results as of" date.
 

@@ -205,14 +205,17 @@ under ignored `data/interim/m3-spatial-grid/`. The 2026-08-27 run produced:
 | Rerun | Explicit-overwrite rerun reproduced the same output checksum and deterministic run ID; execution timestamps and lineage checksum changed |
 | Visual inspection | **Passed 2026-08-27 in headless QGIS 4.2.1 (GDAL 3.13.2).** QGIS opened this exact GeoParquet directly through OGR; no conversion was used. Five QGIS-rendered images confirmed the correct Southern California location and axis order, NOAA-footprint alignment, context-boundary clipping, plausible coastline/island gaps, south-to-north rows, west-to-east columns, and no unexplained gaps, spikes, slivers, displacement, or projection artifacts. |
 
-The generated lineage sidecar remains immutable evidence of the generation run
-and records `visual_inspection_status: not_completed` because generation
-finished before QGIS inspection. The later QGIS report and documentation are
-separate verification evidence tied to the output SHA-256 above; they do not
-require manually editing the sidecar. Future reusable verification evidence is
-planned to record the checksum, date, GIS tool/version, inspected views/checks,
-result, and relevant observations. No formal verification record or command is
-implemented yet; [the roadmap](../docs/roadmap.md) carries that follow-up.
+The generation-time lineage sidecar must not be manually edited. It records
+`visual_inspection_status: not_completed` because generation finished before
+QGIS inspection, so that value remains truthful for that generation. Under the
+current implementation, an explicitly authorized overwrite replaces the output
+and sidecar, and prior run evidence is not retained automatically. The later
+QGIS report and documentation are separate verification evidence tied to the
+output SHA-256 above. Future reusable verification evidence is planned to
+record the checksum, date, GIS tool/version, inspected views/checks, result, and
+relevant observations. No formal verification record or command and no
+append-only/versioned lineage are implemented yet; [the roadmap](../docs/roadmap.md)
+carries that follow-up.
 
 QGIS is an inspection and visual-verification tool, not a production processing
 path. Any result-changing transformation discovered during review must be

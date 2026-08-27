@@ -24,10 +24,12 @@ Three independent questions remain open and gate different work:
    with attribution but has no confirmed redistribution grant. This gates
    project-hosted publication of a copy, not analysis against the local source
    or reference to the publisher's service.
-3. **Publication route.** ArcGIS Online organization access, publishing and
-   public-sharing privileges, hosted feature/tile/imagery support, credits, and
-   storage are all unverified. The account check constrains the publication
-   route; it does not determine whether Version 1 can be completed.
+3. **Publication route.** ArcGIS Location Platform data-service support,
+   storage, bandwidth, free-tier headroom, and billing status are unverified.
+   ArcGIS Online organization access, publishing/public-sharing privileges,
+   hosted feature/tile/imagery support, credits, and storage are also
+   unverified. Account-type-specific checks constrain the publication route;
+   they do not determine whether Version 1 can be completed.
 
 Changes to this accepted architecture are recorded under
 [decisions/](decisions/README.md), not made silently.
@@ -47,8 +49,9 @@ The system has four kinds of participant:
   visual-verification evidence. Local source and generated data are not
   committed.
 - **Public publication services** — validated outputs cross a provider-neutral
-  boundary into a publicly accessible representation. ArcGIS Online hosted
-  layers are one conditional option, not a required processing tier.
+  boundary into a publicly accessible representation. ArcGIS Location Platform
+  limited data services and ArcGIS Online organization-hosted layers are
+  separate Esri candidates. A non-Esri route remains available if neither fits.
 - **A visitor's browser** — a static Next.js application uses the ArcGIS Maps
   SDK for JavaScript to read public layers and available ArcGIS platform
   services. It presents and filters; it does not calculate exposure or reported
@@ -84,25 +87,28 @@ Validated derived artifacts and lineage
         v
 Provider-neutral publication / export boundary
         |
-        +----> ArcGIS Online hosted layer, when account capabilities permit
+        +----> ArcGIS Location Platform feature/vector-tile/map-tile service,
+        |        when free-tier capacity and account capabilities permit
         |
-        `----> selected public static or otherwise supported representation,
-               when hosted ArcGIS Online publication is unavailable/unsuitable
+        +----> ArcGIS Online organization-hosted layer,
+        |        when privileges, credits, and storage permit
+        |
+        `----> selected non-Esri public representation,
+               when neither Esri-hosted route is suitable
         |
         v
 Next.js + ArcGIS Maps SDK for JavaScript
   public layers + precomputed statistics
-  ArcGIS Location Platform basemap/services where available
+  ArcGIS platform basemap/services and public project layers where available
         |
         v
 Static deployment -> visitor's browser
 ```
 
-The non-ArcGIS Online branch in this diagram is an architectural boundary, not
-an implemented fallback. Its format and host remain deferred. Summary
-statistics follow the same analysis boundary and may be delivered as a small,
-versioned file the static application reads; the browser does not recompute
-them.
+The three publication branches in this diagram are candidates, not implemented
+fallbacks. Their final format and host remain deferred. Summary statistics
+follow the same analysis boundary and may be delivered as a small, versioned
+file the static application reads; the browser does not recompute them.
 
 ## Component responsibilities
 
@@ -183,12 +189,14 @@ The boundary must preserve a traceable mapping among:
 - any export or tiling parameters; and
 - the public layer or file the application consumes.
 
-The final representation is deliberately open. Selection depends on measured
-output size, feature count or raster characteristics, geometry complexity,
-browser load/render performance, redistribution terms, anonymous-access
-requirements, and verified account or hosting capabilities. GeoJSON, vector
-tiles, hosted feature layers, hosted tile/imagery layers, and other supported
-representations are candidates, not decisions.
+The final representation is deliberately open. Candidate routes are ArcGIS
+Location Platform limited data services, ArcGIS Online organization-hosted
+layers, and a non-Esri public fallback if neither is suitable. Selection depends
+on measured output size, feature count or raster characteristics, geometry
+complexity, browser load/render performance, redistribution terms,
+anonymous-access requirements, and verified account or hosting capabilities.
+GeoJSON, vector tiles, hosted feature layers, hosted tile/imagery layers, and
+other supported representations are candidates, not decisions.
 
 ### ArcGIS Online organization hosting
 
@@ -210,14 +218,37 @@ or documentation alone:
 If a required capability is unavailable, that evidence becomes a constraint on
 the publication-format decision. It does not invalidate the Python analysis,
 QGIS verification, static application, or Esri map-client integration. A later
-milestone must select and verify another public delivery route; none exists yet.
+milestone must evaluate ArcGIS Location Platform and, if needed, a non-Esri
+public route; none is selected or implemented yet.
 
-### ArcGIS Location Platform and browser API-key services
+### ArcGIS Location Platform limited organization and data services
 
-ArcGIS Location Platform service access is separate from ArcGIS Online
-organization hosting. The application intends to use an ArcGIS basemap and may
-use other appropriate platform services through the ArcGIS Maps SDK where
-available. Those browser requests use `NEXT_PUBLIC_ARCGIS_API_KEY`.
+ArcGIS Location Platform is a separate Esri-hosted publication candidate, not
+only an API-key and basemap provider. Esri documents it as a limited single-user
+organization with support for creating hosted feature, vector-tile, and
+map-tile services. It does not provide the full ArcGIS Online organization
+capability set, and the documented Location Platform data-service list does not
+include hosted imagery or scene services. See Esri's
+[portal and data services FAQ](https://developers.arcgis.com/documentation/portal-and-data-services/faq/).
+
+Location Platform storage and data-service bandwidth use a monthly free tier
+with optional pay-as-you-go billing. Before it can be selected, the author must
+verify the real account's supported service types, public access, current
+storage and bandwidth use, free-tier limits and remaining headroom, and billing
+status. This project does **not** authorize enabling pay-as-you-go, adding a
+payment method, or incurring a charge. If a safe test cannot remain within an
+already available free tier, it is not run and the route remains unverified or
+is recorded as unsuitable.
+
+### Browser API-key services
+
+The application intends to use an ArcGIS basemap and may use other appropriate
+platform services or project items through the ArcGIS Maps SDK where available.
+Those browser requests use `NEXT_PUBLIC_ARCGIS_API_KEY`. Esri documents API-key
+management privileges as available by default for ArcGIS Location Platform
+accounts; ArcGIS Online accounts have separate user-type and privilege
+requirements. See the
+[API-key authentication documentation](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/).
 
 A browser key is public by definition. It must be minimally scoped to the
 services and public items the application reads, restricted to approved
@@ -282,11 +313,11 @@ it belongs in the reproducible Python path.
   application server.
 - Public project layers are loaded directly by the browser from the selected
   delivery route.
-- ArcGIS Location Platform basemap/service requests are made through the SDK
-  with a scoped and origin-restricted browser API key where available.
-- If verified capabilities support it, the delivery route may use public
-  ArcGIS Online hosted layers. Otherwise a later evidence-based decision must
-  select and verify a supported public alternative.
+- ArcGIS platform basemap/service/item requests are made through the SDK with a
+  scoped and origin-restricted browser API key where available.
+- The project-layer route may use ArcGIS Location Platform limited data
+  services, ArcGIS Online organization-hosted layers, or a non-Esri public
+  representation. A later evidence-based decision selects among them.
 
 The application host and layer host need not be the same provider. The static
 hosting platform, project-layer representation, and project-layer host all
@@ -307,6 +338,9 @@ project layers, and matching precomputed results.
 - Any authenticated publication is an author-run action outside the repository.
   An agent does not sign in, publish, change sharing, spend credits, or operate
   the user's ArcGIS account.
+- No account check or publication test enables pay-as-you-go billing, adds a
+  payment method, exceeds an already available free tier, or otherwise
+  authorizes spending.
 - A committed credential is treated as compromised and rotated first.
 
 ## Large-data handling
@@ -317,8 +351,8 @@ project layers, and matching precomputed results.
   application reads may be committed when their contract is implemented and
   their provenance is recorded.
 - Public derived layers cross the publication boundary to the selected host;
-  ArcGIS Online is one conditional destination rather than the categorical
-  destination for every output.
+  ArcGIS Location Platform and ArcGIS Online are separate conditional Esri
+  destinations, with a non-Esri public route retained if neither is suitable.
 - Git LFS is not planned for Version 1. Any demonstrated need requires a
   decision record before large binaries are added.
 - The AIS retrieval route remains an M3 decision. An entire national season is
@@ -346,13 +380,17 @@ Testing effort follows consequence:
   explicitly recorded GIS tool. Tests do not reveal every projection,
   orientation, clipping, or rendering error.
 
-Generation lineage and visual verification are related but distinct evidence:
+Generation-time lineage and visual verification are related but distinct
+evidence:
 
-1. **Generation lineage is immutable evidence of the generation run.** It
-   records the inputs, configuration, processing steps, output checksum,
-   validations performed during generation, and execution metadata. A field
-   written as `visual_inspection_status: not_completed` remains truthful for
-   the moment that sidecar was generated.
+1. **Generation-time lineage must not be manually edited.** It records the
+   inputs, configuration, processing steps, output checksum, validations
+   performed during generation, and execution metadata. A field written as
+   `visual_inspection_status: not_completed` remains truthful for that
+   generation. Under the current implementation, an explicitly authorized
+   overwrite replaces both the output and sidecar; prior run evidence is not
+   retained automatically. Append-only or versioned lineage remains future
+   work.
 2. **Post-generation visual verification is separate evidence tied to the exact
    output SHA-256.** It records the checksum, date, GIS tool and version,
    inspected views and checks, result, and relevant observations. It does not
@@ -395,8 +433,9 @@ the real whale, vessel, exposure, and boundary outputs, including:
 - whether the representation supports required symbology, legends, popups,
   attribution, and anonymous access;
 - redistribution conditions for each source and derivative; and
-- actual ArcGIS Online or alternative-host capability, quota, storage, and
-  operating constraints.
+- actual ArcGIS Location Platform service support, storage, bandwidth,
+  free-tier/billing status; ArcGIS Online privileges, credits, and storage; or
+  alternative-host capability and operating constraints.
 
 The ArcGIS SDK's installed payload and local shell build have been measured,
 but those measurements do not select a project-layer representation. Hosted
@@ -441,9 +480,10 @@ No implementation directory is scaffolded before its milestone needs it.
 | Analytical and statistical domain | ADR 0002 receives enough independent AIS-coverage evidence | Map/context extent, EPSG:3310, and the 5 km grid are settled; the reporting domain is not. |
 | Exposure formula, normalization, and weighting | Both grid-aligned inputs and the analytical domain are ready | Input units/distributions, scientific support, and sensitivity. |
 | High-exposure threshold | Exposure surface exists | Real value distribution and sensitivity analysis. |
-| Final public layer representation and host | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, anonymous browser performance, required interactions, legal constraints, credits/storage, and supported service types. No format or provider is preselected. |
-| ArcGIS Online publication route | Author completes the real capability check | Organization, privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |
-| Alternative public delivery route, if needed | ArcGIS Online is unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |
+| Final public layer representation and host | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, anonymous browser performance, required interactions, legal constraints, usage limits, and supported service types. No format or provider is preselected. |
+| ArcGIS Location Platform publication route | Author completes the Location Platform capability check | Limited single-user organization; feature/vector-tile/map-tile support; public access; storage, bandwidth, monthly free-tier headroom, and billing status. No pay-as-you-go activation or spending is authorized. |
+| ArcGIS Online publication route | Author completes the ArcGIS Online capability check | Organization privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |
+| Non-Esri public delivery route, if needed | Both Esri routes are unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |
 | Static application host | Deployment milestone | HTTPS, stable origin, static-export limits, build-time environment values, and clean-browser verification. |
 | Formal visual-verification record or command | M3/M8 reproducibility work | Must record output checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage. |
 | Reporting-domain-dependent contracts | ADR 0002 is accepted | Exposure, inside/outside statistics, exposure-layer, and application-results shapes may change with the domain. |

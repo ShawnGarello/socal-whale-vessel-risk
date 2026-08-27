@@ -20,9 +20,14 @@ MultiPolygon features, with no conversion step.
 
 The public application also has a direct Esri boundary that does not require
 ArcGIS Pro. The implemented Next.js shell uses the ArcGIS Maps SDK for
-JavaScript, and ArcGIS Location Platform services are intended to provide the
-basemap and other API-key-accessible services where available. A successful
-render with a real scoped browser API key remains unverified.
+JavaScript. ArcGIS Location Platform provides location services and a limited
+single-user organization that can create hosted feature, vector-tile, and
+map-tile data services. Its storage and bandwidth use a monthly free tier with
+optional pay-as-you-go billing. Those capabilities make it a candidate Esri
+host for project layers as well as a source of API-key-accessible basemap and
+other location services. The account's actual service, storage, bandwidth,
+free-tier, and billing status remain unverified. See Esri's
+[portal and data services FAQ](https://developers.arcgis.com/documentation/portal-and-data-services/faq/).
 
 ArcGIS Online organization hosting is a different capability boundary. The
 available account's organization access, publishing privileges, public-sharing
@@ -50,16 +55,23 @@ responsibilities:
 - **ArcGIS Online hosted layers** remain an allowed publication option when a
   real account check establishes the required organization, publishing,
   public-sharing, service-type, credit, and storage capabilities.
-- If those capabilities are unavailable or unsuitable, Version 1 may use
+- **ArcGIS Location Platform hosted data services** are a separate publication
+  candidate. They are limited to feature, vector-tile, and map-tile services
+  and are usable only when actual output compatibility, public access, storage,
+  bandwidth, monthly free-tier headroom, and billing status are verified. This
+  project does not enable pay-as-you-go billing or authorize spending.
+- If neither Esri-hosted route is available or suitable, Version 1 may use
   another publicly accessible static or otherwise supported layer-delivery
-  method that the ArcGIS Maps SDK for JavaScript can consume. No fallback
-  format or provider is selected by this decision.
+  method that the ArcGIS Maps SDK for JavaScript can consume. No non-Esri
+  fallback format or provider is selected by this decision.
 - **Next.js and the ArcGIS Maps SDK for JavaScript** remain the public
   application and map client.
-- **ArcGIS Location Platform services**, accessed from the browser through a
-  minimally scoped and origin-restricted API key, are the intended basemap and
-  service integration where available. This API-key boundary is distinct from
-  authenticated ArcGIS Online organization publishing.
+- **ArcGIS platform services and items**, accessed from the browser through a
+  minimally scoped and origin-restricted API key, remain the intended Esri
+  integration where available. ArcGIS Location Platform accounts have API-key
+  management privileges by default; ArcGIS Online has different account and
+  privilege requirements. See Esri's
+  [API-key authentication documentation](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/).
 - **ArcGIS Pro is optional and unnecessary for Version 1.** It is neither a
   missing prerequisite nor a planned repository component.
 
@@ -76,19 +88,22 @@ layers, hosted imagery, or any other representation.
 - Python remains the authoritative production path. QGIS supplies required
   spatial validation and useful exploration, but does not become an
   undocumented processing pipeline.
-- ArcGIS Online hosting remains usable if verified, but the architecture does
-  not assume it. The capability check constrains or selects the publication
+- ArcGIS Location Platform limited data services and ArcGIS Online organization
+  hosting remain separate Esri-hosted candidates. The architecture assumes
+  neither. Account-type-specific evidence constrains or selects the publication
   route instead of deciding whether the analysis can exist.
 - The final delivery representation remains open until measured output size,
   browser performance, redistribution constraints, and real account evidence
   support a choice. A fallback delivery route must be designed and verified
-  later if hosted ArcGIS Online publication is not selected.
+  later if neither Esri-hosted publication route is selected.
 - The project keeps direct Esri relevance through the ArcGIS Maps SDK for
   JavaScript and available ArcGIS platform services, even if project layers are
-  delivered outside ArcGIS Online hosting.
-- Generation lineage remains evidence of the generation run. Later visual
-  verification is separate evidence tied to the exact output checksum; it does
-  not require editing the generated lineage sidecar.
+  delivered through a non-Esri fallback.
+- Generation-time lineage must not be manually edited. Later visual verification
+  is separate evidence tied to the exact output checksum. Under the current
+  implementation, an explicitly authorized overwrite replaces the output and
+  sidecar without retaining prior run evidence automatically; append-only or
+  versioned lineage remains future work.
 
 ## Alternatives considered
 
