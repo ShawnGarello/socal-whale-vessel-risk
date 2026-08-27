@@ -10,6 +10,7 @@ from whale_vessel_analysis.whale import (
     WHALE_SOURCE_CRS,
     WhaleSchemaError,
     WhaleValidationResult,
+    _geometry_from_wkb,
     validate_whale_attributes,
     validate_whale_geometries,
     validate_whale_schema,
@@ -97,6 +98,21 @@ def test_geometry_validation_counts_null_empty_and_invalid_values() -> None:
     )
 
     assert not result.passed
+    assert result.null_geometry_rows == 1
+    assert result.empty_geometry_rows == 1
+    assert result.invalid_geometry_rows == 1
+
+
+def test_wkb_geometry_values_are_classified_before_layer_validation() -> None:
+    empty_polygon_wkb = bytes.fromhex("010300000000000000")
+    result = validate_whale_geometries(
+        [
+            _geometry_from_wkb(None),
+            _geometry_from_wkb(empty_polygon_wkb),
+            _geometry_from_wkb(b"not-wkb"),
+        ]
+    )
+
     assert result.null_geometry_rows == 1
     assert result.empty_geometry_rows == 1
     assert result.invalid_geometry_rows == 1
