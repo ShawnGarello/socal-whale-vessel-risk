@@ -212,14 +212,6 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   disabled and recorded as unresolved project assumptions. No length value is
   presented as equivalent to the BWBS approximately 300 GT condition, and no
   universal speed or implied-speed threshold has been selected.
-- The self-contained suite has 64 passing tests using temporary synthetic CSVs
-  and in-memory records. It covers accepted/rejected configuration and period,
-  source schemas, all documented AIS sentinels and malformed codes, whale
-  geometry and abundance consistency, CRS/grid invariants, deterministic
-  hashes, source locators, benchmark result checks, AIS filter and duplicate
-  invariants, temporal coverage and execution-time lineage, deterministic bundle
-  replacement under an injected clock, failed-run atomicity, an empty cleaned
-  result, and CLI success/failure boundaries.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
   whale layer (12,257 features, with zero null, empty, or invalid geometries)
   and VSR polygon (one valid feature). The required 15 July AIS prefix smoke run
@@ -252,15 +244,17 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The self-contained suite has 73 passing tests using temporary synthetic CSVs
+- The combined self-contained suite has 87 passing tests using temporary synthetic CSVs
   and in-memory records. It covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
   geometry and abundance consistency, CRS/grid invariants, deterministic
-  hashes, source locators, benchmark result checks, the exact 95 × 68 grid,
-  known full/half/partial water areas, CRS transformation, containment and area
-  conservation, map-extent containment and boundary clipping, deterministic
-  WKB/GeoParquet content identity, truthful execution timestamps, overwrite and
-  raw-output refusal, failed-run atomicity, and both CLI boundaries.
+  hashes, source locators, benchmark result checks, AIS filter and duplicate
+  invariants, temporal coverage, deterministic AIS bundle replacement, the exact
+  95 × 68 grid, known full/half/partial water areas, CRS transformation,
+  containment and area conservation, map-extent containment and boundary
+  clipping, deterministic WKB/GeoParquet content identity, truthful execution
+  timestamps, overwrite and raw-output refusal, failed-run atomicity, and the
+  CLI boundaries.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
   whale layer (12,257 features, with zero null, empty, or invalid geometries)
   and VSR polygon (one valid feature). The raw AIS prefix was correctly reported
