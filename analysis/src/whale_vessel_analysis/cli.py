@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import cast
 
 from whale_vessel_analysis.ais import AISValidationError, validate_ais_csv
+from whale_vessel_analysis.ais_processing import AISProcessingError, process_ais_csv
 from whale_vessel_analysis.config import (
     ConfigurationError,
     ProcessingConfig,
@@ -38,6 +39,10 @@ def _emit(payload: dict[str, object]) -> None:
     print(json.dumps(payload, indent=2, sort_keys=True))
 
 
+def _emit_compact(payload: dict[str, object]) -> None:
+    print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the package command-line parser."""
     parser = argparse.ArgumentParser(
@@ -59,6 +64,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ais_parser.add_argument("path", type=Path, help="AIS CSV path")
     _add_config_argument(ais_parser)
+
+    process_ais_parser = commands.add_parser(
+        "process-ais", help="clean one supplied NOAA Marine Cadastre AIS CSV"
+    )
+    process_ais_parser.add_argument(
+        "--input", type=Path, required=True, help="one AIS flat-CSV path"
+    )
+    process_ais_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        required=True,
+        help="new output bundle directory",
+    )
+    process_ais_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="replace only an existing complete AIS processing bundle",
+    )
+    _add_config_argument(process_ais_parser)
 
     whale_parser = commands.add_parser(
         "validate-whale", help="validate the selected NOAA/SWFSC whale layer"
@@ -85,9 +109,21 @@ def _run_command(args: argparse.Namespace) -> int:
         return 0
     if command == "validate-ais":
         config = _load_selected_config(cast(Path | None, args.config))
-        result = validate_ais_csv(cast(Path, args.path), config.spatial.map_extent)
-        _emit(result.to_dict())
-        return 0 if result.passed else 2
+        validation_result = validate_ais_csv(
+            cast(Path, args.path), config.spatial.map_extent
+        )
+        _emit(validation_result.to_dict())
+        return 0 if validation_result.passed else 2
+    if command == "process-ais":
+        config = _load_selected_config(cast(Path | None, args.config))
+        processing_result = process_ais_csv(
+            cast(Path, args.input),
+            cast(Path, args.output_dir),
+            config,
+            overwrite=cast(bool, args.overwrite),
+        )
+        _emit_compact(processing_result.to_dict())
+        return 0
     if command == "validate-whale":
         whale_result = validate_whale_input(
             cast(Path, args.path), layer=cast(str, args.layer)
@@ -108,6 +144,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_command(args)
     except (
         AISValidationError,
+        AISProcessingError,
         ConfigurationError,
         VSRValidationError,
         WhaleValidationError,
