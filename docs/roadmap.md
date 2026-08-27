@@ -279,6 +279,14 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   cells, plausible coastline/island gaps, and no unexplained geometry or
   projection artifacts. The inspected output SHA-256 was
   `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
+- The generated lineage sidecar truthfully records
+  `visual_inspection_status: not_completed` because it was written before the
+  QGIS check. Generation-time lineage must not be manually edited; the later
+  QGIS report and documentation are separate evidence tied to the exact output
+  checksum. An explicitly authorized overwrite currently replaces the output
+  and sidecar without automatically retaining prior run evidence. A formal
+  reusable verification record or command, plus append-only or versioned
+  lineage, is **not implemented** and remains M3/M8 follow-up work.
 
 **Not implemented**
 
@@ -319,7 +327,9 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 **Risks and open questions**
 - Raster–vector alignment and resampling choices can materially change results; the chosen approach must be justified.
 - AIS records commonly contain implausible positions and speeds; the cleaning rules will need documenting and will affect outputs.
-- Splitting work between ArcGIS Pro and Python risks steps that exist only as manual clicks and are therefore not reproducible. Manual steps must be recorded in enough detail to repeat.
+- QGIS exploration can reveal useful methods, but no production result may
+  depend on manual edits or transformations. Any result-changing step must be
+  implemented in the reproducible Python path.
 
 ---
 
@@ -339,8 +349,17 @@ path — before there is analytical content to put in it.
 - Application scaffold created following the reviewed architecture.
 - A working map view of the study area using the ArcGIS Maps SDK for JavaScript.
 - Environment-variable and credential handling in place, with nothing secret committed.
-- **A verified ArcGIS Online capability check**, recording: access to an organization; content-creation and publishing privileges; permission to share items publicly; availability of hosted imagery and tile publishing as well as hosted feature layers; credit availability and which operations consume credits; and storage availability against quota.
-- A test item published and shared publicly, then loaded from the application, proving the publish-and-serve path end to end before any real layer depends on it.
+- **A verified account-type capability check.** For ArcGIS Location Platform,
+  record limited feature/vector-tile/map-tile service support, public access,
+  storage, bandwidth, monthly free-tier headroom, and billing status. For
+  ArcGIS Online, record organization access, publishing/public-sharing
+  privileges, hosted feature/tile/imagery support, credits, and storage. The
+  check does not enable pay-as-you-go or authorize spending.
+- **When either Esri account type safely supports public hosted-feature
+  publishing without paid usage**, a minimal test item published, shared
+  publicly, and loaded from the application to prove that candidate route end
+  to end. If neither does, the outcome is recorded and the public-layer
+  end-to-end test waits for the selected non-Esri fallback route.
 - A working deployment of the empty shell.
 - Formatting, linting, and type-checking configured.
 
@@ -349,8 +368,14 @@ path — before there is analytical content to put in it.
 - The map renders, pans, and zooms over the study area.
 - No API keys or credentials appear in the repository or in committed build output.
 - The deployment is reachable and reflects the current main branch state.
-- **The ArcGIS Online capability check is complete and recorded.** Publishing privileges, public sharing, imagery and tile support, credits, and storage are each confirmed or confirmed unavailable. The deployment path is not considered proven until a publicly shared item loads in the deployed application.
-- Any capability found unavailable is recorded as a constraint on layer representation and hosting, and carried into the core-input-layers milestone rather than discovered there.
+- **The applicable account-type checks are complete and recorded.** Location
+  Platform's limited data-service, storage, bandwidth, free-tier, and billing
+  status and ArcGIS Online's organization privileges, public sharing, service
+  types, credits, and storage are each confirmed or confirmed unavailable.
+- If either Esri-hosted route safely supports the test, anonymous loading of the
+  temporary hosted item is verified. Otherwise the outcome is carried into M5
+  as evidence requiring a non-Esri publication-route decision; M4 does not
+  invent or verify that fallback.
 
 ### Progress
 
@@ -391,15 +416,18 @@ Built on the `feat/web-foundation` branch. The application is in
   reports the problem in the interface. That the map renders, pans, and zooms
   with a valid key has **not** been observed.
 
-- The ArcGIS Online capability check. Nothing about the account has been
-  established: not the organization, the user type, the role, publishing
-  privileges, public-sharing permission, hosted feature, tile, or imagery
-  support, credits, or storage. All of it remains **unverified**.
-- The public test item, and loading it from the application. Both this and the
-  capability check require the author's real account and its privileges.
+- The account-type capability checks. Nothing has been established about
+  Location Platform data-service support, public access, storage, bandwidth,
+  monthly free-tier headroom, or billing status. ArcGIS Online organization,
+  user type, role, publishing/public-sharing privileges, hosted service types,
+  credits, and storage are also unverified.
+- The conditional Esri-hosted test item and loading it from the application.
+  This is attempted only if the applicable account branch establishes public
+  hosted-feature support and enough no-cost capacity. The check requires the
+  author's real account and never enables billing or authorizes spending.
 
 The ordered steps for all of the above are in
-[development.md](development.md#arcgis-online-capability-check-and-publishing).
+[development.md](development.md#arcgis-account-type-capability-checks-and-service-access).
 
 ### Completion criteria status
 
@@ -409,14 +437,18 @@ The ordered steps for all of the above are in
 | Builds in the deployment environment | **Unverified.** No deployment environment exists yet. |
 | Map renders, pans, and zooms | **Unverified.** Requires an API key. The failure path is verified; the success path is not. |
 | No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored. |
-| Deployment reachable and reflecting main | **Unverified.** Not deployed, and this branch is not merged. |
-| ArcGIS Online capability check complete and recorded | **Unverified.** Not started; requires the author's account. |
+| Deployment reachable and reflecting main | **Unverified.** No deployment exists; main has not been deployed or verified. |
+| Account-type capability checks complete and recorded | **Unverified.** Location Platform and ArcGIS Online checks have not started; they require the author's account. |
+| Conditional Esri-hosted publish-and-serve test | **Unverified.** Attempt only if an applicable account branch verifies public hosted-feature support and enough no-cost capacity. |
 | Unavailable capabilities recorded as constraints for M5 | **Not applicable yet.** Nothing has been checked, so nothing has been found unavailable. |
 
 M4 is not complete and must not be marked complete until the deployed
-application, successful map rendering, and the ArcGIS Online publish-and-serve
-path are verified. Any unavailable account capabilities must also be recorded
-as constraints for M5.
+application, successful API-key-backed map rendering, and the real account-type
+capability checks are verified. An Esri-hosted publish-and-serve test is also
+required when either account type safely supports it without paid usage. Any
+unavailable capabilities must be recorded as publication constraints for M5;
+selection and end-to-end testing of a non-Esri route happen in later milestones
+after real layers exist.
 
 ### Findings
 
@@ -445,9 +477,11 @@ A disconnected or network-restricted deployment would need assets copied locally
 and `assetsPath` configured.
 
 **A browser-delivered API key is required for the basemap.** Without one, the
-basemap styles service returns 401 "Token Required". This is the whole reason
-the capability check gates delivery: the deployed application does not work at
-all until a key exists and is origin-restricted.
+basemap styles service returns 401 "Token Required". ArcGIS Location Platform
+accounts have API-key management privileges by default; ArcGIS Online accounts
+have different user-type and privilege requirements. Neither a configured key
+nor a successful basemap request proves project-layer hosting. The deployed map
+is not proven until a scoped, origin-restricted key works from the real origin.
 
 **The SDK prompts for a sign-in by default, and this is wrong for this
 application.** Left at its default, a rejected request opens the SDK's own
@@ -474,9 +508,16 @@ from this number. First development-server compile of the map route takes
 this repository's own. Disabled with `agentRules: false`.
 
 **Risks and open questions**
-- **ArcGIS Online account capabilities are unverified and gate delivery.** If the available account cannot publish hosted imagery or tiles, cannot share publicly, or lacks credits or storage, the layer representation and possibly the whole hosting approach have to change. This is cheaper to discover here than at release. **Still entirely open** — the check has not been started.
-- Credit consumption for publishing and storage is not yet understood and could constrain how often layers are republished during iteration. **Still open.**
-- ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Partly resolved:** a browser-delivered, origin-restricted API key is required for the basemap, and the requirements for scoping it are recorded in [development.md](development.md). What the account can actually issue is unverified.
+- **Both Esri-hosted routes are unverified and constrain publication.** Location
+  Platform is limited to feature, vector-tile, and map-tile services and must be
+  checked for public access, storage, bandwidth, free-tier headroom, and billing
+  status. ArcGIS Online must be checked for organization privileges, service
+  types, public sharing, credits, and storage. If neither fits, a later decision
+  must select and verify a non-Esri public fallback. **Still entirely open.**
+- Location Platform storage/bandwidth usage and ArcGIS Online credit/storage
+  consumption could constrain iteration. The project does not enable
+  pay-as-you-go or authorize spending. **Still open.**
+- ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Partly resolved:** a browser-delivered, origin-restricted API key is required for the basemap, Location Platform accounts have API-key privileges by default, and the requirements for scoping a browser key are recorded in [development.md](development.md). The real account and successful service access remain unverified.
 - Bundle size and initial load time of the SDK need an early look rather than a late one. **Resolved for size** — see the findings above. Load time still needs measuring on a real deployment.
 - The hosting platform is still unchosen. Its requirements are now written down in [development.md](development.md), so the choice is constrained rather than open-ended.
 
@@ -487,28 +528,43 @@ this repository's own. Disabled with `agentRules: false`.
 **Status:** Not started
 
 **Objective**
-Publish the validated input datasets as hosted layers and make them visible in the application.
+Prepare the validated input datasets for public delivery and make them visible
+in the application through the evidence-selected publication route.
 
 **Dependencies**
 - M3 (validated derived datasets exist).
-- M4 (application shell exists).
+- M4 (application shell exists and account-type capability evidence is recorded).
 
 **Deliverables**
-- Study area, VSR boundary, whale density, and vessel activity published as hosted layers.
-- A web map assembling them with symbology chosen for legibility, not decoration.
+- Study area, VSR boundary, whale density, and vessel activity prepared in a
+  selected public representation based on measured output size, browser
+  performance, redistribution terms, and real account capabilities.
+- ArcGIS Location Platform feature/vector-tile/map-tile services when its
+  verified free-tier capacity and service support fit; ArcGIS Online hosted
+  layers and a web map when verified organization capabilities fit; or a
+  documented non-Esri public route selected later when neither does. No route
+  is implemented yet.
+- The ArcGIS Maps SDK application assembling the public layers with symbology
+  chosen for legibility, not decoration.
 - Layer visibility control and legends in the application.
 - Popups or panels that state what each layer's values mean, including units.
-- Recorded mapping from each hosted layer back to the derived dataset and processing step that produced it.
+- Recorded mapping from each public layer representation back to the validated
+  derived dataset, output checksum, visual-verification evidence, and
+  processing/export steps that produced it.
 
 **Completion criteria**
 - Each layer renders at the study-area scale within an acceptable load time.
+- Anonymous access works end to end from the application. When neither Esri
+  hosting route is suitable, this criterion is verified later against the
+  selected non-Esri fallback rather than waived.
 - Every layer's legend states its units and the meaning of its values.
 - Every layer names its source and its retrieval or processing date somewhere the user can reach.
 - Layer geometry visually aligns across layers; no projection mismatch is visible.
 
 **Risks and open questions**
-- Hosted-layer size or feature-count limits may force further aggregation or generalization.
-- Raster layers may need to be published differently from vector layers, with different performance characteristics.
+- Layer size, feature-count limits, or browser performance may force a different
+  representation, aggregation, or generalization.
+- Raster and vector outputs may need different public delivery methods.
 - Symbology for a continuous density surface needs a defensible classification, since the class breaks chosen will shape how the map is read.
 
 ---
@@ -558,11 +614,12 @@ Produce the project's own analytical result: a documented relative exposure laye
 Bring the analysis into the application so a visitor can explore the exposure layer and read the results without prior GIS knowledge.
 
 **Dependencies**
-- M5 (input layers published and displayed).
+- M5 (input layers publicly delivered and displayed).
 - M6 (exposure layer and statistics exist).
 
 **Deliverables**
-- The derived exposure layer published and rendered in the application.
+- The derived exposure layer delivered through the selected public route and
+  rendered in the application.
 - A results panel presenting the inside-versus-outside statistics.
 - Explanatory text stating what the exposure layer represents, in plain language, with its assumptions visible at the point of reading.
 - Methodology and limitations reachable from the application, not only from the repository.
@@ -577,7 +634,9 @@ Bring the analysis into the application so a visitor can explore the exposure la
 
 **Risks and open questions**
 - Presenting a single headline percentage invites overinterpretation; the framing needs care.
-- Interactive exploration of a raster surface in the browser may require serving a pre-rendered or tiled representation rather than raw values.
+- Interactive exploration of a continuous surface may require a pre-rendered or
+  tiled representation rather than raw values; the format remains open until
+  the real output is measured.
 
 ---
 
@@ -593,20 +652,24 @@ Confirm that the results are correct, that the process can be rerun, and that th
 - M7 (application integrated).
 
 **Deliverables**
-- End-to-end rerun of the processing path from raw inputs, with outputs compared against the published layers.
+- End-to-end rerun of the processing path from raw inputs, with outputs compared
+  against the public layer representations.
 - Verification that every statistic in the application traces to a processing step.
 - Automated checks over analytical logic where it exists as code.
 - A documentation audit against the implemented behavior, correcting anything described as built that is not, and anything built that is not described.
 - Recorded source retrieval dates and dataset versions used for the published results.
 
 **Completion criteria**
-- A rerun reproduces the published derived layers.
+- A rerun reproduces the derived outputs behind the public layer
+  representations.
 - No documented capability is absent from the implementation, and no implemented capability is undocumented.
 - Every published number is traceable to an input and a step.
 - Known limitations are recorded in one place and referenced from the application.
 
 **Risks and open questions**
-- Manual ArcGIS Pro steps are the most likely reproducibility gap; if a rerun is not repeatable, the step needs converting to script or documenting in far more detail.
+- Unrecorded manual QGIS transformations would be a reproducibility gap. QGIS
+  remains a verification tool; result-changing production steps belong in the
+  tested Python path.
 - Source datasets can be revised or withdrawn upstream, which is why retrieval dates and versions must be recorded.
 
 ---
@@ -637,8 +700,15 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 - Version 1 scope items in [project-brief.md](project-brief.md) are all satisfied or explicitly recorded as reduced, with the reason.
 
 **Risks and open questions**
-- **Public delivery depends on ArcGIS Online account capabilities.** If public sharing, publishing privileges, imagery or tile support, credits, or storage prove insufficient, the layers cannot be served to a public visitor and the release is blocked regardless of how complete the analysis is. This is verified in M4 precisely so it is not discovered here.
-- Credits and storage are consumable. A release can be blocked by an exhausted quota even when everything was working during development.
+- **Public delivery depends on a verified publication route.** ArcGIS Location
+  Platform limited data services or ArcGIS Online organization hosting may be
+  used if the applicable account evidence supports the selected representation.
+  If neither does, a non-Esri public fallback must be selected and verified end
+  to end before release; none is implemented today.
+- Location Platform storage/bandwidth limits and billing status or ArcGIS Online
+  credits/storage are constraints if those routes are selected. The project
+  does not enable pay-as-you-go or authorize spending. Any non-Esri host will
+  have its own measured limits and operating constraints.
 - Deployment hosting and any ArcGIS credential requirements must be settled before release, not at release.
 - Screenshots and headline numbers go stale if the analysis is later revised; they need a stated "results as of" date.
 

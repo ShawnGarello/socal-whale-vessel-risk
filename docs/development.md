@@ -6,10 +6,12 @@
 > their commands are real** — they are recorded below and were run to write them
 > down. The repository also contains the [M2 verification
 > utility](../tools/README.md), which is separate from the analysis package. The
-> ArcGIS Pro project is **not** built. The analysis package validates source
+> ArcGIS Pro is optional and unnecessary for Version 1; no ArcGIS Pro project
+> is planned as a repository component. The analysis package validates source
 > inputs and configuration, processes one explicitly supplied AIS extract into
 > an atomic local bundle, and generates the projected per-cell water grid.
-> Retrieval and all other derived processing remain unfinished.
+> QGIS is the local inspection and visual-verification tool. Retrieval and all
+> other derived processing remain unfinished.
 
 ---
 
@@ -37,7 +39,8 @@ If two documents contradict each other, the owner above wins and the other is co
 ## Local development
 
 This section fills in as each part is built. The **web application shell and
-Python analysis foundation exist**; the ArcGIS Pro project does not.
+Python analysis foundation exist**. QGIS has verified the exact generated
+water-grid artifact; ArcGIS Pro is not a Version 1 prerequisite.
 
 ### Application (Next.js / TypeScript) — implemented
 
@@ -270,6 +273,44 @@ index orientation, and no unexplained gaps, spikes, slivers, displaced cells,
 or projection artifacts. The renders, temporary QGIS project, and evidence
 report remain ignored and are not project deliverables.
 
+**Reviewing the exact derived output in QGIS**
+
+1. Obtain or regenerate the local GeoParquet at the documented path. Do not
+   convert or export it before review.
+2. From `analysis/`, compute its SHA-256 before opening it. On this Windows
+   environment:
+
+   ```text
+   Get-FileHash -Algorithm SHA256 -LiteralPath "..\data\interim\m3-spatial-grid\noaa-whale-footprint-water-grid.parquet"
+   ```
+
+3. In QGIS, use **Layer → Add Layer → Add Vector Layer** and select that exact
+   `.parquet` file, or pass the same path to the recorded headless review
+   procedure. Do not save a converted copy and inspect that instead.
+4. Inspect the CRS, extent, location and axis order, row/column orientation,
+   context-boundary clipping, NOAA-footprint alignment, coastline/island gaps,
+   geometry artifacts, and any layer-specific checks. Record both failures and
+   passes.
+5. Tie the evidence to the pre-open checksum and record the date, QGIS
+   tool/version, inspected views/checks, result, and relevant observations.
+
+Generation-time lineage must not be manually edited. The existing sidecar
+records `visual_inspection_status: not_completed` because it was written before
+the QGIS check; that value remains truthful for that generation. Under the
+current implementation, an explicitly authorized overwrite replaces both the
+output and sidecar, and prior run evidence is not retained automatically. The
+later QGIS report and the documentation above are separate evidence for output
+SHA-256 `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
+A formal reusable verification-record command and append-only or versioned
+lineage are not implemented; the [roadmap](roadmap.md) carries that M3/M8
+follow-up.
+
+QGIS is not a production transformation boundary. If inspection or exploration
+reveals a needed clip, repair, field calculation, reprojection, classification,
+or other result-changing operation, implement it in Python with configuration,
+tests, and lineage, then generate and inspect a new artifact. Do not carry an
+unrecorded QGIS-edited file forward to publication.
+
 **Large-tabular evidence benchmark**
 
 The parameterized command supporting [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md)
@@ -285,12 +326,15 @@ module import; its separate warm-up process only warms the operating-system
 file cache. Polars and psutil are benchmark-only dependencies; DuckDB is the
 sole production large-tabular engine.
 
-### ArcGIS Pro — not built
+### QGIS — inspection and visual verification
 
-Pending implementation. A documented project location and the version used,
-since Pro projects are version-sensitive.
+QGIS is used locally to inspect exact source and derived spatial artifacts,
+explore methods or cartography, and perform the required visual-verification
+step described above. It does not own deterministic processing, configuration,
+tests, lineage, or production transformations; Python owns those boundaries.
 
-Whoever creates each of these updates this section in the same branch.
+ArcGIS Pro is optional and unnecessary for Version 1. There is no planned
+ArcGIS Pro directory or project to implement.
 
 ## Environment variables and secrets
 
@@ -298,7 +342,11 @@ Whoever creates each of these updates this section in the same branch.
 - Local configuration lives in an ignored `.env.local`. A committed `.env.example` lists required variable **names** with empty or placeholder values only.
 - Deployment configuration is set in the hosting platform, not in the repository.
 - Any key shipped to the browser is public. It must be scoped and origin-restricted, and must never carry publishing or account-management rights.
-- ArcGIS Online publishing credentials stay on the author's machine. Publishing is a local, authenticated operation and is never automated from the repository in Version 1.
+- The browser key provides access to intended ArcGIS platform/basemap services
+  and explicitly authorized items. It never proves publishing capability.
+- If an Esri-hosted publication route is selected, authenticated publication
+  credentials stay on the author's machine. Publishing is a local,
+  author-run action and is never automated from the repository in Version 1.
 - A committed secret is treated as compromised. Rotate it first; clean history second. Do not reverse that order.
 - Before every commit, check the diff for values that look like credentials. This is a habit, not a tool.
 
@@ -329,126 +377,146 @@ browser with no existing session — a private window, or a different device —
 and confirm the map renders and the console is clean. Until that has been done,
 the deployment is unverified and must be described that way.
 
-## ArcGIS Online capability check and publishing
+## ArcGIS account-type capability checks and service access
 
-Everything in this section is an **authenticated, author-run action**. An agent
-does not perform any of it: it does not sign in, publish items, change sharing,
-alter organization settings, or spend credits. The steps are written so the
-author can run them and record the findings.
+There are three publication candidates: ArcGIS Location Platform limited data
+services, ArcGIS Online organization-hosted layers, and a non-Esri public route
+if neither Esri option fits. The browser API-key check is related but separate:
+it proves access to the basemap, location services, and explicitly authorized
+items; it does not by itself prove that either account can host the project
+layers.
 
-Run them in order. Record each answer in [roadmap.md](roadmap.md) under M4, and
-record anything that turns out to be unavailable as a constraint carried into
-the core-input-layers milestone.
+Esri documents Location Platform as a limited single-user organization that can
+create feature, vector-tile, and map-tile services. Storage and bandwidth use a
+monthly free tier with optional pay-as-you-go billing. ArcGIS Online has a
+different organization, privilege, credit, and storage model. See Esri's
+[portal and data services FAQ](https://developers.arcgis.com/documentation/portal-and-data-services/faq/)
+and [API-key authentication documentation](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/).
 
-### 1. Identify the account and organization
+Everything involving an account is an **authenticated, author-run action**. An
+agent does not sign in, publish, change sharing, alter organization settings,
+enable billing, add a payment method, or spend money. A test is not attempted
+if it could exceed an already available free tier or consume paid capacity.
 
-1. Sign in at <https://www.arcgis.com/> (or the ArcGIS Location Platform
-   dashboard at <https://location.arcgis.com/>).
-2. Open the account menu → **My settings**, and record:
-   - the **organization name and URL** (`https://<org>.maps.arcgis.com`), or that
-     the account is a Location Platform account with no organization;
-   - the **user type** (for example Creator, Professional, Viewer);
-   - the **role** (Administrator, Publisher, User, or custom).
+Record capability outcomes under M4 in [roadmap.md](roadmap.md). Record only the
+non-sensitive billing mode: `free-tier-only` or `pay-as-you-go already enabled`.
+Never commit payment information, subscription identifiers, balances, invoices,
+or temporary capability-test item IDs. A future public production item ID or
+service URL may be committed when the application requires it; that public
+identifier is configuration and provenance, not a credential. Carry unavailable
+or unsuitable capabilities into M5 as evidence for the publication-format and
+route decision.
 
-The user type and role together determine what can be published. A Viewer user
-type cannot create content at all. Location Platform accounts can issue API keys
-and use basemaps but are not the same as an ArcGIS Online organization; if that
-is what exists, hosted-layer publishing needs checking specifically rather than
-assumed.
+### 1. Identify the account type
 
-### 2. Confirm privileges
+Sign in privately at <https://www.arcgis.com/> or the ArcGIS Location Platform
+dashboard at <https://location.arcgis.com/> and determine which branch applies:
 
-In **Organization → Members**, open the account, or check **My settings →
-Licenses**. Record whether each of these is present:
+- **ArcGIS Location Platform:** a limited single-user organization. API-key
+  management privileges are available by default, but actual data-service,
+  public-access, usage, and billing status still require checking.
+- **ArcGIS Online:** an organization account whose user type, role, and custom
+  privileges determine available capabilities.
 
-- **Create, update, and delete content** — required to publish anything.
-- **Publish hosted feature layers** — required for vector layers.
-- **Publish hosted tile layers** — required for pre-rendered raster or tiled
-  delivery.
-- **Publish hosted imagery layers** — required if the exposure surface is
-  delivered as imagery rather than features or tiles. This is the one most
-  likely to be missing, and it constrains how the derived layer can be
-  represented.
-- **Share with everyone (public)** — required for anonymous visitors.
+Do not commit the organization URL, account name, user name, subscription id,
+or another account identifier.
 
-Also check **Organization → Settings → Sharing** for an organization-level
-policy that blocks public sharing regardless of individual privilege. If public
-sharing is blocked, the delivery path in
-[architecture.md](architecture.md) does not hold and needs a decision record.
+### 2A. Check ArcGIS Location Platform data services
 
-### 3. Record credits and storage
+For a Location Platform account, record only the capability outcomes:
 
-- **Organization → Credits** (or the Location Platform dashboard usage page):
-  record remaining credits and any per-member budget.
-- **Organization → Status → Content** or the storage summary: record storage
-  used against quota.
+- whether hosted feature, vector-tile, and map-tile service creation is
+  available to the account;
+- whether the intended service can be shared for anonymous public access;
+- current storage and bandwidth usage, the applicable monthly free-tier limits,
+  and enough remaining headroom for a minimal test and the likely project
+  representation; and
+- whether pay-as-you-go billing is disabled or already enabled.
 
-Publishing, storing, and tile generation consume credits. Record the current
-figures before publishing anything so later consumption can be attributed.
+Do **not** enable pay-as-you-go, add or change payment information, or publish a
+test that could incur a charge. If the account is already pay-as-you-go, that is
+a constraint to record, not authorization to spend. Location Platform does not
+offer hosted imagery or scene services under the documented limited data-service
+support; if the eventual output needs one, this route is unsuitable unless the
+representation changes on measured evidence.
 
-### 4. Publish a minimally scoped public test item
+### 2B. Check ArcGIS Online organization capabilities
 
-The point is to prove the publish-and-serve path end to end while risking
-nothing. Use throwaway data — **not** project data, and nothing derived from a
-dataset whose redistribution terms are still unverified.
+For an ArcGIS Online account, inspect the user type, role, and organization
+policy, then record whether these capabilities are available:
 
-1. Create a CSV with a handful of arbitrary points inside the Southern
-   California Bight, for example three rows of `name,latitude,longitude`.
-2. **Content → New item → Your device**, upload the CSV, and choose to publish
-   it as a **hosted feature layer**.
-3. Name it so it is obviously disposable and dated, for example
-   `m4-publish-path-test-<yyyy-mm-dd>`. Add a description saying it is a
-   temporary capability test to be deleted.
-4. Open the item → **Share** → **Everyone (public)**.
-5. Record: whether publishing succeeded, whether public sharing was permitted,
-   the item id, and the credits consumed.
+- create, update, and delete content;
+- publish hosted feature, tile, and imagery layers;
+- share with everyone, including any organization-level policy restriction;
+- sufficient credits and any per-member budget; and
+- sufficient storage.
 
-If any step is refused, record exactly which one and the message shown. That
-refusal is the finding — it is more valuable than a success.
+Do not change the role, privileges, organization policy, credit budget, or
+subscription. If public sharing or a required service type is unavailable,
+record ArcGIS Online hosting as constrained and continue evaluating the other
+publication candidates.
 
-### 5. Verify anonymous access
+### 3. Conditionally test an Esri-hosted feature service
 
-Do not skip this. An item can appear shared and still not be reachable.
+Attempt a minimal hosted-feature-service test only when the applicable branch
+has already verified public sharing and enough no-cost capacity. Use throwaway
+data — **not** project data and nothing derived from a source whose
+redistribution terms remain unverified.
 
-1. Copy the layer's **service URL** from the item page.
-2. Open a **private/incognito window** with no ArcGIS session and request
-   `<service URL>/0?f=pjson`.
-3. Confirm JSON comes back rather than a token or sign-in response.
-4. Then load the item in the application to close the loop end to end.
+1. Create a CSV with a handful of arbitrary Southern California Bight points.
+2. Publish it as a hosted feature service through the applicable Location
+   Platform or ArcGIS Online portal workflow.
+3. Mark it clearly as a disposable, dated capability test.
+4. Share it with everyone.
+5. Record whether publication and public sharing succeeded, which account-type
+   branch was tested, and whether storage, bandwidth, or credits changed. Keep
+   the item id privately only until cleanup; do not commit it.
 
-### 6. Configure the API key
+If a prerequisite is missing, the portal refuses a step, or the operation could
+incur a charge, stop. Record the outcome and do not work around account or
+billing policy.
 
-1. In the developer credentials area, create **API key credentials**.
-2. Scope the key to the minimum needed: basemap styles, plus read access to the
-   public test item. **No publishing, content-management, or
-   account-management privilege** — those belong to the author's interactive
-   sign-in, never to a key shipped to a browser.
-3. Set **referrer URLs** to `http://localhost:3000` and the deployed origin.
-   A browser-delivered key is public by definition; referrer restriction is what
-   limits its use.
-4. Put the key in `web/.env.local` as `NEXT_PUBLIC_ARCGIS_API_KEY`. Never in
-   `.env.example`, never in a commit, never in a screenshot.
-5. Set the same variable in the hosting platform's build environment.
+### 4. Verify anonymous access
 
-Record the key's expiry. API keys are valid for up to a year, and an expired key
-takes the deployed map down.
+When a test service exists, copy its service URL and request its JSON metadata
+from a private browser session with no ArcGIS sign-in. Confirm the response is
+available without an interactive token, then load the service in the
+application. If no safe test was possible, record this check as not attempted
+and why.
 
-### 7. Deploy and verify
+### 5. Configure and verify the browser API key
+
+ArcGIS Location Platform accounts have API-key management privileges by
+default. ArcGIS Online API-key availability depends on user type and privileges;
+the account check records the actual outcome.
+
+1. Create API key credentials in the applicable developer-credentials area.
+2. Scope the key to the minimum needed: basemap styles and intended location
+   services, plus read access to a project/test item only when required. It has
+   no publishing, content-management, organization, billing, or
+   account-management rights.
+3. Restrict referrer URLs to `http://localhost:3000` and the deployed origin.
+4. Put the key in ignored `web/.env.local` as
+   `NEXT_PUBLIC_ARCGIS_API_KEY`; never put a value in `.env.example`, a commit,
+   or a screenshot.
+5. Set the same variable in the host's build environment without exposing it in
+   repository or deployment logs.
+
+Record expiry and rotation details outside the repository. Successful basemap
+rendering with the key is a distinct M4 check and does not prove project-layer
+hosting.
+
+### 6. Deploy and verify
 
 Follow "Deploying the application" above, then verify from a clean browser
 session as described there.
 
-### 8. Clean up the test item
+### 7. Clean up a test service, if created
 
-Once the path is proven and recorded:
-
-1. Delete the hosted feature layer and its source CSV item.
-2. If the API key was scoped to that item, remove that scope.
-3. Record the deletion, so a later reader does not go looking for an item that
-   was removed on purpose.
-
-Leaving a stray public item costs storage and creates something publicly shared
-that nothing documents.
+Delete the hosted feature service and its source item. Remove item access from
+the API key if it was granted, and record the deletion without committing the
+item id. Leaving a test item consumes storage and may consume bandwidth or
+credits.
 
 ## Raw data
 
@@ -461,14 +529,23 @@ that nothing documents.
 ## Generated outputs
 
 - Derived datasets are generated by the processing path, not hand-edited. If a derived file needs changing, change the process that produces it.
-- Derived datasets are published to ArcGIS Online rather than committed, with one exception: small results the application reads — such as the summary-statistics file — may be committed so the application and its numbers stay versioned together.
+- Validated derived datasets cross the provider-neutral publication boundary to
+  the evidence-selected public delivery route. ArcGIS Location Platform limited
+  data services and ArcGIS Online organization-hosted layers are separate Esri
+  candidates; a non-Esri public representation must be selected and verified if
+  neither is suitable. No route is selected or implemented yet.
+- Small results the application reads — such as a future summary-statistics
+  file — may be committed once their contract is allowed, so the application
+  and its numbers stay versioned together.
 - A committed generated file must record what produced it and when.
-- Build output, caches, virtual environments, ArcGIS Pro scratch data, and editor state are ignored, never committed.
+- Build output, caches, virtual environments, QGIS/ArcGIS scratch data, and
+  editor state are ignored, never committed.
 - Deleting everything under the derived directory and rerunning the process must be a safe operation. If it is not, something important is only stored in a generated file, which is a bug in the process.
 
 ## Testing and verification
 
-Effort follows consequence. Detail on where testing does and does not apply is in [architecture.md](architecture.md#testing-boundaries).
+Effort follows consequence. Detail on where testing does and does not apply is
+in [architecture.md](architecture.md#testing-and-visual-verification-boundaries).
 
 In practice:
 
@@ -476,6 +553,12 @@ In practice:
 - Input validation — coordinate reference system, extent, nulls, value ranges — is asserted inside the processing path so a bad input fails loudly rather than producing a plausible-looking wrong map.
 - Application code gets type checking and linting, plus tests for non-trivial presentational logic.
 - **Visual inspection is mandatory** for every derived spatial layer. Some errors — a wrong projection, an off-by-one grid, a flipped sign — are only visible on a map. Passing tests do not substitute for looking at the result.
+- Visual inspection evidence is recorded separately from generation-time
+  lineage and tied to the exact output SHA-256. The generated sidecar is not
+  manually edited; an explicitly authorized overwrite currently replaces it
+  and does not retain prior run evidence. Until a reusable record or command
+  exists, documentation must explicitly record the checksum, date, GIS
+  tool/version, inspected views/checks, result, and relevant observations.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
@@ -541,7 +624,9 @@ Multiple coding sessions — human or agent — may run at once. They must not s
 - **Split work along ownership lines.** Concurrent sessions should touch different areas — for example analysis versus application. Two sessions editing the same document will conflict, and documentation conflicts are harder to resolve correctly than code conflicts because both sides usually look fine.
 - **Preserve unrelated changes.** If a session finds uncommitted changes it did not make, it stops and reports them. It does not stage, commit, stash, revert, or "clean up" work belonging to someone else.
 - **Rebase and history rewriting are not shared operations.** Do not rewrite history on a branch another session may be using.
-- **Publishing to ArcGIS Online is not concurrent-safe.** Two sessions publishing layers to the same items will overwrite each other. Only one session performs publishing at a time.
+- **Publishing to an Esri-hosted item is not concurrent-safe.** Two sessions
+  publishing to the same Location Platform or ArcGIS Online item can overwrite
+  each other. Only one session performs publishing at a time.
 
 ## Recording incomplete or uncertain work
 

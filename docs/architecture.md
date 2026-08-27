@@ -2,317 +2,499 @@
 
 **Owns:** system design, component boundaries, and deferred design decisions.
 
-> **Status: accepted as the initial architecture.** Recorded in [ADR 0001](decisions/0001-accept-initial-architecture.md).
+> **Status: accepted and refined.** [ADR 0001](decisions/0001-accept-initial-architecture.md)
+> accepted the initial direction. [ADR 0015](decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md)
+> refines its tooling and publication assumptions after implementation and
+> visual-verification evidence; it does not rewrite ADR 0001's historical
+> context.
 >
-> Accepted means this is the direction implementation follows. It does not mean it is proven. The application shell, Python processing foundation, one-extract AIS cleaning slice, and projected water-grid slice are implemented — see M3 and M4 in the [roadmap](roadmap.md). Retrieval, remaining spatial aggregation and exposure processing, publishable derived layers, deployment, and the hosting half of this design are not. The repository also contains one data-discovery verification utility, [tools/](../tools/README.md), which is separate from the analysis package.
->
-> Data discovery has established the dataset formats and resolutions several parts depended on, and the licensing position for both NOAA sources — see [data-sources.md](data-sources.md) — and some of the deferred decisions at the end of this document are now resolved. **Three things remain open, and each gates a different part of delivery:**
->
-> 1. **The analytical and statistical domain** — [ADR 0002](decisions/0002-southern-california-study-area-extent.md), still Proposed, because AIS coverage offshore is unestablished. Gates the exposure statistics.
-> 2. **Redistribution of the VSR zone geometry** — publicly shared by BWBS/CMSF with attribution, but with no redistribution grant, and the publisher is not a federal agency. Gates hosting that geometry as a project-owned layer. **Referencing the publisher's own service from the application remains available and is not affected**, so this constrains the hosting approach rather than the delivery.
-> 3. **The ArcGIS Online capability gate** — still unverified.
->
-> Changes to an accepted architecture are recorded as decision records under [decisions/](decisions/README.md) rather than made silently.
->
-> Of the source-code layout near the end of this document, `web/` and `analysis/` now exist. `arcgis/` and `results/` remain deliberately uncreated.
+> The Next.js application shell, Python processing foundation, deterministic
+> one-extract AIS cleaning, and projected water-grid construction are
+> implemented. QGIS 4.2.1 has visually verified the exact generated water-grid
+> GeoParquet. Retrieval, whale transfer, vessel aggregation, the exposure
+> analysis, a final public layer representation, and deployment remain
+> unfinished. See the [roadmap](roadmap.md) for milestone status.
+
+Three independent questions remain open and gate different work:
+
+1. **Analytical and statistical domain.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md)
+   remains Proposed because offshore AIS coverage is unestablished. This gates
+   the exposure surface and inside-versus-outside statistics.
+2. **VSR geometry redistribution.** The BWBS/CMSF geometry is publicly shared
+   with attribution but has no confirmed redistribution grant. This gates
+   project-hosted publication of a copy, not analysis against the local source
+   or reference to the publisher's service.
+3. **Publication route.** ArcGIS Location Platform data-service support,
+   storage, bandwidth, free-tier headroom, and billing status are unverified.
+   ArcGIS Online organization access, publishing/public-sharing privileges,
+   hosted feature/tile/imagery support, credits, and storage are also
+   unverified. Account-type-specific checks constrain the publication route;
+   they do not determine whether Version 1 can be completed.
+
+Changes to this accepted architecture are recorded under
+[decisions/](decisions/README.md), not made silently.
 
 ---
 
 ## System context
 
-The system has three kinds of participant:
+The system has four kinds of participant:
 
-- **Authoritative external publishers** — NOAA and the California BWBS program — who publish the whale distribution model, the AIS vessel records, and the VSR zone definition. They are read-only upstreams. See [data-sources.md](data-sources.md).
-- **The author, working offline**, who retrieves that data, inspects it, processes it into derived datasets, and publishes the results. All analysis happens here.
-- **A visitor's browser**, which loads a static web application and reads published layers. The browser displays and filters; it does not analyze.
+- **Authoritative external publishers** — NOAA and the California BWBS program
+  publish the whale distribution model, AIS vessel records, and VSR zone
+  definition. They are read-only upstreams; provenance and verification status
+  are owned by [data-sources.md](data-sources.md).
+- **The author and local toolchain** — Python performs deterministic processing
+  and analysis. QGIS inspects source and derived spatial artifacts and supplies
+  visual-verification evidence. Local source and generated data are not
+  committed.
+- **Public publication services** — validated outputs cross a provider-neutral
+  boundary into a publicly accessible representation. ArcGIS Location Platform
+  limited data services and ArcGIS Online organization-hosted layers are
+  separate Esri candidates. A non-Esri route remains available if neither fits.
+- **A visitor's browser** — a static Next.js application uses the ArcGIS Maps
+  SDK for JavaScript to read public layers and available ArcGIS platform
+  services. It presents and filters; it does not calculate exposure or reported
+  statistics.
 
-The important boundary is between the second and third: **every analytical decision is made offline and published as a result.** The browser never recomputes the exposure index. This keeps the analysis reproducible, keeps the client fast, and keeps the numbers shown to a visitor identical to the numbers in the documentation.
+The load-bearing boundary is between analysis and presentation: every decision
+that can change a reported number happens in the reproducible Python path. QGIS
+inspection and publication may validate or represent an output, but may not
+silently alter its analytical meaning.
 
 ## End-to-end data flow
 
-```
+```text
 Authoritative sources
   NOAA whale distribution model
   NOAA / USCG AIS vessel records
   California BWBS VSR zone definition
         |
         v
-Local raw data store  (not committed to Git)
+Local raw data store  (Git-ignored; inputs remain unchanged)
         |
         v
-Offline processing    (ArcGIS Pro and/or Python)
-  inspect -> clean -> reproject -> clip to study area
-  -> aggregate onto analysis grid -> combine -> derive exposure
+Deterministic Python processing and analysis
+  validate -> clean -> reproject -> grid/aggregate -> derive
+  tests + versioned configuration + generation lineage
         |
         v
-Validated derived datasets  (+ recorded lineage)
+Validated derived artifacts and lineage
+        |
+        +----> QGIS inspection and visual verification
+        |        separate checksum-bound evidence; no production edits
         |
         v
-ArcGIS Online
-  hosted feature / tile layers
-  web map
+Provider-neutral publication / export boundary
+        |
+        +----> ArcGIS Location Platform feature/vector-tile/map-tile service,
+        |        when free-tier capacity and account capabilities permit
+        |
+        +----> ArcGIS Online organization-hosted layer,
+        |        when privileges, credits, and storage permit
+        |
+        `----> selected non-Esri public representation,
+               when neither Esri-hosted route is suitable
         |
         v
-Next.js + TypeScript application
-  ArcGIS Maps SDK for JavaScript
+Next.js + ArcGIS Maps SDK for JavaScript
+  public layers + precomputed statistics
+  ArcGIS platform basemap/services and public project layers where available
         |
         v
-Static deployment  ->  visitor's browser
+Static deployment -> visitor's browser
 ```
 
-Summary statistics follow the same path: they are computed offline in the processing step, checked against the published layers, and delivered to the application as a small committed data file rather than recomputed client-side.
+The three publication branches in this diagram are candidates, not implemented
+fallbacks. Their final format and host remain deferred. Summary statistics
+follow the same analysis boundary and may be delivered as a small, versioned
+file the static application reads; the browser does not recompute them.
 
 ## Component responsibilities
 
-### ArcGIS Pro
-
-- Visual inspection of source data — the fastest way to notice that a dataset is in the wrong place, the wrong projection, or the wrong units.
-- Exploratory spatial analysis while the method is still being worked out.
-- Cartographic work: symbology, classification, and layouts.
-- Publishing derived datasets to ArcGIS Online.
-- Geoprocessing that is materially easier in Pro than in code.
-
-**Constraint:** anything done in Pro that affects a published result must be reproducible. A sequence of manual clicks that cannot be repeated is not an acceptable production step. Pro work that shapes results should be either recorded as an ordered, parameter-level written procedure, or exported to a script or model that can be rerun.
-
 ### Python
 
+Python is the reproducible processing and analytical core.
+
 **Implemented in part.** The src-based package under
-[`analysis/`](../analysis/README.md) has a uv-locked Python 3.13 environment, a
-module/console entry points, versioned analytical-period,
-map/grid/source/whale/AIS/VSR/lineage contracts, read-only source validators,
-and deterministic processing for one explicitly supplied NOAA AIS flat CSV
-extract whose valid timestamps belong to exactly one UTC date. The extract may
-cover only part of that date, so completeness remains `unverified` without
-retrieval evidence. The command emits an atomic cleaned Parquet/report/lineage
-bundle over the map extent, records real execution timestamps separately from
-the analytical period, and applies the duplicate policy in
-[ADR 0013](decisions/0013-remove-conflicting-ais-key-records.md). The
-configuration records the accepted 1 July–30 November 2024 period while keeping
-the analytical/statistical domain unresolved. A separate spatial module
-validates and unions an explicitly supplied polygon mask, reprojects it to
-EPSG:3310 with explicit x/y ordering, clips it to a densified projection of the
-configured WGS84 map/context extent, constructs the exact configured grid, and
-writes actual per-cell water intersections as deterministic GeoParquet with
-lineage. The map/context clip is not a statistical-domain decision. It does not
-retrieve data, transfer whale values, aggregate vessels, calculate relative
-exposure, or derive statistics.
+[`analysis/`](../analysis/README.md) has a uv-locked Python 3.13 environment,
+DuckDB as the production large-tabular engine, versioned configuration and
+source/processing/lineage contracts, read-only input validators, deterministic
+one-extract AIS cleaning, and deterministic EPSG:3310 water-grid construction.
+The grid process accepts an explicit polygon mask, clips it to the projected
+map/context boundary, intersects the exact configured grid, and writes actual
+per-cell water geometry and area as GeoParquet plus generation lineage. It does
+not retrieve the analytical-period AIS data, transfer whale values, aggregate
+vessels, calculate relative exposure, or derive statistics.
 
-DuckDB is the single primary engine for large AIS tables, selected by the
-equivalent-operation benchmark in [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md).
-Polars remains only in a benchmark dependency group and is not a second
-production pipeline.
+Python owns or is planned to own:
 
-- Retrieval and bulk handling of AIS records, which are too large and too repetitive for manual work.
-- Cleaning and filtering: vessel-class selection, implausible-position and implausible-speed removal, deduplication.
-- Grid construction and water-mask intersection. **Implemented.** The grid is
-  always constructed from the accepted bounds and does not infer its extent or
-  origin from the input. The biological-support mask is first clipped to the
-  configured WGS84 map/context polygon after 0.01° edge densification and
-  EPSG:3310 projection. Dry cells are omitted and every retained row carries
-  actual intersected geometry and area in EPSG:3310. [ADR
-  0014](decisions/0014-select-the-grid-water-mask.md) selects the NOAA 2020b
-  whale-model footprint as the biological-support mask while keeping it
-  separate from both an authoritative shoreline and future AIS observability.
-- Aggregation onto the analysis grid.
-- The relative exposure calculation itself — this is the project's own analytical contribution and should live in code that can be read, reviewed, and rerun.
-- Computation of the inside-versus-outside VSR summary statistics. **These are computed by fractional area intersection, not by classifying cells.** Each grid cell is intersected with the water mask, that water geometry is intersected with the VSR polygon, and the cell's exposure is split by the resulting area fractions. A boundary cell is never assigned whole to one side, by centroid or by majority area — doing so would make the headline statistic depend on grid origin and cell size. See [ADR 0004](decisions/0004-analysis-grid-resolution.md), which also records the assumption this introduces and the synthetic cases that must verify it.
-- Validation checks over inputs and outputs.
-- Emission of lineage metadata alongside each derived dataset.
+- source retrieval boundaries and large-tabular handling;
+- source validation, cleaning, filtering, deduplication, and reprojection;
+- deterministic grid construction and water-mask intersection;
+- whale-value transfer and vessel aggregation onto the analysis grid;
+- the relative-exposure calculation and fractional inside/outside VSR
+  statistics after the analytical domain is accepted;
+- synthetic tests whose answers are known by construction;
+- versioned configuration, run metadata, provenance links, and output lineage;
+- deterministic export preparation at the publication boundary.
 
-Python is the preferred home for any step that must be reproducible or that will be run more than once.
+Any repeatable transformation that changes a derived value belongs here. A
+manual GIS experiment can inform a method, but that method becomes a recorded,
+tested Python step before it contributes to a production result.
 
-The implemented grid boundary uses GeoParquet 1.1.0 with WKB and explicit
-EPSG:3310 metadata as a **local deterministic processing format**. A sibling
-JSON file records lineage and the Parquet checksum. This is not a publishing
-decision: ArcGIS compatibility has not been verified, and the eventual hosted
-representation remains constrained by the ArcGIS Online capability gate.
-Execution timestamps record actual start-before-load and post-Parquet-write
-completion, while the deterministic run ID is derived from input,
-configuration, processing version, and output content rather than timestamps.
-Generated grid output is refused beneath the project `data/raw/` tree.
+The implemented grid is GeoParquet 1.1.0 with WKB and explicit EPSG:3310
+metadata as a **local deterministic processing format**. It is not the selected
+public delivery format. ArcGIS compatibility for that file has not been
+verified.
 
-### ArcGIS Online
+### QGIS
 
-- Hosting the derived layers as feature or tile services.
-- Holding the web map that assembles them with agreed symbology.
-- Serving those layers to the application over HTTPS.
-- Sharing and access control for the published items.
+QGIS is the local GIS inspection, exploratory-review, cartographic-review, and
+visual-verification tool. It is not the production processing system.
 
-ArcGIS Online is a publication and hosting target, not a processing tier. Analysis is not performed there for Version 1.
+QGIS is used to:
 
-**Account capability is an unverified delivery gate.** This architecture assumes ArcGIS Online can host the project's eventual layers and serve them publicly. That assumption has not been checked against an actual account, and it is a hard delivery constraint rather than a detail: if the available account cannot publish or share what the analysis produces, the delivery path does not work. The following must all be verified before the hosting approach is considered proven:
+- open exact source or derived spatial artifacts without conversion where the
+  format is supported;
+- inspect CRS, extent, layer placement, geometry, orientation, coastline and
+  island gaps, boundary clipping, and other properties tests can miss;
+- explore candidate methods or symbology before reproducible choices are
+  implemented and recorded; and
+- provide post-generation visual-verification evidence tied to the inspected
+  output checksum.
 
-- access to an ArcGIS Online organization, and which one;
-- content-creation and publishing privileges on that account;
-- permission to share items publicly, and whether the organization allows public sharing at all;
-- availability of hosted imagery or tile publishing, not only hosted feature layers;
-- credit availability, and which publishing operations consume credits;
-- storage availability against the account's quota;
-- whether the account supports the raster-delivery method the exposure layer ends up needing.
+On 2026-08-27, QGIS 4.2.1 successfully opened the exact generated GeoParquet
+and verified 4,516 EPSG:3310 MultiPolygon features. This is evidence for that
+specific checksum, not evidence that every future spatial output is correct.
 
-The last two points matter most for the whale-density input and the derived exposure result, which may be raster or tiled imagery rather than features. **The final layer representation and hosting approach therefore depend partly on verified account capabilities**, not only on the analytical resolution chosen. No layer format is selected here; the choice is made once both the resolution and the account capabilities are known. Verification is a deliverable of the application-foundation milestone in the [roadmap](roadmap.md).
+No production result may depend on an unrecorded manual QGIS edit, conversion,
+field calculation, geoprocessing action, or export. If exploration in QGIS
+reveals a needed transformation, it is implemented in the Python path with
+configuration, tests, and lineage. QGIS project files and rendered inspection
+images are local evidence unless a later decision explicitly makes a small
+artifact part of the repository.
+
+### Publication and export boundary
+
+Publication begins only after programmatic validation and visual inspection. It
+may change representation for browser delivery, but it may not change the
+underlying analytical values without returning to the Python processing path.
+
+The boundary must preserve a traceable mapping among:
+
+- the validated derived artifact and its checksum;
+- the generation run and source lineage;
+- the post-generation visual-verification evidence;
+- any export or tiling parameters; and
+- the public layer or file the application consumes.
+
+The final representation is deliberately open. Candidate routes are ArcGIS
+Location Platform limited data services, ArcGIS Online organization-hosted
+layers, and a non-Esri public fallback if neither is suitable. Selection depends
+on measured output size, feature count or raster characteristics, geometry
+complexity, browser load/render performance, redistribution terms,
+anonymous-access requirements, and verified account or hosting capabilities.
+GeoJSON, vector tiles, hosted feature layers, hosted tile/imagery layers, and
+other supported representations are candidates, not decisions.
+
+### ArcGIS Online organization hosting
+
+ArcGIS Online is a conditional publication and hosting option, not a processing
+tier and not a prerequisite for Version 1. If a real account check verifies the
+needed capabilities, it may host project feature, tile, or imagery layers and
+serve them anonymously to the application.
+
+The following facts remain unverified and must not be inferred from account type
+or documentation alone:
+
+- organization access, user type, role, and content-creation privileges;
+- hosted feature, tile, and imagery publishing privileges;
+- permission and organization policy for public sharing;
+- credits and the cost of intended publishing/storage operations;
+- available storage; and
+- anonymous access to the resulting service.
+
+If a required capability is unavailable, that evidence becomes a constraint on
+the publication-format decision. It does not invalidate the Python analysis,
+QGIS verification, static application, or Esri map-client integration. A later
+milestone must evaluate ArcGIS Location Platform and, if needed, a non-Esri
+public route; none is selected or implemented yet.
+
+### ArcGIS Location Platform limited organization and data services
+
+ArcGIS Location Platform is a separate Esri-hosted publication candidate, not
+only an API-key and basemap provider. Esri documents it as a limited single-user
+organization with support for creating hosted feature, vector-tile, and
+map-tile services. It does not provide the full ArcGIS Online organization
+capability set, and the documented Location Platform data-service list does not
+include hosted imagery or scene services. See Esri's
+[portal and data services FAQ](https://developers.arcgis.com/documentation/portal-and-data-services/faq/).
+
+Location Platform storage and data-service bandwidth use a monthly free tier
+with optional pay-as-you-go billing. Before it can be selected, the author must
+verify the real account's supported service types, public access, current
+storage and bandwidth use, free-tier limits and remaining headroom, and billing
+status. This project does **not** authorize enabling pay-as-you-go, adding a
+payment method, or incurring a charge. If a safe test cannot remain within an
+already available free tier, it is not run and the route remains unverified or
+is recorded as unsuitable.
+
+### Browser API-key services
+
+The application intends to use an ArcGIS basemap and may use other appropriate
+platform services or project items through the ArcGIS Maps SDK where available.
+Those browser requests use `NEXT_PUBLIC_ARCGIS_API_KEY`. Esri documents API-key
+management privileges as available by default for ArcGIS Location Platform
+accounts; ArcGIS Online accounts have separate user-type and privilege
+requirements. See the
+[API-key authentication documentation](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/).
+
+A browser key is public by definition. It must be minimally scoped to the
+services and public items the application reads, restricted to approved
+origins, and must never carry publishing, content-management, organization, or
+account-management privileges. Publishing credentials never enter the
+application or repository.
+
+The missing-key failure path is implemented and verified. Successful rendering
+with a real, scoped API key remains unverified. Whether the account can issue
+the needed credential and whether the intended services work from the deployed
+origin also remain to be checked.
 
 ### Next.js, TypeScript, and the ArcGIS Maps SDK for JavaScript
 
-- Loading the published layers and rendering the map.
-- Layer visibility, legends, and popups.
-- Presenting precomputed summary statistics.
-- Explaining what each layer means, including units, assumptions, and limitations.
-- Client-side filtering and view state — cheap, presentational operations only.
+The public application is a static Next.js and TypeScript presentation layer
+using the ArcGIS Maps SDK for JavaScript. The application shell exists and
+builds. The SDK is mounted through client-only web components per
+[ADR 0009](decisions/0009-mount-arcgis-through-client-only-map-components.md),
+while [ADR 0008](decisions/0008-deliver-the-application-as-a-static-export.md)
+enforces a static build with no application server.
 
-The application is a presentation layer. It does not compute exposure, does not derive statistics, and does not transform data in ways that would change a reported number.
+The client is responsible for:
 
-## Offline processing versus browser-side processing
+- loading the selected public layer representation;
+- rendering the map, layers, legends, visibility controls, and popups;
+- presenting precomputed summary statistics and methodology;
+- exposing units, assumptions, limitations, and provenance; and
+- client-side view state and other presentational interactions.
 
-| Concern | Offline (Pro / Python) | Browser (Next.js / SDK) |
-|---|---|---|
-| Raw source retrieval and cleaning | Yes | Never |
-| Reprojection, clipping, gridding | Yes | Never |
-| Exposure index computation | Yes | Never |
-| Inside/outside VSR statistics | Yes | Never |
-| Symbology decisions | Yes (authored) | Applied as published |
-| Layer visibility, opacity, basemap | — | Yes |
-| Attribute filtering of a displayed layer | — | Yes |
-| Map extent, zoom, popups | — | Yes |
+It does not retrieve raw inputs, transform analytical data, calculate exposure,
+or derive reportable statistics. No deployment exists yet, and successful
+API-key-backed map rendering has not been observed.
 
-The rule behind the table: **if it changes a number a reader might quote, it happens offline.** If it only changes what is currently visible, it can happen in the browser.
+### ArcGIS Pro
 
-## Proposed deployment model
+ArcGIS Pro is optional and unnecessary for Version 1. It is paid software and
+is unavailable to this project. There is no missing ArcGIS Pro prerequisite,
+no planned `arcgis/` repository directory, and no milestone waits for a Pro
+project. If it becomes available later, it may be used for optional inspection
+or exploration under the same rule as QGIS: no production result may depend on
+an unrecorded manual transformation.
 
-- A static or statically-rendered Next.js build, deployed to a hosting platform that serves it over HTTPS from a stable public URL.
-- No application server, no server-side rendering of analytical content, no server-side data processing.
-- Layers served directly from ArcGIS Online to the browser.
-- Deployments triggered from the repository's default branch.
+## Processing versus presentation
 
-Specific hosting platform: **to be decided.** The constraints that matter are HTTPS, a stable URL, static hosting of a Next.js build, and the ability to inject environment variables at build time.
+| Concern | Python processing | QGIS review | Browser application |
+|---|---|---|---|
+| Raw retrieval, validation, cleaning | Owns | May inspect read-only | Never |
+| Reprojection, clipping, gridding | Owns | Verifies output | Never |
+| Exposure and inside/outside statistics | Owns | Verifies spatial output | Never |
+| Exploratory method/cartography review | Records accepted method in code/configuration | Supports exploration | Never |
+| Publication-format conversion | Reproducible export boundary | May inspect exported artifact | Never |
+| Layer visibility, opacity, map view | — | May preview | Owns |
+| Display filtering and popups | — | May preview | Owns |
 
-This model has two halves, and only one of them is about the web host. The application half is straightforward. The layer half depends entirely on ArcGIS Online account capabilities — publishing privileges, public sharing, imagery or tile support, credits, and storage — as set out under [ArcGIS Online](#arcgis-online) above. The deployment path is not proven until both halves are verified: a deployed application that cannot load a publicly shared layer is not a deployment.
+The rule is simple: if an operation can change a number a reader might quote,
+it belongs in the reproducible Python path.
+
+## Deployment model
+
+- Next.js produces a static export served over HTTPS from a stable public URL.
+- Version 1 has no custom backend, server-side analysis, database, or runtime
+  application server.
+- Public project layers are loaded directly by the browser from the selected
+  delivery route.
+- ArcGIS platform basemap/service/item requests are made through the SDK with a
+  scoped and origin-restricted browser API key where available.
+- The project-layer route may use ArcGIS Location Platform limited data
+  services, ArcGIS Online organization-hosted layers, or a non-Esri public
+  representation. A later evidence-based decision selects among them.
+
+The application host and layer host need not be the same provider. The static
+hosting platform, project-layer representation, and project-layer host all
+remain unselected. A local build proves none of them: completion requires a
+clean-browser test of the deployed application, basemap/service access, public
+project layers, and matching precomputed results.
 
 ## Secrets and credentials
 
-- No credential, API key, token, or ArcGIS Online password is ever committed. This includes example files, screenshots, notebooks, and test fixtures.
-- Configuration reaches the application through environment variables, supplied locally by an ignored `.env.local` and in deployment by the hosting platform's environment settings.
-- A committed `.env.example` lists required variable **names** with empty or placeholder values, and never real values.
-- Any key that reaches the browser is public by definition. Any such key must be scoped and referrer-restricted to the deployed origin, and must never be a key with publishing or account-management rights.
-- Publishing to ArcGIS Online is an authenticated, local, author-run operation. Those credentials stay on the author's machine and never enter the repository or the application build.
-- If a credential is ever committed, it is treated as compromised: rotate it first, then clean up history.
+- No credential, API key, token, connection string, account identifier, or
+  password is committed, including in examples, screenshots, notebooks, or
+  fixtures.
+- Local browser configuration uses ignored `.env.local`; deployment values are
+  supplied as build-time environment configuration.
+- Committed examples list variable names only and contain no real keys.
+- Every browser-delivered key is public, minimally scoped, origin-restricted,
+  and read-only. It never has publishing or account-management rights.
+- Any authenticated publication is an author-run action outside the repository.
+  An agent does not sign in, publish, change sharing, spend credits, or operate
+  the user's ArcGIS account.
+- No account check or publication test enables pay-as-you-go billing, adds a
+  payment method, exceeds an already available free tier, or otherwise
+  authorizes spending.
+- A committed credential is treated as compromised and rotated first.
 
 ## Large-data handling
 
-- **Raw source data is never committed.** AIS extracts in particular can be very large. Raw data lives in a local, Git-ignored directory.
-- Derived datasets are published to ArcGIS Online rather than committed, except where a derived output is genuinely small and benefits from being versioned — for example the summary-statistics file the application reads.
-- Git LFS is **not** planned for Version 1. If a real need appears, it gets a decision record first.
-- Every dataset the project depends on must be *retrievable*: the register in [data-sources.md](data-sources.md) records the source, retrieval method, and retrieval date so that an uncommitted file can be obtained again.
-- The AIS extract is scoped to the study area and analytical period as early as the chosen route allows. **The route itself is an M3 decision**: NOAA's AccessAIS tool returns a spatial and temporal subset directly and is preferred, but it was not exercised during discovery, and the only confirmed route is the bulk daily national files. Bulk retrieval is therefore permitted under the guard in [data/README.md](../data/README.md) — one day at a time, filtered immediately, national copy discarded once a validated scoped output exists. **What is prohibited in every case is staging an entire national season locally.**
-- Data volumes are now estimated rather than unknown: discovery puts the study-area extract at order 10⁸ records and ≈56 GB of transfer for the analytical period, as an order-of-magnitude planning figure scaled from a small sample. **The measured volume is not known and will not be until M3 retrieval runs.** If it turns out large enough to break this model, that finding gets recorded and the model gets revised.
+- Raw source data is never committed. It lives in the Git-ignored local data
+  root governed by [data/README.md](../data/README.md).
+- Local interim and derived artifacts remain ignored. Small results the static
+  application reads may be committed when their contract is implemented and
+  their provenance is recorded.
+- Public derived layers cross the publication boundary to the selected host;
+  ArcGIS Location Platform and ArcGIS Online are separate conditional Esri
+  destinations, with a non-Esri public route retained if neither is suitable.
+- Git LFS is not planned for Version 1. Any demonstrated need requires a
+  decision record before large binaries are added.
+- The AIS retrieval route remains an M3 decision. An entire national season is
+  never staged locally; the detailed retrieval guard belongs to
+  [data/README.md](../data/README.md).
 
-**The tabular engine is now settled; the retrieval route is not.** DuckDB is the
-production scan/filter/aggregation boundary per [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md).
-On the 22.7 MB M2 AIS prefix it produced the same grouped result as Polars with
-a lower median elapsed time and peak RSS. That half-hour benchmark chooses one
-foundation engine; it does not establish full-day or full-period performance.
-At least one complete scoped day must be measured before resource behavior is
-described as established.
+DuckDB is the production large-tabular boundary per
+[ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md). The
+existing half-hour benchmark selects the foundation engine but does not
+establish full-day or full-period performance.
 
-## Testing boundaries
+## Testing and visual-verification boundaries
 
-Testing effort follows consequence, not coverage.
+Testing effort follows consequence:
 
-- **Analytical code (Python)** — the highest-value target. Aggregation, normalization, the exposure calculation, and the inside/outside statistics should be tested with small synthetic inputs whose correct answers are known by construction. A geometry whose area is known, a grid whose totals are known, and — specifically — the fractional boundary cases set out in [ADR 0004](decisions/0004-analysis-grid-resolution.md), including the case of a cell 45% inside the zone that centroid and majority-area assignment both score as entirely outside.
-- **Validation checks** — CRS correctness, extent coverage, null handling, and value ranges are asserted as part of processing rather than as a separate test suite.
-- **Application code (TypeScript)** — type checking and linting, plus tests for any non-trivial presentational logic such as number formatting or classification. UI tests are not a Version 1 priority.
-- **Not tested** — third-party libraries, the ArcGIS SDK, ArcGIS Online itself, and the correctness of upstream datasets. Upstream data is *inspected and documented*, not unit-tested.
-- **Manual verification remains part of the process.** Some spatial errors are only visible on a map. Visual inspection of each derived layer is a required step, not a substitute for tests.
+- Python analytical logic is tested with small synthetic inputs whose answers
+  are known by construction, including the fractional-boundary cases in
+  [ADR 0004](decisions/0004-analysis-grid-resolution.md).
+- Processing validates CRS, extent, nulls, geometry, ranges, invariants, and
+  output identity so bad inputs or outputs fail loudly.
+- TypeScript receives type checking, linting, and tests for non-trivial
+  presentation logic. The ArcGIS SDK and external services are verified through
+  browser integration checks rather than unit tests.
+- Every derived spatial layer requires visual inspection in QGIS or another
+  explicitly recorded GIS tool. Tests do not reveal every projection,
+  orientation, clipping, or rendering error.
 
-TypeScript tests run on Vitest — see [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md). Python tests run on pytest, with Ruff for formatting/linting and strict mypy for package source — see [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md). Exact commands for both packages are in [development.md](development.md).
+Generation-time lineage and visual verification are related but distinct
+evidence:
 
-## Reproducibility and data lineage
+1. **Generation-time lineage must not be manually edited.** It records the
+   inputs, configuration, processing steps, output checksum, validations
+   performed during generation, and execution metadata. A field written as
+   `visual_inspection_status: not_completed` remains truthful for that
+   generation. Under the current implementation, an explicitly authorized
+   overwrite replaces both the output and sidecar; prior run evidence is not
+   retained automatically. Append-only or versioned lineage remains future
+   work.
+2. **Post-generation visual verification is separate evidence tied to the exact
+   output SHA-256.** It records the checksum, date, GIS tool and version,
+   inspected views and checks, result, and relevant observations. It does not
+   require or permit manually editing the generated lineage sidecar.
 
-Reproducibility is a Version 1 requirement, not a nice-to-have. It rests on three practices:
+The current QGIS documentation records successful verification of output
+SHA-256 `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`
+on 2026-08-27 in QGIS 4.2.1. A formal reusable verification record or command
+is not implemented. That follow-up belongs to the processing/reproducibility
+workflow, not to this documentation-only architecture change.
 
-1. **Recorded provenance.** For each source: publisher, exact URL or tool used, retrieval date, any query parameters or extract bounds, and dataset version or vintage where one is published.
-2. **An ordered processing path.** Each derived dataset records the steps that produced it, in order, with the parameters used. Steps performed in ArcGIS Pro are written down at parameter level. Code is not self-documenting for this purpose — source alone does not capture how it was run — so a coded step is reproducible only when all of the following exist: version-controlled code; configuration and parameters that are themselves versioned rather than passed ad hoc; a documented invocation or entrypoint; a pinned or recorded environment, including runtime and dependency versions; and run metadata tying that execution to the specific input datasets and output datasets it consumed and produced. The locked environment, versioned configuration with a deterministic digest, CLI boundaries, and run-metadata structures now support the one-extract AIS cleaning and projected water-grid steps. The complete retrieval-to-derived workflow is not implemented, and no workflow engine has been selected.
-3. **Traceable outputs.** Each published layer and each reported statistic maps back to the derived dataset and processing step that produced it. Nothing is published whose origin cannot be stated.
+## Reproducibility and lineage
 
-The intended test of all this is simple: rerun the process from raw inputs and compare against the published layers. That check happens in M8 of the [roadmap](roadmap.md).
+Reproducibility rests on four linked practices:
 
-## Initial performance considerations
+1. **Recorded provenance:** publisher, retrieval method, parameters, date,
+   version/vintage, local artifact identity, and checksum.
+2. **An ordered Python processing path:** version-controlled code, versioned
+   configuration, documented entrypoints, locked environment, tests, and run
+   metadata.
+3. **Separate spatial verification:** checksum-bound evidence recorded after
+   inspecting the exact derived artifact.
+4. **Traceable publication:** every public layer and reported statistic maps to
+   a validated derived artifact, generation run, verification record, and any
+   representation-changing export step.
 
-These are early concerns to keep in view, not measured problems:
+The intended end-to-end test is to rerun from unchanged raw inputs, reproduce
+the validated derived outputs, repeat spatial verification where required, and
+compare them with what the deployed application serves. M8 owns that gate.
 
-- **ArcGIS SDK payload.** The Maps SDK is substantial. Import only what is used, and watch initial load time from the start rather than at release.
-- **Feature count and geometry complexity.** Vessel-activity layers can carry very high feature counts. Aggregating to the analysis grid before publishing is both the analytical choice and the performance choice.
-- **Raster versus vector delivery.** A continuous exposure surface may be better served as tiles than as features. The decision depends on the resolution chosen in discovery.
-- **Classification cost.** Client-side renderer classification over large layers is slower than publishing a layer with symbology already defined.
-- **Basemap and layer requests** on a mid-range connection: a reviewer opening the deployed app should see something meaningful quickly.
+## Performance and publication-format selection
 
-No performance budget has been set. One should be set once the real layers exist.
+No final project-layer format is selected. The decision requires evidence from
+the real whale, vessel, exposure, and boundary outputs, including:
+
+- byte size, feature count, geometry complexity, and raster dimensions where
+  applicable;
+- transfer size, time to first meaningful map, pan/zoom responsiveness, memory
+  use, and behavior on a mid-range connection/device;
+- whether the representation supports required symbology, legends, popups,
+  attribution, and anonymous access;
+- redistribution conditions for each source and derivative; and
+- actual ArcGIS Location Platform service support, storage, bandwidth,
+  free-tier/billing status; ArcGIS Online privileges, credits, and storage; or
+  alternative-host capability and operating constraints.
+
+The ArcGIS SDK's installed payload and local shell build have been measured,
+but those measurements do not select a project-layer representation. Hosted
+feature layers, hosted tiles/imagery, vector tiles, GeoJSON, and other formats
+remain candidates until the real outputs exist and browser tests distinguish
+them.
 
 ## Version 1 architectural constraints
 
-For Version 1, the project deliberately does **not** introduce:
-
-- a custom backend or API service,
-- microservices,
-- PostGIS or any self-hosted database,
-- job queues or schedulers,
-- containers or Kubernetes,
-- AI or machine-learning features.
-
-Each of these would add operational surface without serving the Version 1 question. Any of them may be introduced later if a concrete, demonstrated need appears — and if it does, it gets a decision record explaining the need before it gets an implementation.
+Version 1 deliberately does not introduce a custom backend or API service,
+microservices, PostGIS or another self-hosted database, job queues, schedulers,
+containers, Kubernetes, or AI features. The provider-neutral publication
+boundary does not authorize any of those. A future need must be demonstrated
+and recorded before the architecture expands.
 
 ## Current and planned repository structure
 
-`web/` and `analysis/` now exist, created by their respective foundation work.
-The analysis package has foundation modules, source validators, one-extract AIS
-processing, the projected water-grid implementation, and tests. The other
-processing responsibilities listed below remain intended boundaries rather than
-a claim that all of them exist. `arcgis/` and `results/` remain proposed and are not
-created before a milestone needs them.
+`analysis/` and `web/` exist. The remaining entries are existing documentation
+and local data boundaries or explicitly deferred small results; no ArcGIS Pro
+directory is planned.
 
-```
+```text
 socal-whale-vessel-risk/
-├── docs/                  # documentation (exists)
-│   └── decisions/         # architecture decision records (exists)
-├── analysis/              # Python analysis package  (exists)
-│   ├── src/               #   contracts, validators, AIS/grid processing, CLIs  (exists)
-│   └── tests/             #   synthetic foundation/processing tests  (exists)
-├── data/                  # local data root, Git-ignored  (exists)
-│   ├── raw/               #   untouched source downloads
-│   ├── interim/           #   intermediate processing outputs
-│   └── derived/           #   validated outputs for publication
-├── arcgis/                # ArcGIS Pro project and exported tools  [proposed]
-├── web/                   # Next.js + TypeScript application  (exists)
-│   ├── app/               #   routes and pages  (exists)
-│   ├── components/        #   map and UI components  (exists)
-│   ├── lib/               #   configuration and formatting helpers  (exists)
-│   └── types/             #   ambient type declarations  (exists)
-└── results/               # small committed outputs the app reads  [proposed]
+├── docs/                  # documentation and ADRs (exists)
+├── analysis/              # Python processing package and tests (exists)
+├── data/                  # Git-ignored local data root (exists)
+│   ├── raw/               # untouched source downloads
+│   ├── interim/           # intermediate and verification artifacts
+│   └── derived/           # validated local outputs before publication
+├── web/                   # static Next.js application (exists)
+└── results/               # small versioned application results [deferred]
 ```
 
-Open questions about the uncreated portion: whether `results/` is distinct
-enough from `data/derived/` to justify existing, and whether the ArcGIS Pro
-project belongs in the repository at all given its file sizes. These are settled
-at the milestone that needs them. The placement of both implemented packages in
-root subdirectories is settled by their existing layouts.
+Whether `results/` is distinct enough from `data/derived/` remains deferred
+until the reporting-domain-dependent application-results contract is allowed.
+No implementation directory is scaffolded before its milestone needs it.
 
 ## Explicitly deferred decisions
 
-Deferred on purpose. Each should be resolved by evidence — real data, real measurements — and recorded as a decision record when it is.
-
-| Decision | Deferred until | Why it is not decided now |
+| Decision | Deferred until | Selection basis |
 |---|---|---|
-| Study area extent, projected CRS, and analysis grid resolution | **Partly resolved** | Projection settled in [ADR 0003](decisions/0003-projected-coordinate-system.md) and grid in [ADR 0004](decisions/0004-analysis-grid-resolution.md). Extent is **split and only half settled** in [ADR 0002](decisions/0002-southern-california-study-area-extent.md), which is Proposed: the map and context extent is fixed, the **analytical and statistical domain is not**, because AIS coverage offshore is unestablished. |
-| ~~Analytical period for Version 1~~ | **Resolved by data discovery** | [ADR 0005](decisions/0005-analytical-period.md). The whale model turned out not to be a time series at all, and AIS is only published through 2024. |
-| Exposure index formula, normalization, and weighting | After both inputs are inspected | Cannot be defined responsibly before the units and value distributions of the inputs are known. |
-| High-exposure threshold definition | After the exposure surface exists | Should be chosen against the real value distribution and tested for sensitivity. |
-| Raster versus vector representation for the exposure layer | After resolution is chosen and account capabilities are verified | Drives both publishing method and client performance, and is constrained by what the ArcGIS Online account can actually publish. |
-| ~~Whether vessel speed is used in the index or reported separately~~ | **Resolved by data discovery** | [ADR 0006](decisions/0006-report-vessel-speed-separately.md). `SOG` is present, documented, and appears usable in the inspected sample — not established across the full period — and is reported separately rather than weighted into the index, because weighting it would require a lethality assumption the brief forbids. |
-| Split of work between ArcGIS Pro and Python for each processing step | Processing workflow | Depends on which operations turn out to be awkward in code. |
-| Hosting platform for the deployed application | Still open | The requirements a host must satisfy are now written down in [development.md](development.md), so the choice is constrained. The platform itself is still not chosen, and nothing is deployed. |
-| ArcGIS Online account capability and publishing feasibility — organization access, publishing privileges, public sharing, hosted imagery and tile support, credits, storage | Application foundation, before the deployment path is treated as proven | Unverified against a real account. It gates what can be published at all, and therefore constrains the layer representation and the hosting approach. |
-| ArcGIS Online sharing model and API-key scoping | Application foundation | Depends on the account and licensing available, and on the capability check above. |
-| ~~Test framework and toolchain for Python~~ | **Resolved by the processing foundation** | uv, Ruff, mypy, pytest, and Hatchling are recorded in [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md). The TypeScript half remains Vitest in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md). |
-| Layer schemas, field names, and any data or API contract | **Partly resolved.** M3 implements source, processing, grid, whale-input, AIS-input, VSR-source, lineage, and local projected-water-grid contracts under `analysis/`. The exposure-layer, statistics, and results-file contracts still wait on [ADR 0002](decisions/0002-southern-california-study-area-extent.md). | Contracts written against imagined data are wrong contracts — and contracts written against an undecided reporting domain are wrong for the same reason. |
+| Analytical and statistical domain | ADR 0002 receives enough independent AIS-coverage evidence | Map/context extent, EPSG:3310, and the 5 km grid are settled; the reporting domain is not. |
+| Exposure formula, normalization, and weighting | Both grid-aligned inputs and the analytical domain are ready | Input units/distributions, scientific support, and sensitivity. |
+| High-exposure threshold | Exposure surface exists | Real value distribution and sensitivity analysis. |
+| Final public layer representation and host | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, anonymous browser performance, required interactions, legal constraints, usage limits, and supported service types. No format or provider is preselected. |
+| ArcGIS Location Platform publication route | Author completes the Location Platform capability check | Limited single-user organization; feature/vector-tile/map-tile support; public access; storage, bandwidth, monthly free-tier headroom, and billing status. No pay-as-you-go activation or spending is authorized. |
+| ArcGIS Online publication route | Author completes the ArcGIS Online capability check | Organization privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |
+| Non-Esri public delivery route, if needed | Both Esri routes are unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |
+| Static application host | Deployment milestone | HTTPS, stable origin, static-export limits, build-time environment values, and clean-browser verification. |
+| Formal visual-verification record or command | M3/M8 reproducibility work | Must record output checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage. |
+| Reporting-domain-dependent contracts | ADR 0002 is accepted | Exposure, inside/outside statistics, exposure-layer, and application-results shapes may change with the domain. |
 
-The last row matters most, and its rule has moved on now that the data has been inspected: **a contract may be written when the data it describes has been inspected and settling the analytical domain could not change it.** The exposure formula and every reporting-domain-dependent contract still wait. The operative wording is in [../AGENTS.md](../AGENTS.md).
+Resolved choices remain recorded in their ADRs: EPSG:3310
+([0003](decisions/0003-projected-coordinate-system.md)), the 5 km grid and
+fractional boundary accounting ([0004](decisions/0004-analysis-grid-resolution.md)),
+the 2024 analytical period ([0005](decisions/0005-analytical-period.md)), separate
+vessel-speed reporting ([0006](decisions/0006-report-vessel-speed-separately.md)),
+the static application and client-only SDK boundary ([0008](decisions/0008-deliver-the-application-as-a-static-export.md),
+[0009](decisions/0009-mount-arcgis-through-client-only-map-components.md)),
+the Python toolchain and DuckDB engine ([0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md),
+[0012](decisions/0012-use-duckdb-for-large-tabular-processing.md)), and the
+whale-model support mask ([0014](decisions/0014-select-the-grid-water-mask.md)).
