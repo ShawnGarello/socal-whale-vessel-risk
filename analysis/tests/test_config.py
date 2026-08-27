@@ -14,6 +14,10 @@ from whale_vessel_analysis.config import (
 def _document() -> dict[str, Any]:
     return {
         "schema_version": 1,
+        "analytical_period": {
+            "start_date": "2024-07-01",
+            "end_date": "2024-11-30",
+        },
         "spatial": {
             "projected_crs": "EPSG:3310",
             "grid_cell_size_m": 5000,
@@ -37,6 +41,10 @@ def test_default_configuration_records_settled_spatial_invariants() -> None:
     config = load_default_config()
 
     assert config.schema_version == 1
+    assert config.analytical_period.to_dict() == {
+        "start_date": "2024-07-01",
+        "end_date": "2024-11-30",
+    }
     assert config.spatial.map_extent.to_dict() == {
         "crs": "EPSG:4326",
         "lon_min": -122.0,
@@ -50,8 +58,25 @@ def test_default_configuration_records_settled_spatial_invariants() -> None:
     assert config.spatial.grid.rows == 68
     assert config.spatial.analytical_domain_status == "unresolved"
     assert config.digest() == (
-        "617f1b3b513d15b1c7bc3a6f8bf4a13f4ad60687c9342332473c0a40051939ff"
+        "df60aa03796ca979eff5bdca4c620fbac809a797d40d320ea649276d6c889c06"
     )
+
+
+@pytest.mark.parametrize("key", ["start_date", "end_date"])
+def test_rejects_period_outside_accepted_analytical_window(key: str) -> None:
+    document = _document()
+    document["analytical_period"][key] = "2024-06-30"
+
+    with pytest.raises(ConfigurationError, match="analytical period must be"):
+        config_from_mapping(document)
+
+
+def test_rejects_invalid_period_date() -> None:
+    document = _document()
+    document["analytical_period"]["start_date"] = "not-a-date"
+
+    with pytest.raises(ConfigurationError, match="must be an ISO date"):
+        config_from_mapping(document)
 
 
 @pytest.mark.parametrize(

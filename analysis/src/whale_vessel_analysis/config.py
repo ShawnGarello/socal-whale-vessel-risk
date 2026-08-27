@@ -8,11 +8,14 @@ import math
 import tomllib
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import date
 from importlib import resources
 from pathlib import Path
 from typing import Final, Literal, cast
 
 CONFIG_SCHEMA_VERSION: Final = 1
+ANALYTICAL_PERIOD_START: Final = date(2024, 7, 1)
+ANALYTICAL_PERIOD_END: Final = date(2024, 11, 30)
 MAP_EXTENT_CRS: Final = "EPSG:4326"
 PROJECTED_CRS: Final = "EPSG:3310"
 GRID_CELL_SIZE_M: Final = 5_000
@@ -22,6 +25,30 @@ MAP_EXTENT_BOUNDS: Final = (-122.0, 32.0, -117.0, 35.0)
 
 class ConfigurationError(ValueError):
     """Raised when processing configuration violates a settled invariant."""
+
+
+@dataclass(frozen=True, slots=True)
+class AnalyticalPeriod:
+    """The accepted Version 1 AIS analytical period from ADR 0005."""
+
+    start_date: date
+    end_date: date
+
+    def __post_init__(self) -> None:
+        if (self.start_date, self.end_date) != (
+            ANALYTICAL_PERIOD_START,
+            ANALYTICAL_PERIOD_END,
+        ):
+            raise ConfigurationError(
+                "analytical period must be 2024-07-01 through 2024-11-30 "
+                "as accepted in ADR 0005"
+            )
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "start_date": self.start_date.isoformat(),
+            "end_date": self.end_date.isoformat(),
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -141,6 +168,7 @@ class ProcessingConfig:
     """Versioned foundation configuration with deterministic serialization."""
 
     schema_version: int
+    analytical_period: AnalyticalPeriod
     spatial: SpatialConfig
 
     def __post_init__(self) -> None:
@@ -152,6 +180,7 @@ class ProcessingConfig:
     def to_dict(self) -> dict[str, object]:
         return {
             "schema_version": self.schema_version,
+            "analytical_period": self.analytical_period.to_dict(),
             "spatial": self.spatial.to_dict(),
         }
 
@@ -210,9 +239,31 @@ def _number(table: Mapping[str, object], key: str, table_name: str) -> float:
     return float(value)
 
 
+def _date(table: Mapping[str, object], key: str, table_name: str) -> date:
+    value = _required(table, key, table_name)
+    if not isinstance(value, str):
+        raise ConfigurationError(f"{table_name}.{key} must be an ISO date string")
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise ConfigurationError(
+            f"{table_name}.{key} must be an ISO date (YYYY-MM-DD)"
+        ) from exc
+
+
 def config_from_mapping(document: Mapping[str, object]) -> ProcessingConfig:
     """Construct and validate configuration from a parsed TOML mapping."""
-    _reject_unknown(document, {"schema_version", "spatial"}, "root")
+    _reject_unknown(
+        document, {"schema_version", "analytical_period", "spatial"}, "root"
+    )
+    period_table = _mapping(
+        _required(document, "analytical_period", "root"), "analytical_period"
+    )
+    _reject_unknown(period_table, {"start_date", "end_date"}, "analytical_period")
+    analytical_period = AnalyticalPeriod(
+        start_date=_date(period_table, "start_date", "analytical_period"),
+        end_date=_date(period_table, "end_date", "analytical_period"),
+    )
     spatial_table = _mapping(_required(document, "spatial", "root"), "spatial")
     _reject_unknown(
         spatial_table,
@@ -258,6 +309,7 @@ def config_from_mapping(document: Mapping[str, object]) -> ProcessingConfig:
         )
     return ProcessingConfig(
         schema_version=_integer(document, "schema_version", "root"),
+        analytical_period=analytical_period,
         spatial=SpatialConfig(
             map_extent=map_extent,
             grid=grid,

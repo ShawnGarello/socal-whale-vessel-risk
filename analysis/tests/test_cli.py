@@ -33,6 +33,10 @@ def test_validate_default_config_boundary(
     assert payload["configuration"]["spatial"]["analytical_domain_status"] == (
         "unresolved"
     )
+    assert payload["configuration"]["analytical_period"] == {
+        "start_date": "2024-07-01",
+        "end_date": "2024-11-30",
+    }
     assert payload["sha256"] == (
-        "617f1b3b513d15b1c7bc3a6f8bf4a13f4ad60687c9342332473c0a40051939ff"
+        "df60aa03796ca979eff5bdca4c620fbac809a797d40d320ea649276d6c889c06"
     )
