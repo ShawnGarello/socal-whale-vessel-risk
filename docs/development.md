@@ -125,7 +125,7 @@ re-run; the built package declares only runtime requirements.
 |---|---|
 | `python -m uv sync --locked` | Creates or updates the ignored environment from the committed lock without changing it. |
 | `python -m uv lock --check` | Fails if `pyproject.toml` and `uv.lock` disagree. |
-| `python -m uv run ruff format .` | Rewrites Python, TOML, and test files to the configured format. |
+| `python -m uv run ruff format .` | Rewrites Python source and test files to the configured format. |
 | `python -m uv run ruff format --check .` | Checks formatting without rewriting. |
 | `python -m uv run ruff check .` | Runs Ruff linting. |
 | `python -m uv run mypy src/whale_vessel_analysis` | Strictly type-checks package source. |
@@ -164,8 +164,10 @@ python -m uv run python -m whale_vessel_analysis.benchmark --input <ais-csv> --r
 ```
 
 It compares DuckDB and Polars in isolated processes and fails unless their
-grouped results agree. Polars and psutil are benchmark-only dependencies;
-DuckDB is the sole production large-tabular engine.
+grouped results agree. Each measured operation includes the selected engine's
+module import; its separate warm-up process only warms the operating-system
+file cache. Polars and psutil are benchmark-only dependencies; DuckDB is the
+sole production large-tabular engine.
 
 ### ArcGIS Pro — not built
 

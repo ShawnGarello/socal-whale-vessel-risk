@@ -44,11 +44,14 @@ Both candidates performed the same operation:
 
 Each engine ran in a fresh child process. One unreported run per engine warmed
 the operating-system file cache, followed by five measured runs in alternating
-engine order. Elapsed time covers the scan-through-aggregation operation, not
-module import. A 5 ms sampler recorded approximate process resident memory;
-the total peak includes the imported engine, and the increase is measured from
-immediately before the operation. RSS is an approximation rather than an
-allocation profile.
+engine order. The measured child imports its engine inside the timed operation,
+so elapsed time explicitly includes module import as well as the
+scan-through-aggregation operation. The warm-up child is separate and therefore
+does not warm Python imports for measured runs. A 5 ms sampler recorded
+approximate process resident memory; the initial RSS is sampled immediately
+before the timed operation, the total peak includes the imported engine, and
+the increase includes import and operation. RSS is an approximation rather than
+an allocation profile.
 
 ### Results
 
@@ -58,11 +61,11 @@ the command would have exited non-zero if they were not.
 
 | Engine | Elapsed, five runs (s) | Median elapsed (s) | Peak RSS, five runs (MiB) | Median peak RSS (MiB) | Median RSS increase (MiB) |
 |---|---|---:|---|---:|---:|
-| DuckDB 1.5.5 | 0.247, 0.209, 0.206, 0.247, 0.206 | **0.209** | 75.2, 78.2, 75.4, 81.9, 75.6 | **75.6** | **51.5** |
-| Polars 1.44.1 | 0.358, 0.255, 0.255, 0.237, 0.288 | **0.255** | 122.7, 119.8, 112.6, 115.7, 117.2 | **117.2** | **93.1** |
+| DuckDB 1.5.5 | 0.299, 0.316, 0.265, 0.268, 0.255 | **0.268** | 79.9, 75.6, 74.6, 77.8, 79.2 | **77.8** | **53.5** |
+| Polars 1.44.1 | 0.424, 0.304, 0.433, 0.332, 0.298 | **0.332** | 124.9, 120.8, 122.1, 119.4, 117.0 | **120.8** | **96.7** |
 
-DuckDB was about 18% faster by the median elapsed measurement and used about
-35% less total peak RSS in this run. Those percentages describe this input,
+DuckDB was about 19% faster by the median elapsed measurement and used about
+36% less total peak RSS in this run. Those percentages describe this input,
 operation, machine, and warm-cache protocol only.
 
 ## Decision

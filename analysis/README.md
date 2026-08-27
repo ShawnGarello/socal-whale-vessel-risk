@@ -53,9 +53,10 @@ schema, configuration, or value check failed. Source data is expected to need
 later cleaning, so a non-zero raw-AIS result is an audit finding rather than a
 request to edit the source.
 
-The packaged configuration records the proposed ADR 0002 map/context extent,
-EPSG:3310, and the accepted 5,000 m grid. It deliberately represents the
-analytical domain only as `unresolved`; this foundation contains no exposure,
+The packaged configuration records the accepted 1 July–30 November 2024
+analytical period, the proposed ADR 0002 map/context extent, EPSG:3310, and the
+accepted 5,000 m grid. It deliberately represents the analytical domain only as
+`unresolved`; this foundation contains no exposure,
 inside-versus-outside statistics, exposure-layer, or application-results
 contract.
 
@@ -71,5 +72,7 @@ python -m uv run python -m whale_vessel_analysis.benchmark --input <ais-csv> --r
 
 The command reads only the supplied file and writes a JSON report to standard
 output. It runs DuckDB and Polars in separate processes, samples process RSS,
-and fails unless their grouped results are equivalent. Polars and psutil are
-benchmark-group dependencies; Polars is not a production dependency.
+and fails unless their grouped results are equivalent. Measured elapsed time
+includes each engine's module import; the separate warm-up process only warms
+the operating-system file cache. Polars and psutil are benchmark-group
+dependencies; Polars is not a production dependency.

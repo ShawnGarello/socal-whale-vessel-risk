@@ -182,24 +182,27 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   The five-run evidence and its half-hour-sample limits are in
   [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md).
 - Versioned contracts now cover configurable source locators, the proposed ADR
-  0002 map/context extent, EPSG:3310, the accepted 5 km grid, the exact inspected
-  AIS header and sentinels, the selected 2020b blue-whale layer and its value
-  relationships, the VSR source geometry, and deterministic provenance/lineage
-  and run metadata.
+  0002 map/context extent, the accepted 1 July–30 November 2024 analytical
+  period, EPSG:3310, the accepted 5 km grid, the exact inspected AIS header and
+  sentinels, the selected 2020b blue-whale layer and its value relationships,
+  the VSR source geometry, and deterministic provenance/lineage and run
+  metadata.
 - The configuration represents the analytical domain only as **unresolved** and
   rejects any other status. There is no exposure formula, exposure/statistics
   contract, or application-results contract.
 - Read-only CLI commands validate configuration and supplied AIS CSV, whale
   File Geodatabase, and VSR GeoJSON paths. They produce JSON diagnostics and no
   analytical output.
-- The self-contained suite has 36 passing tests using temporary synthetic CSVs
-  and in-memory records. It covers accepted/rejected configuration, source
-  schemas, all documented AIS sentinels, whale abundance consistency, CRS/grid
-  invariants, deterministic hashes, source locators, and the CLI boundary.
+- The self-contained suite has 48 passing tests using temporary synthetic CSVs
+  and in-memory records. It covers accepted/rejected configuration and period,
+  source schemas, all documented AIS sentinels and malformed codes, whale
+  geometry and abundance consistency, CRS/grid invariants, deterministic
+  hashes, source locators, benchmark result checks, and the CLI boundary.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
-  whale layer (12,257 features) and VSR polygon (one valid feature). The raw AIS
-  prefix was correctly reported as not yet processing-ready because it contains
-  malformed/missing source values; no source file was changed.
+  whale layer (12,257 features, with zero null, empty, or invalid geometries)
+  and VSR polygon (one valid feature). The raw AIS prefix was correctly reported
+  as not yet processing-ready because it contains malformed/missing source
+  values; no source file was changed.
 
 **Not implemented**
 

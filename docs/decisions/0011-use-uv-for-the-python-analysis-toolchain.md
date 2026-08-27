@@ -12,8 +12,9 @@ dependency graph and one set of commands rather than create slice-specific
 environments.
 
 The author's machine has Python 3.13.7 and uv 0.12.6. The ignored root virtual
-environment was created for M2 exploration and contains useful packages, but it
-is not a dependency declaration and cannot make a clean clone reproducible.
+environment was created while preparing this M3 foundation and contains useful
+packages, but it is not a dependency declaration and cannot make a clean clone
+reproducible.
 Version 1 does not include CI or containers, so the local workflow itself must
 be explicit and checkable.
 

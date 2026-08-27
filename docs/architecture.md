@@ -78,7 +78,9 @@ Summary statistics follow the same path: they are computed offline in the proces
 
 **Implemented foundation.** The src-based package under [`analysis/`](../analysis/README.md)
 has a uv-locked Python 3.13 environment, a module/console entry point, versioned
-map/grid/source/whale/AIS/VSR/lineage contracts, and read-only source validators.
+analytical-period, map/grid/source/whale/AIS/VSR/lineage contracts, and read-only
+source validators. The configuration records the accepted 1 July–30 November
+2024 period while keeping the analytical/statistical domain unresolved.
 It does not yet retrieve data or implement the cleaning, reprojection, gridding,
 whale transfer, vessel aggregation, relative exposure, or statistics steps
 described below.
