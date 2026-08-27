@@ -2,7 +2,14 @@
 
 **Owns:** the engineering workflow — how work is done, recorded, verified, and reviewed in this repository.
 
-> The **web application shell and Python analysis package exist, and their commands are real** — they are recorded below and were run to write them down. The repository also contains the [M2 verification utility](../tools/README.md), which is separate from the analysis package. The ArcGIS Pro project is **not** built. The analysis package validates source inputs and configuration and processes one explicitly supplied AIS CSV into an atomic local bundle. It does not retrieve AIS, aggregate vessel activity, or produce an exposure result.
+> The **web application and Python analysis package are implemented in part and
+> their commands are real** — they are recorded below and were run to write them
+> down. The repository also contains the [M2 verification
+> utility](../tools/README.md), which is separate from the analysis package. The
+> ArcGIS Pro project is **not** built. The analysis package validates source
+> inputs and configuration, processes one explicitly supplied AIS extract into
+> an atomic local bundle, and generates the projected per-cell water grid.
+> Retrieval and all other derived processing remain unfinished.
 
 ---
 
@@ -98,14 +105,15 @@ interface rather than failing silently: it names the unset variable and shows th
 service's own response. That behaviour is verified. A **successful** basemap
 render has **not** been verified — see [roadmap.md](roadmap.md) M4.
 
-### Analysis (Python) — foundation and AIS extract processing implemented
+### Analysis (Python) — AIS extract and water-grid processing implemented
 
 The src-based package lives in [`../analysis/`](../analysis/). It owns versioned
 processing/source/lineage contracts, the selected DuckDB large-tabular boundary,
-read-only AIS/whale/VSR validators, a CLI, synthetic tests, and deterministic
-processing of one supplied NOAA AIS flat CSV extract. It does **not** retrieve AIS,
-reproject or grid spatial inputs, aggregate vessel activity, or produce a
-relative-exposure result. Run every command below from `analysis/`.
+read-only AIS/whale/VSR validators, CLI boundaries, deterministic processing of
+one supplied NOAA AIS flat CSV extract, the deterministic EPSG:3310 water-grid
+process, and synthetic tests. It does **not** retrieve AIS, transfer whale
+values, aggregate vessels, or produce an exposure dataset or statistics. Run
+every command below from `analysis/`.
 
 **Prerequisites**
 
@@ -204,6 +212,63 @@ analytical-period result. Its valid timestamps range from
 `2024-07-15T00:00:00Z` to `2024-07-15T15:40:54Z` because the source prefix is
 not strictly time ordered; this does not establish continuous coverage between
 those bounds, and completeness remains `unverified`.
+
+**Projected water-grid generation**
+
+This derived command is deliberately separate from the primary CLI while the
+AIS processing branch owns that shared surface:
+
+```text
+python -m uv run python -m whale_vessel_analysis.spatial_cli --input <mask-dataset> --layer <layer> --source-crs <crs> --output <water-grid.parquet> [--config <config.toml>] [--overwrite]
+```
+
+The command requires a polygon mask supplied at runtime and verifies the
+declared source CRS against the dataset. It builds the 95 × 68 grid from the
+versioned bounds, reprojects with longitude/latitude treated as x/y, and clips
+the mask to the configured WGS84 map/context extent after densifying its edges
+to at most 0.01° and projecting it to EPSG:3310. It then intersects each cell
+with that clipped support, omits dry cells, and writes deterministic GeoParquet
+plus a lineage JSON sidecar. It refuses to replace either file unless
+`--overwrite` is supplied and refuses generated destinations beneath
+`data/raw/`. The output directory may be created by the command; generated
+files remain ignored and are never staged. The CLI captures UTC start before
+configuration and mask loading; the writer records completion after the
+Parquet write succeeds. Timestamps do not participate in content/run identity.
+
+The exact read-only NOAA smoke invocation used on 2026-08-27 was:
+
+```text
+python -m uv run python -m whale_vessel_analysis.spatial_cli --input "C:\Users\teche\socal-whale-vessel-risk-data-discovery\data\raw\noaa-swfsc-becker-2020b\swfsc_cce_becker_et_al_2020b.gdb" --layer Blue_whale_summer_fall --source-crs EPSG:4326 --output "..\data\interim\m3-spatial-grid\noaa-whale-footprint-water-grid.parquet"
+```
+
+The input remains unchanged. The output and sidecar are under the ignored local
+interim root. [ADR 0014](decisions/0014-select-the-grid-water-mask.md) explains
+why the union of the selected whale-model polygons is the Version 1 grid mask
+and why it must not be described as an authoritative shoreline or as AIS
+observability. The output contract and smoke results are in
+[`../analysis/README.md`](../analysis/README.md).
+
+PyArrow read-back and GeoParquet metadata validation passed. ArcGIS publishing
+compatibility is unverified. GDAL/Pyogrio read-back on the current machine
+failed because its Parquet driver could not load `duckdb.dll`; this is recorded
+as a local driver limitation, not silently treated as format verification.
+Visual map inspection passed on 2026-08-27 in headless QGIS 4.2.1 with GDAL
+3.13.2. QGIS opened the exact ignored
+`data/interim/m3-spatial-grid/noaa-whale-footprint-water-grid.parquet` directly
+through OGR as Parquet; no conversion was used. The inspected file's SHA-256
+was `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
+QGIS confirmed EPSG:3310, 4,516 MultiPolygon features, the expected extent and
+area, zero null/empty/invalid geometry, negligible numerical outside-context
+area, and south-to-north row and west-to-east column progression. Five
+2200×1400 QGIS renders under the ignored
+`data/interim/m3-spatial-grid/qgis-verification/` directory were inspected:
+`full-context.png`, `northern-boundary.png`, `southern-boundary.png`,
+`coast-and-islands.png`, and `grid-detail.png`. They showed the correct Southern
+California location and axis order, alignment with the NOAA whale footprint,
+visibly clipped boundary cells, plausible coastline and island gaps, correct
+index orientation, and no unexplained gaps, spikes, slivers, displaced cells,
+or projection artifacts. The renders, temporary QGIS project, and evidence
+report remain ignored and are not project deliverables.
 
 **Large-tabular evidence benchmark**
 
@@ -415,12 +480,15 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs tests over
-project logic with values known by construction: accepted and rejected spatial
-configuration, the exact AIS header and documented sentinels, invalid source
-values, whale schema and abundance consistency, VSR source schema, deterministic
-lineage/configuration hashing, configurable source locators, and the CLI help
-boundary. Tests create temporary CSVs or data in memory; the ignored M2
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 87 tests
+over project logic with values known by construction: accepted and rejected
+spatial configuration, the exact AIS header and documented sentinels, invalid
+source values, whale schema and abundance consistency, VSR source schema,
+deterministic lineage/configuration hashing, configurable source locators, the
+exact grid and water-area invariants, configured-extent clipping, deterministic
+spatial serialization and content identity, truthful execution timestamps,
+raw-output refusal, atomic-write failure behavior, and both CLI boundaries.
+Tests create temporary CSVs and geometry or use data in memory; the ignored M2
 artifacts are not test prerequisites. Third-party libraries are not themselves
 unit-tested.
 

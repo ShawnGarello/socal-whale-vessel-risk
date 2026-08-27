@@ -170,7 +170,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 
 ### Progress
 
-**Foundation and first AIS processing slice implemented and verified**
+**Foundation, first AIS processing slice, and projected water grid implemented and verified**
 
 - A Python 3.13 src package exists under [`../analysis/`](../analysis/) with a
   committed `pyproject.toml` and `uv.lock`. uv sync/lock, Ruff format/lint,
@@ -212,14 +212,6 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   disabled and recorded as unresolved project assumptions. No length value is
   presented as equivalent to the BWBS approximately 300 GT condition, and no
   universal speed or implied-speed threshold has been selected.
-- The self-contained suite has 64 passing tests using temporary synthetic CSVs
-  and in-memory records. It covers accepted/rejected configuration and period,
-  source schemas, all documented AIS sentinels and malformed codes, whale
-  geometry and abundance consistency, CRS/grid invariants, deterministic
-  hashes, source locators, benchmark result checks, AIS filter and duplicate
-  invariants, temporal coverage and execution-time lineage, deterministic bundle
-  replacement under an injected clock, failed-run atomicity, an empty cleaned
-  result, and CLI success/failure boundaries.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
   whale layer (12,257 features, with zero null, empty, or invalid geometries)
   and VSR polygon (one valid feature). The required 15 July AIS prefix smoke run
@@ -232,6 +224,61 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   `2024-07-15T00:00:00Z` to `2024-07-15T15:40:54Z` because the source prefix is
   not strictly ordered. Those bounds do not establish continuous coverage, and
   completeness is `unverified`.
+- A separate spatial CLI now takes an explicit mask path/layer, declared source
+  CRS, output path, and optional configuration. It rejects missing, mismatched,
+  empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
+  ordering, constructs all 6,460 nominal cells from the accepted bounds, and
+  clips the mask to the configured WGS84 map/context polygon after 0.01° edge
+  densification and EPSG:3310 projection before intersecting each cell. Dry
+  cells are omitted. Retained rows carry stable IDs, parent bounds, normalized
+  water geometry, and actual water area in square metres and square kilometres.
+- The local output is deterministic GeoParquet 1.1.0 with WKB and explicit
+  EPSG:3310 metadata plus a JSON lineage sidecar. The process records source and
+  output checksums, configuration digest, CRS transformation, feature counts,
+  area totals, validation records, and run metadata. It writes through temporary
+  files, refuses replacement without explicit authorization, and refuses output
+  beneath `data/raw/`. Actual UTC execution timestamps remain separate from the
+  deterministic content-derived run ID. This local format is not claimed to be
+  ArcGIS publishing-compatible.
+- [ADR 0014](decisions/0014-select-the-grid-water-mask.md) accepts the union of
+  the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
+  the model's biological support, not an authoritative shoreline and not a
+  future AIS observability mask. The processing API remains mask-agnostic.
+- The combined self-contained suite has 87 passing tests using temporary synthetic CSVs
+  and in-memory records. It covers accepted/rejected configuration and period,
+  source schemas, all documented AIS sentinels and malformed codes, whale
+  geometry and abundance consistency, CRS/grid invariants, deterministic
+  hashes, source locators, benchmark result checks, AIS filter and duplicate
+  invariants, temporal coverage, deterministic AIS bundle replacement, the exact
+  95 × 68 grid, known full/half/partial water areas, CRS transformation,
+  containment and area conservation, map-extent containment and boundary
+  clipping, deterministic WKB/GeoParquet content identity, truthful execution
+  timestamps, overwrite and raw-output refusal, failed-run atomicity, and the
+  CLI boundaries.
+- Manual smoke checks against the read-only M2 artifacts passed for the selected
+  whale layer (12,257 features, with zero null, empty, or invalid geometries)
+  and VSR polygon (one valid feature). The raw AIS prefix was correctly reported
+  as not yet processing-ready because it contains malformed/missing source
+  values; no source file was changed.
+- The corrected real derived smoke run used the selected whale layer read-only.
+  It retained 4,516 of 6,460 nominal cells and omitted 1,944 dry cells, with
+  107,728.695924 km² of biological-support water inside the configured map
+  extent in EPSG:3310 and zero null, empty, invalid, or out-of-extent output
+  geometry. This is 25 fewer cells and 2,970.781272 km² less than the
+  pre-correction run. The 437,466-byte output has SHA-256
+  `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`;
+  an explicit-overwrite rerun reproduced the output checksum and deterministic
+  run ID while recording different execution timestamps. Generated files
+  remain under ignored `data/interim/`.
+- Visual verification passed on 2026-08-27 in headless QGIS 4.2.1 with GDAL
+  3.13.2. QGIS opened the exact GeoParquet directly, confirmed its EPSG:3310
+  CRS, 4,516 MultiPolygon features, expected extent and area, and row/column
+  orientation, then rendered five ignored high-resolution views. Inspection
+  confirmed the correct Southern California location and axis order, alignment
+  with the NOAA footprint and configured context boundary, clipped boundary
+  cells, plausible coastline/island gaps, and no unexplained geometry or
+  projection artifacts. The inspected output SHA-256 was
+  `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
 
 **Not implemented**
 
@@ -240,11 +287,15 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 - Behavioral plausibility filtering, any length threshold, vessel aggregation,
   or speed summaries. The first two remain disabled rather than silently
   receiving provisional thresholds.
-- Reprojection runs, final water-mask selection, grid/water geometry generation,
-  area-weighted whale abundance transfer, or any derived spatial dataset.
-- Lineage beyond the one-extract AIS bundle, an end-to-end analytical-period rerun,
-  or map-based visual inspection. The cleaned AIS output is a tabular input to
-  later aggregation, not a spatial layer and not an analytical result.
+- Normalization of whale values, area-weighted whale abundance
+  transfer, or any vessel-derived spatial dataset.
+- A successful GDAL/Pyogrio read-back of the GeoParquet on this machine; its
+  driver attempted to load a missing `duckdb.dll`. PyArrow read-back and
+  GeoParquet metadata validation passed, but ArcGIS compatibility remains
+  unverified.
+- Lineage beyond the one-extract AIS bundle and projected water grid, or an
+  end-to-end analytical-period rerun. The cleaned AIS output and water grid are
+  processing inputs, not analytical results.
 - Anything gated by the unresolved analytical/statistical domain: the exposure
   calculation and surface, inside-versus-outside statistics, and their output
   contracts.

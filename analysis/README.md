@@ -2,9 +2,11 @@
 
 This directory is the Python package for the M3 offline-processing workflow. It
 provides versioned spatial and source-input contracts, read-only validators,
-traceable lineage metadata, and a real one-extract AIS cleaning command. It does
-not retrieve AIS, process a season implicitly, aggregate vessel activity onto
-the analysis grid, calculate relative exposure, or report inside-versus-outside
+traceable lineage metadata, a real one-extract AIS cleaning command, and
+construction of the exact EPSG:3310 analysis grid with actual per-cell water
+geometry from an explicitly supplied polygon mask. It does not retrieve AIS or
+process a season implicitly, transfer whale values, aggregate vessel activity
+onto the grid, calculate relative exposure, or report inside-versus-outside
 statistics.
 
 Run all commands below from this directory.
@@ -131,6 +133,77 @@ fields. The input CSV and every generated bundle remain local and Git-ignored.
 The command records the supplied path and SHA-256 but does not invent a
 publisher retrieval date; retrieval provenance remains something recorded when
 retrieval occurs.
+
+## Projected water-grid command
+
+The spatial slice has a separate module entry point so it does not change the
+shared AIS-oriented command surface:
+
+```text
+python -m uv run python -m whale_vessel_analysis.spatial_cli --input <mask-dataset> --layer <layer> --source-crs <crs> --output <water-grid.parquet> [--config <config.toml>] [--overwrite]
+```
+
+`--layer` may be omitted for a single-layer format. `--source-crs` is required
+and is checked against the CRS embedded in the input; a missing or mismatched
+CRS fails the run. Longitude/latitude inputs are transformed with explicit x/y
+ordering. The command reads every polygon feature, rejects null, empty,
+invalid, non-finite, or non-polygon geometry, unions the accepted mask, and
+constructs the configured WGS84 map/context polygon with edges densified to at
+most 0.01°. It projects that polygon to EPSG:3310 with explicit x/y ordering,
+clips the mask to it, and only then intersects the clipped support with the
+exact grid defined by configuration. The grid origin and indices are never
+inferred from the input.
+
+The output is GeoParquet 1.1.0 with WKB geometry and explicit EPSG:3310
+PROJJSON. Rows are ordered by zero-based `row_index` south to north, then by
+zero-based `column_index` west to east. Stable identifiers use
+`r{row:03d}_c{column:03d}`. Dry cells are omitted; every retained row has:
+
+- parent-cell indices and exact projected bounds;
+- actual intersected `water_area_m2` and `water_area_km2`; and
+- normalized Polygon or MultiPolygon WKB contained by that parent cell.
+
+The Parquet schema metadata records the grid contract, ordering, dry-cell
+behavior, source checksum, configuration digest, CRS transformation, feature
+counts, and area totals. A sibling `<output>.lineage.json` uses the foundation
+run-metadata structures and records the output checksum. Execution start is
+captured before input loading and processing, completion after Parquet writing,
+and the deterministic content-derived run ID excludes those nondeterministic
+timestamps. Writes use temporary files, refuse any destination under
+`data/raw/`, and replace neither an existing dataset nor its lineage unless
+`--overwrite` is explicitly supplied.
+
+[ADR 0014](../docs/decisions/0014-select-the-grid-water-mask.md) selects the
+union of the land-clipped NOAA 2020b `Blue_whale_summer_fall` polygons as the
+Version 1 **grid water mask**. That footprint is the biological model's support,
+not an authoritative shoreline and not an AIS observability mask. The API stays
+mask-agnostic and requires the selected geometry at runtime.
+
+The local format has been read back and validated with PyArrow. ArcGIS
+publishing compatibility has not been tested or claimed. On the current
+machine, GDAL/Pyogrio could not open the Parquet because its driver attempted to
+load a missing `duckdb.dll`; that local driver problem does not affect the
+PyArrow processing boundary but remains a delivery check for a later milestone.
+
+### Verified NOAA smoke run
+
+The selected NOAA layer was read-only and the generated files were written only
+under ignored `data/interim/m3-spatial-grid/`. The 2026-08-27 run produced:
+
+| Check | Result |
+|---|---|
+| Source features | 12,257; 0 null, empty, invalid, or non-finite geometry values |
+| Source checksum | Extracted File Geodatabase directory-tree SHA-256 `1bfdb2bc75b26a3a33aa81952f5fc6cc58bd8e8b73a93362017fa06f76ec94cf`; the registered source archive checksum remains in `docs/data-sources.md` |
+| Configuration | Schema 1; SHA-256 `df60aa03796ca979eff5bdca4c620fbac809a797d40d320ea649276d6c889c06`; EPSG:4326 → EPSG:3310 with `always_xy=true` |
+| Nominal grid | 95 columns × 68 rows = 6,460 cells |
+| Processing extent | WGS84 −122° to −117°, 32° to 35°; edges densified to at most 0.01° before EPSG:3310 projection |
+| Retained water cells | 4,516; 1,944 dry cells omitted; 25 fewer retained cells than the pre-correction smoke run |
+| Water area | 107,728,695,924.005 m² = 107,728.695924 km²; 2,970.781272 km² less than the pre-correction smoke run |
+| Output bounds | x −189,429.372 to 272,786.624 m; y −667,727.411 to −333,263.928 m |
+| CRS and geometry | EPSG:3310; Polygon and MultiPolygon WKB; 0 null, empty, invalid, or out-of-extent outputs |
+| Output | 437,466 bytes; SHA-256 `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031` |
+| Rerun | Explicit-overwrite rerun reproduced the same output checksum and deterministic run ID; execution timestamps and lineage checksum changed |
+| Visual inspection | **Passed 2026-08-27 in headless QGIS 4.2.1 (GDAL 3.13.2).** QGIS opened this exact GeoParquet directly through OGR; no conversion was used. Five QGIS-rendered images confirmed the correct Southern California location and axis order, NOAA-footprint alignment, context-boundary clipping, plausible coastline/island gaps, south-to-north rows, west-to-east columns, and no unexplained gaps, spikes, slivers, displacement, or projection artifacts. |
 
 ## Re-running the large-tabular benchmark
 

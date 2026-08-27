@@ -12,11 +12,13 @@ dependencies = [
     "duckdb>=1.5.5,<2",
     "pyarrow>=25,<26",
     "pyogrio>=0.13,<0.14",
+    "pyproj>=3.7.2,<4",
     "shapely>=2.1.2,<3",
 ]
 
 [project.scripts]
 whale-vessel-analysis = "whale_vessel_analysis.cli:main"
+whale-vessel-grid = "whale_vessel_analysis.spatial_cli:main"
 
 [dependency-groups]
 dev = [

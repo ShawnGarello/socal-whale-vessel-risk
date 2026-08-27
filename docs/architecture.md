@@ -4,7 +4,7 @@
 
 > **Status: accepted as the initial architecture.** Recorded in [ADR 0001](decisions/0001-accept-initial-architecture.md).
 >
-> Accepted means this is the direction implementation follows. It does not mean it is proven. The application shell, Python processing foundation, and first one-extract AIS cleaning slice are implemented — see M3 and M4 in the [roadmap](roadmap.md). Retrieval, spatial aggregation, exposure processing, derived layers, deployment, and the hosting half of this design are not. The repository also contains one data-discovery verification utility, [tools/](../tools/README.md), which is separate from the analysis package.
+> Accepted means this is the direction implementation follows. It does not mean it is proven. The application shell, Python processing foundation, one-extract AIS cleaning slice, and projected water-grid slice are implemented — see M3 and M4 in the [roadmap](roadmap.md). Retrieval, remaining spatial aggregation and exposure processing, publishable derived layers, deployment, and the hosting half of this design are not. The repository also contains one data-discovery verification utility, [tools/](../tools/README.md), which is separate from the analysis package.
 >
 > Data discovery has established the dataset formats and resolutions several parts depended on, and the licensing position for both NOAA sources — see [data-sources.md](data-sources.md) — and some of the deferred decisions at the end of this document are now resolved. **Three things remain open, and each gates a different part of delivery:**
 >
@@ -76,9 +76,9 @@ Summary statistics follow the same path: they are computed offline in the proces
 
 ### Python
 
-**Implemented foundation and first AIS slice.** The src-based package under
+**Implemented in part.** The src-based package under
 [`analysis/`](../analysis/README.md) has a uv-locked Python 3.13 environment, a
-module/console entry point, versioned analytical-period,
+module/console entry points, versioned analytical-period,
 map/grid/source/whale/AIS/VSR/lineage contracts, read-only source validators,
 and deterministic processing for one explicitly supplied NOAA AIS flat CSV
 extract whose valid timestamps belong to exactly one UTC date. The extract may
@@ -87,9 +87,15 @@ retrieval evidence. The command emits an atomic cleaned Parquet/report/lineage
 bundle over the map extent, records real execution timestamps separately from
 the analytical period, and applies the duplicate policy in
 [ADR 0013](decisions/0013-remove-conflicting-ais-key-records.md). The
-configuration keeps the analytical/statistical domain unresolved. Retrieval,
-reprojection, gridding, whale transfer, vessel aggregation, relative exposure,
-and statistics are not implemented.
+configuration records the accepted 1 July–30 November 2024 period while keeping
+the analytical/statistical domain unresolved. A separate spatial module
+validates and unions an explicitly supplied polygon mask, reprojects it to
+EPSG:3310 with explicit x/y ordering, clips it to a densified projection of the
+configured WGS84 map/context extent, constructs the exact configured grid, and
+writes actual per-cell water intersections as deterministic GeoParquet with
+lineage. The map/context clip is not a statistical-domain decision. It does not
+retrieve data, transfer whale values, aggregate vessels, calculate relative
+exposure, or derive statistics.
 
 DuckDB is the single primary engine for large AIS tables, selected by the
 equivalent-operation benchmark in [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md).
@@ -98,6 +104,15 @@ production pipeline.
 
 - Retrieval and bulk handling of AIS records, which are too large and too repetitive for manual work.
 - Cleaning and filtering: vessel-class selection, implausible-position and implausible-speed removal, deduplication.
+- Grid construction and water-mask intersection. **Implemented.** The grid is
+  always constructed from the accepted bounds and does not infer its extent or
+  origin from the input. The biological-support mask is first clipped to the
+  configured WGS84 map/context polygon after 0.01° edge densification and
+  EPSG:3310 projection. Dry cells are omitted and every retained row carries
+  actual intersected geometry and area in EPSG:3310. [ADR
+  0014](decisions/0014-select-the-grid-water-mask.md) selects the NOAA 2020b
+  whale-model footprint as the biological-support mask while keeping it
+  separate from both an authoritative shoreline and future AIS observability.
 - Aggregation onto the analysis grid.
 - The relative exposure calculation itself — this is the project's own analytical contribution and should live in code that can be read, reviewed, and rerun.
 - Computation of the inside-versus-outside VSR summary statistics. **These are computed by fractional area intersection, not by classifying cells.** Each grid cell is intersected with the water mask, that water geometry is intersected with the VSR polygon, and the cell's exposure is split by the resulting area fractions. A boundary cell is never assigned whole to one side, by centroid or by majority area — doing so would make the headline statistic depend on grid origin and cell size. See [ADR 0004](decisions/0004-analysis-grid-resolution.md), which also records the assumption this introduces and the synthetic cases that must verify it.
@@ -105,6 +120,16 @@ production pipeline.
 - Emission of lineage metadata alongside each derived dataset.
 
 Python is the preferred home for any step that must be reproducible or that will be run more than once.
+
+The implemented grid boundary uses GeoParquet 1.1.0 with WKB and explicit
+EPSG:3310 metadata as a **local deterministic processing format**. A sibling
+JSON file records lineage and the Parquet checksum. This is not a publishing
+decision: ArcGIS compatibility has not been verified, and the eventual hosted
+representation remains constrained by the ArcGIS Online capability gate.
+Execution timestamps record actual start-before-load and post-Parquet-write
+completion, while the deterministic run ID is derived from input,
+configuration, processing version, and output content rather than timestamps.
+Generated grid output is refused beneath the project `data/raw/` tree.
 
 ### ArcGIS Online
 
@@ -206,7 +231,7 @@ TypeScript tests run on Vitest — see [ADR 0010](decisions/0010-use-vitest-for-
 Reproducibility is a Version 1 requirement, not a nice-to-have. It rests on three practices:
 
 1. **Recorded provenance.** For each source: publisher, exact URL or tool used, retrieval date, any query parameters or extract bounds, and dataset version or vintage where one is published.
-2. **An ordered processing path.** Each derived dataset records the steps that produced it, in order, with the parameters used. Steps performed in ArcGIS Pro are written down at parameter level. Code is not self-documenting for this purpose — source alone does not capture how it was run — so a coded step is reproducible only when all of the following exist: version-controlled code; configuration and parameters that are themselves versioned rather than passed ad hoc; a documented invocation or entrypoint; a pinned or recorded environment, including runtime and dependency versions; and run metadata tying that execution to the specific input datasets and output datasets it consumed and produced. The locked environment, versioned configuration with a deterministic digest, CLI boundary, and run-metadata structures now support a real one-extract AIS cleaning step. The complete retrieval-to-derived workflow is not implemented, and no workflow engine has been selected.
+2. **An ordered processing path.** Each derived dataset records the steps that produced it, in order, with the parameters used. Steps performed in ArcGIS Pro are written down at parameter level. Code is not self-documenting for this purpose — source alone does not capture how it was run — so a coded step is reproducible only when all of the following exist: version-controlled code; configuration and parameters that are themselves versioned rather than passed ad hoc; a documented invocation or entrypoint; a pinned or recorded environment, including runtime and dependency versions; and run metadata tying that execution to the specific input datasets and output datasets it consumed and produced. The locked environment, versioned configuration with a deterministic digest, CLI boundaries, and run-metadata structures now support the one-extract AIS cleaning and projected water-grid steps. The complete retrieval-to-derived workflow is not implemented, and no workflow engine has been selected.
 3. **Traceable outputs.** Each published layer and each reported statistic maps back to the derived dataset and processing step that produced it. Nothing is published whose origin cannot be stated.
 
 The intended test of all this is simple: rerun the process from raw inputs and compare against the published layers. That check happens in M8 of the [roadmap](roadmap.md).
@@ -239,9 +264,10 @@ Each of these would add operational surface without serving the Version 1 questi
 ## Current and planned repository structure
 
 `web/` and `analysis/` now exist, created by their respective foundation work.
-The analysis package has foundation modules, one-extract AIS processing, and tests;
-the other processing responsibilities listed below remain intended boundaries,
-not implemented claims. `arcgis/` and `results/` remain proposed and are not
+The analysis package has foundation modules, source validators, one-extract AIS
+processing, the projected water-grid implementation, and tests. The other
+processing responsibilities listed below remain intended boundaries rather than
+a claim that all of them exist. `arcgis/` and `results/` remain proposed and are not
 created before a milestone needs them.
 
 ```
@@ -249,7 +275,7 @@ socal-whale-vessel-risk/
 ├── docs/                  # documentation (exists)
 │   └── decisions/         # architecture decision records (exists)
 ├── analysis/              # Python analysis package  (exists)
-│   ├── src/               #   contracts, validators, AIS processing, CLI  (exists)
+│   ├── src/               #   contracts, validators, AIS/grid processing, CLIs  (exists)
 │   └── tests/             #   synthetic foundation/processing tests  (exists)
 ├── data/                  # local data root, Git-ignored  (exists)
 │   ├── raw/               #   untouched source downloads
@@ -287,6 +313,6 @@ Deferred on purpose. Each should be resolved by evidence — real data, real mea
 | ArcGIS Online account capability and publishing feasibility — organization access, publishing privileges, public sharing, hosted imagery and tile support, credits, storage | Application foundation, before the deployment path is treated as proven | Unverified against a real account. It gates what can be published at all, and therefore constrains the layer representation and the hosting approach. |
 | ArcGIS Online sharing model and API-key scoping | Application foundation | Depends on the account and licensing available, and on the capability check above. |
 | ~~Test framework and toolchain for Python~~ | **Resolved by the processing foundation** | uv, Ruff, mypy, pytest, and Hatchling are recorded in [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md). The TypeScript half remains Vitest in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md). |
-| Layer schemas, field names, and any data or API contract | **Partly resolved.** The M3 foundation implements source, processing, grid, whale-input, AIS-input, VSR-source, and lineage contracts under `analysis/`. The exposure-layer, statistics, and results-file contracts still wait on [ADR 0002](decisions/0002-southern-california-study-area-extent.md). | Contracts written against imagined data are wrong contracts — and contracts written against an undecided reporting domain are wrong for the same reason. |
+| Layer schemas, field names, and any data or API contract | **Partly resolved.** M3 implements source, processing, grid, whale-input, AIS-input, VSR-source, lineage, and local projected-water-grid contracts under `analysis/`. The exposure-layer, statistics, and results-file contracts still wait on [ADR 0002](decisions/0002-southern-california-study-area-extent.md). | Contracts written against imagined data are wrong contracts — and contracts written against an undecided reporting domain are wrong for the same reason. |
 
 The last row matters most, and its rule has moved on now that the data has been inspected: **a contract may be written when the data it describes has been inspected and settling the analytical domain could not change it.** The exposure formula and every reporting-domain-dependent contract still wait. The operative wording is in [../AGENTS.md](../AGENTS.md).
