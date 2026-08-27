@@ -193,7 +193,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 - Read-only CLI commands validate configuration and supplied AIS CSV, whale
   File Geodatabase, and VSR GeoJSON paths. They produce JSON diagnostics and no
   analytical output.
-- The self-contained suite has 49 passing tests using temporary synthetic CSVs
+- The self-contained suite has 50 passing tests using temporary synthetic CSVs
   and in-memory records. It covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
   geometry and abundance consistency, CRS/grid invariants, deterministic
