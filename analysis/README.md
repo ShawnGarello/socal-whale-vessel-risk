@@ -2,7 +2,7 @@
 
 This directory is the Python package for the M3 offline-processing workflow. It
 provides versioned spatial and source-input contracts, read-only validators,
-deterministic lineage metadata, and a real one-CSV AIS cleaning command. It does
+deterministic lineage metadata, and a real one-extract AIS cleaning command. It does
 not retrieve AIS, process a season implicitly, aggregate vessel activity onto
 the analysis grid, calculate relative exposure, or report inside-versus-outside
 statistics.
@@ -59,11 +59,19 @@ accepted 5,000 m grid. It deliberately represents the analytical domain only as
 inside-versus-outside statistics, exposure-layer, or application-results
 contract.
 
-## Process one AIS CSV
+## Process one AIS extract
 
-`process-ais` requires one explicit NOAA Marine Cadastre flat CSV and one
-explicit output-bundle directory. It never discovers adjacent files, expands a
-date range, downloads data, or writes into `data/raw/`.
+`process-ais` requires one explicit NOAA Marine Cadastre flat CSV extract and
+one explicit output-bundle directory. It never discovers adjacent files,
+expands a date range, downloads data, or writes into `data/raw/`. The extract
+must contain at least one data row and one valid timestamp, and all valid
+timestamps must fall on exactly one UTC calendar date.
+
+A partial-day extract is valid input. The command does not infer that the CSV
+covers every instant or record in that date: completeness is reported as
+`unverified` unless a future retrieval boundary supplies retained metadata that
+can prove otherwise. The processing contract is
+`noaa_marine_cadastre_ais_extract_v2`, not a complete-day contract.
 
 ```text
 python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <new-output-directory>
@@ -81,8 +89,8 @@ complete:
 | File | Contract |
 |---|---|
 | `cleaned.parquet` | Deterministically ordered, map-extent-scoped commercial AIS rows. |
-| `quality-report.json` | Stage counts, every removal and normalization count, parameters, input/config/output hashes, and the map-extent scope warning. |
-| `run-metadata.json` | Existing `RunMetadata`, `ArtifactReference`, `ProcessingStep`, and `ValidationRecord` structures plus runtime/package versions and the full processing parameters. |
+| `quality-report.json` | Stage counts, every removal and normalization count, earliest/latest valid timestamps, observed UTC date, unverified completeness, parameters, hashes, and the map-extent scope warning. |
+| `run-metadata.json` | Existing `RunMetadata`, `ArtifactReference`, `ProcessingStep`, and `ValidationRecord` structures plus real UTC execution timestamps, runtime/package versions, the analytical period, and the full processing parameters. |
 
 The Parquet columns, in order, are `mmsi`, `observed_at_utc`, `latitude`,
 `longitude`, `sog_knots`, `cog_degrees`, `heading_degrees`,
@@ -93,9 +101,9 @@ documented reason.
 
 The cleaning order is fixed and auditable:
 
-1. require the exact inspected 17-column header;
-2. parse the strict source timestamp as UTC and reject a CSV containing more
-   than one valid UTC day;
+1. require the exact inspected 17-column header and at least one data row;
+2. parse the strict source timestamp as UTC, require at least one valid
+   timestamp, and require all valid timestamps to share one UTC calendar date;
 3. remove missing, non-finite, out-of-range, and outside-map-extent positions;
 4. remove MMSI values that do not satisfy the existing nine-digit contract;
 5. remove missing, malformed, non-finite, or negative reported SOG values, while
@@ -113,12 +121,16 @@ SOG validity and position-to-position behavioral plausibility remain separate.
 The optional length filter is also disabled: AIS has no gross tonnage, and the
 project has not accepted a length proxy, threshold, or sensitivity plan.
 
-The bundle is deterministic for the same input bytes, configuration, runtime,
-and final paths. Its logical run timestamp is anchored to the configured period
-rather than wall-clock execution time; this is stated inside the metadata. The
-input CSV and every generated bundle remain local and Git-ignored. The command
-records the supplied path and SHA-256 but does not invent a publisher retrieval
-date; retrieval provenance remains something recorded when retrieval occurs.
+The cleaned Parquet, quality report, output checksum, and run identifier are
+deterministic for the same input bytes, configuration, and final paths. Run
+metadata also records the real UTC time immediately before processing begins
+and the real UTC completion time after the analytical files are prepared, so
+that metadata file is intentionally not byte-identical across real executions.
+Execution timestamps and the configured 2024 analytical period are separate
+fields. The input CSV and every generated bundle remain local and Git-ignored.
+The command records the supplied path and SHA-256 but does not invent a
+publisher retrieval date; retrieval provenance remains something recorded when
+retrieval occurs.
 
 ## Re-running the large-tabular benchmark
 

@@ -98,12 +98,12 @@ interface rather than failing silently: it names the unset variable and shows th
 service's own response. That behaviour is verified. A **successful** basemap
 render has **not** been verified — see [roadmap.md](roadmap.md) M4.
 
-### Analysis (Python) — foundation and AIS day processing implemented
+### Analysis (Python) — foundation and AIS extract processing implemented
 
 The src-based package lives in [`../analysis/`](../analysis/). It owns versioned
 processing/source/lineage contracts, the selected DuckDB large-tabular boundary,
 read-only AIS/whale/VSR validators, a CLI, synthetic tests, and deterministic
-processing of one supplied NOAA AIS flat CSV. It does **not** retrieve AIS,
+processing of one supplied NOAA AIS flat CSV extract. It does **not** retrieve AIS,
 reproject or grid spatial inputs, aggregate vessel activity, or produce a
 relative-exposure result. Run every command below from `analysis/`.
 
@@ -155,10 +155,10 @@ schema, or value check failed. Raw AIS is expected to contain records that later
 cleaning must reject, so a non-zero source inspection is recorded rather than
 "fixed" in place.
 
-**One-CSV AIS processing**
+**One-extract AIS processing**
 
-The processing command requires both paths and never discovers a day, directory,
-or season on its own:
+The processing command requires both paths and never discovers a date,
+directory, or season on its own:
 
 ```text
 python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <new-output-directory>
@@ -178,6 +178,11 @@ whose metadata identifies the AIS processing contract. The command publishes
 atomic directory rename. A failure before publication leaves no completed target
 bundle. Outputs belong under the ignored `data/interim/` or `data/derived/`
 roots, never `data/raw/`; the command enforces the repository raw-data boundary.
+Header-only input, input with no valid timestamp, and input spanning multiple
+UTC dates fail without publishing a target bundle. A partial-day extract is
+allowed, but the quality report records its observed timestamp bounds and marks
+date completeness `unverified`; a filename or timestamp range is not evidence
+of complete retrieval.
 
 The output and cleaning contract, including the disabled length and behavioral
 thresholds, is in [`../analysis/README.md`](../analysis/README.md). The duplicate
@@ -195,7 +200,10 @@ the unchanged 22.7 MB M2 prefix extracted by the M2 utility from 15 July 2024: i
 read 207,849 source rows, retained 13,800 in the map extent, selected 2,495
 commercial rows before deduplication, and wrote 2,490 cleaned rows. This is
 sample evidence from an approximately half-hour prefix, not a complete day or
-analytical-period result.
+analytical-period result. Its valid timestamps range from
+`2024-07-15T00:00:00Z` to `2024-07-15T15:40:54Z` because the source prefix is
+not strictly time ordered; this does not establish continuous coverage between
+those bounds, and completeness remains `unverified`.
 
 **Large-tabular evidence benchmark**
 

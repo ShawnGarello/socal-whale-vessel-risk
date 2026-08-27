@@ -3,7 +3,7 @@
 A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
 
 > **Status: in development.**
-> The web application shell and Python processing foundation exist. The Python package validates the inspected input contracts and can clean one explicitly supplied NOAA AIS CSV into a deterministic local Parquet/report/lineage bundle, but it does not retrieve or process the analytical period. No derived layer has been produced or published, and nothing in this repository is an exposure result yet.
+> The web application shell and Python processing foundation exist. The Python package validates the inspected input contracts and can clean one explicitly supplied, single-UTC-date NOAA AIS CSV extract into a local Parquet/report/lineage bundle, but it neither proves complete-day coverage nor retrieves or processes the analytical period. No derived layer has been produced or published, and nothing in this repository is an exposure result yet.
 
 ## Why
 
@@ -39,7 +39,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Architecture | Accepted as the initial direction; the application and processing foundations are built against it |
 | Data sources | Downloaded and inspected; properties, licensing, and limits recorded, with a reproducible provenance manifest |
 | Study area | Map extent proposed; **the analytical domain for statistics is still open** — see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) |
-| Processing workflow | **In progress** — locked Python package, DuckDB engine, contracts, validators, and a tested one-CSV AIS cleaning command; no retrieval, vessel aggregation, or exposure processing yet |
+| Processing workflow | **In progress** — locked Python package, DuckDB engine, contracts, validators, and a tested one-extract AIS cleaning command; no retrieval, vessel aggregation, or exposure processing yet |
 | Analysis and derived layers | Not started |
 | Web application | **Foundation built** — Next.js and TypeScript with an ArcGIS map shell over Southern California. Basemap configured but successful keyed rendering still unverified; no project layers or analysis |
 | Deployment | Not started |

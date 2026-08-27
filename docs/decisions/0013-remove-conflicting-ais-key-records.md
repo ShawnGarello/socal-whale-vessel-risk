@@ -21,7 +21,13 @@ multiple positions for one vessel and timestamp into later spatial aggregation.
 
 ## Decision
 
-The one-CSV AIS cleaning step applies two distinct policies after timestamp,
+The one-extract AIS cleaning step accepts only a nonempty CSV with at least one
+valid timestamp and requires all valid timestamps to belong to exactly one UTC
+date. This is a single-date extract contract, not a complete-day contract: a
+partial-day extract remains valid, and completeness is reported as `unverified`
+unless retained retrieval evidence can prove otherwise.
+
+For an accepted extract, the cleaning step applies two distinct policies after timestamp,
 coordinate, map-extent, MMSI, reported-SOG, vessel-type, and commercial-group
 filters:
 
