@@ -33,8 +33,10 @@ from shapely.geometry.base import BaseGeometry
 
 from whale_vessel_analysis.config import (
     CONFIG_SCHEMA_VERSION,
+    MAP_EXTENT_CRS,
     PROJECTED_CRS,
     AnalysisGrid,
+    GeographicExtent,
     ProcessingConfig,
 )
 from whale_vessel_analysis.lineage import (
@@ -45,14 +47,18 @@ from whale_vessel_analysis.lineage import (
 )
 
 GRID_DATASET_SCHEMA_VERSION: Final = 1
-GRID_PROCESSING_VERSION: Final = "1.0.0"
+GRID_PROCESSING_VERSION: Final = "1.1.0"
 GEOPARQUET_VERSION: Final = "1.1.0"
 CELL_ID_PATTERN: Final = "r{row:03d}_c{column:03d}"
 ROW_ORDER: Final = "row-major: south-to-north rows, west-to-east columns"
 DRY_CELL_BEHAVIOR: Final = "omitted"
 AREA_TOLERANCE_M2: Final = 0.1
+MAP_EXTENT_AREA_TOLERANCE_M2: Final = 0.1
+MAP_EXTENT_EDGE_MAX_SEGMENT_DEGREES: Final = 0.01
 GEOMETRY_COLUMN: Final = "geometry"
 LINEAGE_SUFFIX: Final = ".lineage.json"
+_PROJECT_ROOT: Final = Path(__file__).resolve().parents[3]
+_PROJECT_RAW_ROOT: Final = (_PROJECT_ROOT / "data" / "raw").resolve()
 
 
 class SpatialGridError(ValueError):
@@ -126,6 +132,9 @@ class WaterGridDataset:
     source_sha256: str
     configuration_sha256: str
     transformation: str
+    map_extent_geometry: BaseGeometry
+    map_extent_transformation: str
+    map_extent_bounds_wgs84: tuple[float, float, float, float]
     mask_feature_count: int
     mask_intersection_area_m2: float
 
@@ -174,6 +183,11 @@ class WaterGridDataset:
             "total_water_area_m2": self.total_water_area_m2,
             "total_water_area_km2": self.total_water_area_km2,
             "mask_grid_intersection_area_m2": self.mask_intersection_area_m2,
+            "map_extent_bounds_wgs84": list(self.map_extent_bounds_wgs84),
+            "projected_map_extent_bounds_m": list(self.map_extent_geometry.bounds),
+            "map_extent_edge_max_segment_degrees": (
+                MAP_EXTENT_EDGE_MAX_SEGMENT_DEGREES
+            ),
             "output_bounds_m": list(self.bounds),
             "row_order": ROW_ORDER,
             "cell_id_pattern": CELL_ID_PATTERN,
@@ -428,6 +442,31 @@ def reproject_mask(geometry: BaseGeometry, source_crs: str) -> tuple[BaseGeometr
     return projected, definition
 
 
+def _axis_values(start: float, end: float) -> tuple[float, ...]:
+    segment_count = math.ceil(abs(end - start) / MAP_EXTENT_EDGE_MAX_SEGMENT_DEGREES)
+    return tuple(
+        start + (end - start) * index / segment_count
+        for index in range(segment_count + 1)
+    )
+
+
+def project_map_extent(extent: GeographicExtent) -> tuple[BaseGeometry, str]:
+    """Densify and project the configured WGS84 map/context extent."""
+    longitudes = _axis_values(extent.lon_min, extent.lon_max)
+    latitudes = _axis_values(extent.lat_min, extent.lat_max)
+    coordinates = (
+        *((longitude, extent.lat_min) for longitude in longitudes),
+        *((extent.lon_max, latitude) for latitude in latitudes[1:]),
+        *((longitude, extent.lat_max) for longitude in reversed(longitudes[:-1])),
+        *((extent.lon_min, latitude) for latitude in reversed(latitudes[1:-1])),
+    )
+    geographic_extent = Polygon(coordinates)
+    _validate_polygon(geographic_extent, "densified geographic map extent")
+    projected_extent, transformation = reproject_mask(geographic_extent, extent.crs)
+    _validate_polygon(projected_extent, "projected map extent")
+    return projected_extent, transformation
+
+
 def _cell_id(row_index: int, column_index: int) -> str:
     return CELL_ID_PATTERN.format(row=row_index, column=column_index)
 
@@ -442,14 +481,26 @@ def construct_water_grid(
 ) -> WaterGridDataset:
     """Intersect the configured exact grid with a validated water mask."""
     projected_mask, transformation = reproject_mask(mask_geometry, source_crs)
+    projected_map_extent, map_extent_transformation = project_map_extent(
+        config.spatial.map_extent
+    )
     grid = config.spatial.grid
     grid_extent = box(grid.x_min_m, grid.y_min_m, grid.x_max_m, grid.y_max_m)
-    clipped_mask = _polygonal_only(projected_mask.intersection(grid_extent))
+    extent_outside_grid_area = float(projected_map_extent.difference(grid_extent).area)
+    if extent_outside_grid_area > MAP_EXTENT_AREA_TOLERANCE_M2:
+        raise SpatialGridError(
+            "configured projected map extent lies outside the accepted grid bounds: "
+            f"outside_area_m2={extent_outside_grid_area}"
+        )
+    extent_clipped_mask = _polygonal_only(
+        projected_mask.intersection(projected_map_extent)
+    )
+    clipped_mask = _polygonal_only(extent_clipped_mask.intersection(grid_extent))
     if clipped_mask.is_empty or clipped_mask.area <= 0:
         raise WaterMaskValidationError(
-            "projected water mask does not intersect the configured analysis grid"
+            "projected water mask does not intersect the configured map extent"
         )
-    _validate_polygon(clipped_mask, "grid-clipped water-mask")
+    _validate_polygon(clipped_mask, "map-extent-clipped water-mask")
 
     nominal_area_m2 = float(grid.cell_size_m * grid.cell_size_m)
     cells: list[WaterGridCell] = []
@@ -477,6 +528,13 @@ def construct_water_grid(
                         "water geometry lies outside its parent cell for "
                         f"{_cell_id(row_index, column_index)}"
                     )
+            outside_extent_area = float(water.difference(projected_map_extent).area)
+            if outside_extent_area > MAP_EXTENT_AREA_TOLERANCE_M2:
+                raise SpatialGridError(
+                    "water geometry lies outside the configured map extent for "
+                    f"{_cell_id(row_index, column_index)}: "
+                    f"outside_area_m2={outside_extent_area}"
+                )
             cells.append(
                 WaterGridCell(
                     cell_id=_cell_id(row_index, column_index),
@@ -515,6 +573,14 @@ def construct_water_grid(
         source_sha256=source_sha256,
         configuration_sha256=config.digest(),
         transformation=transformation,
+        map_extent_geometry=projected_map_extent,
+        map_extent_transformation=map_extent_transformation,
+        map_extent_bounds_wgs84=(
+            config.spatial.map_extent.lon_min,
+            config.spatial.map_extent.lat_min,
+            config.spatial.map_extent.lon_max,
+            config.spatial.map_extent.lat_max,
+        ),
         mask_feature_count=mask_feature_count,
         mask_intersection_area_m2=mask_intersection_area,
     )
@@ -548,6 +614,20 @@ def _dataset_metadata(dataset: WaterGridDataset) -> dict[str, object]:
             "rows": dataset.grid.rows,
             "columns": dataset.grid.columns,
             "nominal_cell_count": dataset.nominal_cell_count,
+        },
+        "processing_extent": {
+            "purpose": "configured map/context extent; not a statistical domain",
+            "source_crs": MAP_EXTENT_CRS,
+            "bounds_wgs84": list(dataset.map_extent_bounds_wgs84),
+            "edge_max_segment_degrees": MAP_EXTENT_EDGE_MAX_SEGMENT_DEGREES,
+            "projected_crs": PROJECTED_CRS,
+            "projected_bounds_m": list(dataset.map_extent_geometry.bounds),
+            "projected_area_m2": float(dataset.map_extent_geometry.area),
+            "outside_area_tolerance_m2": MAP_EXTENT_AREA_TOLERANCE_M2,
+            "transformation": {
+                "always_xy": True,
+                "definition": dataset.map_extent_transformation,
+            },
         },
         "output": {
             "retained_water_cell_count": dataset.retained_water_cell_count,
@@ -632,18 +712,28 @@ def _lineage_document(
     mask: MaskInspection,
     output_path: Path,
     output_sha256: str,
-    run_at: datetime,
+    started_at: datetime,
+    completed_at: datetime,
     visual_inspection_status: str,
 ) -> dict[str, object]:
-    if run_at.utcoffset() != UTC.utcoffset(run_at):
-        raise SpatialOutputError("run_at must be timezone-aware UTC")
+    if started_at.utcoffset() != UTC.utcoffset(started_at):
+        raise SpatialOutputError("started_at must be timezone-aware UTC")
+    if completed_at.utcoffset() != UTC.utcoffset(completed_at):
+        raise SpatialOutputError("completed_at must be timezone-aware UTC")
+    if completed_at <= started_at:
+        raise SpatialOutputError("completed_at must be later than started_at")
     run_key = hashlib.sha256(
-        (dataset.source_sha256 + dataset.configuration_sha256).encode("ascii")
+        (
+            dataset.source_sha256
+            + dataset.configuration_sha256
+            + output_sha256
+            + GRID_PROCESSING_VERSION
+        ).encode("ascii")
     ).hexdigest()[:20]
     metadata = RunMetadata(
         run_id=f"water-grid-{run_key}",
-        started_at=run_at,
-        completed_at=run_at,
+        started_at=started_at,
+        completed_at=completed_at,
         configuration_version=CONFIG_SCHEMA_VERSION,
         configuration_sha256=dataset.configuration_sha256,
         steps=(
@@ -755,16 +845,31 @@ def _commit_pair(
             backup.unlink(missing_ok=True)
 
 
+def _utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+def _validate_output_target(output_path: Path) -> None:
+    resolved = output_path.resolve()
+    if resolved == _PROJECT_RAW_ROOT or resolved.is_relative_to(_PROJECT_RAW_ROOT):
+        raise SpatialOutputError(
+            f"water-grid output cannot be written under raw data: {resolved}"
+        )
+
+
 def write_water_grid(
     dataset: WaterGridDataset,
     mask: MaskInspection,
     output_path: Path,
     *,
+    started_at: datetime,
     overwrite: bool = False,
-    run_at: datetime | None = None,
     visual_inspection_status: str = "not_completed",
 ) -> WaterGridWriteResult:
     """Atomically write deterministic GeoParquet and its lineage sidecar."""
+    _validate_output_target(output_path)
+    if started_at.utcoffset() != UTC.utcoffset(started_at):
+        raise SpatialOutputError("started_at must be timezone-aware UTC")
     if output_path.suffix.lower() != ".parquet":
         raise SpatialOutputError("water-grid output path must end in .parquet")
     if not visual_inspection_status.strip():
@@ -791,12 +896,14 @@ def write_water_grid(
             row_group_size=1024,
         )
         output_sha256 = _sha256_file(temporary_output)
+        completed_at = _utc_now()
         lineage = _lineage_document(
             dataset=dataset,
             mask=mask,
             output_path=output_path,
             output_sha256=output_sha256,
-            run_at=datetime.now(UTC) if run_at is None else run_at,
+            started_at=started_at,
+            completed_at=completed_at,
             visual_inspection_status=visual_inspection_status,
         )
         _write_json(temporary_lineage, lineage)

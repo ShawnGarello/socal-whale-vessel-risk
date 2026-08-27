@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
@@ -56,9 +57,14 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Generate one projected water-grid dataset and print its run summary."""
     args = build_parser().parse_args(argv)
+    started_at = _utc_now()
     try:
         config_path = cast(Path | None, args.config)
         config = (
@@ -74,6 +80,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             dataset,
             mask,
             cast(Path, args.output),
+            started_at=started_at,
             overwrite=cast(bool, args.overwrite),
         )
     except (ConfigurationError, SpatialGridError) as exc:
