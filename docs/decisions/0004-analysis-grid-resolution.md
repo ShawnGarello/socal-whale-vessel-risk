@@ -65,12 +65,19 @@ This assumption is why the cell size still matters after fractional accounting i
 
 The assumption is labelled wherever a boundary-derived statistic is reported, per the project brief's rule on assumptions.
 
-### Planned verification
+### Verification status
 
-Not yet implemented — the analysis package now has a tested foundation, but it
-deliberately does not include grid generation or fractional-boundary machinery.
-These cases remain the target for the later grid/analysis slice, and are written
-in EPSG:3310 metres with answers known by construction.
+The first half is implemented: the analysis package constructs the exact grid,
+intersects it with an explicitly supplied water mask, omits dry cells, and
+tests full, half, coastline-like, containment, and aggregate-area-conservation
+cases with known answers. [ADR 0014](0014-select-the-grid-water-mask.md) selects
+the real grid mask. The second half remains planned for M6: no VSR intersection,
+inside/outside fraction, exposure split, or boundary statistic exists yet.
+
+The cases below remain the contract for that later fractional-boundary slice.
+They are written in EPSG:3310 metres with answers known by construction; the
+implemented generic water tests already cover the water-area and dry-cell
+premises they depend on.
 
 Let cell `C` be the square from (0, 0) to (5000, 5000): area 25,000,000 m².
 

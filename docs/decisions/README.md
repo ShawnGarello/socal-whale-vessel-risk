@@ -21,6 +21,7 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | [0011](0011-use-uv-for-the-python-analysis-toolchain.md) | Use uv for the Python analysis toolchain | Accepted |
 | [0012](0012-use-duckdb-for-large-tabular-processing.md) | Use DuckDB for large-tabular processing | Accepted |
 | [0013](0013-remove-conflicting-ais-key-records.md) | Remove conflicting AIS key records | Accepted |
+| [0014](0014-select-the-grid-water-mask.md) | Use the NOAA whale-model footprint as the grid water mask | Accepted |
 
 ## Why these exist
 
