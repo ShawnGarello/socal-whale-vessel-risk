@@ -236,39 +236,46 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
   ordering, constructs all 6,460 nominal cells from the accepted bounds, and
-  intersects each one with the mask. Dry cells are omitted. Retained rows carry
-  stable IDs, parent bounds, normalized water geometry, and actual water area in
-  square metres and square kilometres.
+  clips the mask to the configured WGS84 map/context polygon after 0.01° edge
+  densification and EPSG:3310 projection before intersecting each cell. Dry
+  cells are omitted. Retained rows carry stable IDs, parent bounds, normalized
+  water geometry, and actual water area in square metres and square kilometres.
 - The local output is deterministic GeoParquet 1.1.0 with WKB and explicit
   EPSG:3310 metadata plus a JSON lineage sidecar. The process records source and
   output checksums, configuration digest, CRS transformation, feature counts,
   area totals, validation records, and run metadata. It writes through temporary
-  files and refuses replacement without explicit authorization. This local
-  format is not claimed to be ArcGIS publishing-compatible.
+  files, refuses replacement without explicit authorization, and refuses output
+  beneath `data/raw/`. Actual UTC execution timestamps remain separate from the
+  deterministic content-derived run ID. This local format is not claimed to be
+  ArcGIS publishing-compatible.
 - [ADR 0014](decisions/0014-select-the-grid-water-mask.md) accepts the union of
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The self-contained suite has 67 passing tests using temporary synthetic CSVs
+- The self-contained suite has 73 passing tests using temporary synthetic CSVs
   and in-memory records. It covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
   geometry and abundance consistency, CRS/grid invariants, deterministic
   hashes, source locators, benchmark result checks, the exact 95 × 68 grid,
   known full/half/partial water areas, CRS transformation, containment and area
-  conservation, deterministic WKB/GeoParquet/lineage, overwrite refusal,
-  failed-run atomicity, and both CLI boundaries.
+  conservation, map-extent containment and boundary clipping, deterministic
+  WKB/GeoParquet content identity, truthful execution timestamps, overwrite and
+  raw-output refusal, failed-run atomicity, and both CLI boundaries.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
   whale layer (12,257 features, with zero null, empty, or invalid geometries)
   and VSR polygon (one valid feature). The raw AIS prefix was correctly reported
   as not yet processing-ready because it contains malformed/missing source
   values; no source file was changed.
-- The first real derived smoke run used the selected whale layer read-only. It
-  retained 4,541 of 6,460 nominal cells and omitted 1,919 dry cells, with
-  110,699.477196 km² of water in EPSG:3310 and zero null, empty, or invalid
-  output geometry. The 421,644-byte output has SHA-256
-  `960563e787b54be9857967ff9e66088dd10e5e67d2811db6c47501a9f48017f5`;
-  an explicit-overwrite rerun reproduced the checksum. Generated files remain
-  under ignored `data/interim/`.
+- The corrected real derived smoke run used the selected whale layer read-only.
+  It retained 4,516 of 6,460 nominal cells and omitted 1,944 dry cells, with
+  107,728.695924 km² of biological-support water inside the configured map
+  extent in EPSG:3310 and zero null, empty, invalid, or out-of-extent output
+  geometry. This is 25 fewer cells and 2,970.781272 km² less than the
+  pre-correction run. The 437,466-byte output has SHA-256
+  `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`;
+  an explicit-overwrite rerun reproduced the output checksum and deterministic
+  run ID while recording different execution timestamps. Generated files
+  remain under ignored `data/interim/`.
 
 **Not implemented**
 
@@ -285,7 +292,10 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   unverified.
 - **Map-based visual inspection of the derived grid.** ArcGIS Pro and QGIS were
   unavailable. This is explicitly unfinished, so the derived layer is not
-  merge-ready even though programmatic validation passed.
+  merge-ready even though programmatic validation passed. Open
+  `data/interim/m3-spatial-grid/noaa-whale-footprint-water-grid.parquet` and
+  verify EPSG:3310, configured-boundary alignment, boundary-cell clipping,
+  coastline/island geometry, row orientation, and unexpected gaps or slivers.
 - Lineage beyond the one-extract AIS bundle and projected water grid, or an
   end-to-end analytical-period rerun. The cleaned AIS output and water grid are
   processing inputs, not analytical results.

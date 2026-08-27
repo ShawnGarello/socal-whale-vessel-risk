@@ -148,8 +148,11 @@ and is checked against the CRS embedded in the input; a missing or mismatched
 CRS fails the run. Longitude/latitude inputs are transformed with explicit x/y
 ordering. The command reads every polygon feature, rejects null, empty,
 invalid, non-finite, or non-polygon geometry, unions the accepted mask, and
-intersects it with the grid defined by configuration rather than inferring a
-grid from the input.
+constructs the configured WGS84 map/context polygon with edges densified to at
+most 0.01°. It projects that polygon to EPSG:3310 with explicit x/y ordering,
+clips the mask to it, and only then intersects the clipped support with the
+exact grid defined by configuration. The grid origin and indices are never
+inferred from the input.
 
 The output is GeoParquet 1.1.0 with WKB geometry and explicit EPSG:3310
 PROJJSON. Rows are ordered by zero-based `row_index` south to north, then by
@@ -163,8 +166,11 @@ zero-based `column_index` west to east. Stable identifiers use
 The Parquet schema metadata records the grid contract, ordering, dry-cell
 behavior, source checksum, configuration digest, CRS transformation, feature
 counts, and area totals. A sibling `<output>.lineage.json` uses the foundation
-run-metadata structures and records the output checksum. Writes use temporary
-files and replace neither an existing dataset nor its lineage unless
+run-metadata structures and records the output checksum. Execution start is
+captured before input loading and processing, completion after Parquet writing,
+and the deterministic content-derived run ID excludes those nondeterministic
+timestamps. Writes use temporary files, refuse any destination under
+`data/raw/`, and replace neither an existing dataset nor its lineage unless
 `--overwrite` is explicitly supplied.
 
 [ADR 0014](../docs/decisions/0014-select-the-grid-water-mask.md) selects the
@@ -190,13 +196,14 @@ under ignored `data/interim/m3-spatial-grid/`. The 2026-08-27 run produced:
 | Source checksum | Extracted File Geodatabase directory-tree SHA-256 `1bfdb2bc75b26a3a33aa81952f5fc6cc58bd8e8b73a93362017fa06f76ec94cf`; the registered source archive checksum remains in `docs/data-sources.md` |
 | Configuration | Schema 1; SHA-256 `df60aa03796ca979eff5bdca4c620fbac809a797d40d320ea649276d6c889c06`; EPSG:4326 → EPSG:3310 with `always_xy=true` |
 | Nominal grid | 95 columns × 68 rows = 6,460 cells |
-| Retained water cells | 4,541; 1,919 dry cells omitted |
-| Water area | 110,699,477,196.491 m² = 110,699.477196 km² |
-| Output bounds | x −190,000 to 272,786.624 m; y −670,000 to −330,000 m |
-| CRS and geometry | EPSG:3310; Polygon and MultiPolygon WKB; 0 null, empty, or invalid outputs |
-| Output | 421,644 bytes; SHA-256 `960563e787b54be9857967ff9e66088dd10e5e67d2811db6c47501a9f48017f5` |
-| Rerun | Explicit-overwrite rerun reproduced the same output checksum |
-| Visual inspection | **Not completed.** ArcGIS Pro and QGIS were unavailable; this layer is not merge-ready until it is viewed on a real map. |
+| Processing extent | WGS84 −122° to −117°, 32° to 35°; edges densified to at most 0.01° before EPSG:3310 projection |
+| Retained water cells | 4,516; 1,944 dry cells omitted; 25 fewer retained cells than the pre-correction smoke run |
+| Water area | 107,728,695,924.005 m² = 107,728.695924 km²; 2,970.781272 km² less than the pre-correction smoke run |
+| Output bounds | x −189,429.372 to 272,786.624 m; y −667,727.411 to −333,263.928 m |
+| CRS and geometry | EPSG:3310; Polygon and MultiPolygon WKB; 0 null, empty, invalid, or out-of-extent outputs |
+| Output | 437,466 bytes; SHA-256 `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031` |
+| Rerun | Explicit-overwrite rerun reproduced the same output checksum and deterministic run ID; execution timestamps and lineage checksum changed |
+| Visual inspection | **Not completed.** Open `data/interim/m3-spatial-grid/noaa-whale-footprint-water-grid.parquet` in ArcGIS Pro or QGIS and check EPSG:3310, alignment with the WGS84 −122/−117/32/35 boundary, clipped boundary cells, coastline/island geometry, row orientation, and unexpected gaps or slivers. The layer is not merge-ready until that check is recorded. |
 
 ## Re-running the large-tabular benchmark
 

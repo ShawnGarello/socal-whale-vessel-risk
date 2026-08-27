@@ -224,11 +224,16 @@ python -m uv run python -m whale_vessel_analysis.spatial_cli --input <mask-datas
 
 The command requires a polygon mask supplied at runtime and verifies the
 declared source CRS against the dataset. It builds the 95 × 68 grid from the
-versioned bounds, reprojects with longitude/latitude treated as x/y, intersects
-each cell with the mask, omits dry cells, and writes deterministic GeoParquet
+versioned bounds, reprojects with longitude/latitude treated as x/y, and clips
+the mask to the configured WGS84 map/context extent after densifying its edges
+to at most 0.01° and projecting it to EPSG:3310. It then intersects each cell
+with that clipped support, omits dry cells, and writes deterministic GeoParquet
 plus a lineage JSON sidecar. It refuses to replace either file unless
-`--overwrite` is supplied. The output directory may be created by the command;
-generated files remain ignored and are never staged.
+`--overwrite` is supplied and refuses generated destinations beneath
+`data/raw/`. The output directory may be created by the command; generated
+files remain ignored and are never staged. The CLI captures UTC start before
+configuration and mask loading; the writer records completion after the
+Parquet write succeeds. Timestamps do not participate in content/run identity.
 
 The exact read-only NOAA smoke invocation used on 2026-08-27 was:
 
@@ -248,7 +253,11 @@ compatibility is unverified. GDAL/Pyogrio read-back on the current machine
 failed because its Parquet driver could not load `duckdb.dll`; this is recorded
 as a local driver limitation, not silently treated as format verification.
 ArcGIS Pro and QGIS were unavailable, so visual map inspection is explicitly
-unfinished and the derived layer is not merge-ready.
+unfinished and the derived layer is not merge-ready. A reviewer must open
+`data/interim/m3-spatial-grid/noaa-whale-footprint-water-grid.parquet` and check
+EPSG:3310, alignment with the configured WGS84 boundary, clipped boundary
+cells, coastline/island geometry, row orientation, and unexpected gaps or
+slivers.
 
 **Large-tabular evidence benchmark**
 
@@ -460,15 +469,17 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 67 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 73 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
 deterministic lineage/configuration hashing, configurable source locators, the
-exact grid and water-area invariants, deterministic spatial serialization,
-atomic-write failure behavior, and both CLI help boundaries. Tests create
-temporary CSVs and geometry or use data in memory; the ignored M2 artifacts are
-not test prerequisites. Third-party libraries are not themselves unit-tested.
+exact grid and water-area invariants, configured-extent clipping, deterministic
+spatial serialization and content identity, truthful execution timestamps,
+raw-output refusal, atomic-write failure behavior, and both CLI boundaries.
+Tests create temporary CSVs and geometry or use data in memory; the ignored M2
+artifacts are not test prerequisites. Third-party libraries are not themselves
+unit-tested.
 
 ## Formatting and linting
 

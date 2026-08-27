@@ -57,9 +57,18 @@ boundary at runtime; its location is not embedded in code.
 
 The grid water mask remains separate from any AIS observability, analytical-
 domain, or reporting-domain mask. ADR 0002 remains Proposed. The grid is
-generated over the accepted map/context bounds, and neither this decision nor
-the resulting 4,541 retained water cells accepts that full footprint as a
-statistical domain.
+generated over the accepted map/context bounds: its exact ADR 0004 origin and
+indices are preserved, while the biological-support mask is clipped to a
+densified EPSG:3310 projection of the configured WGS84 −122° to −117°, 32° to
+35° polygon before cell intersection. Neither this decision nor the resulting
+4,516 retained water cells accepts that full footprint as a statistical domain.
+
+The geographic rectangle is not projected from four corners alone. Each edge
+is deterministically subdivided into segments no longer than 0.01° (roughly one
+kilometre at this latitude) before projection so the curved projected boundary
+is represented adequately relative to 5 km cells. The segment limit,
+geographic and projected bounds, transformation, and 0.1 m² outside-area
+tolerance are recorded in dataset metadata.
 
 ## Consequences
 
@@ -81,10 +90,12 @@ statistical domain.
 - The NOAA redistribution assessment supports local derivation and later
   publication with citation, subject to the limitations already recorded in
   the source register.
-- The first real smoke run produced 4,541 retained cells and 110,699.477196 km²
-  of model-footprint water inside the exact projected grid. Programmatic
-  geometry checks passed, but visual map inspection is unfinished; these
-  numbers do not substitute for looking at the layer.
+- The corrected real smoke run produced 4,516 retained cells and
+  107,728.695924 km² of model-footprint water inside the configured context
+  extent. It removed 25 cells and 2,970.781272 km² that the earlier grid-bounds-
+  only implementation retained outside that extent. Programmatic geometry and
+  read-back checks passed, but visual map inspection is unfinished; these
+  numbers do not substitute for opening the derived layer in a GIS.
 
 ## Alternatives considered
 

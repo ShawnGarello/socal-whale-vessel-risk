@@ -90,10 +90,12 @@ the analytical period, and applies the duplicate policy in
 configuration records the accepted 1 July–30 November 2024 period while keeping
 the analytical/statistical domain unresolved. A separate spatial module
 validates and unions an explicitly supplied polygon mask, reprojects it to
-EPSG:3310 with explicit x/y ordering, constructs the exact configured grid, and
+EPSG:3310 with explicit x/y ordering, clips it to a densified projection of the
+configured WGS84 map/context extent, constructs the exact configured grid, and
 writes actual per-cell water intersections as deterministic GeoParquet with
-lineage. Retrieval, whale-value transfer, vessel aggregation, relative exposure,
-and statistics are not implemented.
+lineage. The map/context clip is not a statistical-domain decision. It does not
+retrieve data, transfer whale values, aggregate vessels, calculate relative
+exposure, or derive statistics.
 
 DuckDB is the single primary engine for large AIS tables, selected by the
 equivalent-operation benchmark in [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md).
@@ -104,7 +106,9 @@ production pipeline.
 - Cleaning and filtering: vessel-class selection, implausible-position and implausible-speed removal, deduplication.
 - Grid construction and water-mask intersection. **Implemented.** The grid is
   always constructed from the accepted bounds and does not infer its extent or
-  origin from the input. Dry cells are omitted and every retained row carries
+  origin from the input. The biological-support mask is first clipped to the
+  configured WGS84 map/context polygon after 0.01° edge densification and
+  EPSG:3310 projection. Dry cells are omitted and every retained row carries
   actual intersected geometry and area in EPSG:3310. [ADR
   0014](decisions/0014-select-the-grid-water-mask.md) selects the NOAA 2020b
   whale-model footprint as the biological-support mask while keeping it
@@ -122,6 +126,10 @@ EPSG:3310 metadata as a **local deterministic processing format**. A sibling
 JSON file records lineage and the Parquet checksum. This is not a publishing
 decision: ArcGIS compatibility has not been verified, and the eventual hosted
 representation remains constrained by the ArcGIS Online capability gate.
+Execution timestamps record actual start-before-load and post-Parquet-write
+completion, while the deterministic run ID is derived from input,
+configuration, processing version, and output content rather than timestamps.
+Generated grid output is refused beneath the project `data/raw/` tree.
 
 ### ArcGIS Online
 
