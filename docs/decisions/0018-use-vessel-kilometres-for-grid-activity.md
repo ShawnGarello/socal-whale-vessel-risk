@@ -46,10 +46,11 @@ separate descriptive output under
   requires a maximum time and distance when it splits sequential points. Its
   defaults demonstrate that track construction requires explicit choices; they
   are not evidence that those defaults fit this source, grid or question.
-- NOAA defines its annual transit-count grid as the number of unique tracks
-  passing through a cell, not the number of AIS messages. Its
-  [Transit Counter guide](https://coast.noaa.gov/data/marinecadastre/ais/AISVesselTransitCounterTool.pdf)
-  also shows that track breaks can over-count or under-count transits.
+- The [NOAA AIS FAQ](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf)
+  defines its annual transit-count grid as the number of unique tracks passing
+  through a cell, not the number of AIS messages. Because NOAA's Track Builder
+  requires explicit break rules, sensitivity of a transit count to track
+  segmentation is an inference rather than a source-defined invariant.
 
 ### Verified from authoritative or peer-reviewed methods
 
