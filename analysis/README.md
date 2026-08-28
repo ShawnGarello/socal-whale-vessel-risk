@@ -233,9 +233,10 @@ checksum is checked before source projection or transfer:
 python -m uv run python -m whale_vessel_analysis.whale_grid_cli --whale-input <model.gdb> --whale-layer Blue_whale_summer_fall --grid-input <water-grid.parquet> --expected-grid-sha256 <sha256> --output <whale-grid.parquet> [--config <config.toml>] [--overwrite]
 ```
 
-The command first runs the existing `noaa_swfsc_blue_whale_2020b_v1` source
-contract and then validates the target as exact `projected_water_grid_v1`
-GeoParquet. It projects source geometry from EPSG:4326 to EPSG:3310 with
+The command first validates the target as exact `projected_water_grid_v1`
+GeoParquet, including the expected checksum when supplied, and then runs the
+`noaa_swfsc_blue_whale_2020b_v1` source contract before projection and
+transfer. It projects source geometry from EPSG:4326 to EPSG:3310 with
 `always_xy=true`, checks source-interior overlap, and intersects each source
 polygon with each target cell's actual water geometry. Each intersection
 contributes:
