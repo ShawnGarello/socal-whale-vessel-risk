@@ -1031,16 +1031,20 @@ def attach_cleaning_reference(
         raise AISRetrievalError(
             "cleaning evidence requires one inspected, non-conflicting date entry"
         )
+    if cast(dict[str, object], entry["observational_completeness"]).get("status") != (
+        "unverified"
+    ):
+        raise AISRetrievalError("cleaning evidence cannot upgrade observability")
+    if reference.get("cleaner_reported_completeness") != "unverified":
+        raise AISRetrievalError(
+            "cleaning evidence must preserve unverified observational completeness"
+        )
     entry["cleaning_compatibility"] = {
         "status": "exercised_compatible",
         "exact_header_compatible": True,
         "cleaner_exercised": True,
         "cleaning_reference": dict(reference),
-        "observational_completeness_propagated": False,
+        "observational_completeness_preserved": True,
     }
-    if cast(dict[str, object], entry["observational_completeness"]).get("status") != (
-        "unverified"
-    ):
-        raise AISRetrievalError("cleaning evidence cannot upgrade observability")
     _write_manifest_atomic(manifest_path, manifest)
     return manifest

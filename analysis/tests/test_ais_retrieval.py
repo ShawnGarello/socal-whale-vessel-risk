@@ -16,6 +16,7 @@ from whale_vessel_analysis.ais_retrieval import (
     RequestBounds,
     RetrievalRequest,
     SourceHttpMetadata,
+    attach_cleaning_reference,
     inspect_ais_artifact,
     load_retrieval_manifest,
     materialize_verified_csv_bundle,
@@ -154,6 +155,33 @@ def test_manifest_serialization_is_deterministic(tmp_path: Path) -> None:
     assert payload["entries"][0]["cleaning_compatibility"]["status"] == (
         "header_compatible_not_exercised"
     )
+
+
+def test_cleaning_reference_cannot_upgrade_observational_completeness(
+    tmp_path: Path,
+) -> None:
+    artifact = tmp_path / "delivery.csv"
+    manifest_path = tmp_path / "manifest.json"
+    _write_csv(artifact, [_row()])
+    inspection = inspect_ais_artifact(artifact, EXPECTED_DATE)
+    record_verified_attempt(manifest_path, _request("delivery.csv"), inspection)
+    original = manifest_path.read_bytes()
+
+    with pytest.raises(
+        AISRetrievalError,
+        match="must preserve unverified observational completeness",
+    ):
+        attach_cleaning_reference(
+            manifest_path,
+            EXPECTED_DATE,
+            {"cleaner_reported_completeness": "verified"},
+        )
+
+    assert manifest_path.read_bytes() == original
+    stored = load_retrieval_manifest(manifest_path)
+    entry = cast(list[dict[str, object]], stored["entries"])[0]
+    completeness = cast(dict[str, object], entry["observational_completeness"])
+    assert completeness["status"] == "unverified"
 
 
 def test_one_verified_date_leaves_other_analytical_dates_missing(

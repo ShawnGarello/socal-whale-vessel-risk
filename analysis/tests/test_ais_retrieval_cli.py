@@ -144,4 +144,7 @@ def test_cli_exercises_cleaner_without_upgrading_completeness(
     assert quality["temporal_coverage"]["completeness"]["status"] == "unverified"
     compatibility = stored["entries"][0]["cleaning_compatibility"]
     assert compatibility["status"] == "exercised_compatible"
-    assert compatibility["observational_completeness_propagated"] is False
+    assert compatibility["observational_completeness_preserved"] is True
+    assert stored["entries"][0]["observational_completeness"]["status"] == (
+        "unverified"
+    )
