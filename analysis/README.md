@@ -269,8 +269,11 @@ Source-interior overlap larger than 1 m² fails the run. Smaller positive-area
 residuals are reported by count and total area in metadata and lineage. The
 real source contains three such pairs totaling 0.311235765 m²; none exceeds
 1 m². Coverage uses an exact threshold of 0.000001 m² and a numerical threshold
-of 0.1 m². Conservation requires an absolute tolerance of `1e-9` animals and a
-relative tolerance of `1e-10` and retains the actual difference.
+of 0.1 m². Conservation independently intersects each source polygon with the
+unioned target water domain, then compares that expected abundance with the
+cell allocations. Its scale-aware `math.isclose` bound is the larger of `1e-9`
+animals and `1e-10 × max(abs(expected), abs(allocated))`; the actual difference
+is retained.
 
 The output does not carry a propagated `UNCERTAINTY` value. The source field is
 a coefficient of variation, and no scientifically supported aggregation rule

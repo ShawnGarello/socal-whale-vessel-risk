@@ -244,7 +244,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 110 passing tests using temporary synthetic CSVs
+- The combined self-contained suite has 111 passing tests using temporary synthetic CSVs
   and in-memory records. It covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
   geometry and abundance consistency, CRS/grid invariants, deterministic
@@ -258,14 +258,18 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 - A focused whale-grid command validates the selected NOAA/SWFSC source and the
   exact versioned water-grid input, reprojects source polygons with explicit x/y
   order, detects material source-interior overlap, and transfers modeled density
-  by abundance-conserving EPSG:3310 intersection area. Its versioned GeoParquet
-  preserves target cell identity, water area, geometry, and row order while
-  adding modeled abundance allocation, modeled density, contributor count, and
-  explicit source-support coverage fields. It does not normalize values,
-  propagate coefficient-of-variation uncertainty, or implement exposure logic.
+  by abundance-conserving EPSG:3310 intersection area. Conservation is checked
+  independently by intersecting every source polygon with the unioned target
+  water domain rather than reusing cell-allocation contributions. Its versioned
+  GeoParquet preserves target cell identity, water area, geometry, and row order
+  while adding modeled abundance allocation, modeled density, contributor
+  count, and explicit source-support coverage fields. It does not normalize
+  values, propagate coefficient-of-variation uncertainty, or implement exposure
+  logic.
 - Synthetic whale-transfer cases cover full and half-cell intersection,
   multiple-to-one and one-to-multiple allocation, partial water geometry,
-  conservation, ordering and identity, longitude/latitude axis handling,
+  independently enumerated conservation including deliberately omitted cell
+  intersections, ordering and identity, longitude/latitude axis handling,
   invalid CRS and density values, material and numerical source overlap,
   coverage gaps, invalid grid contracts and checksums, PyArrow read-back,
   lineage, deterministic output, overwrite, atomic failure, and CLI paths.

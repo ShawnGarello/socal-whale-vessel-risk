@@ -46,10 +46,13 @@ grid by **abundance-conserving area weighting** in EPSG:3310:
 6. Retain covered water area, uncovered water area, coverage fraction, and a
    coverage status that distinguishes complete support, a numerical residual
    within tolerance, and an incomplete gap. Do not silently fill a gap.
-7. Verify that summed target allocations equal the source contribution within
-   the target water domain. The implementation uses deterministic summation and
-   requires both an absolute tolerance of `1e-9` animals and a relative
-   tolerance of `1e-10`; diagnostics retain the actual difference.
+7. Independently union the target water geometries, intersect each source
+   polygon with that union, and sum density × intersected area as the expected
+   source-domain abundance. Compare that independently enumerated total with the
+   summed target allocations. The scale-aware `math.isclose` check passes when
+   the absolute difference is no greater than the larger of `1e-9` animals and
+   `1e-10 × max(abs(expected), abs(allocated))`; diagnostics retain the actual
+   difference.
 
 The versioned whale-grid output preserves `cell_id`, row and column indices,
 parent bounds, water areas, and exact water geometry from the target grid. Rows

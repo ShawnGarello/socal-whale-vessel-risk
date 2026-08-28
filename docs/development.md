@@ -328,7 +328,9 @@ verified run. The command validates both versioned input contracts, projects
 longitude/latitude with explicit x/y order, rejects material source-interior
 overlap, and allocates source modeled density by actual EPSG:3310 overlap area.
 It derives per-cell modeled density from allocated abundance divided by full
-cell water area. Coverage status exposes incomplete support rather than
+cell water area. It independently recomputes expected source-domain abundance
+by intersecting each source polygon with the unioned target water domain before
+checking conservation. Coverage status exposes incomplete support rather than
 renormalizing it away. The output preserves target IDs, bounds, water areas,
 row order, and WKB geometry exactly.
 
@@ -608,7 +610,7 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 110 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 111 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -616,9 +618,9 @@ deterministic lineage/configuration hashing, configurable source locators, the
 exact grid and water-area invariants, configured-extent clipping, deterministic
 spatial serialization and content identity, truthful execution timestamps,
 raw-output refusal, atomic-write failure behavior, abundance-conserving whale
-transfer, source-overlap detection, explicit support coverage, target-contract
-validation, deterministic whale-grid serialization and lineage, and all CLI
-boundaries.
+transfer, independently enumerated conservation, source-overlap detection,
+explicit support coverage, target-contract validation, deterministic whale-grid
+serialization and lineage, and all CLI boundaries.
 Tests create temporary CSVs and geometry or use data in memory; the ignored M2
 artifacts are not test prerequisites. Third-party libraries are not themselves
 unit-tested.
