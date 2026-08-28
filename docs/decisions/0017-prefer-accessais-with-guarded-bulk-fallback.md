@@ -49,23 +49,56 @@ unresolved offshore observability domain remains owned by
   returned HTTP 200 and
   reported the API and its database as available. This proves only that the
   metadata service responded; it does not prove order creation or delivery.
-- Read-only size-estimate requests used WGS 84 bounds `-122.0, 32.0, -117.0,
-  35.0`. A single request for the full period returned HTTP 413. The five
-  month-sized requests below were each accepted by the estimator and below its
-  2 GB limit:
+- Read-only size estimates used `POST`
+  `https://marinecadastre.gov/accessais/api/v1/search/limit` with
+  `Content-Type: application/json`. This endpoint was observed in the AccessAIS
+  web application's network behavior and current JavaScript bundle; NOAA does
+  not document it as a supported production API. Its path, request shape and
+  response shape may change without notice, so future production retrieval
+  must not depend on it as a stable contract.
+- The exact JSON fields are `fromDate`, `toDate`, `xMin`, `yMin`, `xMax` and
+  `yMax`. The web application serializes dates as `YYYY-M-D 00:00:00` in UTC,
+  without requiring zero-padded month or day values. The July request body was:
 
-  | Requested dates | Estimated records | Estimated bytes |
-  |---|---:|---:|
-  | 2024-07-01 through 2024-07-31 | 18,000,749 | 1,851,070,153 |
-  | 2024-08-01 through 2024-08-31 | 18,286,289 | 1,880,613,226 |
-  | 2024-09-01 through 2024-09-30 | 15,639,769 | 1,608,194,156 |
-  | 2024-10-01 through 2024-10-31 | 16,356,927 | 1,681,834,982 |
-  | 2024-11-01 through 2024-11-30 | 14,343,702 | 1,474,632,980 |
-  | **Total of estimates** | **82,627,436** | **8,496,345,497** |
+  ```json
+  {
+    "fromDate": "2024-7-1 00:00:00",
+    "toDate": "2024-7-31 00:00:00",
+    "xMin": -122,
+    "yMin": 32,
+    "xMax": -117,
+    "yMax": 35
+  }
+  ```
+
+  The other request bodies changed only `fromDate` and `toDate` to the exact
+  strings shown below. The one-day body used `2024-7-15 00:00:00` for both date
+  fields. The full-period body used `2024-7-1 00:00:00` and
+  `2024-11-30 00:00:00` and returned HTTP 413. Because the endpoint is
+  undocumented, these observed results do not independently establish its
+  date-boundary semantics.
+- The recorded estimates came from `data.estimate.n_records` and
+  `data.estimate.n_bytes` in the JSON response. `data.estimate.limit` reported
+  whether the estimate exceeded the service limit; the five monthly responses
+  returned `false`. Top-level `status`, `success` and `valid` were also checked
+  as `200`, `true` and `true`. The response also contained informational
+  `data.bbox.sq_miles` and `data.runtime` values, which were not used in the
+  volume decision.
+- The five month-sized requests were each accepted by the estimator and below
+  its 2 GB limit:
+
+  | `fromDate` | `toDate` | Estimated records | Estimated bytes |
+  |---|---|---:|---:|
+  | `2024-7-1 00:00:00` | `2024-7-31 00:00:00` | 18,000,749 | 1,851,070,153 |
+  | `2024-8-1 00:00:00` | `2024-8-31 00:00:00` | 18,286,289 | 1,880,613,226 |
+  | `2024-9-1 00:00:00` | `2024-9-30 00:00:00` | 15,639,769 | 1,608,194,156 |
+  | `2024-10-1 00:00:00` | `2024-10-31 00:00:00` | 16,356,927 | 1,681,834,982 |
+  | `2024-11-1 00:00:00` | `2024-11-30 00:00:00` | 14,343,702 | 1,474,632,980 |
+  | **Total of estimates** |  | **82,627,436** | **8,496,345,497** |
 
   These are service estimates, not delivered counts or measured file sizes.
-  The request body contained only dates and bounding coordinates; no documented
-  vessel-type filter was found and none is assumed.
+  The request body contained only the dates and bounding coordinates shown
+  above; no documented vessel-type filter was found and none is assumed.
 - The bulk index listed all 366 dates in leap year 2024. Comparing it with the
   generated 153-date analytical-period calendar found zero missing filenames.
   Metadata-only HEAD requests for 1 July, 16 September, and 30 November returned

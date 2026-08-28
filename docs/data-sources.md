@@ -456,7 +456,7 @@ There is a near-empty gap between 50 m and 150 m separating small harbour and pa
 
 **Verified from official documentation.** AccessAIS provides point data for a selected area and period, limits orders to 2 GB and one active order per user, and expires a delivery after 14 days or five accesses. NOAA cannot restart an expired or failed order. The [AccessAIS help sheet](https://coast.noaa.gov/data/marinecadastre/ais/accessais-help.pdf) and [AIS FAQ](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf) are the sources. The FAQ also says AccessAIS and bulk outputs differ slightly in format and structure; current compatibility with the exact 17-column cleaner is therefore unverified.
 
-**Observed through read-only official endpoints on 2026-08-27.** The AccessAIS [status endpoint](https://marinecadastre.gov/accessais/api/v1/status) returned HTTP 200. Its [limit endpoint](https://marinecadastre.gov/accessais/api/v1/search/limit) reported a 2 GB cap, one active order and a date range containing 2024. Size-estimate POST requests used WGS 84 bounds longitude −122 to −117 and latitude 32 to 35:
+**Observed through read-only official endpoints on 2026-08-27.** The AccessAIS [status endpoint](https://marinecadastre.gov/accessais/api/v1/status) returned HTTP 200. A `GET` to its [limit endpoint](https://marinecadastre.gov/accessais/api/v1/search/limit) reported a 2 GB cap, one active order and a date range containing 2024. Size estimates used `POST` to the same path with WGS 84 bounds longitude −122 to −117 and latitude 32 to 35. The `POST` interface is an observed, undocumented web-application endpoint, not a NOAA-supported production API; its exact request schema, response fields and reproduced bodies are recorded in ADR 0017.
 
 | Requested dates | Estimated records | Estimated bytes |
 |---|---:|---:|
@@ -466,7 +466,7 @@ There is a near-empty gap between 50 m and 150 m separating small harbour and pa
 | 2024-10-01 through 2024-10-31 | 16,356,927 | 1,681,834,982 |
 | 2024-11-01 through 2024-11-30 | 14,343,702 | 1,474,632,980 |
 
-The five estimates total **82,627,436 records and 8,496,345,497 bytes**. They are service estimates, not delivered counts. A full-period estimate request returned HTTP 413. A one-day 15 July request estimated 582,454 records and 59,895,276 bytes. The exact request bodies and the acceptance gate are recorded in ADR 0017. The documented interface exposes area and time, not a vessel-type selector; no server-side vessel-type filter is assumed.
+The five estimates total **82,627,436 records and 8,496,345,497 bytes**. They are service estimates, not delivered counts. A full-period estimate request returned HTTP 413. A one-day 15 July request estimated 582,454 records and 59,895,276 bytes. The exact request bodies and the acceptance gate are recorded in ADR 0017. The observed request body exposes area and time, not a vessel-type selector; no server-side vessel-type filter is assumed.
 
 **Bulk metadata verification on 2026-08-27.** The official [2024 bulk index](https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/) listed all 366 daily filenames; comparison against the 153-date analytical calendar found zero missing names. HEAD requests for the first, a middle, and the last analytical date returned HTTP 200, byte lengths, validators and byte-range support. Together with the five M2 prefix transfers, this verifies listing and partial-transfer behavior. It does **not** verify a complete archive, ZIP CRC, daily semantics or observational completeness.
 

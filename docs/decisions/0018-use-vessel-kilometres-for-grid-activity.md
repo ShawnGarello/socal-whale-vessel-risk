@@ -133,10 +133,13 @@ gap or plausibility threshold.
 
 The planned vessel-grid input carries both additive `vessel_km` and the derived
 intensity `vessel_km_per_water_km2` for the fixed 153-day period, by vessel group
-and for all selected groups combined. The latter divides by the grid's actual
-`water_area_km2`, not the nominal 25 km² cell area. Its units are kilometres
-travelled per square kilometre of water, equivalent to km⁻¹ for this fixed
-period. Neither field is an exposure value or a speed weight.
+and for all selected groups combined. The latter divides by the grid's stored
+`water_area_km2`, not the nominal 25 km² cell area. Despite the existing field
+name, that area represents modeled-blue-whale support in the accepted source
+mask; it is not an authoritative shoreline or AIS-coverage boundary. The
+intensity's units are kilometres travelled per square kilometre of modeled
+whale support, equivalent to km⁻¹ for this fixed period. Neither field is an
+exposure value or a speed weight.
 
 The same grid may carry `distinct_mmsi` and `distinct_mmsi_dates` as clearly
 separate descriptive fields. A raw observation count belongs in quality and
@@ -148,9 +151,9 @@ stationary and gap treatment.
 
 Use **vessel-kilometres from valid consecutive-observation segments** as the
 primary commercial vessel-activity measure. Split every valid segment across
-the exact EPSG:3310 grid-water geometries and allocate only the length within
-each water geometry. Preserve passenger, cargo and tanker groups. Retain
-distinct-vessel descriptors and reported-SOG data separately.
+the exact EPSG:3310 modeled-whale-support geometries and allocate only the
+length within each support geometry. Preserve passenger, cargo and tanker
+groups. Retain distinct-vessel descriptors and reported-SOG data separately.
 
 This record remains **Proposed** because track distance cannot be implemented
 without a maximum interpolation gap, an implied-speed plausibility rule and an
@@ -219,24 +222,27 @@ never repaired by drawing a shorter invented path.
   explicit edge censoring. Any support extent is a processing aid, not an
   analytical or offshore-coverage boundary, and needs its own stated basis.
 
-### Splitting across grid water geometry
+### Splitting across modeled-whale-support geometry
 
 1. Construct a straight segment between each valid consecutive pair and
    transform it with explicit x/y ordering to EPSG:3310. The straight-line
    assumption applies only within the accepted maximum gap.
-2. Intersect that line with each crossed grid row's exact water geometry, not
-   its nominal square or centroid. Dry and land portions receive no allocation.
+2. Intersect that line with each crossed grid row's exact modeled-whale-support
+   geometry, not its nominal square or centroid. Allocate only the segment
+   portion inside that support geometry. Report portions outside it separately;
+   do not interpret them automatically as land, dry area or absent AIS
+   coverage.
 3. Emit one or more pieces keyed by `segment_id`, `cell_id` and deterministic
    piece order. Carry vessel group, parent elapsed time, endpoint reported SOG,
    parent projected length and piece projected length.
 4. Sum piece metres by `cell_id` and vessel group, then divide by 1,000 for
-   `vessel_km`. Derive `vessel_km_per_water_km2` only from the stored actual
-   water area. State the fixed period with the units.
+   `vessel_km`. Derive `vessel_km_per_water_km2` only from the modeled-support
+   area stored in `water_area_km2`. State the fixed period with the units.
 5. Validate that pieces from one segment do not overlap each other and that
    their summed length equals the parent segment's intersection with the union
-   of grid-water geometries within numerical precision. Report the parent
-   length outside grid water separately. This conservation check prevents
-   whole-segment and per-cell double-counting.
+   of modeled-whale-support geometries within numerical precision. Report the
+   parent length outside modeled-whale support separately. This conservation
+   check prevents whole-segment and per-cell double-counting.
 
 EPSG:3310 projected metres are the proposed recorded distance basis because
 they are the coordinates used for the actual split. The complete-day evidence
@@ -247,16 +253,22 @@ the overlay in EPSG:3310.
 
 ### Descriptive metrics kept separate
 
-- `distinct_mmsi` and `distinct_mmsi_dates` are computed from cleaned points
-  that spatially join to a grid-water geometry. Points not matching water are
-  counted and reported, not silently snapped.
+- `distinct_mmsi` is the count of unique MMSIs with at least one retained
+  cleaned point inside the cell's modeled-whale-support geometry during the
+  period. `distinct_mmsi_dates` is the count of unique `(MMSI, UTC date)` pairs
+  with at least one such retained point. Points outside the support geometry are
+  counted and reported, not silently snapped or classified as land.
 - The segment table retains endpoint `sog_knots` and the point-to-cell relation
   retains valid and unavailable reported-SOG counts. A later speed-summary
   contract must state whether its summaries are observation-, segment-, time-
   or vessel-weighted. This record selects none of those and never multiplies
   vessel-kilometres by SOG.
-- Results remain split by `vessel_type_group`; an all-commercial value is the
-  exact sum of passenger, cargo and tanker values.
+- Results remain split by `vessel_type_group`. Additive measures such as
+  `vessel_km` produce an all-commercial value by exact summation of passenger,
+  cargo and tanker values. All-commercial `distinct_mmsi` and
+  `distinct_mmsi_dates` are recomputed from the union of retained commercial
+  points; they are not sums of group counts because one MMSI may appear in more
+  than one group.
 
 ## Threshold and evidence register
 
@@ -291,9 +303,9 @@ production vessel grid. It must:
    without selecting one merely from that day;
 5. compare raw point counts, distinct MMSI, MMSI-date, vessel-hours and
    vessel-kilometres on synthetic cells and the complete day;
-6. split candidate valid segments over the exact water grid in a non-production
-   evidence run and verify segment-length conservation and no duplicate segment
-   allocation;
+6. split candidate valid segments over the exact modeled-whale-support
+   geometries in a non-production evidence run and verify segment-length
+   conservation and no duplicate segment allocation;
 7. compare EPSG:3310 and WGS 84 geodesic segment lengths; and
 8. record runtime, peak memory, excluded counts and sensitivity of per-cell and
    total vessel-kilometres.
