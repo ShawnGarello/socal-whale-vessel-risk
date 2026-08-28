@@ -24,6 +24,7 @@ from whale_vessel_analysis.whale_grid import (
     COVERAGE_NUMERICAL_TOLERANCE_M2,
     TargetGridCell,
     TargetGridInspection,
+    WhaleGridConservationError,
     WhaleGridInputError,
     WhaleGridOutputError,
     WhaleGridOverlapError,
@@ -248,6 +249,31 @@ def test_one_source_polygon_contributes_to_multiple_target_cells(
     ]
     assert dataset.diagnostics.source_contribution_animals == pytest.approx(100.0)
     assert dataset.diagnostics.allocated_abundance_animals == pytest.approx(100.0)
+
+
+def test_independent_conservation_rejects_omitted_cell_intersections(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    geometry = _cell_geometry(34, 38)
+
+    class _OmittingTree:
+        def __init__(self, _geometries: object) -> None:
+            pass
+
+        def query(self, _geometry: object) -> tuple[int, ...]:
+            return ()
+
+    monkeypatch.setattr(whale_grid, "STRtree", _OmittingTree)
+
+    with pytest.raises(
+        WhaleGridConservationError,
+        match="did not conserve source contribution",
+    ):
+        _transfer(
+            tmp_path,
+            [(2.0, geometry)],
+            [_target_cell(34, 38, geometry)],
+        )
 
 
 def test_coastal_partial_water_uses_actual_water_area(tmp_path: Path) -> None:

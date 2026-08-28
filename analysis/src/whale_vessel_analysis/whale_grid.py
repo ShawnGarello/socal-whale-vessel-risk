@@ -66,7 +66,7 @@ from whale_vessel_analysis.whale import (
 )
 
 WHALE_GRID_DATASET_SCHEMA_VERSION: Final = 1
-WHALE_GRID_PROCESSING_VERSION: Final = "1.0.0"
+WHALE_GRID_PROCESSING_VERSION: Final = "1.0.1"
 WHALE_GRID_CONTRACT: Final = "blue_whale_grid_transfer_v1"
 WHALE_GRID_LINEAGE_CONTRACT: Final = "blue_whale_grid_transfer_lineage_v1"
 GRID_INPUT_CONTRACT: Final = "projected_water_grid_v1"
@@ -811,6 +811,30 @@ def _coverage_status(uncovered_area_m2: float) -> CoverageStatus:
     return "incomplete"
 
 
+def _independent_source_domain_abundance(
+    features: Sequence[WhaleSourceFeature],
+    target_cells: Sequence[TargetGridCell],
+) -> float:
+    """Recompute expected abundance from sources and the unioned target domain."""
+    target_domain = _polygonal_only(
+        unary_union([target.geometry for target in target_cells])
+    )
+    _validate_polygon(target_domain, "unioned target water domain")
+    contributions: list[float] = []
+    for feature in features:
+        intersection = _polygonal_only(feature.geometry.intersection(target_domain))
+        area_m2 = float(intersection.area)
+        if area_m2 <= 0:
+            continue
+        contribution = feature.density_animals_per_km2 * area_m2 / 1_000_000.0
+        if not math.isfinite(contribution) or contribution < 0:
+            raise WhaleGridError(
+                "independent source-domain contribution is non-finite or negative"
+            )
+        contributions.append(contribution)
+    return math.fsum(contributions)
+
+
 def transfer_whale_density(
     source: WhaleSourceInspection,
     target_grid: TargetGridInspection,
@@ -825,7 +849,6 @@ def transfer_whale_density(
     overlap_pair_count, overlap_area_m2 = _source_overlap_diagnostics(
         source.features, tree
     )
-    source_contributions: list[list[float]] = [[] for _feature in source.features]
     output_cells: list[WhaleGridCell] = []
     intersection_count = 0
     status_counts: dict[CoverageStatus, int] = {
@@ -852,7 +875,6 @@ def transfer_whale_density(
                     f"non-finite or negative contribution for {target.cell_id}"
                 )
             contributions.append(contribution)
-            source_contributions[source_index].append(contribution)
             intersections.append(intersection)
             contributing_sources.add(source_index)
             intersection_count += 1
@@ -885,8 +907,8 @@ def transfer_whale_density(
                 source_polygon_count=len(contributing_sources),
             )
         )
-    source_contribution = math.fsum(
-        math.fsum(contributions) for contributions in source_contributions
+    source_contribution = _independent_source_domain_abundance(
+        source.features, target_grid.cells
     )
     allocated_abundance = math.fsum(
         cell.modeled_abundance_allocation_animals for cell in output_cells
