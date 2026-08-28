@@ -109,12 +109,13 @@ gap or plausibility threshold.
   and exact grid. This is one-day implementation evidence, not period evidence,
   and it selects no production parameter.
 - The real run measured 113,799 observations, 113,620 structural segments, an
-  unfiltered baseline of 25,560.766 vessel-km, a 431,402-knot maximum implied
-  speed, 1,303 touched grid cells, passing conservation, 228.968 seconds of
-  runtime, and an approximate 243 MiB peak working set. The extreme implied
-  speed confirms that the unfiltered baseline is diagnostic only. Candidate-rule
-  effects on per-cell vessel-kilometres and the vessel-hours comparison remain
-  unmeasured by this harness.
+  unfiltered total parent distance of 25,560.766 km, 24,096.858 km inside
+  modeled-whale support, 1,463.908 km outside that support, a 431,402-knot
+  maximum implied speed, 1,303 touched grid cells, passing conservation,
+  228.968 seconds of runtime, and an approximate 243 MiB peak working set. The
+  extreme implied speed confirms that the unfiltered baseline is diagnostic
+  only. Candidate-rule effects on per-cell vessel-kilometres and the
+  vessel-hours comparison remain unmeasured by this harness.
 - No maximum interpolation gap or implied-speed plausibility threshold has an
   accepted evidentiary basis.
 - The current cleaner removes positions outside the map/context extent before
@@ -330,10 +331,27 @@ execution provenance but do not enter `report_id`.
 The author exercised the partial harness against the real bounded 2024-07-15
 cleaned bundle and exact grid on 2026-08-28. It processed 113,799 observations
 and 113,620 structural segments, touched 1,303 cells, passed conservation, and
-reported 25,560.766 vessel-km for the unfiltered baseline. Runtime was 228.968
-seconds with an approximate 243 MiB peak working set. Its maximum implied speed
-was 431,402 knots, confirming that the unfiltered baseline cannot become a
-production result without an evidence-supported plausibility rule.
+reported 25,560.766 km of total parent segment distance for the unfiltered
+baseline. Of that distance, 24,096.858 km was inside the supplied grid's
+modeled-whale support and 1,463.908 km was outside that support. Runtime was
+228.968 seconds with an approximate 243 MiB peak working set. Its maximum
+implied speed was 431,402 knots, confirming that the unfiltered baseline cannot
+become a production result without an evidence-supported plausibility rule.
+
+The durable identity of that evidence run is:
+
+| Identity field | Value |
+|---|---|
+| Path-independent report ID | `vessel-evidence-7b59c6e3ec64c42915b62f74` |
+| Exact local report SHA-256 | `1d9faafc29d6405e4adf89929660f67a1c5d321c58b4e8d7400e9ecde2260880` |
+| Cleaned input SHA-256 | `efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6` |
+| Cleaner run ID | `ais-362502c6a37b53e681b745f5` |
+| Exact water-grid SHA-256 | `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031` |
+| Candidate thresholds | None supplied; this was the unfiltered structural baseline only. |
+
+The report ID excludes local filesystem paths and identifies deterministic
+evidence content. The report SHA-256 identifies the exact local JSON bytes,
+including their non-identity local provenance metadata.
 
 Source-transfer completeness and observational completeness remain unverified.
 The harness also omits vessel-hours and per-cell candidate sensitivity, so it

@@ -273,9 +273,10 @@ Synthetic verification covers the diagnostic and optional-allocation boundary.
 The author also exercised the partial harness read-only against the real bounded
 2024-07-15 cleaned bundle and exact water grid on 2026-08-28. The run processed
 113,799 observations and 113,620 structural segments, touched 1,303 grid cells,
-and passed segment-length conservation. The unfiltered baseline totaled
-25,560.766 vessel-km. Runtime was 228.968 seconds and the approximate peak
-working set was 243 MiB.
+and passed segment-length conservation. The unfiltered baseline's total parent
+segment distance was 25,560.766 km: 24,096.858 km inside the supplied
+modeled-whale-support grid and 1,463.908 km outside that support. Runtime was
+228.968 seconds and the approximate peak working set was 243 MiB.
 
 The maximum implied speed was 431,402 knots. That physically implausible value
 confirms that the unfiltered baseline is diagnostic only and that an explicit,

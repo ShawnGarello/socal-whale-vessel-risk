@@ -262,13 +262,15 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   dataset. Synthetic tests passed. The author also exercised the partial harness
   against the real bounded 2024-07-15 cleaned bundle and exact grid: 113,799
   observations, 113,620 structural segments, 1,303 touched grid cells, passing
-  conservation, and a 25,560.766 vessel-km unfiltered baseline. Runtime was
-  228.968 seconds and approximate peak working set was 243 MiB. The maximum
-  implied speed was 431,402 knots, confirming that the unfiltered baseline is
-  diagnostic only and a plausibility rule remains unresolved. Source-transfer
-  and observational completeness remain unverified. The harness remains partial
-  because it does not calculate vessel-hours or per-cell candidate sensitivity;
-  no production rule or vessel grid was produced.
+  conservation, and 25,560.766 km of unfiltered total parent segment distance.
+  Of that distance, 24,096.858 km was inside the supplied modeled-whale-support
+  grid and 1,463.908 km was outside that support. Runtime was 228.968 seconds and
+  approximate peak working set was 243 MiB. The maximum implied speed was
+  431,402 knots, confirming that the unfiltered baseline is diagnostic only and
+  a plausibility rule remains unresolved. Source-transfer and observational
+  completeness remain unverified. The harness remains partial because it does
+  not calculate vessel-hours or per-cell candidate sensitivity; no production
+  rule or vessel grid was produced.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
   whale layer (12,257 features, with zero null, empty, or invalid geometries)
   and VSR polygon (one valid feature). The required 15 July AIS prefix smoke run
