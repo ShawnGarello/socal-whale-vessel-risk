@@ -249,12 +249,13 @@ Supplying an exact grid is optional:
 
 That path reuses the exact `projected_water_grid_v1` contract and optional
 checksum validation, transforms longitude/latitude with explicit x/y ordering,
-and intersects the unfiltered structural candidate segments with actual
-modeled-whale-support cell geometry. It reports in-support and outside-support
-length separately and checks piece-length conservation and duplicate
-allocation. Outside-support length means only outside the supplied biological
-model support; it is not labelled as land, dry area, or absent AIS coverage.
-No per-cell vessel-activity dataset is emitted.
+and intersects actual modeled-whale-support cell geometry first with the
+unfiltered structural baseline and then independently with every explicitly
+supplied candidate scenario. Each population reports in-support and
+outside-support vessel-kilometres separately and checks piece-length
+conservation and duplicate allocation. Outside-support length means only
+outside the supplied biological model support; it is not labelled as land, dry
+area, or absent AIS coverage. No per-cell vessel-activity dataset is emitted.
 
 The deterministic report contains no execution timestamp. Its `report_id` is
 derived from its content, while the CLI prints actual UTC start/completion time

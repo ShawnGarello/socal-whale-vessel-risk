@@ -309,17 +309,20 @@ When an exact `projected_water_grid_v1` input is supplied, the optional
 non-production path reuses the versioned grid and optional checksum validation,
 projects with explicit x/y order, intersects lines with actual
 modeled-whale-support cell geometry, reports in-support and outside-support
-length separately, and verifies conservation and no duplicate allocation. It
-does not emit a per-cell vessel-activity dataset. Outside-support portions are
-not interpreted as land, dry area, or absent AIS coverage.
+vessel-kilometres separately, and verifies conservation and no duplicate
+allocation. It retains the unfiltered structural allocation as a baseline and
+performs a separate allocation for every explicitly supplied candidate
+scenario, using exactly that scenario's retained segment population. It does
+not emit a per-cell vessel-activity dataset. Outside-support portions are not
+interpreted as land, dry area, or absent AIS coverage.
 
 Synthetic tests pass for the implemented boundary, including invalid grid CRS,
-contract and checksum, deterministic report identity, overwrite and raw-output
-refusal, atomic failure, and CLI exits. This implementation evidence does not
-resolve the items below. In particular, no complete-day bundle was available
-on this branch, the real 15 July run did not occur, vessel-hours and peak-memory
-comparison remain part of the bounded evidence step, and the full-period gates
-remain open.
+contract and checksum, candidate-scenario allocation, deterministic report
+identity, overwrite and raw-output refusal, atomic failure, and CLI exits. This
+implementation evidence does not resolve the items below. In particular, no
+complete-day bundle was available on this branch, the real 15 July run did not
+occur, vessel-hours and peak-memory comparison remain part of the bounded
+evidence step, and the full-period gates remain open.
 
 ## Bounded next evidence step
 

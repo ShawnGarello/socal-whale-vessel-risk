@@ -114,6 +114,36 @@ class CandidateSegment:
 
 
 @dataclass(frozen=True, slots=True)
+class CandidateScenarioEvaluation:
+    """One explicitly supplied candidate-rule combination and retained segments."""
+
+    scenario_id: str
+    maximum_gap_seconds: float | None
+    implied_speed_ceiling_knots: float | None
+    minimum_vessel_length_m: float | None
+    retained_segments: tuple[CandidateSegment, ...]
+    primary_exclusion_counts: tuple[tuple[str, int], ...]
+
+    def rules(self) -> dict[str, float | None]:
+        return {
+            "candidate_maximum_gap_seconds": self.maximum_gap_seconds,
+            "candidate_implied_speed_ceiling_knots": (self.implied_speed_ceiling_knots),
+            "candidate_minimum_vessel_length_m": self.minimum_vessel_length_m,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CandidateSensitivityEvaluation:
+    """Normalized candidate inputs, baseline, and all explicit combinations."""
+
+    maximum_gap_seconds: tuple[float, ...]
+    implied_speed_ceiling_knots: tuple[float, ...]
+    minimum_vessel_length_m: tuple[float, ...]
+    structural_baseline: tuple[CandidateSegment, ...]
+    scenarios: tuple[CandidateScenarioEvaluation, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class CleanedBundleInspection:
     """Validated cleaner bundle and its deterministic observations."""
 
@@ -661,23 +691,31 @@ def _validated_candidates(values: Sequence[float], label: str) -> tuple[float, .
     return tuple(sorted(normalized))
 
 
-def _candidate_sensitivity(
+def _evaluate_candidate_sensitivity(
     segments: Sequence[CandidateSegment],
     *,
     maximum_gap_seconds: Sequence[float],
     implied_speed_ceiling_knots: Sequence[float],
     minimum_vessel_length_m: Sequence[float],
-) -> dict[str, object]:
+) -> CandidateSensitivityEvaluation:
     gaps = _validated_candidates(maximum_gap_seconds, "maximum-gap")
     speeds = _validated_candidates(implied_speed_ceiling_knots, "implied-speed")
     lengths = _validated_candidates(minimum_vessel_length_m, "minimum-length")
-    structural = [item for item in segments if item.structurally_eligible]
+    structural = tuple(item for item in segments if item.structurally_eligible)
+    if not gaps and not speeds and not lengths:
+        return CandidateSensitivityEvaluation(
+            maximum_gap_seconds=gaps,
+            implied_speed_ceiling_knots=speeds,
+            minimum_vessel_length_m=lengths,
+            structural_baseline=structural,
+            scenarios=(),
+        )
     axes: list[tuple[float | None, ...]] = [
         gaps if gaps else (None,),
         speeds if speeds else (None,),
         lengths if lengths else (None,),
     ]
-    scenarios: list[dict[str, object]] = []
+    scenarios: list[CandidateScenarioEvaluation] = []
     for gap in axes[0]:
         for speed in axes[1]:
             for length in axes[2]:
@@ -703,41 +741,76 @@ def _candidate_sensitivity(
                         exclusions["length"] += 1
                         continue
                     retained.append(segment)
+                rules = {
+                    "candidate_maximum_gap_seconds": gap,
+                    "candidate_implied_speed_ceiling_knots": speed,
+                    "candidate_minimum_vessel_length_m": length,
+                }
                 scenarios.append(
-                    {
-                        "candidate_maximum_gap_seconds": gap,
-                        "candidate_implied_speed_ceiling_knots": speed,
-                        "candidate_minimum_vessel_length_m": length,
-                        "retained_segment_count": len(retained),
-                        "retained_projected_distance_m": _round(
-                            math.fsum(item.projected_distance_m for item in retained)
+                    CandidateScenarioEvaluation(
+                        scenario_id=(
+                            "candidate-"
+                            + hashlib.sha256(
+                                _canonical_json(rules).encode("utf-8")
+                            ).hexdigest()[:16]
                         ),
-                        "primary_exclusion_counts": exclusions,
-                        "by_group": {
-                            group: {
-                                "retained_segment_count": sum(
-                                    item.start.vessel_type_group == group
-                                    for item in retained
-                                ),
-                                "retained_projected_distance_m": _round(
-                                    math.fsum(
-                                        item.projected_distance_m
-                                        for item in retained
-                                        if item.start.vessel_type_group == group
-                                    )
-                                ),
-                            }
-                            for group in VESSEL_GROUPS
-                        },
-                    }
+                        maximum_gap_seconds=gap,
+                        implied_speed_ceiling_knots=speed,
+                        minimum_vessel_length_m=length,
+                        retained_segments=tuple(retained),
+                        primary_exclusion_counts=tuple(sorted(exclusions.items())),
+                    )
                 )
+    return CandidateSensitivityEvaluation(
+        maximum_gap_seconds=gaps,
+        implied_speed_ceiling_knots=speeds,
+        minimum_vessel_length_m=lengths,
+        structural_baseline=structural,
+        scenarios=tuple(scenarios),
+    )
+
+
+def _candidate_scenario_diagnostics(
+    scenario: CandidateScenarioEvaluation,
+) -> dict[str, object]:
+    retained = scenario.retained_segments
+    return {
+        "scenario_id": scenario.scenario_id,
+        **scenario.rules(),
+        "retained_segment_count": len(retained),
+        "retained_projected_distance_m": _round(
+            math.fsum(item.projected_distance_m for item in retained)
+        ),
+        "primary_exclusion_counts": dict(scenario.primary_exclusion_counts),
+        "by_group": {
+            group: {
+                "retained_segment_count": sum(
+                    item.start.vessel_type_group == group for item in retained
+                ),
+                "retained_projected_distance_m": _round(
+                    math.fsum(
+                        item.projected_distance_m
+                        for item in retained
+                        if item.start.vessel_type_group == group
+                    )
+                ),
+            }
+            for group in VESSEL_GROUPS
+        },
+    }
+
+
+def _candidate_sensitivity(
+    evaluation: CandidateSensitivityEvaluation,
+) -> dict[str, object]:
+    structural = evaluation.structural_baseline
     return {
         "status": "candidate evidence values only; no rule is accepted",
         "implicit_defaults": False,
         "supplied_values": {
-            "maximum_gap_seconds": list(gaps),
-            "implied_speed_ceiling_knots": list(speeds),
-            "minimum_vessel_length_m": list(lengths),
+            "maximum_gap_seconds": list(evaluation.maximum_gap_seconds),
+            "implied_speed_ceiling_knots": list(evaluation.implied_speed_ceiling_knots),
+            "minimum_vessel_length_m": list(evaluation.minimum_vessel_length_m),
         },
         "candidate_definitions": {
             "maximum_gap": "retain elapsed seconds less than or equal to the value",
@@ -760,7 +833,10 @@ def _candidate_sensitivity(
                 math.fsum(item.projected_distance_m for item in structural)
             ),
         },
-        "candidate_scenarios": scenarios,
+        "candidate_scenarios": [
+            _candidate_scenario_diagnostics(scenario)
+            for scenario in evaluation.scenarios
+        ],
         "precedence": ["maximum_gap", "implied_speed", "minimum_length"],
     }
 
@@ -793,9 +869,12 @@ def _censoring_diagnostics(observations: Sequence[Observation]) -> dict[str, obj
 
 
 def allocate_segments_to_grid(
-    segments: Sequence[CandidateSegment], target_grid: TargetGridInspection
+    segments: Sequence[CandidateSegment],
+    target_grid: TargetGridInspection,
+    *,
+    population_label: str = "unfiltered structural baseline",
 ) -> dict[str, object]:
-    """Allocate unfiltered structural candidates for diagnostics only."""
+    """Allocate one named structural-candidate population for diagnostics only."""
     geometries = [cell.geometry for cell in target_grid.cells]
     support_union = cast(BaseGeometry, unary_union(geometries))
     tree = STRtree(geometries)
@@ -868,15 +947,15 @@ def allocate_segments_to_grid(
         group_report[group_name] = {
             "segment_count": values["segment_count"],
             "parent_length_m": _round(parent),
+            "parent_length_km": _round(parent / 1_000),
             "in_support_length_m": _round(inside),
+            "in_support_length_km": _round(inside / 1_000),
             "outside_support_length_m": _round(max(0.0, parent - inside)),
+            "outside_support_length_km": _round(max(0.0, parent - inside) / 1_000),
         }
     return {
         "status": "non-production diagnostic allocation",
-        "segment_population": (
-            "unfiltered structural baseline: strictly increasing, unchanged-group "
-            "pairs with no candidate gap, implied-speed, or length filter"
-        ),
+        "segment_population": population_label,
         "target_grid": {
             "contract": "projected_water_grid_v1",
             "path": str(target_grid.path),
@@ -893,9 +972,13 @@ def allocate_segments_to_grid(
         },
         "lengths": {
             "parent_projected_length_m": _round(total_parent),
+            "parent_projected_length_km": _round(total_parent / 1_000),
             "in_support_piece_length_m": _round(total_piece),
+            "in_support_piece_length_km": _round(total_piece / 1_000),
             "in_support_union_intersection_length_m": _round(total_union),
+            "in_support_union_intersection_length_km": _round(total_union / 1_000),
             "outside_support_length_m": _round(outside),
+            "outside_support_length_km": _round(outside / 1_000),
         },
         "by_group": group_report,
         "conservation": {
@@ -917,6 +1000,41 @@ def allocate_segments_to_grid(
     }
 
 
+def _grid_allocation_diagnostics(
+    evaluation: CandidateSensitivityEvaluation,
+    target_grid: TargetGridInspection,
+) -> dict[str, object]:
+    baseline = allocate_segments_to_grid(
+        evaluation.structural_baseline,
+        target_grid,
+        population_label="unfiltered structural baseline",
+    )
+    scenario_allocations: list[dict[str, object]] = []
+    for scenario in evaluation.scenarios:
+        allocation = allocate_segments_to_grid(
+            scenario.retained_segments,
+            target_grid,
+            population_label=f"explicit candidate scenario {scenario.scenario_id}",
+        )
+        scenario_allocations.append(
+            {
+                "scenario_id": scenario.scenario_id,
+                **scenario.rules(),
+                "retained_segment_count": len(scenario.retained_segments),
+                "allocation": allocation,
+            }
+        )
+    return {
+        "performed": True,
+        "baseline": baseline,
+        "candidate_scenarios": scenario_allocations,
+        "interpretation": (
+            "each explicitly supplied candidate scenario is allocated independently; "
+            "the baseline remains unfiltered by gap, implied speed, or vessel length"
+        ),
+    }
+
+
 def build_evidence_report(
     bundle: CleanedBundleInspection,
     *,
@@ -927,6 +1045,12 @@ def build_evidence_report(
 ) -> dict[str, object]:
     """Build deterministic evidence content without writing or timing it."""
     segments = construct_candidate_segments(bundle.observations)
+    sensitivity = _evaluate_candidate_sensitivity(
+        segments,
+        maximum_gap_seconds=candidate_maximum_gap_seconds,
+        implied_speed_ceiling_knots=candidate_implied_speed_ceiling_knots,
+        minimum_vessel_length_m=candidate_minimum_vessel_length_m,
+    )
     report: dict[str, object] = {
         "contract": EVIDENCE_REPORT_CONTRACT,
         "processing_version": EVIDENCE_PROCESSING_VERSION,
@@ -954,19 +1078,14 @@ def build_evidence_report(
         },
         "observations": _grouped_observation_diagnostics(bundle.observations),
         "candidate_segments": _grouped_segment_diagnostics(segments),
-        "candidate_rule_sensitivity": _candidate_sensitivity(
-            segments,
-            maximum_gap_seconds=candidate_maximum_gap_seconds,
-            implied_speed_ceiling_knots=candidate_implied_speed_ceiling_knots,
-            minimum_vessel_length_m=candidate_minimum_vessel_length_m,
-        ),
+        "candidate_rule_sensitivity": _candidate_sensitivity(sensitivity),
         "censoring_and_support_limitations": _censoring_diagnostics(
             bundle.observations
         ),
         "optional_grid_allocation": (
             {"performed": False}
             if target_grid is None
-            else {"performed": True, **allocate_segments_to_grid(segments, target_grid)}
+            else _grid_allocation_diagnostics(sensitivity, target_grid)
         ),
         "prohibited_interpretations": [
             "not a production vessel-activity grid",

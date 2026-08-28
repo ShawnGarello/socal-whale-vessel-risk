@@ -64,6 +64,7 @@ def _row(**updates: str) -> list[str]:
 
 
 def _bundle(tmp_path: Path) -> Path:
+    tmp_path.mkdir(parents=True, exist_ok=True)
     source = tmp_path / "synthetic.csv"
     rows = [
         _row(BaseDateTime="2024-07-15T00:02:00", LON="-117.99"),
@@ -77,6 +78,23 @@ def _bundle(tmp_path: Path) -> Path:
             SOG="102.3",
             Length="",
         ),
+    ]
+    with source.open("w", encoding="utf-8", newline="") as destination:
+        writer = csv.writer(destination, lineterminator="\n")
+        writer.writerow(AIS_PUBLISHED_HEADER)
+        writer.writerows(rows)
+    bundle = tmp_path / "bundle"
+    process_ais_csv(source, bundle, load_default_config())
+    return bundle
+
+
+def _gap_bundle(tmp_path: Path) -> Path:
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    source = tmp_path / "synthetic-gaps.csv"
+    rows = [
+        _row(BaseDateTime="2024-07-15T00:00:00", LON="-118.000"),
+        _row(BaseDateTime="2024-07-15T00:00:10", LON="-117.999"),
+        _row(BaseDateTime="2024-07-15T00:00:50", LON="-117.998"),
     ]
     with source.open("w", encoding="utf-8", newline="") as destination:
         writer = csv.writer(destination, lineterminator="\n")
@@ -280,20 +298,43 @@ def test_no_candidate_values_means_no_implicit_behavioral_defaults(
         "minimum_vessel_length_m": [],
     }
     scenarios = sensitivity["candidate_scenarios"]
-    assert len(scenarios) == 1
-    assert scenarios[0]["candidate_maximum_gap_seconds"] is None
-    assert scenarios[0]["candidate_implied_speed_ceiling_knots"] is None
-    assert scenarios[0]["candidate_minimum_vessel_length_m"] is None
-    assert scenarios[0]["retained_segment_count"] == 2
-    assert scenarios[0]["retained_projected_distance_m"] == pytest.approx(
-        923.84786, abs=1
+    assert scenarios == []
+    baseline = sensitivity["structural_baseline"]
+    assert baseline["segment_count"] == 2
+    assert baseline["projected_distance_m"] == pytest.approx(923.84786, abs=1)
+
+
+def test_gap_candidate_and_grid_allocation_use_the_same_segment_population(
+    tmp_path: Path,
+) -> None:
+    bundle = load_cleaned_bundle(_gap_bundle(tmp_path))
+    support = _cell(
+        "support",
+        0,
+        box(180_000, -450_000, 190_000, -440_000),
     )
-    assert scenarios[0]["primary_exclusion_counts"] == {
-        "gap": 0,
-        "implied_speed": 0,
-        "length": 0,
-    }
-    assert scenarios[0]["by_group"]["cargo"]["retained_segment_count"] == 2
+
+    report = build_evidence_report(
+        bundle,
+        candidate_maximum_gap_seconds=[20],
+        target_grid=_grid(support),
+    )
+
+    sensitivity_scenario = report["candidate_rule_sensitivity"]["candidate_scenarios"][
+        0
+    ]
+    allocation_report = report["optional_grid_allocation"]
+    baseline = allocation_report["baseline"]
+    allocation_scenario = allocation_report["candidate_scenarios"][0]
+    assert sensitivity_scenario["retained_segment_count"] == 1
+    assert baseline["counts"]["allocated_segment_count"] == 2
+    assert allocation_scenario["scenario_id"] == sensitivity_scenario["scenario_id"]
+    assert allocation_scenario["retained_segment_count"] == 1
+    assert allocation_scenario["allocation"]["counts"]["allocated_segment_count"] == 1
+    assert (
+        allocation_scenario["allocation"]["lengths"]["parent_projected_length_km"]
+        < baseline["lengths"]["parent_projected_length_km"]
+    )
 
 
 def test_exact_full_partial_and_multi_cell_allocation_conserves_length() -> None:
