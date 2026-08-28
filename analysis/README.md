@@ -258,10 +258,14 @@ outside the supplied biological model support; it is not labelled as land, dry
 area, or absent AIS coverage. No per-cell vessel-activity dataset is emitted.
 
 The deterministic report contains no execution timestamp. Its `report_id` is
-derived from its content, while the CLI prints actual UTC start/completion time
-and elapsed time separately. Writing is atomic, existing output requires
-`--overwrite`, an unrelated JSON file cannot be overwritten, and any destination
-outside `data/interim/` or beneath `data/raw/` is refused.
+derived from stable checksums, contracts, cleaner run identity, observations,
+parameters, and diagnostics. Local bundle, cleaned-Parquet, and grid paths are
+retained as execution provenance but explicitly excluded from that identity, so
+moving identical inputs between worktrees does not change `report_id`. The CLI
+prints actual UTC start/completion time and elapsed time separately. Writing is
+atomic, existing output requires `--overwrite`, an unrelated JSON file cannot be
+overwritten, and any destination outside `data/interim/` or beneath `data/raw/`
+is refused.
 
 Synthetic verification covers the diagnostic and optional-allocation boundary.
 It does not select a production rule. No verified complete-day cleaned bundle

@@ -202,11 +202,14 @@ def _canonical_json(value: object) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
-def _content_report_id(report_without_id: Mapping[str, object]) -> str:
+def _content_report_id(report: Mapping[str, object]) -> str:
+    identity_material = dict(report)
+    identity_material.pop("report_id", None)
+    identity_material.pop("local_provenance", None)
     return (
         "vessel-evidence-"
         + hashlib.sha256(
-            _canonical_json(report_without_id).encode("utf-8")
+            _canonical_json(identity_material).encode("utf-8")
         ).hexdigest()[:24]
     )
 
@@ -958,7 +961,6 @@ def allocate_segments_to_grid(
         "segment_population": population_label,
         "target_grid": {
             "contract": "projected_water_grid_v1",
-            "path": str(target_grid.path),
             "sha256": target_grid.sha256,
             "analysis_crs": PROJECTED_CRS,
             "transformation": {"source_crs": WGS84_CRS, "always_xy": True},
@@ -1056,13 +1058,21 @@ def build_evidence_report(
         "processing_version": EVIDENCE_PROCESSING_VERSION,
         "status": "non-production evidence; no production vessel rule selected",
         "input": {
-            "bundle_path": str(bundle.bundle_path),
-            "cleaned_parquet_path": str(bundle.cleaned_path),
             "cleaned_parquet_sha256": bundle.cleaned_sha256,
             "cleaner_contract": AIS_PROCESSING_CONTRACT,
             "cleaner_run_id": bundle.cleaner_run_id,
             "temporal_coverage": dict(bundle.temporal_coverage),
             "read_only": True,
+        },
+        "local_provenance": {
+            "identity_excluded": True,
+            "cleaned_bundle_path": str(bundle.bundle_path),
+            "cleaned_parquet_path": str(bundle.cleaned_path),
+            "target_grid_path": None if target_grid is None else str(target_grid.path),
+            "identity_note": (
+                "local filesystem paths are execution provenance and do not affect "
+                "report_id"
+            ),
         },
         "ordering": {
             "keys": [
@@ -1145,9 +1155,7 @@ def write_evidence_report(
         raise VesselActivityEvidenceError(
             "evidence report contract or report_id is invalid"
         )
-    identity_material = dict(report)
-    identity_material.pop("report_id")
-    if report_id != _content_report_id(identity_material):
+    if report_id != _content_report_id(report):
         raise VesselActivityEvidenceError(
             "evidence report_id does not match deterministic report content"
         )

@@ -317,12 +317,13 @@ not emit a per-cell vessel-activity dataset. Outside-support portions are not
 interpreted as land, dry area, or absent AIS coverage.
 
 Synthetic tests pass for the implemented boundary, including invalid grid CRS,
-contract and checksum, candidate-scenario allocation, deterministic report
-identity, overwrite and raw-output refusal, atomic failure, and CLI exits. This
-implementation evidence does not resolve the items below. In particular, no
-complete-day bundle was available on this branch, the real 15 July run did not
-occur, vessel-hours and peak-memory comparison remain part of the bounded
-evidence step, and the full-period gates remain open.
+contract and checksum, candidate-scenario allocation, path-independent
+deterministic report identity, overwrite and raw-output refusal, atomic failure,
+and CLI exits. Local input paths remain execution provenance but do not enter
+`report_id`. This implementation evidence does not resolve the items below. In
+particular, no complete-day bundle was available on this branch, the real 15
+July run did not occur, vessel-hours and peak-memory comparison remain part of
+the bounded evidence step, and the full-period gates remain open.
 
 ## Bounded next evidence step
 

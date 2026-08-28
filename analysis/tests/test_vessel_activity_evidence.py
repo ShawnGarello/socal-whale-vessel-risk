@@ -455,6 +455,28 @@ def test_deterministic_identity_overwrite_and_atomic_failure(
     assert list(interim.glob(".*.tmp")) == []
 
 
+def test_report_identity_excludes_local_bundle_parquet_and_grid_paths(
+    tmp_path: Path,
+) -> None:
+    first_bundle = load_cleaned_bundle(_bundle(tmp_path / "first-location"))
+    second_bundle = load_cleaned_bundle(_bundle(tmp_path / "second-location"))
+    first_grid = _grid(_cell("support", 0))
+    second_grid = TargetGridInspection(
+        cells=first_grid.cells,
+        path=tmp_path / "another-worktree" / "same-grid.parquet",
+        sha256=first_grid.sha256,
+        metadata=first_grid.metadata,
+    )
+
+    first = build_evidence_report(first_bundle, target_grid=first_grid)
+    second = build_evidence_report(second_bundle, target_grid=second_grid)
+
+    assert first_bundle.cleaned_sha256 == second_bundle.cleaned_sha256
+    assert first_bundle.cleaner_run_id == second_bundle.cleaner_run_id
+    assert first["local_provenance"] != second["local_provenance"]
+    assert first["report_id"] == second["report_id"]
+
+
 def test_raw_and_non_interim_output_are_refused(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

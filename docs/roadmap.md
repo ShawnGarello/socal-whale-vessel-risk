@@ -257,9 +257,10 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the unfiltered structural baseline and every explicitly supplied candidate
   scenario. It reports in-support and outside-support vessel-kilometres without
   interpreting outside support's cause, and verifies length conservation and no
-  duplicate allocation. It emits no per-cell vessel-activity dataset. Synthetic
-  tests passed; no verified complete-day bundle was available, so no real-day
-  result or production rule was produced.
+  duplicate allocation. Its deterministic identity excludes local input paths
+  while retaining them as provenance. It emits no per-cell vessel-activity
+  dataset. Synthetic tests passed; no verified complete-day bundle was
+  available, so no real-day result or production rule was produced.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
   whale layer (12,257 features, with zero null, empty, or invalid geometries)
   and VSR polygon (one valid feature). The required 15 July AIS prefix smoke run
