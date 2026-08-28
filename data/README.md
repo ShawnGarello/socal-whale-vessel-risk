@@ -238,6 +238,45 @@ not a linear forecast. Monthly or full-period processing is not authorized or
 shown safe until optimization, bounded date-sized processing, spilling or
 memory controls, or another measured design resolves it.
 
+### Multi-day cleaned-input manifest and bounded scanning
+
+The implemented `multiday_cleaned_ais_input_v1` boundary is a second, separate
+manifest. The retrieval manifest above answers whether a UTC date was delivered
+and verified; this one answers whether that date's cleaned analytical input
+exists and is compatible. Neither satisfies the other, and both are local,
+ignored files.
+
+```text
+python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help
+```
+
+The command takes explicit paths only. It records supplied cleaner bundles
+read-only, writes its manifest atomically to an explicit destination under
+ignored `data/interim/`, refuses any destination beneath `data/raw/` or outside
+`data/interim/`, and never overwrites a file that is not one of its own
+manifests. A supplied retrieval manifest is read-only; the command never writes
+to it.
+
+The manifest pre-populates all 153 accepted UTC dates and keeps one current
+entry per date, with expected date, retrieval-manifest state, independently
+verified retained-byte/archive state, cleaner-bundle compatibility,
+missing/conflicting status, and observational completeness as separate fields.
+Observational completeness stays `unverified` everywhere, and a bundle whose
+cleaner reports an upgraded completeness claim is refused. An identical bundle
+is reusable retry evidence; different bytes create a `conflict` that preserves
+the recorded identity and the attempt history. The period is `ready` only when
+all 153 dates hold a compatible verified current entry.
+
+Scanning the recorded dates re-verifies each cleaned-Parquet checksum, then
+reads the daily Parquet partitions through DuckDB under an explicit memory limit
+and an explicit temporary/spill directory that must also sit under ignored
+`data/interim/`. A uniquely named spill subdirectory is created per run and
+removed afterwards. Ordered results are streamed as bounded Arrow record
+batches; the period is never assembled in memory. This bounds the assembly step
+only — it does not make full-period retrieval or cleaning safe, and the
+approximately 1.59 GiB one-day cleaner peak recorded above remains the open
+scaling concern.
+
 **Why this is not simply forbidden.** An earlier version of this document banned
 downloading a national file and filtering locally, while the source register
 described the bulk route as the confirmed one. Both statements could not stand.

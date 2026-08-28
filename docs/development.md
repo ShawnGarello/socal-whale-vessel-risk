@@ -15,9 +15,12 @@
 > abundance-conserving area weighting. QGIS is the local inspection and visual-
 > verification tool. A one-bundle vessel evidence harness supplies cached
 > segment-piece, per-cell, vessel-hours and cleaned-point diagnostics without
-> producing a production vessel grid. Network retrieval, analytical-period AIS
-> processing, production vessel aggregation and later derived processing remain
-> unfinished.
+> producing a production vessel grid. A separate boundary assembles explicitly
+> supplied one-date cleaner bundles into a versioned multi-day period-input
+> manifest and scans its verified partitions through a bounded DuckDB relation,
+> without selecting a plausibility threshold or emitting segments. Network
+> retrieval, analytical-period AIS acquisition, production vessel aggregation and
+> later derived processing remain unfinished.
 
 ---
 
@@ -122,7 +125,8 @@ read-only AIS/whale/VSR validators, a local AIS delivery-verification CLI,
 deterministic processing of one supplied NOAA AIS flat CSV extract, the
 deterministic EPSG:3310 water-grid process, abundance-conserving transfer of
 modeled blue-whale density to that grid, a read-only one-bundle vessel-measure
-evidence harness, and synthetic tests. It does **not** submit orders, download
+evidence harness, a versioned multi-day cleaned-input manifest with a bounded
+DuckDB period relation, and synthetic tests. It does **not** submit orders, download
 AIS, produce a production vessel grid, or produce an exposure dataset or
 statistics. Run every command below from `analysis/`.
 
@@ -154,6 +158,7 @@ re-run; the built package declares only runtime requirements.
 | `python -m uv run python -m whale_vessel_analysis --help` | Proves the package module and command boundary load. |
 | `python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help` | Proves the separate local AIS retrieval-verification boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --help` | Proves the separate non-production vessel-evidence boundary loads. |
+| `python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help` | Proves the separate multi-day cleaned-input boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help` | Proves the separate whale-grid transfer boundary loads. |
 
 The toolchain decision is [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md).
@@ -281,6 +286,77 @@ analytical-period result. Its valid timestamps range from
 `2024-07-15T00:00:00Z` to `2024-07-15T15:40:54Z` because the source prefix is
 not strictly time ordered; this does not establish continuous coverage between
 those bounds, and completeness remains `unverified`.
+
+**Multi-day cleaned AIS period input**
+
+A separate command assembles explicitly supplied one-date cleaner bundles into
+one versioned `multiday_cleaned_ais_input_v1` period-input manifest and scans
+its verified partitions through a bounded DuckDB relation. It performs no
+discovery outside the supplied paths and writes only the explicit manifest path
+and DuckDB spill directory under ignored `data/interim/`.
+
+```text
+python -m uv run python -m whale_vessel_analysis.multiday_ais_cli record --manifest <period-manifest.json> --cleaned-bundle <cleaner-output-directory> [--cleaned-bundle <another>] [--retrieval-manifest <retrieval-manifest.json>]
+python -m uv run python -m whale_vessel_analysis.multiday_ais_cli status --manifest <period-manifest.json>
+python -m uv run python -m whale_vessel_analysis.multiday_ais_cli scan --manifest <period-manifest.json> --memory-limit 2GB --temp-directory <ignored-interim-directory> [--threads <n>] [--batch-size <rows>] [--require-ready]
+```
+
+Exit codes are `0` for success, `2` for a refused input, destination, or
+contract check, `3` when the operation succeeded but the analytical period is
+not ready, and `4` when a conflicting date entry was recorded. All three
+subcommands print JSON.
+
+The manifest begins with all 153 accepted UTC dates and keeps one current entry
+per date. Expected date, optional retrieval-manifest state, independently
+verified retained-byte and archive state, cleaner-bundle compatibility, missing
+or conflicting status, and observational completeness are separate fields, so
+none can substitute for another. Observational completeness is always
+`unverified`.
+
+Every supplied bundle passes the existing sidecar and checksum boundary before
+occupying a date: the exact three files, the supported cleaner contract and
+`clean-and-scope-ais-extract` processing version, one shared cleaner run
+identity, matching cleaned-Parquet and quality-report checksums, the exact
+cleaner schema, exactly one UTC date read from the Parquet through DuckDB and
+cross-checked against the quality report's observed date and row count, that
+date inside the accepted period, and an unchanged `unverified` completeness
+claim. An identical retry is reusable evidence; different bytes create a
+`conflict` that preserves the recorded identity and the attempt history instead
+of replacing them. Out-of-period, incomplete, tampered, or mismatched input is
+refused without publishing anything, and an existing file that is not this
+contract is never overwritten.
+
+The period is `ready` only when all 153 expected dates carry a compatible
+verified current entry. Timestamp bounds, filenames, and plausible row counts
+are explicitly recorded as insufficient. `period_input_id` derives from the
+contracts, expected dates, stable checksums, and cleaner identities; local paths
+and real execution timestamps are kept as provenance and excluded from it.
+
+`scan` re-verifies each recorded cleaned-Parquet checksum, requires an explicit
+memory limit with a unit and an explicit spill directory under ignored
+`data/interim/`, and scans daily Parquet partitions through DuckDB. The period
+is never concatenated in Python, Pandas, Polars, or PyArrow: aggregates run in
+SQL and ordered results stream as bounded Arrow record batches, in the
+deterministic global order `mmsi`, `observed_at_utc`, `latitude`, `longitude`,
+`vessel_type_code`, `vessel_type_group`. Consecutive pairs are formed across the
+whole period per MMSI, so no vessel is split solely because the UTC date
+changed; the reported continuity summary states how many pairs an artificial
+daily partitioning would have lost. No maximum gap, implied-speed, length, or
+edge-support rule is applied, and no segment or vessel grid is produced.
+
+On 2026-08-28 the command recorded the existing bounded 2024-07-15 cleaner
+bundle and retrieval manifest read-only, leaving both unchanged. It produced one
+compatible date, 152 missing dates, `not_ready` readiness, `unverified`
+observational completeness, and path-independent
+`period_input_id` `multiday-ais-0e08bce424308c3ce929b89d`. The retrieval state
+was recorded separately as entry status `retrieved` with verified retained byte
+identity and `unverified` independent byte completeness. `scan` streamed 113,799
+observations in three 50,000-row batches and reported 113,620 whole-period
+consecutive pairs, matching the structural segment count the one-bundle evidence
+harness produced independently for the same input; with one date present,
+cross-date pairs were 0. Three end-to-end `scan` invocations took approximately
+0.63, 0.68, and 0.78 seconds. One date does not validate the analytical period
+and establishes neither transfer nor observational completeness.
 
 **One-bundle vessel-measure evidence**
 
