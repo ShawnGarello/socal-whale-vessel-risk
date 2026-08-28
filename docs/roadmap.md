@@ -238,9 +238,39 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   of retained commercial points rather than summed across passenger, cargo, and
   tanker groups. The modeled-whale-support geometry is biological model
   support, not an authoritative shoreline, general water mask, or AIS
-  observability boundary. Segment construction, grid allocation, and the
+  observability boundary. The production segment/grid process and the
   unresolved gap, implied-speed, edge-support, and vessel-length parameters
   have not been implemented or settled.
+- An isolated, read-only vessel-activity evidence harness now validates one
+  explicit current cleaner bundle and constructs deterministic consecutive
+  pairs for diagnostics. It reports group and commercial-union observation and
+  distinct counts, gaps, zero-length segments, group changes, non-increasing
+  time, EPSG:3310 and WGS 84 geodesic endpoint distances, their differences,
+  implied speed, and separately named reported-SOG availability. Gap,
+  implied-speed, and length candidate values have no defaults and are accepted
+  only as explicitly supplied, labelled evidence values. The deterministic
+  atomic JSON output is restricted to ignored `data/interim/`; actual execution
+  timestamps stay outside its content identity.
+- The optional evidence-only allocation path validates the exact
+  `projected_water_grid_v1` contract and checksum, transforms with explicit x/y
+  order, and intersects actual modeled-whale-support geometry separately for
+  the unfiltered structural baseline and every explicitly supplied candidate
+  scenario. It reports in-support and outside-support vessel-kilometres without
+  interpreting outside support's cause, and verifies length conservation and no
+  duplicate allocation. Its deterministic identity excludes local input paths
+  while retaining them as provenance. It emits no per-cell vessel-activity
+  dataset. Synthetic tests passed. The author also exercised the partial harness
+  against the real bounded 2024-07-15 cleaned bundle and exact grid: 113,799
+  observations, 113,620 structural segments, 1,303 touched grid cells, passing
+  conservation, and 25,560.766 km of unfiltered total parent segment distance.
+  Of that distance, 24,096.858 km was inside the supplied modeled-whale-support
+  grid and 1,463.908 km was outside that support. Runtime was 228.968 seconds and
+  approximate peak working set was 243 MiB. The maximum implied speed was
+  431,402 knots, confirming that the unfiltered baseline is diagnostic only and
+  a plausibility rule remains unresolved. Source-transfer and observational
+  completeness remain unverified. The harness remains partial because it does
+  not calculate vessel-hours or per-cell candidate sensitivity; no production
+  rule or vessel grid was produced.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
   whale layer (12,257 features, with zero null, empty, or invalid geometries)
   and VSR polygon (one valid feature). The required 15 July AIS prefix smoke run
@@ -284,17 +314,22 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 139 passing tests using temporary synthetic CSVs
-  and in-memory records. It covers accepted/rejected configuration and period,
+- The combined self-contained suite has 155 passing tests using temporary
+  synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
+  covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
   geometry and abundance consistency, CRS/grid invariants, deterministic
   hashes, source locators, benchmark result checks, AIS filter and duplicate
-  invariants, temporal coverage, deterministic AIS bundle replacement, the exact
-  95 × 68 grid, known full/half/partial water areas, CRS transformation,
+  invariants, temporal coverage, deterministic AIS bundle replacement and
+  sidecar integrity, the exact 95 × 68 grid, known full/half/partial water
+  areas, CRS transformation,
   containment and area conservation, map-extent containment and boundary
   clipping, deterministic WKB/GeoParquet content identity, truthful execution
-  timestamps, overwrite and raw-output refusal, failed-run atomicity, and the
-  CLI boundaries.
+  timestamps, vessel evidence ordering and diagnostic arithmetic, explicit
+  candidate sensitivity, union-recomputed distinct counts, exact segment-piece
+  allocation and conservation, invalid grid inputs, deterministic evidence
+  identity, overwrite and raw-output refusal, failed-run atomicity, and all CLI
+  boundaries.
 - A focused whale-grid command validates the selected NOAA/SWFSC source and the
   exact versioned water-grid input, reprojects source polygons with explicit x/y
   order, detects material source-interior overlap, and transfers modeled density
@@ -372,12 +407,16 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   direct-CSV exercise are complete, but independent transfer completeness,
   monthly/full-period memory safety, a guarded daily bulk download, and the
   153-date retrieval remain unverified or unexercised.
-- The vessel-activity aggregation proposed in ADR 0018, including deterministic
-  segment construction, allocation within modeled-whale-support geometry,
-  additive vessel-kilometres, and union-recomputed distinct counts. Behavioral
-  plausibility filtering, a maximum interpolation gap, an implied-speed rule,
-  edge-support treatment, any vessel-length threshold, and speed summaries also
-  remain unimplemented or unresolved rather than receiving provisional values.
+- The production vessel-activity aggregation proposed in ADR 0018, including a
+  multi-day segment manifest, accepted filtering rules, a final per-cell
+  vessel-kilometres dataset, and validated period-wide distinct counts. The
+  implemented one-bundle harness supplies partial diagnostics and optional
+  non-production aggregate allocation only. One real bounded-day run occurred,
+  but behavioral plausibility filtering, a maximum interpolation gap, an
+  implied-speed rule, edge-support treatment, any vessel-length threshold,
+  vessel-hours comparison, per-cell candidate sensitivity, and final speed
+  summaries remain unimplemented, unexercised, or unresolved rather than
+  receiving provisional values.
 - Normalization of whale values or any vessel-derived spatial dataset. The
   whale input is grid-aligned without normalization; normalization remains part
   of the deferred exposure-method decision.
