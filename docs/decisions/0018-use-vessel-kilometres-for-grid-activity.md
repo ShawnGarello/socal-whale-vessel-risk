@@ -101,21 +101,26 @@ gap or plausibility threshold.
   they distinguish many vessels from repeated use by fewer vessels, but they do
   not replace a movement measure.
 
-### Still unverified
+### Implemented bounded evidence and still unverified
 
-- An isolated partial evidence harness exercises the proposed code shape with
-  synthetic cleaned bundles and exact synthetic grid geometry. The author also
-  ran its implemented subset against the real bounded 2024-07-15 cleaned bundle
-  and exact grid. This is one-day implementation evidence, not period evidence,
-  and it selects no production parameter.
-- The real run measured 113,799 observations, 113,620 structural segments, an
-  unfiltered total parent distance of 25,560.766 km, 24,096.858 km inside
-  modeled-whale support, 1,463.908 km outside that support, a 431,402-knot
-  maximum implied speed, 1,303 touched grid cells, passing conservation,
-  228.968 seconds of runtime, and an approximate 243 MiB peak working set. The
+- The bounded evidence harness now exercises the proposed code shape with
+  synthetic cleaned bundles and exact synthetic grid geometry, including
+  cached segment pieces, per-cell candidate aggregation, point/distinct-vessel
+  context, and the separately named vessel-hours comparison. It also ran
+  without candidate thresholds against the real bounded 2024-07-15 cleaned
+  bundle and exact grid. This is one-day implementation evidence, not period
+  evidence, and it selects no production parameter.
+- The updated real run measured 113,799 observations, 113,620 structural
+  segments, 77,887 cached in-support pieces, 1,303 touched grid cells, and
+  passing distance, elapsed-time and no-double-allocation checks. Parent
+  distance was 25,560.766048547 km: 24,096.858442602 km inside support and
+  1,463.907605945 km outside. Parent vessel time was 3,672.903055556 hours:
+  1,929.780498228 inside, 1,743.122557328 outside and zero unallocated. Point
+  context classified 71,482 cleaned observations inside support, 42,316 outside
+  and one as ambiguous. The maximum implied speed was 431,402.639804 knots. The
   extreme implied speed confirms that the unfiltered baseline is diagnostic
-  only. Candidate-rule effects on per-cell vessel-kilometres and the
-  vessel-hours comparison remain unmeasured by this harness.
+  only. Real candidate-rule effects remain unmeasured because no candidate
+  values were supplied.
 - No maximum interpolation gap or implied-speed plausibility threshold has an
   accepted evidentiary basis.
 - The current cleaner removes positions outside the map/context extent before
@@ -153,8 +158,9 @@ exposure value or a speed weight.
 
 The same grid may carry `distinct_mmsi` and `distinct_mmsi_dates` as clearly
 separate descriptive fields. A raw observation count belongs in quality and
-diagnostic output, not in the vessel-activity surface. Vessel-hours are not
-included unless a later decision gives that output a purpose and resolves its
+diagnostic output, not in the vessel-activity surface. The evidence harness now
+reports vessel-hours for comparison under explicit provisional semantics; that
+does not include vessel-hours in the planned production grid or resolve its
 stationary and gap treatment.
 
 ## Proposed decision
@@ -294,8 +300,9 @@ the overlay in EPSG:3310.
 
 ## Evidence harness implementation status
 
-The read-only `vessel_activity_evidence` module and its isolated CLI implement a
-partial evidence harness. They require one explicit current cleaner bundle,
+The read-only `vessel_activity_evidence` module and its isolated CLI implement
+the bounded non-production evidence foundation. They require one explicit
+current cleaner bundle,
 verify its contract, cleaned-Parquet and quality-report checksums, and shared
 sidecar cleaner run identity, reorder observations deterministically by MMSI and
 UTC timestamp, and construct consecutive pairs without reading raw AIS. The
@@ -313,37 +320,54 @@ numeric rule.
 
 When an exact `projected_water_grid_v1` input is supplied, the optional
 non-production path reuses the versioned grid and optional checksum validation,
-projects with explicit x/y order, intersects lines with actual
-modeled-whale-support cell geometry, reports in-support and outside-support
-vessel-kilometres separately, and verifies conservation and no duplicate
-allocation. It retains the unfiltered structural allocation as a baseline and
-performs a separate allocation for every explicitly supplied candidate
-scenario, using exactly that scenario's retained segment population. It does
-not emit a per-cell vessel-activity dataset. Outside-support portions are not
-interpreted as land, dry area, or absent AIS coverage.
+projects with explicit x/y order, and intersects each structural segment with
+actual modeled-whale-support cell geometry once. Its reusable parent/piece
+representation retains stable parent identity, group, elapsed time, parent and
+piece distance, cell and piece order, outside-support distance, and explicit
+zero-length/outside/ambiguous status. The unfiltered baseline and every explicit
+candidate scenario filter and aggregate that same cache instead of repeating
+Shapely intersection work.
+
+Every population reports every target cell in stable order, including zeros,
+with segment-piece count and passenger, cargo, tanker and additive commercial-
+union vessel-kilometres and vessel-hours. Positive-length time uses the explicit
+constant-progress assumption and piece/parent projected-length fraction.
+Coincident zero-length time is assigned only for exactly one support cell; no
+match is outside-support time and multiple matches remain unallocated. Distance
+and time conservation are checked at parent and aggregate levels.
+
+Separately, every cleaned observation is classified against exact support
+geometry. Per-cell observation, distinct-MMSI and distinct-MMSI-date counts are
+reported by group and with union-recomputed all-commercial distinct counts;
+outside-support and ambiguous point counts remain separate. This cleaned-point
+population is not candidate filtered. The per-cell values are diagnostics
+inside the ignored JSON report, not a production vessel-activity dataset.
+Outside-support portions are not interpreted as land, dry area, or absent AIS
+coverage.
 
 Synthetic tests pass for the implemented boundary, including bundle-sidecar
-integrity, invalid grid CRS, contract and checksum, candidate-scenario
-allocation, path-independent deterministic report identity, overwrite and
-raw-output refusal, atomic failure, and CLI exits. Local input paths remain
-execution provenance but do not enter `report_id`.
+integrity; invalid grid CRS, contract and checksum; exact distance/time splits;
+partial outside support; all zero-length placement states; group-additive and
+union-distinct totals; candidate cache reuse without repeated intersections;
+reordered observations and candidate values; path-independent report identity;
+overwrite and raw-output refusal; atomic failure; and CLI exits. Local input
+paths remain execution provenance but do not enter `report_id`.
 
-The author exercised the partial harness against the real bounded 2024-07-15
-cleaned bundle and exact grid on 2026-08-28. It processed 113,799 observations
-and 113,620 structural segments, touched 1,303 cells, passed conservation, and
-reported 25,560.766 km of total parent segment distance for the unfiltered
-baseline. Of that distance, 24,096.858 km was inside the supplied grid's
-modeled-whale support and 1,463.908 km was outside that support. Runtime was
-228.968 seconds with an approximate 243 MiB peak working set. Its maximum
-implied speed was 431,402 knots, confirming that the unfiltered baseline cannot
-become a production result without an evidence-supported plausibility rule.
+The author exercised the updated harness against the real bounded 2024-07-15
+cleaned bundle and exact grid on 2026-08-28 without any candidate threshold
+arguments. It processed the counts and quantities recorded under "Still
+unverified" above. The 2,166,881-byte report contains 4,516 stable allocation
+rows and 4,516 stable point-context rows; 1,303 cells were touched by an
+allocated segment piece. The unfiltered baseline cannot become a production
+result without an evidence-supported plausibility rule.
 
 The durable identity of that evidence run is:
 
 | Identity field | Value |
 |---|---|
-| Path-independent report ID | `vessel-evidence-7b59c6e3ec64c42915b62f74` |
-| Exact local report SHA-256 | `1d9faafc29d6405e4adf89929660f67a1c5d321c58b4e8d7400e9ecde2260880` |
+| Report contract / processing version | `vessel_activity_evidence_v2` / `2.0.0` |
+| Path-independent report ID | `vessel-evidence-8432d5193107b94d88873201` |
+| Exact local report SHA-256 | `60e6a02be98d8cf5edd45af56a5adcfac001681a71e868dd438c4db0894a4d6e` |
 | Cleaned input SHA-256 | `efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6` |
 | Cleaner run ID | `ais-362502c6a37b53e681b745f5` |
 | Exact water-grid SHA-256 | `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031` |
@@ -351,31 +375,36 @@ The durable identity of that evidence run is:
 
 The report ID excludes local filesystem paths and identifies deterministic
 evidence content. The report SHA-256 identifies the exact local JSON bytes,
-including their non-identity local provenance metadata.
+including their non-identity local provenance metadata. A second clean output
+reproduced both identities.
+
+The unsampled updated CLI execution took 25.007583 seconds, compared with
+228.968 seconds for the prior aggregate-only implementation: an approximately
+89.1% improvement (9.16×). A separate deterministic process-tree RSS sampling
+run observed an approximate 309.441 MiB peak and took 59.562371 seconds because
+sampling added overhead. Against the earlier approximate 243 MiB working-set
+measurement, memory regressed by about 66 MiB (27%); different approximate
+sampling methods make that directional rather than exact. Neither one-day
+measurement is extrapolated linearly to 153 days.
 
 Source-transfer completeness and observational completeness remain unverified.
-The harness also omits vessel-hours and per-cell candidate sensitivity, so it
-does not complete the bounded comparison originally specified below and is not
-ready to settle this decision.
+One day does not validate the analytical period, and no real candidate values
+were exercised. The evidence foundation is complete, but it is not sufficient
+to settle this Proposed decision.
 
-## Remaining bounded evidence step
+## Remaining decision evidence
 
-The real run completed the implemented pairing, distribution, aggregate
-allocation, conservation, runtime, and memory diagnostics. The remaining
-bounded comparison must:
+The implemented foundation supports the remaining research without repeating
+geometry cost. Before this decision can be accepted, later evidence must:
 
-1. implement and test a separately named non-production vessel-hours diagnostic
-   for comparison with point, distinct-vessel, and vessel-kilometre measures;
-2. implement non-production per-cell candidate sensitivity without emitting or
-   presenting a final vessel-activity dataset;
-3. exercise clearly labelled candidate gap and plausibility values, and report
+1. exercise clearly labelled candidate gap and plausibility values, and report
    their per-cell and total vessel-kilometre effects without selecting a rule
    merely from one day;
-4. review the projected-versus-geodesic results and excluded populations from
+2. review the projected-versus-geodesic results and excluded populations from
    the real report as decision evidence;
-5. retain source-transfer and observational completeness as unverified unless
+3. retain source-transfer and observational completeness as unverified unless
    independent evidence establishes otherwise; and
-6. establish a threshold rationale and edge-support treatment, then validate
+4. establish a threshold rationale and edge-support treatment, then validate
    exclusion rates, sensitivity, vessel-group distributions, and reported-SOG
    availability across the accepted period before producing a vessel grid.
 
@@ -389,8 +418,9 @@ not complete the measure comparison, select a rule, establish stability across
   remain valuable QA for missing or anomalous dates.
 - A deterministic, conservation-tested segment-to-grid evidence process is
   verified with synthetic inputs and exercised on one real bounded day while
-  the numeric thresholds remain unresolved. It emits aggregate diagnostics
-  only and cannot produce a production result using hidden defaults.
+  the numeric thresholds remain unresolved. It emits per-cell evidence only
+  inside its ignored diagnostic report and cannot produce a production result
+  using hidden defaults.
 - The current cleaned files are sufficient for interior candidate segments but
   not for uncensored entry/exit portions. The future implementation must expose
   that limitation or revise the pre-segmentation boundary.
