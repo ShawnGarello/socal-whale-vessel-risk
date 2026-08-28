@@ -273,12 +273,19 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   observations inside, 42,316 outside and one ambiguous. The deterministic
   report ID is `vessel-evidence-8432d5193107b94d88873201`; exact report SHA-256
   is `60e6a02be98d8cf5edd45af56a5adcfac001681a71e868dd438c4db0894a4d6e`,
-  reproduced by a second clean output. The unsampled run took 25.007583 seconds,
-  about 89.1% faster than the prior 228.968-second aggregate harness. A separate
-  sampled repeat observed approximately 309.441 MiB peak process-tree RSS, about
-  66 MiB above the prior approximate 243 MiB measurement; sampling slowed that
-  repeat, and the memory comparison is directional. The 431,402.639804-knot
-  maximum confirms the baseline is diagnostic only. Source-transfer and
+  reproduced by a second clean output. The harness-recorded processing interval
+  inside `run_evidence` was 25.007583 seconds; it begins after Python imports,
+  CLI parsing and configuration loading and is not an end-to-end CLI runtime. A
+  separate process-tree RSS sampling protocol took 59.562371 seconds and
+  observed approximately 309.441 MiB peak. These observations used different
+  protocols; sampling may have contributed overhead, but the measurements do
+  not isolate its effect. Independent end-to-end CLI runs took approximately
+  64.4 and 66.4 seconds while reproducing the exact report. Against the prior
+  aggregate harness's 228.968-second observation, these measurements provide
+  directional evidence of improved runtime, not a generally reproducible
+  speedup factor. The approximate memory comparison with the prior 243 MiB
+  measurement is also directional. The 431,402.639804-knot maximum confirms the
+  baseline is diagnostic only. Source-transfer and
   observational completeness remain unverified; one day does not validate the
   period; edge support and production thresholds remain unresolved; no
   production vessel grid or exposure result was produced.

@@ -378,14 +378,21 @@ evidence content. The report SHA-256 identifies the exact local JSON bytes,
 including their non-identity local provenance metadata. A second clean output
 reproduced both identities.
 
-The unsampled updated CLI execution took 25.007583 seconds, compared with
-228.968 seconds for the prior aggregate-only implementation: an approximately
-89.1% improvement (9.16×). A separate deterministic process-tree RSS sampling
-run observed an approximate 309.441 MiB peak and took 59.562371 seconds because
-sampling added overhead. Against the earlier approximate 243 MiB working-set
-measurement, memory regressed by about 66 MiB (27%); different approximate
-sampling methods make that directional rather than exact. Neither one-day
-measurement is extrapolated linearly to 153 days.
+The harness-recorded processing interval inside `run_evidence` was 25.007583
+seconds. It begins after Python imports, CLI parsing and configuration loading
+and is not an end-to-end CLI runtime. A separate deterministic process-tree RSS
+sampling protocol took 59.562371 seconds and observed an approximate 309.441
+MiB peak. These observations used different protocols; sampling may have
+contributed overhead, but the measurements do not isolate its effect.
+Independent end-to-end CLI runs took approximately 64.4 and 66.4 seconds while
+reproducing the exact report.
+
+Against the prior aggregate-only implementation's 228.968-second observation,
+the measurements provide directional evidence of improved runtime, not a
+generally reproducible speedup factor. Against the earlier approximate 243 MiB
+working-set measurement, memory regressed by about 66 MiB (27%); different
+approximate sampling methods make that directional rather than exact. No
+one-day measurement is extrapolated linearly to 153 days.
 
 Source-transfer completeness and observational completeness remain unverified.
 One day does not validate the analytical period, and no real candidate values

@@ -315,12 +315,21 @@ The 2026-08-28 real no-threshold baseline used the read-only 113,799-row bounded
 `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
 It produced report ID `vessel-evidence-8432d5193107b94d88873201` and exact JSON
 SHA-256 `60e6a02be98d8cf5edd45af56a5adcfac001681a71e868dd438c4db0894a4d6e`;
-a second clean output reproduced both. The unsampled run took 25.007583 seconds.
-A separate process-tree RSS sampling repeat observed approximately 309.441 MiB
-peak but slowed execution to 59.562371 seconds. The earlier aggregate harness
-took 228.968 seconds at an approximate 243 MiB, so runtime improved while memory
-regressed directionally. Do not linearly extrapolate either one-day measurement
-to 153 days.
+a second clean output reproduced both. The harness-recorded processing interval
+inside `run_evidence` was 25.007583 seconds; it begins after Python imports, CLI
+parsing and configuration loading and is not an end-to-end CLI runtime. A
+separate process-tree RSS sampling protocol took 59.562371 seconds and observed
+approximately 309.441 MiB peak. These observations used different protocols;
+sampling may have contributed overhead, but the measurements do not isolate its
+effect. Independent end-to-end CLI runs took approximately 64.4 and 66.4 seconds
+while reproducing the exact report.
+
+Against the earlier aggregate harness's 228.968-second observation, the updated
+measurements provide directional evidence of improved runtime, not a generally
+reproducible speedup factor. The comparison between the earlier approximate 243
+MiB and the sampled repeat's approximate 309.441 MiB indicates a directional
+memory regression. Do not linearly extrapolate any one-day measurement to 153
+days.
 
 No production threshold has been selected. Source-transfer and observational
 completeness remain unverified, one day does not validate the analytical period,

@@ -314,14 +314,21 @@ A second clean output reproduced both identities. The cleaned input SHA-256 is
 cleaner run ID is `ais-362502c6a37b53e681b745f5`, and exact grid SHA-256 is
 `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
 
-The unsampled CLI execution took 25.007583 seconds, versus 228.968 seconds for
-the prior aggregate-only harness: runtime improved by about 89.1% (9.16×).
-A separate deterministic repeat with process-tree RSS sampling observed an
-approximate 309.441 MiB peak and took 59.562371 seconds because the sampler
-added overhead. Compared with the earlier approximate 243 MiB working-set
-measurement, memory regressed by about 66 MiB (27%); the methods are both
-approximate, so this comparison is directional rather than exact. No one-day
-performance figure is extrapolated to 153 days.
+The harness-recorded processing interval inside `run_evidence` was 25.007583
+seconds. That interval begins after Python imports, CLI parsing and
+configuration loading, so it is not an end-to-end CLI runtime. A separate
+deterministic repeat under a process-tree RSS sampling protocol took 59.562371
+seconds and observed an approximate 309.441 MiB peak. These timing observations
+used different protocols; sampling may have contributed overhead, but the
+measurements do not isolate its effect. Independent end-to-end CLI runs took
+approximately 64.4 and 66.4 seconds while reproducing the exact report.
+
+Compared with the prior aggregate-only harness's 228.968-second observation,
+these measurements provide directional evidence of improved runtime, not a
+generally reproducible speedup factor. Compared with the earlier approximate
+243 MiB working-set measurement, memory regressed by about 66 MiB (27%); the
+methods are both approximate, so this comparison is directional rather than
+exact. No one-day performance figure is extrapolated to 153 days.
 
 The maximum implied speed remained 431,402.639804 knots. That physically
 implausible value confirms that the unfiltered baseline is diagnostic only and
