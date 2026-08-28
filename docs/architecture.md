@@ -9,11 +9,13 @@
 > context.
 >
 > The Next.js application shell, Python processing foundation, deterministic
-> one-extract AIS cleaning, and projected water-grid construction are
-> implemented. QGIS 4.2.1 has visually verified the exact generated water-grid
-> GeoParquet. Retrieval, whale transfer, vessel aggregation, the exposure
-> analysis, a final public layer representation, and deployment remain
-> unfinished. See the [roadmap](roadmap.md) for milestone status.
+> one-extract AIS cleaning, projected water-grid construction, and deterministic
+> whale-grid transfer are implemented and tested. Two clean whale-transfer runs
+> produced byte-identical output, and QGIS 4.2.1 visually verified the exact
+> generated water-grid and whale-grid GeoParquet artifacts. AIS retrieval,
+> vessel aggregation, exposure analysis, a final public layer representation,
+> and deployment remain unfinished. See the [roadmap](roadmap.md) for milestone
+> status.
 
 Three independent questions remain open and gate different work:
 
@@ -124,8 +126,12 @@ one-extract AIS cleaning, and deterministic EPSG:3310 water-grid construction.
 The grid process accepts an explicit polygon mask, clips it to the projected
 map/context boundary, intersects the exact configured grid, and writes actual
 per-cell water geometry and area as GeoParquet plus generation lineage. It does
-not retrieve the analytical-period AIS data, transfer whale values, aggregate
-vessels, calculate relative exposure, or derive statistics.
+not retrieve the analytical-period AIS data, aggregate vessels, calculate
+relative exposure, or derive statistics. A separate deterministic, tested
+whale-grid command transfers modeled density by abundance-conserving
+area-weighted intersection, writes generation lineage, and produced
+byte-identical outputs in two clean real-data runs; the exact derived output was
+also visually verified in QGIS 4.2.1.
 
 Python owns or is planned to own:
 

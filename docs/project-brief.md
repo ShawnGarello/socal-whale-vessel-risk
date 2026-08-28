@@ -2,7 +2,11 @@
 
 **Owns:** the authoritative product scope for this repository. If another document describes scope differently, this document is correct and the other should be updated.
 
-**Status:** Version 1 is defined but not yet implemented. Nothing in the "Version 1 scope" section below exists in the repository today.
+**Status:** Version 1 is defined and partially implemented. The application and
+processing foundations exist, and the deterministic whale-grid transfer is
+implemented, tested, reproducible, and visually verified. Version 1 remains
+incomplete: AIS retrieval, vessel aggregation, exposure analysis, publication,
+and deployment are unfinished.
 
 ---
 
@@ -45,7 +49,10 @@ Version 1 is complete when the research question above has a defensible, documen
 
 ## Version 1 functional scope
 
-Version 1 must ultimately include all of the following. None of it is built yet.
+Version 1 must ultimately include all of the following. Supporting foundations
+and the grid-aligned whale input are implemented, but the complete functional
+scope is not: AIS retrieval, vessel aggregation, exposure analysis,
+publication, and deployment remain unfinished.
 
 **Analytical inputs**
 

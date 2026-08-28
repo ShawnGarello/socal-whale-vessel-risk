@@ -134,23 +134,31 @@ anything is derived from it.
 
 ## AIS retrieval policy
 
-**The final retrieval route is a processing-milestone (M3) decision. It is not
-settled here.** What is settled is the constraint every route has to satisfy.
+**[ADR 0017](../docs/decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md)
+proposes the final retrieval route; it is not yet accepted.** The preferred
+design is five sequential monthly AccessAIS extracts, with guarded daily bulk
+retrieval as the fallback. A one-day author-controlled AccessAIS exercise must
+pass before full-period retrieval begins. What is settled here is the local
+handling constraint every route has to satisfy.
 
 Two routes exist. Both are documented in
 [`../docs/data-sources.md`](../docs/data-sources.md).
 
-**Preferred: AccessAIS.** NOAA's extract tool takes a bounding box and a time
-period and returns only what was asked for, which is the right shape for this
-project. Its documented limits are a 2 GB cap per request, a five-year rolling
-window, new data every 90 days with a 145–165 day lag, and links that expire
-after 14 days or five accesses. At the estimated row size a full analytical
-period for the study area would exceed the cap and need splitting into chunks.
+**Preferred, but still Proposed: AccessAIS.** NOAA's extract tool takes a
+bounding box and a time period and returns only what was asked for, which is the
+right shape for this project. Its documented limits are a 2 GB cap per request,
+a five-year rolling window, new data every 90 days with a 145–165 day lag, and
+links that expire after 14 days or five accesses. Read-only 2026-08-27 service
+estimates place each calendar-month request below 2 GB; exact values and
+parameters are in ADR 0017 and the source register.
 
-**It has not been exercised.** No order was placed during data discovery, and
-whether it can filter by vessel type server-side is unknown. Nothing in this
-repository should describe AccessAIS as verified until someone has actually
-run a request through it and recorded the result.
+**The order-and-delivery path has not been exercised.** No order was placed.
+AccessAIS output compatibility with the current exact-header cleaner, delivery
+layout and resume behavior remain unknown. Nothing in this repository should
+describe the route as accepted until the bounded 15 July order has been
+delivered, verified and processed. Order submission remains an author action;
+future code must not submit an order, record an email address, or persist an
+expiring tokenized URL.
 
 **Permitted fallback: guarded bulk retrieval.** The bulk daily files are the
 only route confirmed working, and they are national — there is no way to ask
@@ -171,6 +179,29 @@ conditions:
 Peak local footprint under this route is one national daily file plus the
 accumulated scoped outputs. That is the point of the guard: it keeps the
 constraint in rule 7 above true even though the transfer is national.
+
+### Retrieval manifest and immutable-write rules
+
+Whichever route is exercised, future retrieval records one current entry for
+each of the 153 expected UTC dates. The entry carries the route, exact request
+parameters or bulk URL, token-free order/delivery identifier when applicable,
+retrieval timestamp, source filename, byte size, SHA-256, archive and date
+checks, status and retry history. Missing expected dates are computed from the
+accepted date range rather than inferred from filenames already present.
+
+Retrieval writes a uniquely named temporary file and publishes it by atomic
+rename only after transfer and archive validation. A final raw file is never
+overwritten: an identical checksum is reused, a different checksum is a
+conflict, and a genuine upstream revision receives a new path and lineage.
+Resume is permitted only with byte-range support plus a stable object validator;
+otherwise the temporary attempt restarts rather than appending blindly.
+
+The manifest distinguishes listed/ordered, byte-verified, date-verified and
+observationally complete. Only the first three are properties retrieval can
+establish. NOAA receiver coverage and outages mean observational completeness
+remains unverified. The existing one-date cleaning report stays separate and
+must not be upgraded from `unverified` merely because its source transfer
+passed.
 
 **Why this is not simply forbidden.** An earlier version of this document banned
 downloading a national file and filtering locally, while the source register

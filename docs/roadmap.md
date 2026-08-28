@@ -212,6 +212,25 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   disabled and recorded as unresolved project assumptions. No length value is
   presented as equivalent to the BWBS approximately 300 GT condition, and no
   universal speed or implied-speed threshold has been selected.
+- [ADR 0017](decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md)
+  records the **Proposed** AIS retrieval policy. AccessAIS is preferred when an
+  author-submitted order satisfies its documented constraints, with guarded
+  one-day-at-a-time bulk retrieval as the proposed fallback. The read-only
+  AccessAIS estimator endpoint observed during research is an undocumented web-
+  application interface and must not be treated as a stable production API.
+  This is recorded design work only: no AccessAIS order, daily bulk download,
+  complete-day extract, or full-period retrieval has been performed.
+- [ADR 0018](decisions/0018-use-vessel-kilometres-for-grid-activity.md)
+  records the **Proposed** vessel-activity aggregation design.
+  Vessel-kilometres is the proposed primary additive grid metric. Group-specific
+  distinct MMSI and MMSI-date counts remain descriptive; their all-commercial
+  values must be recomputed as unique MMSIs and MMSI-date pairs from the union
+  of retained commercial points rather than summed across passenger, cargo, and
+  tanker groups. The modeled-whale-support geometry is biological model
+  support, not an authoritative shoreline, general water mask, or AIS
+  observability boundary. Segment construction, grid allocation, and the
+  unresolved gap, implied-speed, edge-support, and vessel-length parameters
+  have not been implemented or settled.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
   whale layer (12,257 features, with zero null, empty, or invalid geometries)
   and VSR polygon (one valid feature). The required 15 July AIS prefix smoke run
@@ -327,11 +346,15 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 
 **Not implemented**
 
-- AccessAIS ordering or the final retrieval-route decision; no full daily AIS
-  file or analytical-period extract has been retrieved.
-- Behavioral plausibility filtering, any length threshold, vessel aggregation,
-  or speed summaries. The first two remain disabled rather than silently
-  receiving provisional thresholds.
+- Production AIS retrieval code and real retrieval execution. ADR 0017 records
+  a Proposed route design, but no AccessAIS order, guarded daily bulk download,
+  complete-day extract, or analytical-period retrieval has been performed.
+- The vessel-activity aggregation proposed in ADR 0018, including deterministic
+  segment construction, allocation within modeled-whale-support geometry,
+  additive vessel-kilometres, and union-recomputed distinct counts. Behavioral
+  plausibility filtering, a maximum interpolation gap, an implied-speed rule,
+  edge-support treatment, any vessel-length threshold, and speed summaries also
+  remain unimplemented or unresolved rather than receiving provisional values.
 - Normalization of whale values or any vessel-derived spatial dataset. The
   whale input is grid-aligned without normalization; normalization remains part
   of the deferred exposure-method decision.
