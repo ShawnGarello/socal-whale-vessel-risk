@@ -50,6 +50,20 @@ separate descriptive output under
   through a cell, not the number of AIS messages. Because the track definition
   uses break rules, sensitivity of a transit count to track segmentation is an
   inference rather than a source-defined invariant.
+- NOAA's [AIS Track Builder user
+  guide](https://coast.noaa.gov/data/marinecadastre/ais/AISTrackBuilder.pdf)
+  documents a 30-minute default maximum time between sequential points and a
+  separate one-statute-mile default maximum distance. These are defaults for a
+  general track-building tool, not findings about this bounded extract or a
+  rule selected for this project. Only the 30-minute value is exercised below;
+  the evidence harness has no distance-gap rule.
+- The Coast Guard's [AIS equipment-type
+  documentation](https://www.navcen.uscg.gov/types-of-ais) states that Class A
+  position reports are normally sent every 2--10 seconds while underway and
+  every three minutes or less while anchored or moored. This supports treating
+  multi-minute gaps as missing reception or reporting opportunities that need
+  explicit handling. It does not establish how much straight-line
+  interpolation is defensible after NOAA down-sampling or receiver loss.
 
 ### Verified from authoritative or peer-reviewed methods
 
@@ -74,6 +88,21 @@ separate descriptive output under
   tracks and intersect them with grids to obtain distance travelled. Their
   thresholds and daily segmentation belong to their data and are not imported
   into this project.
+- Coro et al. (2023), [Estimating hidden fishing activity hotspots from vessel
+  transmitted data](https://doi.org/10.3389/fsufs.2023.1152226), derives gap
+  regimes from its own AIS/VMS distributions: below 30 minutes, above 3.5
+  hours, and an intervening reconstruction range. It explicitly says long-gap
+  reconstruction is uncertain. Its fishing-vessel population and gap-filling
+  objective differ from this project's passenger, cargo and tanker distance
+  aggregation, so it supports distribution-led sensitivity rather than a
+  transferable threshold.
+- A 2026 peer-reviewed Tokyo Bay study, [High-Resolution Mapping of Port
+  Dynamics from Open-Access AIS Data](https://doi.org/10.3390/geomatics6010010),
+  iteratively removed inter-message speeds over 50 knots together with a
+  separate acceleration rule. That 50-knot value is exercised only as a
+  permissive comparison candidate. The study includes hydrofoil ferries and a
+  port-movement objective, and its complete cleaning method is not reproduced
+  here.
 
 ### Observed in the existing partial sample
 
@@ -110,7 +139,7 @@ gap or plausibility threshold.
   without candidate thresholds against the real bounded 2024-07-15 cleaned
   bundle and exact grid. This is one-day implementation evidence, not period
   evidence, and it selects no production parameter.
-- The updated real run measured 113,799 observations, 113,620 structural
+- The updated real baseline measured 113,799 observations, 113,620 structural
   segments, 77,887 cached in-support pieces, 1,303 touched grid cells, and
   passing distance, elapsed-time and no-double-allocation checks. Parent
   distance was 25,560.766048547 km: 24,096.858442602 km inside support and
@@ -119,8 +148,30 @@ gap or plausibility threshold.
   context classified 71,482 cleaned observations inside support, 42,316 outside
   and one as ambiguous. The maximum implied speed was 431,402.639804 knots. The
   extreme implied speed confirms that the unfiltered baseline is diagnostic
-  only. Real candidate-rule effects remain unmeasured because no candidate
-  values were supplied.
+  only.
+- The real gap distributions are concentrated near the source's down-sampled
+  cadence but have long tails. For all commercial segments, the median was 70
+  seconds, p95 183 seconds, p99 361 seconds, p99.9 1,079 seconds and maximum
+  74,400 seconds. Counts above 300/1,800 seconds were 2,589/55 overall,
+  comprising passenger 1,106/35, cargo 714/14 and tanker 769/6.
+- Implied speed had commercial median 0.144447 knots, p95 13.981812, p99
+  20.658558, p99.9 37.369922 and maximum 431,402.639804 knots. Counts above
+  30/50 knots were 166/69 overall: passenger 84/9, cargo 70/49 and tanker
+  12/11. The ten largest implied speeds ranged from 28,126 to 431,403 knots,
+  despite endpoint reported SOG values of 5.2--20.0 knots where available;
+  these are positional jumps, not credible vessel motion.
+- Reported SOG was available on 113,755 of 113,799 observations (99.961%). Both
+  endpoint values were available for 113,567 structural segments, exactly one
+  was unavailable for 20, and both were unavailable for 33. Across the paired
+  population, the impossible jumps reduce Pearson correlation between implied
+  speed and mean endpoint SOG to 0.0104. Restricting this diagnostic comparison
+  to implied speed at or below 50 knots gives 0.9842; the median absolute
+  difference is 0.0547 knots and p95 is 0.4333 knots. This agreement supports
+  using endpoint SOG as a cross-check, not as a substitute or as ground truth.
+- All 113,620 consecutive pairs increased in time and retained one vessel
+  group. There were zero non-increasing-time and zero group-change pairs.
+  There were 9,053 zero-length pairs; they contribute zero vessel-kilometres
+  and remain visible rather than receiving an invented movement rule.
 - No maximum interpolation gap or implied-speed plausibility threshold has an
   accepted evidentiary basis.
 - The current cleaner removes positions outside the map/context extent before
@@ -128,12 +179,88 @@ gap or plausibility threshold.
   of a segment entering or leaving that extent. Whether retrieval and cleaning
   should retain boundary-support observations, or whether edge segments remain
   explicitly censored, is unresolved.
-- EPSG:3310 is the accepted equal-area grid CRS, not an equidistant CRS. The
-  difference between its line lengths and WGS 84 geodesic lengths has not been
-  quantified for complete-day segments.
+- EPSG:3310 is the accepted equal-area grid CRS, not an equidistant CRS. Across
+  the structural baseline its 25,560.766049 km total was 2.935568 km lower than
+  the WGS 84 geodesic total, a -0.011483% difference. Mean absolute pair
+  difference was 0.074093 m, p95 was 0.340146 m and the maximum was 97.742585
+  m. The candidate populations below differed by -0.010781% to -0.010899%.
+  This one day gives no evidence that projected length is material at 5 km
+  cell scale, but period-wide comparison remains required.
 - The optional minimum-length decision remains unresolved. The current
   type-only commercial selection is not equivalent to the program's
   approximately 300 GT condition.
+
+### Candidate-rule sensitivity on the bounded day
+
+The matrix deliberately crosses only two gap and two implied-speed values. A
+300-second gap is a project inference chosen just above the observed 183-second
+p95/reporting cluster; it is not source-defined. The 1,800-second gap is NOAA
+Track Builder's comparison default. A 30-knot ceiling is a project inference
+just above this day's maximum available reported SOG of 26.6 knots. The
+50-knot ceiling is the permissive peer-reviewed comparison above. No length
+value was supplied because length is not gross tonnage and no defensible
+mapping to the BWBS population was found.
+
+Exclusions use the implemented precedence: maximum gap, then implied speed.
+Vessel-hours remain an evidence-only comparison under constant progress. A
+"materially changed" cell below means an absolute all-commercial difference of
+at least 1 vessel-km from the unfiltered baseline; this is a transparent
+reporting choice for this sensitivity review, not a production threshold.
+
+| Maximum gap (s) | Speed ceiling (kn) | Retained / excluded segments | Parent vessel-km, passenger / cargo / tanker / all | In-support / outside-support vessel-km | Parent vessel-hours | Materially changed cells |
+|---:|---:|---:|---:|---:|---:|---:|
+| 300 | 30 | 110,865 / 2,755 (2.425%) | 4,872.170 / 6,664.394 / 3,550.756 / 15,087.320 | 13,794.137 / 1,293.183 | 3,098.637 | 392 (8.680% of 4,516; 30.084% of 1,303 baseline-touched) |
+| 300 | 50 | 110,962 / 2,658 (2.339%) | 4,965.410 / 6,689.099 / 3,551.375 / 15,205.885 | 13,904.721 / 1,301.164 | 3,100.330 | 355 (7.861% of 4,516; 27.245% of 1,303 baseline-touched) |
+| 1,800 | 30 | 113,399 / 221 (0.195%) | 4,920.097 / 6,763.482 / 3,572.958 / 15,256.537 | 13,951.683 / 1,304.854 | 3,413.416 | 369 (8.171% of 4,516; 28.319% of 1,303 baseline-touched) |
+| 1,800 | 50 | 113,496 / 124 (0.109%) | 5,013.337 / 6,788.187 / 3,573.578 / 15,375.102 | 14,062.267 / 1,312.835 | 3,415.109 | 333 (7.374% of 4,516; 25.556% of 1,303 baseline-touched) |
+
+All four scenarios passed distance, elapsed-time and no-double-allocation
+conservation. Relative to the 25,560.766049 km baseline, they retain only
+59.025%--60.151% of parent distance while excluding 0.109%--2.425% of
+segments. Thus a very small number of implausible jumps dominates roughly 40%
+of unfiltered distance. Every candidate removes the 431,402.639804-knot
+maximum; the 30-knot cases remove 166 implied-speed exceedances after the gap
+rule and the 50-knot cases remove 69. The 300-second gap additionally removes
+2,589 segments before speed evaluation, versus 55 at 1,800 seconds.
+
+The largest cell decrease was 101.744333 vessel-km in every scenario. Counting
+any change above 1e-9 vessel-km, rather than the stated 1-km materiality rule,
+gives 482, 420, 432 and 365 changed cells in table order. Candidate effects are
+therefore spatially material even though the excluded segment share is small.
+Outside-support distance also changes materially, from 1,463.907606 baseline
+vessel-km to 1,293.182879--1,312.835239; these quantities mean only outside the
+modeled-whale-support geometry.
+
+The deterministic `vessel_activity_evidence_v2` / processing version `2.0.0`
+candidate report has path-independent ID
+`vessel-evidence-c3f562e751b10e6e4199f67f`, size 6,240,164 bytes and SHA-256
+`0c33f2eedd612e976e476d687e6298b78bb86b06c7b9f87640bb0a2d46906c1b`.
+Two clean output paths reproduced the exact ID, checksum and bytes. The CLI
+reported 43.015664 and 35.236685 seconds from its documented internal runtime
+protocol; these are run observations, not a benchmark. Inputs were cleaner run
+`ais-362502c6a37b53e681b745f5`, cleaned-Parquet SHA-256
+`efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`,
+and water-grid SHA-256
+`7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
+
+### Edge support
+
+The current map-scoped cleaner censors positions before track construction.
+Consequently, the first and last retained point for each MMSI cannot reveal
+whether an adjacent point was outside the map, outside the one-day window, or
+simply absent. This bundle has 358 endpoint observations (two for each of 179
+MMSIs) and no single-observation MMSI, but that count does not apportion causes
+or estimate omitted distance.
+
+Two treatments remain candidates. A bounded support ring retained through a
+revised pre-segmentation contract could permit segments to be clipped at the
+map boundary, but its width must be justified against the accepted maximum gap
+and plausible travel distance, and retrieval/cleaning must preserve its
+lineage. Keeping the current censoring avoids inventing boundary crossings but
+systematically omits unknown entry/exit distance and must remain explicit in
+outputs. This one bounded day contains no outside-ring observations, so it
+cannot compare the alternatives or resolve the issue. Period-wide testing
+needs a deliberately retrieved ring and a matched censored run.
 
 ## Candidate measures
 
@@ -395,20 +522,21 @@ approximate sampling methods make that directional rather than exact. No
 one-day measurement is extrapolated linearly to 153 days.
 
 Source-transfer completeness and observational completeness remain unverified.
-One day does not validate the analytical period, and no real candidate values
-were exercised. The evidence foundation is complete, but it is not sufficient
-to settle this Proposed decision.
+One day does not validate the analytical period. The four real candidate
+combinations were exercised, but that evidence is not sufficient to settle
+this Proposed decision.
 
 ## Remaining decision evidence
 
 The implemented foundation supports the remaining research without repeating
 geometry cost. Before this decision can be accepted, later evidence must:
 
-1. exercise clearly labelled candidate gap and plausibility values, and report
-   their per-cell and total vessel-kilometre effects without selecting a rule
-   merely from one day;
-2. review the projected-versus-geodesic results and excluded populations from
-   the real report as decision evidence;
+1. repeat the 300/1,800-second and 30/50-knot matrix across the accepted period,
+   retaining daily and vessel-group distributions so seasonal or source-quality
+   changes cannot be hidden in one total;
+2. review projected-versus-geodesic differences and excluded populations
+   period-wide; the bounded-day difference is immaterial, but it is not a
+   period guarantee;
 3. retain source-transfer and observational completeness as unverified unless
    independent evidence establishes otherwise; and
 4. establish a threshold rationale and edge-support treatment, then validate
@@ -418,6 +546,15 @@ geometry cost. Before this decision can be accepted, later evidence must:
 One bounded day establishes that the implemented subset is executable. It does
 not complete the measure comparison, select a rule, establish stability across
 153 days, or validate a production analytical input.
+
+All four combinations deserve period-wide testing: the two gap values bracket
+a locally inferred short-gap treatment and NOAA's tool default, while the two
+speed values test a locally inferred ceiling against a permissive published
+comparison. The 30/50-knot difference changes 97 retained segments and about
+111--119 parent vessel-km within each gap case; the 300/1,800-second difference
+changes vessel-hours much more strongly. The resulting per-cell changes are
+large enough that this one day cannot justify dropping either axis. This is a
+testing conclusion, not acceptance of any threshold.
 
 ## Consequences
 
