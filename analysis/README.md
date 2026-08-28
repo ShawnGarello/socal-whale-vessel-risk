@@ -90,6 +90,10 @@ and CRC or a matching source `Content-Length` can verify that separate state.
 The manifest keeps source availability, byte/archive verification, expected-
 date verification, cleaning compatibility, and observational completeness as
 different fields. Observational completeness always remains `unverified`.
+Every new manifest starts with the complete accepted 153-date calendar from
+2024-07-01 through 2024-11-30. Request-level verification removes only its date
+from the missing set; analytical-period retrieval becomes `verified` only when
+all 153 current entries are verified.
 Repeated identical bytes append reusable attempt evidence without creating a
 second current date entry. Different bytes put the date in `conflict` without
 replacing the previously verified identity.
@@ -97,11 +101,13 @@ replacing the previously verified identity.
 For a verified ZIP, `--csv-bundle-dir <data/interim/...>` extracts only the
 selected safe member into an atomic `noaa_ais_retrieval_csv_bundle_v1` bundle.
 The command refuses `data/raw`, arbitrary existing destinations, and replacement
-of incompatible bundles. `--clean-output-dir <data/interim/...>` additionally
-runs the existing source validator and one-date cleaner; ZIP input also requires
-`--csv-bundle-dir`. The attached cleaning reference records checksums and row
-counts but verifies that the cleaner's completeness field is still
-`unverified`.
+of incompatible bundles. It rechecks the source byte size and SHA-256 before
+extraction and before publishing, so a path swapped after inspection cannot be
+attributed to the earlier artifact. `--clean-output-dir <data/interim/...>`
+additionally runs the existing source validator and one-date cleaner; ZIP input
+also requires `--csv-bundle-dir`. The attached cleaning reference records
+checksums and row counts but verifies that the cleaner's completeness field is
+still `unverified`.
 
 This boundary is tested synthetically. The author-submitted 2024-07-15
 AccessAIS request was still processing when this code was completed, so no real

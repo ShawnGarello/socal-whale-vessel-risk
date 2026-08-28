@@ -166,9 +166,10 @@ network retrieval is not implemented.
 
 The implemented `noaa_ais_retrieval_manifest_v1` boundary creates one current
 entry per explicitly supplied expected UTC date and keeps retry attempts inside
-that entry. It is distinct from the existing one-date cleaning quality report.
-Generating and pre-populating all expected dates from `2024-07-01` through
-`2024-11-30` is not implemented yet.
+that entry. A new manifest pre-populates the complete accepted calendar from
+`2024-07-01` through `2024-11-30`; verifying one request clears only its date
+from the missing set. It is distinct from the existing one-date cleaning
+quality report.
 
 Each date entry records at least:
 
@@ -280,8 +281,10 @@ gate.
   not five monthly orders and not 153 bulk downloads.
 - The local retrieval command implements artifact inspection, the manifest
   contract, safe optional ZIP extraction, and an optional bridge to the current
-  one-date cleaner. It does not implement network transfer or resume. The bridge
-  asserts that the cleaner's `unverified` completeness field is unchanged.
+  one-date cleaner. Materialization revalidates the inspected source identity
+  before extraction and before publication. The command does not implement
+  network transfer or resume. The bridge asserts that the cleaner's
+  `unverified` completeness field is unchanged.
 - Monthly AccessAIS partitions bound each order below the currently reported
   service limit and make resubmission local to one month. Only one is submitted
   at a time.

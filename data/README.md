@@ -183,13 +183,15 @@ constraint in rule 7 above true even though the transfer is national.
 
 ### Retrieval manifest and immutable-write rules
 
-The implemented `noaa_ais_retrieval_manifest_v1` boundary records one current
-entry per expected UTC date. The entry carries the route, exact request
+The implemented `noaa_ais_retrieval_manifest_v1` boundary initializes the
+complete accepted 153-date calendar and records at most one current entry per
+expected UTC date. Each entry carries the route, exact request
 parameters or redacted bulk/source reference, stable token-free local request
 identifier, retrieval timestamp, source filename, byte size, SHA-256, available
-HTTP metadata, archive and date checks, status, and attempt history. The current
-CLI adds dates explicitly one artifact at a time; generation of the full
-153-date planned manifest is not implemented.
+HTTP metadata, archive and date checks, status, and attempt history. The CLI
+verifies artifacts one date at a time. Request-level success removes only that
+date from the missing set; analytical-period retrieval is verified only when all
+153 dates have verified current entries.
 
 The command is local-only:
 
@@ -211,9 +213,12 @@ an explicit destination outside `data/raw/`; an existing destination is reused
 only when its complete bundle metadata and checksums match. An arbitrary or
 different destination is never replaced. Within the manifest, an identical
 checksum is reusable retry evidence, while different bytes create `conflict`
-without replacing the current identity. Network transfer and range-resume are
-not implemented; their Proposed rules remain that resume requires byte-range
-support plus a stable object validator and must never append blindly.
+without replacing the current identity. The source byte size and SHA-256 are
+rechecked before extraction and again before bundle publication, preventing a
+path replacement from being attributed to earlier inspection evidence. Network
+transfer and range-resume are not implemented; their Proposed rules remain that
+resume requires byte-range support plus a stable object validator and must never
+append blindly.
 
 The manifest distinguishes source/order availability, retained byte identity,
 independent byte/archive completeness, expected-date verification, cleaning

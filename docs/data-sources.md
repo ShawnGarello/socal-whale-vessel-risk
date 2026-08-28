@@ -244,7 +244,7 @@ The vessel input to the exposure analysis: where large commercial vessels travel
 | **Bulk directory** | `https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{year}/` — one `AIS_YYYY_MM_DD.zip` per day |
 | **Custom extracts** | AccessAIS — <https://coast.noaa.gov/digitalcoast/tools/ais.html>. Read-only status, limit, and size-estimate endpoints were exercised on 2026-08-27. The author submitted the bounded 2024-07-15 acceptance-gate request; NOAA was still processing it, and **no delivery artifact was supplied or exercised**. See "Retrieval route" below |
 | **Documentation** | AIS FAQ (May 2026) — <https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf>; Vessel Type and Group Codes — <https://coast.noaa.gov/data/marinecadastre/ais/VesselTypeCodes2018.pdf> |
-| **Years verified available** | Bulk year index and daily files return HTTP 200 for **2019–2024** and **404 for 2025 and 2026**, checked 2026-08-25. The FAQ gives 2009 as the earliest year and 2015 as the start of the flat CSV format |
+| **Years verified available** | NOAA's current [Vessel Traffic page](https://www.coast.noaa.gov/digitalcoast/data/vesseltraffic.html) lists **2009–2025**. The [AIS Point Data Summary](https://coast.noaa.gov/data/marinecadastre/ais/point-data-summary.pdf), updated 2026-01-22, records 2025 as a **partial year covering 1 January–30 September**: 273 daily national files using the new `.zst` compression format. Therefore 2024 remains the latest published year that covers the complete accepted July–November analytical period. NOAA does not list 2026 data. Checked 2026-08-28 |
 
 **Requested citation** (from the FAQ): "NOAA Office for Coastal Management. ([Year]). [Title of Dataset]. Marine Cadastre. https://marinecadastre.gov."
 

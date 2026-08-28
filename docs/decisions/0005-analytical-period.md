@@ -9,9 +9,19 @@
 
 - **The blue-whale model is not a time series.** It is a single multi-year `Summer-Fall` average. `MONTH_NUMB` and `MONTH_NAME` are null throughout, and NOAA's field definition says the fields are "NOT USED because densities are averaged over multiple months". The InPort record gives the survey basis as **July–November** across nine years between 1991 and 2018. There is therefore no whale time step to align to — only a season the surface claims to represent.
 - **The 2026 VSR season runs 22 April to 31 December 2026**, verified from the program's own page and map.
-- **AIS broadcast points stop at 2024.** This was checked directly against the bulk archive on 2026-08-25: the year index and daily files return HTTP 200 for 2019 through 2024 and **404 for 2025 and 2026.** AccessAIS is documented as adding data every 90 days with a 145–165 day lag and holding a five-year rolling window.
+- **The published 2025 AIS broadcast points are partial.** NOAA's current
+  [Vessel Traffic page](https://www.coast.noaa.gov/digitalcoast/data/vesseltraffic.html)
+  lists data through 2025. The
+  [AIS Point Data Summary](https://coast.noaa.gov/data/marinecadastre/ais/point-data-summary.pdf),
+  updated 2026-01-22, records 273 daily national files for **1 January through
+  30 September 2025** and a new `.zst` compression format. October and November
+  2025 are not published, so 2024 remains the latest published year that covers
+  the complete accepted July–November period. NOAA does not list 2026 data.
 
-The last point is decisive and was not anticipated. **The 2026 VSR season cannot be analysed, because the vessel data for it does not exist yet.** Version 1 has to combine a current zone with the most recent traffic available.
+The last point is decisive and was not anticipated. **Neither the complete 2025
+July–November period nor the 2026 VSR season can be analysed from the currently
+published vessel data.** Version 1 has to combine a current zone with the latest
+traffic year that covers the complete analytical period.
 
 A second constraint follows from the first: since the whale surface represents summer and autumn, pairing it with vessel traffic from outside those months would combine a seasonal biological surface with traffic from a season it does not describe.
 
@@ -24,7 +34,7 @@ Version 1 combines three inputs of three different vintages, and states all thre
 | Input | Vintage used |
 |---|---|
 | VSR zone geometry and program terms | **2026 season** — the current zone, which is what the research question asks about |
-| Commercial vessel activity | **1 July – 30 November 2024** — the most recent data available |
+| Commercial vessel activity | **1 July – 30 November 2024** — the latest published year covering the complete accepted period |
 | Modeled blue-whale density | **Multi-year summer–fall average**, survey basis 1991–2018 |
 
 July to November is chosen because it is the survey window NOAA states for the whale model, so the traffic period matches the months the biological surface is built from. It also falls entirely inside the 22 April – 31 December VSR season window, so the comparison against the zone is made during months when the speed request is in effect.
@@ -37,7 +47,9 @@ July to November is chosen because it is the survey window NOAA states for the w
 - Only one period is analysed, so Version 1 makes **no seasonal or month-to-month claims**, which is consistent with the project brief's non-goals and is now forced by the whale model regardless.
 - This period is reproducible: the AIS archive is a fixed historical record, so a rerun retrieves identical files.
 - **If the whale model's season definition resolves differently, this period may need to shift.** The register records an open question here: the survey basis is July–November, but a redistributor describes the same models' predictions as representing late June to early December. July–November is the conservative reading, anchored to what the publisher's own metadata states.
-- When AIS for 2025 and 2026 is published, the analysis can be rerun on a more recent period. That would supersede this record rather than amend it.
+- When a complete July–November period for 2025 or a later year is published,
+  the analysis can be rerun on a more recent period. That would supersede this
+  record rather than amend it.
 
 ## Alternatives considered
 

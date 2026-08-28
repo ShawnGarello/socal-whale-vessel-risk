@@ -188,13 +188,15 @@ The command hashes and structurally inspects the artifact without modifying it,
 detects plain CSV or ZIP by content, validates all archive paths and CRCs,
 selects exactly one CSV member, requires the exact NOAA header, and rejects zero
 rows or valid timestamps outside the expected date. The manifest has one
-current entry per UTC date and append-only attempt history within that entry.
-Identical retries reuse checksum evidence; different bytes create a conflict
-without replacing the current identity. Sensitive source-reference URL parts
-and email addresses are never retained.
+current entry per UTC date and append-only attempt history within that entry. It
+initializes all 153 accepted analytical-period dates, so one verified request
+cannot imply period completion. Identical retries reuse checksum evidence;
+different bytes create a conflict without replacing the current identity.
+Sensitive source-reference URL parts and email addresses are never retained.
 
 Optional ZIP extraction uses a temporary directory and atomic rename to publish
-a complete compatible bundle under an explicit ignored interim destination.
+a complete compatible bundle under an explicit ignored interim destination. It
+revalidates source size and SHA-256 before extraction and before publication.
 Optional cleaner exercise runs both the existing validator and `process-ais`,
 then checksum-links the output bundle from the retrieval manifest. It asserts
 that the existing quality report still says completeness `unverified`.
@@ -646,7 +648,7 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 136 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 138 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
