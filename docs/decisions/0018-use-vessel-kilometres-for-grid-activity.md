@@ -103,14 +103,18 @@ gap or plausibility threshold.
 
 ### Still unverified
 
-- An isolated evidence harness now exercises the proposed code shape with
-  synthetic cleaned bundles and exact synthetic grid geometry. That verifies
-  deterministic pairing, diagnostic arithmetic, candidate-value plumbing,
-  projected/geodesic comparison, and segment-piece conservation; it is not
-  complete-day or period evidence and selects no production parameter.
-- No complete scoped day has been used to measure consecutive gaps, implied
-  speeds, edge-censored tracks, excluded-segment rates or the sensitivity of
-  vessel-kilometres to candidate rules.
+- An isolated partial evidence harness exercises the proposed code shape with
+  synthetic cleaned bundles and exact synthetic grid geometry. The author also
+  ran its implemented subset against the real bounded 2024-07-15 cleaned bundle
+  and exact grid. This is one-day implementation evidence, not period evidence,
+  and it selects no production parameter.
+- The real run measured 113,799 observations, 113,620 structural segments, an
+  unfiltered baseline of 25,560.766 vessel-km, a 431,402-knot maximum implied
+  speed, 1,303 touched grid cells, passing conservation, 228.968 seconds of
+  runtime, and an approximate 243 MiB peak working set. The extreme implied
+  speed confirms that the unfiltered baseline is diagnostic only. Candidate-rule
+  effects on per-cell vessel-kilometres and the vessel-hours comparison remain
+  unmeasured by this harness.
 - No maximum interpolation gap or implied-speed plausibility threshold has an
   accepted evidentiary basis.
 - The current cleaner removes positions outside the map/context extent before
@@ -289,10 +293,11 @@ the overlay in EPSG:3310.
 
 ## Evidence harness implementation status
 
-The read-only `vessel_activity_evidence` module and its isolated CLI are
-implemented. They require one explicit current cleaner bundle, verify its
-contract and checksums, reorder observations deterministically by MMSI and UTC
-timestamp, and construct consecutive pairs without reading raw AIS. The
+The read-only `vessel_activity_evidence` module and its isolated CLI implement a
+partial evidence harness. They require one explicit current cleaner bundle,
+verify its contract, cleaned-Parquet and quality-report checksums, and shared
+sidecar cleaner run identity, reorder observations deterministically by MMSI and
+UTC timestamp, and construct consecutive pairs without reading raw AIS. The
 deterministic ignored JSON report includes group and commercial-union
 observation counts; union-recomputed distinct MMSI and MMSI-date counts; gap,
 zero-length, group-change and non-increasing-time diagnostics; EPSG:3310 and
@@ -316,60 +321,58 @@ scenario, using exactly that scenario's retained segment population. It does
 not emit a per-cell vessel-activity dataset. Outside-support portions are not
 interpreted as land, dry area, or absent AIS coverage.
 
-Synthetic tests pass for the implemented boundary, including invalid grid CRS,
-contract and checksum, candidate-scenario allocation, path-independent
-deterministic report identity, overwrite and raw-output refusal, atomic failure,
-and CLI exits. Local input paths remain execution provenance but do not enter
-`report_id`. This implementation evidence does not resolve the items below. In
-particular, no complete-day bundle was available on this branch, the real 15
-July run did not occur, vessel-hours and peak-memory comparison remain part of
-the bounded evidence step, and the full-period gates remain open.
+Synthetic tests pass for the implemented boundary, including bundle-sidecar
+integrity, invalid grid CRS, contract and checksum, candidate-scenario
+allocation, path-independent deterministic report identity, overwrite and
+raw-output refusal, atomic failure, and CLI exits. Local input paths remain
+execution provenance but do not enter `report_id`.
 
-## Bounded next evidence step
+The author exercised the partial harness against the real bounded 2024-07-15
+cleaned bundle and exact grid on 2026-08-28. It processed 113,799 observations
+and 113,620 structural segments, touched 1,303 cells, passed conservation, and
+reported 25,560.766 vessel-km for the unfiltered baseline. Runtime was 228.968
+seconds with an approximate 243 MiB peak working set. Its maximum implied speed
+was 431,402 knots, confirming that the unfiltered baseline cannot become a
+production result without an evidence-supported plausibility rule.
 
-After the user-authorized retrieval gate in
-[ADR 0017](0017-prefer-accessais-with-guarded-bulk-fallback.md), use the
-complete scoped **2024-07-15** artifact. AccessAIS currently estimates that
-request at 582,454 rows and 59,895,276 bytes for the map/context bounds. If the
-fallback is required, the complete national archive was reported as
-395,954,655 compressed bytes during M2. Do not retrieve either in this decision
-session.
+Source-transfer completeness and observational completeness remain unverified.
+The harness also omits vessel-hours and per-cell candidate sensitivity, so it
+does not complete the bounded comparison originally specified below and is not
+ready to settle this decision.
 
-The implemented harness is ready for this run after retrieval is merged. The
-evidence run produces an ignored, checksum-bound report rather than a
-production vessel grid. The complete bounded step must:
+## Remaining bounded evidence step
 
-1. run the existing validator and one-date cleaner unchanged;
-2. calculate candidate consecutive pairs after ADR 0013 cleaning;
-3. report gap and implied-speed distributions by vessel group, including
-   zero-length, group-change and edge-censored counts;
-4. evaluate a clearly labelled range of candidate gap and plausibility rules
-   without selecting one merely from that day;
-5. compare raw point counts, distinct MMSI, MMSI-date, vessel-hours and
-   vessel-kilometres on synthetic cells and the complete day;
-6. split candidate valid segments over the exact modeled-whale-support
-   geometries in a non-production evidence run and verify segment-length
-   conservation and no duplicate segment allocation;
-7. compare EPSG:3310 and WGS 84 geodesic segment lengths; and
-8. record runtime, peak memory, excluded counts and sensitivity of per-cell and
-   total vessel-kilometres.
+The real run completed the implemented pairing, distribution, aggregate
+allocation, conservation, runtime, and memory diagnostics. The remaining
+bounded comparison must:
 
-The complete day resolves whether the proposed measure and code shape are
-practical and identifies defensible candidate rules. It does **not** establish
-their stability across 153 days. Acceptance also requires a stated threshold
-rationale and edge-support treatment. The full period is required to validate
-daily coverage, exclusion rates, threshold sensitivity, final vessel-group
-distributions and reported-SOG availability before the vessel grid is called a
-validated analytical input.
+1. implement and test a separately named non-production vessel-hours diagnostic
+   for comparison with point, distinct-vessel, and vessel-kilometre measures;
+2. implement non-production per-cell candidate sensitivity without emitting or
+   presenting a final vessel-activity dataset;
+3. exercise clearly labelled candidate gap and plausibility values, and report
+   their per-cell and total vessel-kilometre effects without selecting a rule
+   merely from one day;
+4. review the projected-versus-geodesic results and excluded populations from
+   the real report as decision evidence;
+5. retain source-transfer and observational completeness as unverified unless
+   independent evidence establishes otherwise; and
+6. establish a threshold rationale and edge-support treatment, then validate
+   exclusion rates, sensitivity, vessel-group distributions, and reported-SOG
+   availability across the accepted period before producing a vessel grid.
+
+One bounded day establishes that the implemented subset is executable. It does
+not complete the measure comparison, select a rule, establish stability across
+153 days, or validate a production analytical input.
 
 ## Consequences
 
 - Point-count heatmaps cannot become the Version 1 vessel input. Point counts
   remain valuable QA for missing or anomalous dates.
-- A deterministic, conservation-tested segment-to-grid evidence process is now
-  implemented with synthetic inputs while the numeric thresholds remain
-  unresolved. It emits diagnostics only and cannot produce a production result
-  using hidden defaults.
+- A deterministic, conservation-tested segment-to-grid evidence process is
+  verified with synthetic inputs and exercised on one real bounded day while
+  the numeric thresholds remain unresolved. It emits aggregate diagnostics
+  only and cannot produce a production result using hidden defaults.
 - The current cleaned files are sufficient for interior candidate segments but
   not for uncensored entry/exit portions. The future implementation must expose
   that limitation or revise the pre-segmentation boundary.

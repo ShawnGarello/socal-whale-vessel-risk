@@ -213,9 +213,11 @@ retrieval occurs.
 ## Vessel-activity evidence harness
 
 The isolated harness consumes the exact three-file bundle written by
-`process-ais`; it never reads raw AIS, discovers adjacent files, or modifies an
-input. The output must be an explicit JSON path under the ignored
-`data/interim/` root:
+`process-ais`; it verifies the cleaner contract, the cleaned-Parquet and
+quality-report checksums recorded by the sidecars, and their shared cleaner run
+identity. It never reads raw AIS, discovers adjacent files, or modifies an
+input. The output must be an explicit JSON path under the ignored `data/interim/`
+root:
 
 ```text
 python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --cleaned-bundle <cleaner-output-directory> --output ..\data\interim\vessel-activity-evidence\report.json
@@ -268,9 +270,20 @@ overwritten, and any destination outside `data/interim/` or beneath `data/raw/`
 is refused.
 
 Synthetic verification covers the diagnostic and optional-allocation boundary.
-It does not select a production rule. No verified complete-day cleaned bundle
-was available on this branch, so the 15 July complete-day evidence run and all
-real candidate values remain pending after the retrieval work is merged.
+The author also exercised the partial harness read-only against the real bounded
+2024-07-15 cleaned bundle and exact water grid on 2026-08-28. The run processed
+113,799 observations and 113,620 structural segments, touched 1,303 grid cells,
+and passed segment-length conservation. The unfiltered baseline totaled
+25,560.766 vessel-km. Runtime was 228.968 seconds and the approximate peak
+working set was 243 MiB.
+
+The maximum implied speed was 431,402 knots. That physically implausible value
+confirms that the unfiltered baseline is diagnostic only and that an explicit,
+evidence-supported plausibility rule remains necessary; the run does not select
+one. This remains a partial evidence harness: it does not calculate
+vessel-hours, emit per-cell scenario sensitivity, or produce a production
+vessel grid. Source-transfer completeness and observational completeness remain
+unverified.
 
 ## Projected water-grid command
 

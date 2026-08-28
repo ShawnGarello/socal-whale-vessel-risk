@@ -3,11 +3,12 @@
 A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
 
 > **Status: in development.**
-> The web application shell and Python processing foundation exist. The Python package validates the inspected input contracts, can clean one explicitly supplied single-UTC-date NOAA AIS CSV extract into a local Parquet/report/lineage bundle, and has produced the deterministic projected water grid. QGIS 4.2.1 visually verified that exact local grid. No exposure layer or public project layer exists, and nothing in this repository is an exposure result yet.
+> The web application shell and Python processing foundation exist. The Python package validates the inspected input contracts, verifies and manifests one explicitly supplied local AIS delivery, can clean one single-UTC-date NOAA AIS CSV extract into a local Parquet/report/lineage bundle, and has produced the deterministic projected water grid. QGIS 4.2.1 visually verified that exact local grid. A partial vessel-activity evidence harness has also been exercised on the real bounded 15 July bundle and exact grid; it does not produce the production vessel grid. No exposure layer or public project layer exists, and nothing in this repository is an exposure result yet.
 > The deterministic whale-grid transfer is also implemented and tested; two
 > clean runs produced byte-identical output, and QGIS 4.2.1 visually verified
-> the exact derived GeoParquet. AIS retrieval, vessel aggregation, exposure
-> analysis, publication, and deployment remain unfinished.
+> the exact derived GeoParquet. Network and analytical-period AIS retrieval,
+> production vessel aggregation, exposure analysis, publication, and deployment
+> remain unfinished.
 
 ## Why
 

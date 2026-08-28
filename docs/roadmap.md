@@ -259,8 +259,16 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   interpreting outside support's cause, and verifies length conservation and no
   duplicate allocation. Its deterministic identity excludes local input paths
   while retaining them as provenance. It emits no per-cell vessel-activity
-  dataset. Synthetic tests passed; no verified complete-day bundle was
-  available, so no real-day result or production rule was produced.
+  dataset. Synthetic tests passed. The author also exercised the partial harness
+  against the real bounded 2024-07-15 cleaned bundle and exact grid: 113,799
+  observations, 113,620 structural segments, 1,303 touched grid cells, passing
+  conservation, and a 25,560.766 vessel-km unfiltered baseline. Runtime was
+  228.968 seconds and approximate peak working set was 243 MiB. The maximum
+  implied speed was 431,402 knots, confirming that the unfiltered baseline is
+  diagnostic only and a plausibility rule remains unresolved. Source-transfer
+  and observational completeness remain unverified. The harness remains partial
+  because it does not calculate vessel-hours or per-cell candidate sensitivity;
+  no production rule or vessel grid was produced.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
   whale layer (12,257 features, with zero null, empty, or invalid geometries)
   and VSR polygon (one valid feature). The required 15 July AIS prefix smoke run
@@ -310,8 +318,9 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   source schemas, all documented AIS sentinels and malformed codes, whale
   geometry and abundance consistency, CRS/grid invariants, deterministic
   hashes, source locators, benchmark result checks, AIS filter and duplicate
-  invariants, temporal coverage, deterministic AIS bundle replacement, the exact
-  95 × 68 grid, known full/half/partial water areas, CRS transformation,
+  invariants, temporal coverage, deterministic AIS bundle replacement and
+  sidecar integrity, the exact 95 × 68 grid, known full/half/partial water
+  areas, CRS transformation,
   containment and area conservation, map-extent containment and boundary
   clipping, deterministic WKB/GeoParquet content identity, truthful execution
   timestamps, vessel evidence ordering and diagnostic arithmetic, explicit
@@ -399,11 +408,11 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 - The production vessel-activity aggregation proposed in ADR 0018, including a
   multi-day segment manifest, accepted filtering rules, a final per-cell
   vessel-kilometres dataset, and validated period-wide distinct counts. The
-  implemented one-bundle harness supplies diagnostics and optional
-  non-production allocation only. No complete-day evidence run occurred;
-  behavioral plausibility filtering, a maximum interpolation gap, an
+  implemented one-bundle harness supplies partial diagnostics and optional
+  non-production aggregate allocation only. One real bounded-day run occurred,
+  but behavioral plausibility filtering, a maximum interpolation gap, an
   implied-speed rule, edge-support treatment, any vessel-length threshold,
-  vessel-hours comparison, vessel-harness peak-memory evidence, and final speed
+  vessel-hours comparison, per-cell candidate sensitivity, and final speed
   summaries remain unimplemented, unexercised, or unresolved rather than
   receiving provisional values.
 - Normalization of whale values or any vessel-derived spatial dataset. The
