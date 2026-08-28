@@ -88,14 +88,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         config = (
             load_default_config() if config_path is None else load_config(config_path)
         )
-        source = load_whale_source(
-            cast(Path, args.whale_input), layer=cast(str, args.whale_layer)
-        )
         expected_grid_sha256 = cast(str | None, args.expected_grid_sha256)
         target_grid = load_target_grid(
             cast(Path, args.grid_input),
             config,
             expected_sha256=expected_grid_sha256,
+        )
+        source = load_whale_source(
+            cast(Path, args.whale_input), layer=cast(str, args.whale_layer)
         )
         dataset = transfer_whale_density(source, target_grid, config)
         result = write_whale_grid(

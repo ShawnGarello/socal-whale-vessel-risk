@@ -88,19 +88,23 @@ def test_whale_grid_cli_success_path_preserves_processing_order(
     )
 
     assert exit_code == 0
-    assert events == ["start", "config", "source", "grid", "transfer", "write"]
+    assert events == ["start", "config", "grid", "source", "transfer", "write"]
     assert '"status": "ok"' in capsys.readouterr().out
 
 
-def test_whale_grid_cli_failure_path_returns_two(
+def test_grid_checksum_failure_precedes_whale_source_loading(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     monkeypatch.setattr(whale_grid_cli, "load_default_config", lambda: object())
 
-    def fail_source(*_args: object, **_kwargs: object) -> object:
-        raise WhaleGridInputError("synthetic invalid source")
+    def fail_grid(*_args: object, **_kwargs: object) -> object:
+        raise WhaleGridInputError("synthetic invalid grid checksum")
 
-    monkeypatch.setattr(whale_grid_cli, "load_whale_source", fail_source)
+    def unexpected_source(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("whale source must not load before grid validation")
+
+    monkeypatch.setattr(whale_grid_cli, "load_target_grid", fail_grid)
+    monkeypatch.setattr(whale_grid_cli, "load_whale_source", unexpected_source)
 
     exit_code = whale_grid_cli.main(
         [
@@ -115,5 +119,5 @@ def test_whale_grid_cli_failure_path_returns_two(
 
     captured = capsys.readouterr()
     assert exit_code == 2
-    assert "synthetic invalid source" in captured.err
+    assert "synthetic invalid grid checksum" in captured.err
     assert captured.out == ""
