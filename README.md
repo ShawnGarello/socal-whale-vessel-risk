@@ -4,6 +4,10 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 
 > **Status: in development.**
 > The web application shell and Python processing foundation exist. The Python package validates the inspected input contracts, can clean one explicitly supplied single-UTC-date NOAA AIS CSV extract into a local Parquet/report/lineage bundle, and has produced the deterministic projected water grid. QGIS 4.2.1 visually verified that exact local grid. No exposure layer or public project layer exists, and nothing in this repository is an exposure result yet.
+> The deterministic whale-grid transfer is also implemented and tested; two
+> clean runs produced byte-identical output, and QGIS 4.2.1 visually verified
+> the exact derived GeoParquet. AIS retrieval, vessel aggregation, exposure
+> analysis, publication, and deployment remain unfinished.
 
 ## Why
 
@@ -39,8 +43,8 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Architecture | Accepted as the initial direction; the application and processing foundations are built against it |
 | Data sources | Downloaded and inspected; properties, licensing, and limits recorded, with a reproducible provenance manifest |
 | Study area | Map extent proposed; **the analytical domain for statistics is still open** — see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) |
-| Processing workflow | **In progress** — locked Python package, DuckDB engine, contracts, validators, a tested one-extract AIS cleaning command, and deterministic projected water-grid generation; no retrieval, whale transfer, vessel aggregation, or exposure processing yet |
-| Analysis and derived layers | **In progress** — the projected per-cell water grid is generated, programmatically verified, and visually verified in QGIS 4.2.1; later analytical layers remain unfinished |
+| Processing workflow | **In progress** — locked Python package, DuckDB engine, contracts, validators, a tested one-extract AIS cleaning command, deterministic projected water-grid generation, and deterministic tested whale-grid transfer with byte-identical reruns; AIS retrieval, vessel aggregation, and exposure processing remain unfinished |
+| Analysis and derived layers | **In progress** — the projected per-cell water grid and whale-grid output are generated, programmatically verified, reproducible, and visually verified in QGIS 4.2.1; exposure and later analytical layers remain unfinished |
 | Web application | **Foundation built** — Next.js and TypeScript with an ArcGIS map shell over Southern California. Basemap configured but successful keyed rendering still unverified; no project layers or analysis |
 | Deployment | Not started |
 
