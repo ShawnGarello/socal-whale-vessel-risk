@@ -199,13 +199,35 @@ a complete compatible bundle under an explicit ignored interim destination. It
 revalidates source size and SHA-256 before extraction and before publication.
 Optional cleaner exercise runs both the existing validator and `process-ais`,
 then checksum-links the output bundle from the retrieval manifest. It asserts
-that the existing quality report still says completeness `unverified`.
+that the existing quality report still says completeness `unverified`, records
+`observational_completeness_preserved: true`, and rejects a reference that
+reports an upgraded state.
 
-Only synthetic artifacts have exercised this boundary. The author submitted the
-bounded 2024-07-15 AccessAIS request, but NOAA was still processing it when the
-implementation completed. No real source bytes, delivery layout, cleaner run,
-or performance result are available yet, so the ADR 0017 acceptance gate has
-not passed.
+The real bounded 2024-07-15 AccessAIS direct CSV exercised the read-only
+inspection and cleaner bridge on 2026-08-28. Its 59,497,346 retained bytes have
+SHA-256
+`694ea3e8364de21467dea0affeb77e954d339e155d316dc4115b87ac01ffcca3`.
+The exact header passed, and all 582,419 valid timestamps fell on the requested
+date. No independent HTTP length or object validator was retained, so byte and
+observational completeness remain `unverified` and the period remains not
+verified.
+
+The raw validator's expected `passed: false` result reported 825 invalid or
+missing MMSIs and 2,233 missing vessel types. The cleaner accounted for and
+removed them and all other documented removal categories, producing 113,799
+rows and deterministic run ID `ais-362502c6a37b53e681b745f5`. Two measured
+repeat runs produced the same cleaned SHA-256
+`efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`
+in 3.175186 and 3.094731 seconds. Peak RSS was 1,591.441 and 1,589.828
+MiB—roughly 1.59 GiB—while the first run's peak generated temporary/output
+footprint was approximately 1.576 MiB excluding the immutable raw CSV.
+
+That memory result is a scaling concern, not a linear forecast. Monthly or
+full-period processing has not been shown safe. Before such execution, use a
+measured design with optimization, bounded date-sized processing, DuckDB
+spilling or memory controls, or another demonstrated approach. The full evidence
+and removal accounting are in the [source register](data-sources.md#retrieval-route).
+ADR 0017 remains Proposed.
 
 **One-extract AIS processing**
 
@@ -648,7 +670,7 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 138 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 139 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,

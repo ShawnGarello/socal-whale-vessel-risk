@@ -33,7 +33,7 @@ completeness and AIS observability are therefore different questions. The
 unresolved offshore observability domain remains owned by
 [ADR 0002](0002-southern-california-study-area-extent.md).
 
-## Evidence gathered on 2026-08-27
+## Evidence gathered on 2026-08-27 and 2026-08-28
 
 ### Verified from official documentation or read-only official endpoints
 
@@ -114,6 +114,44 @@ They support the existing schema and one-extract cleaner work, but none is a
 complete day. The 15 July prefix is not strictly timestamp-ordered and its
 observed timestamp bounds do not establish continuous coverage.
 
+### Observed in the real bounded AccessAIS delivery
+
+The author-controlled request for UTC date **2024-07-15**, WGS 84 longitude
+**−122 to −117** and latitude **32 to 35**, completed as direct CSV
+`AIS_178789652574876640_935-1787896526119.csv`. The manifest uses completion
+timestamp `2026-08-28T15:44:29Z`. Read-only inspection measured 59,497,346 bytes
+with SHA-256
+`694ea3e8364de21467dea0affeb77e954d339e155d316dc4115b87ac01ffcca3`.
+No independent HTTP `Content-Length`, `ETag`, or other object validator was
+retained, so the manifest truthfully records local byte identity as verified
+and independent byte completeness as `unverified`.
+
+The direct CSV had the exact NOAA header and 582,419 rows. All 582,419
+timestamps parsed, none were invalid, the only observed UTC date was
+2024-07-15, and bounds were `2024-07-15T00:00:00Z` through
+`2024-07-15T23:59:59Z`. Those bounds verify date organization, not transfer or
+observational completeness.
+
+The raw validator returned `passed: false` because 825 rows had invalid or
+missing MMSIs and 2,233 had missing vessel types. The cleaner then accounted
+for and removed those rows, 6,277 unavailable vessel types, 459,254
+noncommercial vessel types, 13 exact duplicate rows, and 18 conflicting
+MMSI/timestamp rows. The resulting 113,799-row
+`noaa_marine_cadastre_ais_extract_v2` Parquet is 1,640,530 bytes, has SHA-256
+`efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`,
+and carries deterministic run ID `ais-362502c6a37b53e681b745f5`. It contains
+179 unique commercial MMSIs: Cargo has 40,903 rows/67 MMSIs, Passenger has
+42,363/67, and Tanker has 30,533/45. Required-field null rows and duplicate
+MMSI/timestamp keys are both zero.
+
+Two measured repeat cleaning runs reproduced the cleaned SHA-256 and run ID.
+Runtime was 3.175186 and 3.094731 seconds; peak RSS was 1,591.441 and 1,589.828
+MiB, with RSS increases of 1,553.262 and 1,551.969 MiB. The first run's peak
+generated temporary/output disk footprint was approximately 1.576 MiB,
+excluding the immutable raw CSV. The roughly 1.59 GiB peak memory is a real
+scaling concern, not a basis for linear extrapolation. Monthly/full-period
+processing has not been shown safe.
+
 ### Inferred
 
 - Five sequential monthly AccessAIS orders are the smallest simple partition
@@ -125,15 +163,12 @@ observed timestamp bounds do not establish continuous coverage.
 
 ### Still unverified
 
-- The author submitted the bounded 2024-07-15 acceptance-gate request, and NOAA
-  was still processing it when the local verification boundary was completed.
-  No artifact or token-free identifier has been supplied for inspection. The
-  delivery contents, archive layout, source filename, download headers,
-  range-resume behavior, and exact date-boundary semantics have not been
-  observed.
-- NOAA says AccessAIS and bulk files differ slightly in format and structure,
-  with a 2026 upgrade planned to remove the differences. Whether an AccessAIS
-  delivery satisfies the current exact 17-column cleaning header is unknown.
+- Independent AccessAIS byte completeness, because HTTP length and stable
+  object metadata were not retained with the exercised direct CSV; download and
+  range-resume behavior also remain unverified.
+- Safe monthly or full-period processing. The measured one-day peak memory
+  requires optimization, bounded date-sized processing, spilling or memory
+  controls, or another measured design before execution.
 - No complete bulk daily archive has been downloaded, opened through its ZIP
   central directory, or checked through its CRC. NOAA publishes no checksum in
   the bulk index, so a locally computed SHA-256 would identify retrieved bytes
@@ -150,10 +185,11 @@ ranges in the table above. Use the **guarded one-day-at-a-time bulk route** only
 when AccessAIS cannot create or deliver a bounded request, or when an exercised
 delivery proves incompatible with the required processing boundary.
 
-This decision remains **Proposed**. The service limits, estimates, bulk fallback,
-and local verification boundary are documented, but the preferred delivery path
-has not been exercised and its output has not reached the existing cleaner.
-Acceptance requires the bounded one-day exercise below.
+This decision remains **Proposed**. The real direct CSV passed the delivery-
+format, local-identity, header/date, and cleaner-compatibility portion of the
+gate. Independent transfer completeness was not retained, and the measured
+one-day memory result does not establish safe monthly or full-period execution.
+The acceptance criteria below therefore remain only partially satisfied.
 
 AccessAIS order submission is an author-controlled action. It requires an email
 address, acceptance of NOAA's privacy statement, and an external order. The
@@ -167,9 +203,9 @@ network retrieval is not implemented.
 The implemented `noaa_ais_retrieval_manifest_v1` boundary creates one current
 entry per explicitly supplied expected UTC date and keeps retry attempts inside
 that entry. A new manifest pre-populates the complete accepted calendar from
-`2024-07-01` through `2024-11-30`; verifying one request clears only its date
-from the missing set. It is distinct from the existing one-date cleaning
-quality report.
+`2024-07-01` through `2024-11-30`; only a byte-complete current entry with
+status `verified` clears its date from the missing set. It is distinct from the
+existing one-date cleaning quality report.
 
 Each date entry records at least:
 
@@ -187,7 +223,7 @@ Each date entry records at least:
 | `archive_verification` | Archive opens, member list is expected, and CRC validation passes. |
 | `date_verification` | Parsed valid timestamps belong to the manifest date; observed min/max and row count are recorded. |
 | `status` | `planned`, `ordered`, `available`, `transferring`, `retrieved`, `verified`, `unavailable`, `failed`, or `conflict`, with a reason and attempt history. |
-| `cleaning_reference` | Later link to the one-date cleaning bundle and checksum; retrieval verification never copies or upgrades its completeness field. |
+| `cleaning_reference` | Later link to the one-date cleaning bundle and checksum; `observational_completeness_preserved: true` records that the cleaner retained `unverified`, and any attempted upgrade is rejected. |
 
 The manifest must make four states separately visible:
 
@@ -238,15 +274,13 @@ failures. They remain visible source properties and are handled later by
 [ADR 0013](0013-remove-conflicting-ais-key-records.md). A duplicated archive,
 date, or manifest entry is a retrieval conflict and is handled here.
 
-## Acceptance gate: one bounded complete-day exercise
+## Acceptance gate: one bounded one-day exercise
 
-The author submitted one AccessAIS request for **2024-07-15**, WGS 84 bounds
-**longitude -122.0 to -117.0 and latitude 32.0 to 35.0**. NOAA was still
-processing it when the local verification boundary was completed. No delivery
-artifact has been supplied, so submission itself does not pass this gate. That
-date remains useful because its partial bulk prefix and existing cleaner smoke
-result provide a checksum-bound comparison point without being mistaken for
-complete-day evidence.
+The author-controlled request for **2024-07-15**, WGS 84 bounds **longitude
+-122.0 to -117.0 and latitude 32.0 to 35.0**, delivered the direct CSV described
+above. The compatibility portion of this gate passed: the delivery format,
+local byte identity, exact header/date organization, and cleaner behavior were
+exercised without changing the source.
 
 The read-only AccessAIS estimator returned **582,454 records and 59,895,276
 bytes** for that one-day request. This is an estimate, approximately 59.9 MB
@@ -254,37 +288,37 @@ bytes** for that one-day request. This is an estimate, approximately 59.9 MB
 artifact is `AIS_2024_07_15.zip`, whose server-reported compressed size was
 395,954,655 bytes during M2.
 
-The exercise must retain the token-free order parameters and identifier, the
-unchanged delivered artifact, retrieval time, byte size, SHA-256, archive
-validation, source filename, and a one-date manifest entry. It then must:
+The exercise retained token-free parameters and a stable local identifier, the
+unchanged delivered artifact, retrieval time, byte size, SHA-256, source
+filename, and a one-date manifest entry. It:
 
-1. establish the delivered schema and archive/date organization;
-2. confirm whether the current validator and `process-ais` command accept it;
-3. record valid timestamp bounds, per-date row counts, and any unexpected
-   dates without treating those as proof of observational completeness;
-4. run the existing validation and cleaning checks and preserve their reports;
-5. measure the complete scoped day's DuckDB runtime and peak local footprint;
-   and
-6. compare the full-day evidence with the partial sample only to identify how
-   the prefix differed, never to retroactively call the prefix complete.
+1. established direct-CSV schema and exact date organization;
+2. exercised the validator and `process-ais`, preserving the expected raw
+   validation failure and successful cleaning reports;
+3. recorded timestamp bounds and row counts without treating them as proof of
+   transfer or observational completeness;
+4. reproduced the cleaned checksum and run ID; and
+5. measured DuckDB runtime, peak RSS, and generated disk footprint.
 
-Successful delivery, manifest verification, and cleaning compatibility are the
-evidence needed to accept this route. If the order cannot be delivered or its
-format is incompatible, the same date is the bounded user-authorized bulk
-fallback exercise. No full-period retrieval begins until one route passes this
-gate.
+Route acceptance additionally requires independently supported transfer
+completeness and a measured processing design that makes the proposed monthly
+or full-period execution safe. Neither condition is satisfied here: source HTTP
+metadata was not retained, and the one-day run peaked near 1.59 GiB RSS. No
+monthly or full-period retrieval begins from this partially passed gate.
 
 ## Consequences
 
 - Full-period transfer cannot start from this Proposed record. The immediate
-  next step is receipt and read-only exercise of the submitted one-day delivery,
-  not five monthly orders and not 153 bulk downloads.
+  next step is resolving independent transfer-completeness evidence and the
+  measured memory concern, not five monthly orders or 153 bulk downloads.
 - The local retrieval command implements artifact inspection, the manifest
   contract, safe optional ZIP extraction, and an optional bridge to the current
   one-date cleaner. Materialization revalidates the inspected source identity
   before extraction and before publication. The command does not implement
-  network transfer or resume. The bridge asserts that the cleaner's
-  `unverified` completeness field is unchanged.
+  network transfer or resume. The bridge records
+  `observational_completeness_preserved: true` only when the cleaner's
+  `unverified` completeness field is unchanged and rejects an attempted
+  upgrade.
 - Monthly AccessAIS partitions bound each order below the currently reported
   service limit and make resubmission local to one month. Only one is submitted
   at a time.
@@ -307,7 +341,8 @@ partition if an actual monthly order exceeds the estimate.
 **Bulk daily files as the primary route.** Technically available but not
 preferred. It transfers nationwide archives to retain a small spatial subset.
 The guarded design makes it safe enough as a fallback, not efficient enough to
-choose before AccessAIS is exercised.
+choose while the preferred route's independent completeness and scaling
+questions are being resolved.
 
 **Download the national season and filter afterwards.** Rejected. It violates
 the local data policy, increases recovery cost, and is unnecessary for either

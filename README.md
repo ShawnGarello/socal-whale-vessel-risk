@@ -43,7 +43,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Architecture | Accepted as the initial direction; the application and processing foundations are built against it |
 | Data sources | Downloaded and inspected; properties, licensing, and limits recorded, with a reproducible provenance manifest |
 | Study area | Map extent proposed; **the analytical domain for statistics is still open** — see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) |
-| Processing workflow | **In progress** — locked Python package, DuckDB engine, contracts, validators, a tested one-extract AIS cleaning command, deterministic projected water-grid generation, and deterministic tested whale-grid transfer with byte-identical reruns; AIS retrieval, vessel aggregation, and exposure processing remain unfinished |
+| Processing workflow | **In progress** — locked Python package, DuckDB engine, contracts, validators, a one-day AccessAIS retrieval/cleaning boundary exercised with a real direct CSV, deterministic projected water-grid generation, and deterministic tested whale-grid transfer with byte-identical reruns; analytical-period AIS retrieval, vessel aggregation, and exposure processing remain unfinished |
 | Analysis and derived layers | **In progress** — the projected per-cell water grid and whale-grid output are generated, programmatically verified, reproducible, and visually verified in QGIS 4.2.1; exposure and later analytical layers remain unfinished |
 | Web application | **Foundation built** — Next.js and TypeScript with an ArcGIS map shell over Southern California. Basemap configured but successful keyed rendering still unverified; no project layers or analysis |
 | Deployment | Not started |

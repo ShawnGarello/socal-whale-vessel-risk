@@ -137,9 +137,10 @@ anything is derived from it.
 **[ADR 0017](../docs/decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md)
 proposes the final retrieval route; it is not yet accepted.** The preferred
 design is five sequential monthly AccessAIS extracts, with guarded daily bulk
-retrieval as the fallback. A one-day author-controlled AccessAIS exercise must
-pass before full-period retrieval begins. What is settled here is the local
-handling constraint every route has to satisfy.
+retrieval as the fallback. The one-day author-controlled AccessAIS compatibility
+exercise passed, but independent transfer completeness and safe scaling remain
+prerequisites before full-period retrieval begins. What is settled here is the
+local handling constraint every route has to satisfy.
 
 Two routes exist. Both are documented in
 [`../docs/data-sources.md`](../docs/data-sources.md).
@@ -152,14 +153,15 @@ links that expire after 14 days or five accesses. Read-only 2026-08-27 service
 estimates place each calendar-month request below 2 GB; exact values and
 parameters are in ADR 0017 and the source register.
 
-**The order-and-delivery path has not passed its exercise.** The author submitted
-the bounded 15 July request and NOAA was still processing it when the local
-verification boundary was completed. No delivery artifact, source filename,
-archive layout, checksum, or download metadata has been supplied or inspected.
-Nothing in this repository describes the route as accepted until that artifact
-is delivered, verified, and processed. Order submission remains an author
-action; repository code does not submit an order, record an email address, or
-persist an expiring tokenized URL.
+**The bounded order-and-delivery compatibility exercise passed.** The
+author-controlled 15 July delivery was a direct CSV. Read-only inspection
+verified its local byte identity, exact header, exclusive UTC date, and cleaner
+compatibility. No independent HTTP `Content-Length` or `ETag` was retained, so
+independent byte completeness remains `unverified`. The resulting timestamp
+bounds do not prove transfer or observational completeness, and ADR 0017 remains
+Proposed while transfer-completeness evidence and measured scaling are
+unresolved. Order submission remains an author action; repository code does not
+submit an order, record an email address, or persist an expiring tokenized URL.
 
 **Permitted fallback: guarded bulk retrieval.** The bulk daily files are the
 only route confirmed working, and they are national — there is no way to ask
@@ -189,9 +191,9 @@ expected UTC date. Each entry carries the route, exact request
 parameters or redacted bulk/source reference, stable token-free local request
 identifier, retrieval timestamp, source filename, byte size, SHA-256, available
 HTTP metadata, archive and date checks, status, and attempt history. The CLI
-verifies artifacts one date at a time. Request-level success removes only that
-date from the missing set; analytical-period retrieval is verified only when all
-153 dates have verified current entries.
+verifies artifacts one date at a time. Only a byte-complete current entry with
+status `verified` removes its date from the missing set; analytical-period
+retrieval is verified only when all 153 dates have verified current entries.
 
 The command is local-only:
 
@@ -225,7 +227,16 @@ independent byte/archive completeness, expected-date verification, cleaning
 compatibility, and observational completeness. NOAA receiver coverage and
 outages mean observational completeness remains `unverified`. The optional
 cleaner bridge checksum-links its bundle but asserts that the existing one-date
-quality report still carries that `unverified` state.
+quality report still carries that `unverified` state. The manifest records this
+truthfully as `observational_completeness_preserved: true` and refuses a cleaner
+reference that reports an upgraded state.
+
+The real one-day cleaner exercise peaked at approximately 1.59 GiB RSS even
+though its generated temporary/output disk footprint was only approximately
+1.576 MiB, excluding the immutable raw CSV. This is a measured scaling concern,
+not a linear forecast. Monthly or full-period processing is not authorized or
+shown safe until optimization, bounded date-sized processing, spilling or
+memory controls, or another measured design resolves it.
 
 **Why this is not simply forbidden.** An earlier version of this document banned
 downloading a national file and filtering locally, while the source register

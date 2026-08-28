@@ -91,9 +91,9 @@ The manifest keeps source availability, byte/archive verification, expected-
 date verification, cleaning compatibility, and observational completeness as
 different fields. Observational completeness always remains `unverified`.
 Every new manifest starts with the complete accepted 153-date calendar from
-2024-07-01 through 2024-11-30. Request-level verification removes only its date
-from the missing set; analytical-period retrieval becomes `verified` only when
-all 153 current entries are verified.
+2024-07-01 through 2024-11-30. Only a byte-complete current entry with status
+`verified` removes its date from the missing set; analytical-period retrieval
+becomes `verified` only when all 153 current entries are verified.
 Repeated identical bytes append reusable attempt evidence without creating a
 second current date entry. Different bytes put the date in `conflict` without
 replacing the previously verified identity.
@@ -107,12 +107,31 @@ attributed to the earlier artifact. `--clean-output-dir <data/interim/...>`
 additionally runs the existing source validator and one-date cleaner; ZIP input
 also requires `--csv-bundle-dir`. The attached cleaning reference records
 checksums and row counts but verifies that the cleaner's completeness field is
-still `unverified`.
+still `unverified`. Successful attachment records
+`observational_completeness_preserved: true`; a reference that reports any
+other completeness state is rejected without changing the manifest.
 
-This boundary is tested synthetically. The author-submitted 2024-07-15
-AccessAIS request was still processing when this code was completed, so no real
-NOAA delivery, archive layout, checksum, row count, runtime, or cleaner result
-has been recorded and ADR 0017 remains Proposed.
+The real bounded 2024-07-15 AccessAIS delivery exercised this boundary on
+2026-08-28. NOAA delivered a direct CSV with the exact 17-column header:
+59,497,346 bytes, SHA-256
+`694ea3e8364de21467dea0affeb77e954d339e155d316dc4115b87ac01ffcca3`,
+and 582,419 valid rows spanning only `2024-07-15T00:00:00Z` through
+`2024-07-15T23:59:59Z`. No independent HTTP `Content-Length` or `ETag` was
+retained, so byte completeness remains `unverified`; timestamp bounds do not
+change observational completeness from `unverified`, and the 153-date period
+remains not verified.
+
+The cleaner produced 113,799 rows under
+`noaa_marine_cadastre_ais_extract_v2`, with deterministic run ID
+`ais-362502c6a37b53e681b745f5` and cleaned SHA-256
+`efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`.
+Two measured repeat runs reproduced both identities in 3.175186 and 3.094731
+seconds. Their approximately 1.59 GiB peak RSS is a scaling concern: monthly
+and full-period processing have not been shown safe and require optimization,
+bounded date-sized processing, spilling or memory controls, or another measured
+design before execution. The full evidence and removal accounting are in the
+[source register](../docs/data-sources.md#retrieval-route). ADR 0017 remains
+Proposed because independent transfer completeness and scaling are unresolved.
 
 ## Process one AIS extract
 
