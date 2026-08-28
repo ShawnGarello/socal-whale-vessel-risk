@@ -24,6 +24,7 @@ from whale_vessel_analysis.ais import (
     AISSchemaError,
     validate_header,
 )
+from whale_vessel_analysis.config import ANALYTICAL_PERIOD_END, ANALYTICAL_PERIOD_START
 
 RETRIEVAL_MANIFEST_CONTRACT: Final = "noaa_ais_retrieval_manifest_v1"
 RETRIEVAL_MANIFEST_SCHEMA_VERSION: Final = 1
@@ -170,6 +171,12 @@ class RetrievalRequest:
         ):
             raise AISRetrievalError(
                 "expected UTC date must fall inside the exact requested dates"
+            )
+        if not (
+            ANALYTICAL_PERIOD_START <= self.expected_utc_date <= ANALYTICAL_PERIOD_END
+        ):
+            raise AISRetrievalError(
+                "expected UTC date must fall inside the accepted analytical period"
             )
         if self.route == "bulk_daily" and (
             self.request_parameters.from_date != self.expected_utc_date
@@ -368,8 +375,11 @@ def _inspect_csv_stream(source: IO[bytes], expected_date: date) -> CSVDateInspec
         except AISSchemaError as exc:
             raise AISRetrievalError(str(exc)) from exc
         row_count = 0
-        valid_timestamps: list[datetime] = []
+        valid_timestamp_rows = 0
         invalid_timestamp_rows = 0
+        observed_date_values: set[str] = set()
+        earliest: datetime | None = None
+        latest: datetime | None = None
         timestamp_index = AIS_PUBLISHED_HEADER.index("BaseDateTime")
         for row_number, row in enumerate(reader, start=2):
             row_count += 1
@@ -385,7 +395,10 @@ def _inspect_csv_stream(source: IO[bytes], expected_date: date) -> CSVDateInspec
             except ValueError:
                 invalid_timestamp_rows += 1
                 continue
-            valid_timestamps.append(observed)
+            valid_timestamp_rows += 1
+            observed_date_values.add(observed.date().isoformat())
+            earliest = observed if earliest is None else min(earliest, observed)
+            latest = observed if latest is None else max(latest, observed)
     except (UnicodeDecodeError, csv.Error) as exc:
         raise AISRetrievalError(
             f"selected member is not compatible UTF-8 CSV: {exc}"
@@ -394,22 +407,18 @@ def _inspect_csv_stream(source: IO[bytes], expected_date: date) -> CSVDateInspec
         text_source.detach()
     if row_count == 0:
         raise AISRetrievalError("selected CSV contains zero data rows")
-    if not valid_timestamps:
+    if valid_timestamp_rows == 0 or earliest is None or latest is None:
         raise AISRetrievalError("selected CSV contains zero valid UTC timestamps")
-    observed_dates = tuple(
-        sorted({timestamp.date().isoformat() for timestamp in valid_timestamps})
-    )
+    observed_dates = tuple(sorted(observed_date_values))
     expected = expected_date.isoformat()
     if observed_dates != (expected,):
         raise AISRetrievalError(
             "valid timestamps do not belong exclusively to expected UTC date "
             f"{expected}; found {', '.join(observed_dates)}"
         )
-    earliest = min(valid_timestamps)
-    latest = max(valid_timestamps)
     return CSVDateInspection(
         row_count=row_count,
-        valid_timestamp_rows=len(valid_timestamps),
+        valid_timestamp_rows=valid_timestamp_rows,
         invalid_timestamp_rows=invalid_timestamp_rows,
         observed_utc_dates=observed_dates,
         earliest_valid_observed_at_utc=_utc_timestamp(earliest),
@@ -509,15 +518,45 @@ def _canonical_json(payload: object) -> str:
     )
 
 
+def _accepted_utc_dates() -> list[str]:
+    day_count = (ANALYTICAL_PERIOD_END - ANALYTICAL_PERIOD_START).days + 1
+    return [
+        date.fromordinal(ANALYTICAL_PERIOD_START.toordinal() + offset).isoformat()
+        for offset in range(day_count)
+    ]
+
+
+def _period_retrieval_summary(
+    entries: list[dict[str, object]], expected_dates: list[str]
+) -> dict[str, object]:
+    expected_set = set(expected_dates)
+    entry_dates = {cast(str, entry["utc_date"]) for entry in entries}
+    if not entry_dates <= expected_set:
+        raise AISRetrievalError(
+            "manifest current entries must belong to the accepted analytical period"
+        )
+    verified_dates = {
+        cast(str, entry["utc_date"])
+        for entry in entries
+        if entry.get("status") == "verified"
+    }
+    missing = sorted(expected_set - verified_dates)
+    return {
+        "status": "verified" if not missing else "not_verified",
+        "missing_expected_utc_dates": missing,
+    }
+
+
 def _empty_manifest() -> dict[str, object]:
+    expected_dates = _accepted_utc_dates()
     return {
         "contract": RETRIEVAL_MANIFEST_CONTRACT,
         "schema_version": RETRIEVAL_MANIFEST_SCHEMA_VERSION,
-        "expected_utc_dates": [],
+        "expected_utc_dates": expected_dates,
         "entries": [],
         "period_retrieval": {
             "status": "not_verified",
-            "missing_expected_utc_dates": [],
+            "missing_expected_utc_dates": expected_dates.copy(),
         },
         "observational_completeness": {
             "status": "unverified",
@@ -558,8 +597,21 @@ def load_retrieval_manifest(path: Path) -> dict[str, object]:
             raise AISRetrievalError("every current entry must carry attempt history")
     if len(dates) != len(set(dates)):
         raise AISRetrievalError("manifest contains a duplicate current UTC-date entry")
-    if expected != sorted(set(cast(list[str], expected))):
-        raise AISRetrievalError("expected_utc_dates must be unique and sorted")
+    if expected != _accepted_utc_dates():
+        raise AISRetrievalError(
+            "expected_utc_dates must equal the complete accepted analytical period"
+        )
+    expected_set = set(cast(list[str], expected))
+    if not set(dates) <= expected_set:
+        raise AISRetrievalError(
+            "manifest current entries must belong to the accepted analytical period"
+        )
+    if payload.get("period_retrieval") != _period_retrieval_summary(
+        cast(list[dict[str, object]], entries), cast(list[str], expected)
+    ):
+        raise AISRetrievalError(
+            "period_retrieval must match the current entries and accepted period"
+        )
     return cast(dict[str, object], payload)
 
 
@@ -675,21 +727,8 @@ def _verified_entry(
 def _refresh_manifest_summary(manifest: dict[str, object]) -> None:
     entries = cast(list[dict[str, object]], manifest["entries"])
     entries.sort(key=lambda entry: cast(str, entry["utc_date"]))
-    expected = sorted(
-        set(cast(list[str], manifest["expected_utc_dates"]))
-        | {cast(str, entry["utc_date"]) for entry in entries}
-    )
-    manifest["expected_utc_dates"] = expected
-    verified_dates = {
-        cast(str, entry["utc_date"])
-        for entry in entries
-        if entry.get("status") == "verified"
-    }
-    missing = sorted(set(expected) - verified_dates)
-    manifest["period_retrieval"] = {
-        "status": "verified" if not missing else "not_verified",
-        "missing_expected_utc_dates": missing,
-    }
+    expected = cast(list[str], manifest["expected_utc_dates"])
+    manifest["period_retrieval"] = _period_retrieval_summary(entries, expected)
 
 
 def record_verified_attempt(
@@ -823,6 +862,32 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _require_inspected_source_identity(
+    source_path: Path, inspection: ArtifactInspection
+) -> None:
+    byte_size, sha256, _mtime_ns = _fingerprint_regular_file(source_path)
+    if byte_size != inspection.byte_size or sha256 != inspection.sha256:
+        raise AISRetrievalError(
+            "source artifact no longer matches the inspected byte size and SHA-256"
+        )
+
+
+def _require_open_source_identity(
+    source: IO[bytes], inspection: ArtifactInspection
+) -> None:
+    source.seek(0)
+    digest = hashlib.sha256()
+    byte_size = 0
+    for chunk in iter(lambda: source.read(1024 * 1024), b""):
+        byte_size += len(chunk)
+        digest.update(chunk)
+    source.seek(0)
+    if byte_size != inspection.byte_size or digest.hexdigest() != inspection.sha256:
+        raise AISRetrievalError(
+            "source artifact no longer matches the inspected byte size and SHA-256"
+        )
+
+
 def _existing_csv_bundle(
     output_directory: Path,
     inspection: ArtifactInspection,
@@ -879,6 +944,7 @@ def materialize_verified_csv_bundle(
     output_directory = output_directory.resolve()
     if inspection.container != "zip" or inspection.selected_csv_member is None:
         raise AISRetrievalError("CSV materialization is only needed for a verified ZIP")
+    _require_inspected_source_identity(source_path, inspection)
     if _is_under_data_raw(output_directory):
         raise AISRetrievalError(
             f"archive extraction cannot be written under data/raw: {output_directory}"
@@ -898,21 +964,25 @@ def materialize_verified_csv_bundle(
     csv_path = temporary / CSV_BUNDLE_FILENAME
     metadata_path = temporary / CSV_BUNDLE_METADATA_FILENAME
     try:
-        with zipfile.ZipFile(source_path) as archive:
-            matching = [
-                info
-                for info in archive.infolist()
-                if _safe_member_name(info.filename) == inspection.selected_csv_member
-            ]
-            if len(matching) != 1:
-                raise AISRetrievalError(
-                    "verified CSV member is no longer unique in the source archive"
-                )
-            with (
-                archive.open(matching[0], "r") as source,
-                csv_path.open("xb") as output,
-            ):
-                shutil.copyfileobj(source, output, length=1024 * 1024)
+        with source_path.open("rb") as source_file:
+            _require_open_source_identity(source_file, inspection)
+            with zipfile.ZipFile(source_file) as archive:
+                matching = [
+                    info
+                    for info in archive.infolist()
+                    if _safe_member_name(info.filename)
+                    == inspection.selected_csv_member
+                ]
+                if len(matching) != 1:
+                    raise AISRetrievalError(
+                        "verified CSV member is no longer unique in the source archive"
+                    )
+                with (
+                    archive.open(matching[0], "r") as member_source,
+                    csv_path.open("xb") as output,
+                ):
+                    shutil.copyfileobj(member_source, output, length=1024 * 1024)
+            _require_open_source_identity(source_file, inspection)
         csv_size = csv_path.stat().st_size
         csv_sha = _sha256(csv_path)
         metadata = {

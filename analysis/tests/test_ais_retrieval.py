@@ -156,6 +156,29 @@ def test_manifest_serialization_is_deterministic(tmp_path: Path) -> None:
     )
 
 
+def test_one_verified_date_leaves_other_analytical_dates_missing(
+    tmp_path: Path,
+) -> None:
+    artifact = tmp_path / "delivery.zip"
+    manifest_path = tmp_path / "manifest.json"
+    _write_zip(artifact, {"points.csv": _csv_bytes([_row()])})
+    inspection = inspect_ais_artifact(artifact, EXPECTED_DATE)
+
+    update = record_verified_attempt(
+        manifest_path, _request("delivery.zip"), inspection
+    )
+
+    expected = cast(list[str], update.manifest["expected_utc_dates"])
+    summary = cast(dict[str, object], update.manifest["period_retrieval"])
+    missing = cast(list[str], summary["missing_expected_utc_dates"])
+    assert len(expected) == 153
+    assert expected[0] == "2024-07-01"
+    assert expected[-1] == "2024-11-30"
+    assert summary["status"] == "not_verified"
+    assert len(missing) == 152
+    assert "2024-07-15" not in missing
+
+
 def test_plain_csv_without_independent_length_keeps_byte_completeness_unverified(
     tmp_path: Path,
 ) -> None:
@@ -173,10 +196,11 @@ def test_plain_csv_without_independent_length_keeps_byte_completeness_unverified
     completeness = cast(dict[str, object], retrieval["byte_completeness"])
     assert entry["status"] == "retrieved"
     assert completeness["status"] == "unverified"
-    assert update.manifest["period_retrieval"] == {
-        "status": "not_verified",
-        "missing_expected_utc_dates": ["2024-07-15"],
-    }
+    summary = cast(dict[str, object], update.manifest["period_retrieval"])
+    missing = cast(list[str], summary["missing_expected_utc_dates"])
+    assert summary["status"] == "not_verified"
+    assert len(missing) == 153
+    assert "2024-07-15" in missing
 
 
 def test_missing_source_is_rejected(tmp_path: Path) -> None:
@@ -402,6 +426,22 @@ def test_compatible_extraction_bundle_is_reused(tmp_path: Path) -> None:
     assert not first.reused
     assert second.reused
     assert first.csv_sha256 == second.csv_sha256
+
+
+def test_extraction_rejects_artifact_swapped_after_inspection(tmp_path: Path) -> None:
+    artifact = tmp_path / "delivery.zip"
+    output = tmp_path / "data" / "interim" / "bundle"
+    _write_zip(artifact, {"points.csv": _csv_bytes([_row()])})
+    inspection = inspect_ais_artifact(artifact, EXPECTED_DATE)
+    _write_zip(
+        artifact,
+        {"points.csv": _csv_bytes([_row("2024-07-15T00:01:00")])},
+    )
+
+    with pytest.raises(AISRetrievalError, match="no longer matches"):
+        materialize_verified_csv_bundle(artifact, inspection, EXPECTED_DATE, output)
+
+    assert not output.exists()
 
 
 def test_extraction_publication_failure_is_atomic(
