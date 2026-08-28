@@ -105,7 +105,7 @@ Neither is more important than the other for calling M2 done — both criteria a
 
 4. **The datum of the published VSR coordinates is unstated.** Assumed WGS 84, consistent with the geometry being served in EPSG:4326, but the program says nothing. At these latitudes a NAD 27 confusion would be on the order of 100 m.
 
-5. **Deferred to M3 rather than blocking M2**, but named so they are not rediscovered: the AIS retrieval route (AccessAIS preferred but unexercised, guarded bulk fallback permitted — see [../data/README.md](../data/README.md)); whether AccessAIS can filter by vessel type server-side; and whether a length threshold is applied on top of the vessel-type filter, and at what value.
+5. **Deferred to M3 rather than blocking M2**, but named so they are not rediscovered: the AIS retrieval route (the one-day AccessAIS direct-CSV compatibility exercise passed, but the route remains Proposed because independent transfer completeness and scaling are unresolved; guarded bulk fallback permitted — see [../data/README.md](../data/README.md)); whether AccessAIS can filter by vessel type server-side; and whether a length threshold is applied on top of the vessel-type filter, and at what value.
 
 ### What M3 may safely begin, and what must wait
 
@@ -136,7 +136,7 @@ Detail is in [data-sources.md](data-sources.md); this is the summary that change
 - **The whale model is vector polygons, not a raster** — 12,257 cells in EPSG:4326 on a 0.1° equal-angle grid, values in animals per km², with a coefficient of variation per cell. It is a **single summer–fall multi-year average, not a time series**, which removes any possibility of seasonal claims from this input.
 - **AIS carries no gross tonnage**, so the VSR program's 300 GT criterion cannot be applied directly and any size filter is a project assumption.
 - **NOAA states AIS coverage is unavailable beyond 40–50 miles from shore**, and the sampled record density falls off in a way consistent with that. The VSR zone extends well past it. This is the most consequential finding of the milestone and it is what reopened item 1 above.
-- **AIS broadcast points are published only through 2024** — the bulk index returns 404 for 2025 and 2026. The 2026 season cannot be analysed, so Version 1 pairs the current zone with 2024 traffic and says so.
+- **2025 AIS broadcast points are partial through September 30.** NOAA's current vessel-traffic page lists data through 2025, and its January 2026 point-data summary records 273 daily 2025 files covering January 1–September 30 in the new `.zst` compression format. The accepted July–November period therefore cannot be completed from 2025, and 2026 data is not listed. Version 1 pairs the current zone with 2024, the latest published year covering the complete accepted period, and says so.
 - **The VSR zone's eight published points do not define a polygon** — they are the seaward boundary only — but a closed geometry is published separately and matches them at seven of eight vertices, the eighth by 455 m.
 - **Commercial vessel types were 18.2–20.7% of Southern California records** across five sampled windows. A snapshot result: five dates, one time of day, and the direction of any daily bias is unknown. What it supports is the conclusion that **vessel-class filtering is the most consequential processing choice for this input**, which holds across the sampled range and does not depend on the exact share.
 
@@ -218,8 +218,18 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   one-day-at-a-time bulk retrieval as the proposed fallback. The read-only
   AccessAIS estimator endpoint observed during research is an undocumented web-
   application interface and must not be treated as a stable production API.
-  This is recorded design work only: no AccessAIS order, daily bulk download,
-  complete-day extract, or full-period retrieval has been performed.
+  A separate local command now inspects and manifests one explicit supplied
+  artifact, with content-based CSV/ZIP detection, safe member and CRC checks,
+  exact-header and expected-date validation, immutable retry/conflict behavior,
+  optional atomic interim extraction, and an optional checksum-bound bridge to
+  the existing cleaner. The manifest starts with all 153 accepted dates and
+  cannot report period completion from one verified request. Materialization
+  binds extraction to the inspected byte size and SHA-256. The real bounded
+  15 July AccessAIS direct CSV passed local byte-identity, exact-header/date,
+  and cleaner-compatibility checks. Independent byte completeness remains
+  unverified because no HTTP length or object validator was retained;
+  observational completeness and the full analytical-period retrieval also
+  remain unverified.
 - [ADR 0018](decisions/0018-use-vessel-kilometres-for-grid-activity.md)
   records the **Proposed** vessel-activity aggregation design.
   Vessel-kilometres is the proposed primary additive grid metric. Group-specific
@@ -243,6 +253,17 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   `2024-07-15T00:00:00Z` to `2024-07-15T15:40:54Z` because the source prefix is
   not strictly ordered. Those bounds do not establish continuous coverage, and
   completeness is `unverified`.
+- The real bounded 2024-07-15 AccessAIS direct CSV was exercised read-only on
+  2026-08-28. Its 59,497,346 bytes have SHA-256
+  `694ea3e8364de21467dea0affeb77e954d339e155d316dc4115b87ac01ffcca3`;
+  all 582,419 valid timestamps were on the requested date. Cleaning retained
+  113,799 commercial rows with deterministic run ID
+  `ais-362502c6a37b53e681b745f5` and cleaned SHA-256
+  `efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`
+  across two measured repeats. The expected raw-validator failure exposed 825
+  invalid/missing MMSIs and 2,233 missing vessel types; the cleaner accounted
+  for and removed them. Peak RSS of approximately 1.59 GiB is a scaling
+  concern: monthly and full-period execution is not shown safe or authorized.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -263,7 +284,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 111 passing tests using temporary synthetic CSVs
+- The combined self-contained suite has 139 passing tests using temporary synthetic CSVs
   and in-memory records. It covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
   geometry and abundance consistency, CRS/grid invariants, deterministic
@@ -346,9 +367,11 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 
 **Not implemented**
 
-- Production AIS retrieval code and real retrieval execution. ADR 0017 records
-  a Proposed route design, but no AccessAIS order, guarded daily bulk download,
-  complete-day extract, or analytical-period retrieval has been performed.
+- Network AIS transfer, range-resume, and analytical-period retrieval. The local
+  supplied-artifact validation, manifest boundary, and one real AccessAIS
+  direct-CSV exercise are complete, but independent transfer completeness,
+  monthly/full-period memory safety, a guarded daily bulk download, and the
+  153-date retrieval remain unverified or unexercised.
 - The vessel-activity aggregation proposed in ADR 0018, including deterministic
   segment construction, allocation within modeled-whale-support geometry,
   additive vessel-kilometres, and union-recomputed distinct counts. Behavioral

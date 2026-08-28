@@ -2,13 +2,14 @@
 
 This directory is the Python package for the M3 offline-processing workflow. It
 provides versioned spatial and source-input contracts, read-only validators,
-traceable lineage metadata, a real one-extract AIS cleaning command, and
+traceable lineage metadata, a local AIS retrieval-verification boundary, a real
+one-extract AIS cleaning command, and
 construction of the exact EPSG:3310 analysis grid with actual per-cell water
 geometry from an explicitly supplied polygon mask. It also transfers the
 selected NOAA/SWFSC modeled blue-whale density surface to that water grid by
-abundance-conserving area weighting. It does not retrieve AIS or process a
-season implicitly, aggregate vessel activity onto the grid, calculate relative
-exposure, or report inside-versus-outside statistics.
+abundance-conserving area weighting. It does not submit AccessAIS orders,
+download AIS, discover a season implicitly, aggregate vessel activity onto the
+grid, calculate relative exposure, or report inside-versus-outside statistics.
 
 Run all commands below from this directory.
 
@@ -29,6 +30,7 @@ python -m uv run mypy src/whale_vessel_analysis
 python -m uv run pytest
 python -m uv build
 python -m uv run python -m whale_vessel_analysis --help
+python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help
 python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help
 ```
 
@@ -63,6 +65,74 @@ accepted 5,000 m grid. It deliberately represents the analytical domain only as
 inside-versus-outside statistics, exposure-layer, or application-results
 contract.
 
+## Verify one author-supplied AIS delivery
+
+The focused `ais_retrieval_cli` boundary inspects one explicit local NOAA
+artifact read-only and writes a versioned
+`noaa_ais_retrieval_manifest_v1` JSON manifest to an explicit local path. It
+does not access the network, submit an AccessAIS order, discover other files,
+or retrieve a date range.
+
+```text
+python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --input <author-supplied-artifact> --manifest ../data/interim/ais-retrieval/manifest.json --expected-utc-date 2024-07-15 --route accessais --request-id <stable-local-token-free-id> --source-reference "author-supplied AccessAIS delivery" --requested-from 2024-07-15 --requested-through 2024-07-15 --lon-min -122 --lat-min 32 --lon-max -117 --lat-max 35 --source-filename <NOAA-supplied-filename> --retrieved-at-utc <actual-UTC-retrieval-timestamp>
+```
+
+Optional `--http-content-length`, `--http-etag`, and `--http-last-modified`
+values record source metadata supplied by the author. The implementation hashes
+every source byte and detects CSV or ZIP by content. ZIP inspection rejects
+unsafe paths, requires exactly one unambiguous CSV member, streams every member
+through CRC validation, checks the exact NOAA 17-column header, and requires all
+valid parsed timestamps to belong to the expected UTC date. A plain CSV without
+an independent source byte count can establish byte identity, header, and date,
+but its byte-completeness state remains `unverified`; a complete ZIP structure
+and CRC or a matching source `Content-Length` can verify that separate state.
+
+The manifest keeps source availability, byte/archive verification, expected-
+date verification, cleaning compatibility, and observational completeness as
+different fields. Observational completeness always remains `unverified`.
+Every new manifest starts with the complete accepted 153-date calendar from
+2024-07-01 through 2024-11-30. Only a byte-complete current entry with status
+`verified` removes its date from the missing set; analytical-period retrieval
+becomes `verified` only when all 153 current entries are verified.
+Repeated identical bytes append reusable attempt evidence without creating a
+second current date entry. Different bytes put the date in `conflict` without
+replacing the previously verified identity.
+
+For a verified ZIP, `--csv-bundle-dir <data/interim/...>` extracts only the
+selected safe member into an atomic `noaa_ais_retrieval_csv_bundle_v1` bundle.
+The command refuses `data/raw`, arbitrary existing destinations, and replacement
+of incompatible bundles. It rechecks the source byte size and SHA-256 before
+extraction and before publishing, so a path swapped after inspection cannot be
+attributed to the earlier artifact. `--clean-output-dir <data/interim/...>`
+additionally runs the existing source validator and one-date cleaner; ZIP input
+also requires `--csv-bundle-dir`. The attached cleaning reference records
+checksums and row counts but verifies that the cleaner's completeness field is
+still `unverified`. Successful attachment records
+`observational_completeness_preserved: true`; a reference that reports any
+other completeness state is rejected without changing the manifest.
+
+The real bounded 2024-07-15 AccessAIS delivery exercised this boundary on
+2026-08-28. NOAA delivered a direct CSV with the exact 17-column header:
+59,497,346 bytes, SHA-256
+`694ea3e8364de21467dea0affeb77e954d339e155d316dc4115b87ac01ffcca3`,
+and 582,419 valid rows spanning only `2024-07-15T00:00:00Z` through
+`2024-07-15T23:59:59Z`. No independent HTTP `Content-Length` or `ETag` was
+retained, so byte completeness remains `unverified`; timestamp bounds do not
+change observational completeness from `unverified`, and the 153-date period
+remains not verified.
+
+The cleaner produced 113,799 rows under
+`noaa_marine_cadastre_ais_extract_v2`, with deterministic run ID
+`ais-362502c6a37b53e681b745f5` and cleaned SHA-256
+`efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`.
+Two measured repeat runs reproduced both identities in 3.175186 and 3.094731
+seconds. Their approximately 1.59 GiB peak RSS is a scaling concern: monthly
+and full-period processing have not been shown safe and require optimization,
+bounded date-sized processing, spilling or memory controls, or another measured
+design before execution. The full evidence and removal accounting are in the
+[source register](../docs/data-sources.md#retrieval-route). ADR 0017 remains
+Proposed because independent transfer completeness and scaling are unresolved.
+
 ## Process one AIS extract
 
 `process-ais` requires one explicit NOAA Marine Cadastre flat CSV extract and
@@ -73,8 +143,8 @@ timestamps must fall on exactly one UTC calendar date.
 
 A partial-day extract is valid input. The command does not infer that the CSV
 covers every instant or record in that date: completeness is reported as
-`unverified` unless a future retrieval boundary supplies retained metadata that
-can prove otherwise. The processing contract is
+`unverified`; the retrieval boundary deliberately does not upgrade this
+observational-completeness field. The processing contract is
 `noaa_marine_cadastre_ais_extract_v2`, not a complete-day contract.
 
 ```text
