@@ -4,10 +4,11 @@ This directory is the Python package for the M3 offline-processing workflow. It
 provides versioned spatial and source-input contracts, read-only validators,
 traceable lineage metadata, a real one-extract AIS cleaning command, and
 construction of the exact EPSG:3310 analysis grid with actual per-cell water
-geometry from an explicitly supplied polygon mask. It does not retrieve AIS or
-process a season implicitly, transfer whale values, aggregate vessel activity
-onto the grid, calculate relative exposure, or report inside-versus-outside
-statistics.
+geometry from an explicitly supplied polygon mask. It also transfers the
+selected NOAA/SWFSC modeled blue-whale density surface to that water grid by
+abundance-conserving area weighting. It does not retrieve AIS or process a
+season implicitly, aggregate vessel activity onto the grid, calculate relative
+exposure, or report inside-versus-outside statistics.
 
 Run all commands below from this directory.
 
@@ -28,6 +29,7 @@ python -m uv run mypy src/whale_vessel_analysis
 python -m uv run pytest
 python -m uv build
 python -m uv run python -m whale_vessel_analysis --help
+python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help
 ```
 
 `uv.lock` is committed. `uv sync --locked` creates an ignored local virtual
@@ -221,6 +223,94 @@ QGIS is an inspection and visual-verification tool, not a production processing
 path. Any result-changing transformation discovered during review must be
 implemented in Python with configuration, tests, and lineage before a new
 artifact is generated.
+
+## Modeled blue-whale grid transfer
+
+The whale-grid command takes both inputs explicitly. The optional expected grid
+checksum is checked before source projection or transfer:
+
+```text
+python -m uv run python -m whale_vessel_analysis.whale_grid_cli --whale-input <model.gdb> --whale-layer Blue_whale_summer_fall --grid-input <water-grid.parquet> --expected-grid-sha256 <sha256> --output <whale-grid.parquet> [--config <config.toml>] [--overwrite]
+```
+
+The command first validates the target as exact `projected_water_grid_v1`
+GeoParquet, including the expected checksum when supplied, and then runs the
+`noaa_swfsc_blue_whale_2020b_v1` source contract before projection and
+transfer. It projects source geometry from EPSG:4326 to EPSG:3310 with
+`always_xy=true`, checks source-interior overlap, and intersects each source
+polygon with each target cell's actual water geometry. Each intersection
+contributes:
+
+```text
+source modeled density (animals/km²) × overlap area (km²)
+```
+
+Contributions are summed as a modeled abundance allocation in animals. Target
+modeled density is that allocation divided by the full target-cell water area
+in km². The transfer preserves the target geometry and stable identity fields
+byte for byte and keeps its south-to-north, west-to-east row order.
+
+The versioned `blue_whale_grid_transfer_v1` output columns, in order, are:
+
+| Column | Meaning and unit |
+|---|---|
+| `cell_id`, `row_index`, `column_index` | Stable target-grid identity. |
+| `cell_x_min_m`, `cell_y_min_m`, `cell_x_max_m`, `cell_y_max_m` | Parent-cell bounds in EPSG:3310 metres. |
+| `water_area_m2`, `water_area_km2` | Actual target water geometry area. |
+| `modeled_abundance_allocation_animals` | Sum of source density × overlap area, in modeled animals. |
+| `modeled_density_animals_per_km2` | Allocation divided by full target water area, in animals/km². |
+| `source_covered_water_area_m2`, `source_covered_water_area_km2` | Water area covered by the union of contributing source polygons. |
+| `uncovered_water_area_m2`, `uncovered_water_area_km2` | Explicit source-support gap. |
+| `source_coverage_fraction` | Covered water area divided by water area, from 0 to 1. |
+| `coverage_status` | `complete`, `within_numerical_tolerance`, or `incomplete`. |
+| `source_polygon_count` | Number of positive-area source contributors. |
+| `geometry` | Target water geometry as WKB with EPSG:3310 GeoParquet metadata. |
+
+Source-interior overlap larger than 1 m² fails the run. Smaller positive-area
+residuals are reported by count and total area in metadata and lineage. The
+real source contains three such pairs totaling 0.311235765 m²; none exceeds
+1 m². Coverage uses an exact threshold of 0.000001 m² and a numerical threshold
+of 0.1 m². Conservation independently intersects each source polygon with the
+unioned target water domain, then compares that expected abundance with the
+cell allocations. Its scale-aware `math.isclose` bound is the larger of `1e-9`
+animals and `1e-10 × max(abs(expected), abs(allocated))`; the actual difference
+is retained.
+
+The output does not carry a propagated `UNCERTAINTY` value. The source field is
+a coefficient of variation, and no scientifically supported aggregation rule
+or covariance information has been established. The 5 km cells are a reporting
+grid, not a new 5 km biological model: area-weighted transfer changes alignment
+without improving the approximately 0.1° source-model resolution. The command
+does not normalize values to 0–1 or define relative exposure.
+
+Writes follow the spatial-grid pair boundary: deterministic GeoParquet and a
+sibling `.lineage.json` are prepared as temporary files and published together.
+Existing outputs are refused unless `--overwrite` explicitly authorizes
+replacement of both. Outputs beneath `data/raw/` are rejected. Lineage records
+input checksums, configuration, transformation and tolerance parameters,
+software versions, counts, coverage and conservation diagnostics, and the
+output checksum. Generation-time visual status remains `not_completed`; later
+QGIS evidence is checksum-bound and separate.
+
+### Verified NOAA transfer smoke run
+
+The 2026-08-27 run used the selected NOAA layer and the previously verified
+water grid read-only. Generated artifacts remain under ignored
+`data/interim/m3-whale-grid-transfer/`.
+
+| Check | Result |
+|---|---|
+| Source | 12,257 validated NOAA/SWFSC polygons in EPSG:4326; directory-tree SHA-256 `1bfdb2bc75b26a3a33aa81952f5fc6cc58bd8e8b73a93362017fa06f76ec94cf` |
+| Target grid | 4,516 cells; supplied SHA-256 verified as `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031` |
+| Intersections | 9,981 positive-area source/target intersections |
+| Source overlap | Three numerical pairs totaling 0.311235765 m²; no pair over the 1 m² rejection tolerance |
+| Coverage | 4,516 complete; 0 numerical-tolerance; 0 incomplete; 0.000000591 m² total uncovered residual |
+| Conservation | Source contribution and target allocation both 344.1406562623342 modeled animals; difference 0.0 |
+| Values | Modeled density 0.00083394–0.007648247 animals/km²; zero negative or non-finite density/allocation values |
+| Identity and geometry | 4,516 unique ordered cells; target `cell_id` and WKB geometry preserved exactly; zero null, empty, invalid, or non-finite geometries |
+| Output | 523,986 bytes; SHA-256 `421dc7bf837de1b328328d61944bfb7fa0c7e3c77ac0489ab47506a060520c62` |
+| Determinism | Two clean output paths produced byte-identical GeoParquet and the same SHA-256; lineage timestamps and checksums differed truthfully |
+| Visual inspection | **Passed 2026-08-27 in QGIS 4.2.1 (GDAL 3.13.2).** QGIS opened the exact `data/interim/m3-whale-grid-transfer/blue-whale-density-grid-a.parquet` directly through OGR as Parquet. Five ignored 2200×1400 renders showed correct Southern California placement and axis order, exact source/grid alignment, plausible coastline and island gaps, expected source-scale density blocks, clean context boundaries, and no unexplained holes, slivers, displacement, or projection artifacts. |
 
 ## Re-running the large-tabular benchmark
 

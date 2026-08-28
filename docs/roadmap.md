@@ -170,7 +170,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 
 ### Progress
 
-**Foundation, first AIS processing slice, and projected water grid implemented and verified**
+**Foundation, first AIS processing slice, projected water grid, and whale transfer implemented and verified**
 
 - A Python 3.13 src package exists under [`../analysis/`](../analysis/) with a
   committed `pyproject.toml` and `uv.lock`. uv sync/lock, Ruff format/lint,
@@ -244,7 +244,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 87 passing tests using temporary synthetic CSVs
+- The combined self-contained suite has 111 passing tests using temporary synthetic CSVs
   and in-memory records. It covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
   geometry and abundance consistency, CRS/grid invariants, deterministic
@@ -255,6 +255,24 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   clipping, deterministic WKB/GeoParquet content identity, truthful execution
   timestamps, overwrite and raw-output refusal, failed-run atomicity, and the
   CLI boundaries.
+- A focused whale-grid command validates the selected NOAA/SWFSC source and the
+  exact versioned water-grid input, reprojects source polygons with explicit x/y
+  order, detects material source-interior overlap, and transfers modeled density
+  by abundance-conserving EPSG:3310 intersection area. Conservation is checked
+  independently by intersecting every source polygon with the unioned target
+  water domain rather than reusing cell-allocation contributions. Its versioned
+  GeoParquet preserves target cell identity, water area, geometry, and row order
+  while adding modeled abundance allocation, modeled density, contributor
+  count, and explicit source-support coverage fields. It does not normalize
+  values, propagate coefficient-of-variation uncertainty, or implement exposure
+  logic.
+- Synthetic whale-transfer cases cover full and half-cell intersection,
+  multiple-to-one and one-to-multiple allocation, partial water geometry,
+  independently enumerated conservation including deliberately omitted cell
+  intersections, ordering and identity, longitude/latitude axis handling,
+  invalid CRS and density values, material and numerical source overlap,
+  coverage gaps, invalid grid contracts and checksums, PyArrow read-back,
+  lineage, deterministic output, overwrite, atomic failure, and CLI paths.
 - Manual smoke checks against the read-only M2 artifacts passed for the selected
   whale layer (12,257 features, with zero null, empty, or invalid geometries)
   and VSR polygon (one valid feature). The raw AIS prefix was correctly reported
@@ -287,6 +305,25 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   and sidecar without automatically retaining prior run evidence. A formal
   reusable verification record or command, plus append-only or versioned
   lineage, is **not implemented** and remains M3/M8 follow-up work.
+- The real whale-transfer run used the selected 12,257-feature NOAA layer and
+  verified the target grid SHA-256 before processing. It produced 4,516 unique
+  ordered cells from 9,981 positive-area intersections. Three projected-source
+  overlap residuals totaled 0.311235765 m² and none exceeded the accepted 1 m²
+  numerical tolerance. Every cell had complete source support; the aggregate
+  uncovered residual was 0.000000591 m². Source contribution and target
+  allocation were both 344.1406562623342 modeled animals, for a conservation
+  difference of 0.0. Independent PyArrow/Shapely read-back found zero invalid,
+  empty, non-finite, or negative geometry/value records and confirmed byte-for-
+  byte preservation of target IDs and geometry.
+- Two clean whale-transfer runs produced byte-identical 523,986-byte
+  GeoParquet files with SHA-256
+  `421dc7bf837de1b328328d61944bfb7fa0c7e3c77ac0489ab47506a060520c62`.
+  On 2026-08-27 QGIS 4.2.1 with GDAL 3.13.2 opened that exact ignored artifact
+  directly as Parquet. Five rendered views confirmed correct Southern
+  California placement and axis order, source/grid alignment, boundary
+  behavior, coastline and island gaps, and a plausible broad source-scale
+  modeled-density pattern, with no unexplained holes, slivers, displacement, or
+  projection artifacts.
 
 **Not implemented**
 
@@ -295,14 +332,15 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 - Behavioral plausibility filtering, any length threshold, vessel aggregation,
   or speed summaries. The first two remain disabled rather than silently
   receiving provisional thresholds.
-- Normalization of whale values, area-weighted whale abundance
-  transfer, or any vessel-derived spatial dataset.
+- Normalization of whale values or any vessel-derived spatial dataset. The
+  whale input is grid-aligned without normalization; normalization remains part
+  of the deferred exposure-method decision.
 - A successful GDAL/Pyogrio read-back of the GeoParquet on this machine; its
   driver attempted to load a missing `duckdb.dll`. PyArrow read-back and
   GeoParquet metadata validation passed, but ArcGIS compatibility remains
   unverified.
-- Lineage beyond the one-extract AIS bundle and projected water grid, or an
-  end-to-end analytical-period rerun. The cleaned AIS output and water grid are
+- Lineage beyond the one-extract AIS bundle, projected water grid, and whale-grid
+  transfer, or an end-to-end analytical-period rerun. These outputs are
   processing inputs, not analytical results.
 - Anything gated by the unresolved analytical/statistical domain: the exposure
   calculation and surface, inside-versus-outside statistics, and their output
