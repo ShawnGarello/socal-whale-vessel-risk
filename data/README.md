@@ -152,13 +152,14 @@ links that expire after 14 days or five accesses. Read-only 2026-08-27 service
 estimates place each calendar-month request below 2 GB; exact values and
 parameters are in ADR 0017 and the source register.
 
-**The order-and-delivery path has not been exercised.** No order was placed.
-AccessAIS output compatibility with the current exact-header cleaner, delivery
-layout and resume behavior remain unknown. Nothing in this repository should
-describe the route as accepted until the bounded 15 July order has been
-delivered, verified and processed. Order submission remains an author action;
-future code must not submit an order, record an email address, or persist an
-expiring tokenized URL.
+**The order-and-delivery path has not passed its exercise.** The author submitted
+the bounded 15 July request and NOAA was still processing it when the local
+verification boundary was completed. No delivery artifact, source filename,
+archive layout, checksum, or download metadata has been supplied or inspected.
+Nothing in this repository describes the route as accepted until that artifact
+is delivered, verified, and processed. Order submission remains an author
+action; repository code does not submit an order, record an email address, or
+persist an expiring tokenized URL.
 
 **Permitted fallback: guarded bulk retrieval.** The bulk daily files are the
 only route confirmed working, and they are national — there is no way to ask
@@ -182,26 +183,44 @@ constraint in rule 7 above true even though the transfer is national.
 
 ### Retrieval manifest and immutable-write rules
 
-Whichever route is exercised, future retrieval records one current entry for
-each of the 153 expected UTC dates. The entry carries the route, exact request
-parameters or bulk URL, token-free order/delivery identifier when applicable,
-retrieval timestamp, source filename, byte size, SHA-256, archive and date
-checks, status and retry history. Missing expected dates are computed from the
-accepted date range rather than inferred from filenames already present.
+The implemented `noaa_ais_retrieval_manifest_v1` boundary records one current
+entry per expected UTC date. The entry carries the route, exact request
+parameters or redacted bulk/source reference, stable token-free local request
+identifier, retrieval timestamp, source filename, byte size, SHA-256, available
+HTTP metadata, archive and date checks, status, and attempt history. The current
+CLI adds dates explicitly one artifact at a time; generation of the full
+153-date planned manifest is not implemented.
 
-Retrieval writes a uniquely named temporary file and publishes it by atomic
-rename only after transfer and archive validation. A final raw file is never
-overwritten: an identical checksum is reused, a different checksum is a
-conflict, and a genuine upstream revision receives a new path and lineage.
-Resume is permitted only with byte-range support plus a stable object validator;
-otherwise the temporary attempt restarts rather than appending blindly.
+The command is local-only:
 
-The manifest distinguishes listed/ordered, byte-verified, date-verified and
-observationally complete. Only the first three are properties retrieval can
-establish. NOAA receiver coverage and outages mean observational completeness
-remains unverified. The existing one-date cleaning report stays separate and
-must not be upgraded from `unverified` merely because its source transfer
-passed.
+```text
+python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help
+```
+
+It detects CSV or ZIP by content. ZIP input must have safe member paths, one
+unambiguous CSV member, and valid CRCs. The selected CSV must have the exact NOAA
+header, at least one row and valid timestamp, and no valid timestamp outside the
+expected UTC date. Plain CSV byte identity can be established without source
+metadata, but independent byte completeness remains unverified unless a supplied
+source `Content-Length` matches; valid ZIP structure and CRC can independently
+verify archive completeness.
+
+The implemented manifest writer and optional archive extraction use uniquely
+named temporary paths and atomic publication. Extraction is permitted only to
+an explicit destination outside `data/raw/`; an existing destination is reused
+only when its complete bundle metadata and checksums match. An arbitrary or
+different destination is never replaced. Within the manifest, an identical
+checksum is reusable retry evidence, while different bytes create `conflict`
+without replacing the current identity. Network transfer and range-resume are
+not implemented; their Proposed rules remain that resume requires byte-range
+support plus a stable object validator and must never append blindly.
+
+The manifest distinguishes source/order availability, retained byte identity,
+independent byte/archive completeness, expected-date verification, cleaning
+compatibility, and observational completeness. NOAA receiver coverage and
+outages mean observational completeness remains `unverified`. The optional
+cleaner bridge checksum-links its bundle but asserts that the existing one-date
+quality report still carries that `unverified` state.
 
 **Why this is not simply forbidden.** An earlier version of this document banned
 downloading a national file and filtering locally, while the source register

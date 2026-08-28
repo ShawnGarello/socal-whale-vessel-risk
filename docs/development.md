@@ -8,11 +8,13 @@
 > utility](../tools/README.md), which is separate from the analysis package. The
 > ArcGIS Pro is optional and unnecessary for Version 1; no ArcGIS Pro project
 > is planned as a repository component. The analysis package validates source
-> inputs and configuration, processes one explicitly supplied AIS extract into
-> an atomic local bundle, generates the projected per-cell water grid, and
+> inputs and configuration, verifies and manifests one explicitly supplied AIS
+> delivery, processes one explicitly supplied AIS extract into an atomic local
+> bundle, generates the projected per-cell water grid, and
 > transfers the selected modeled blue-whale density surface to that grid by
 > abundance-conserving area weighting. QGIS is the local inspection and visual-
-> verification tool. Retrieval and later derived processing remain unfinished.
+> verification tool. Network retrieval, real-delivery exercise, and later
+> derived processing remain unfinished.
 
 ---
 
@@ -109,15 +111,17 @@ interface rather than failing silently: it names the unset variable and shows th
 service's own response. That behaviour is verified. A **successful** basemap
 render has **not** been verified — see [roadmap.md](roadmap.md) M4.
 
-### Analysis (Python) — AIS extract, water grid, and whale transfer implemented
+### Analysis (Python) — retrieval boundary, AIS extract, grid, and whale transfer
 
 The src-based package lives in [`../analysis/`](../analysis/). It owns versioned
 processing/source/lineage contracts, the selected DuckDB large-tabular boundary,
-read-only AIS/whale/VSR validators, CLI boundaries, deterministic processing of
-one supplied NOAA AIS flat CSV extract, the deterministic EPSG:3310 water-grid
-process, abundance-conserving transfer of modeled blue-whale density to that
-grid, and synthetic tests. It does **not** retrieve AIS, aggregate vessels, or
-produce an exposure dataset or statistics. Run every command below from
+read-only AIS/whale/VSR validators, a local AIS delivery-verification CLI,
+deterministic processing of one supplied NOAA AIS flat CSV extract, the
+deterministic EPSG:3310 water-grid process, abundance-conserving transfer of
+modeled blue-whale density to that grid, and synthetic tests. It does **not**
+submit orders, download AIS,
+aggregate vessels, or produce an exposure dataset or statistics. Run every
+command below from
 `analysis/`.
 
 **Prerequisites**
@@ -146,6 +150,7 @@ re-run; the built package declares only runtime requirements.
 | `python -m uv run pytest` | Runs the self-contained synthetic test suite. |
 | `python -m uv build` | Builds the source distribution and wheel. `analysis/dist/` is generated and must not be committed. |
 | `python -m uv run python -m whale_vessel_analysis --help` | Proves the package module and command boundary load. |
+| `python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help` | Proves the separate local AIS retrieval-verification boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help` | Proves the separate whale-grid transfer boundary loads. |
 
 The toolchain decision is [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md).
@@ -168,6 +173,37 @@ supplied artifact passed the implemented contract; exit 2 means a configuration,
 schema, or value check failed. Raw AIS is expected to contain records that later
 cleaning must reject, so a non-zero source inspection is recorded rather than
 "fixed" in place.
+
+**One-delivery AIS retrieval verification**
+
+`python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help`
+documents the separate boundary. It accepts one explicit author-supplied local
+artifact plus the expected UTC date, route, stable local request identifier,
+redacted source reference, exact requested dates and WGS 84 bounds,
+NOAA-supplied filename, actual retrieval timestamp, and optional supplied HTTP
+metadata. It writes only the explicit manifest path and optional ignored
+`data/interim` bundles; it performs no network operation.
+
+The command hashes and structurally inspects the artifact without modifying it,
+detects plain CSV or ZIP by content, validates all archive paths and CRCs,
+selects exactly one CSV member, requires the exact NOAA header, and rejects zero
+rows or valid timestamps outside the expected date. The manifest has one
+current entry per UTC date and append-only attempt history within that entry.
+Identical retries reuse checksum evidence; different bytes create a conflict
+without replacing the current identity. Sensitive source-reference URL parts
+and email addresses are never retained.
+
+Optional ZIP extraction uses a temporary directory and atomic rename to publish
+a complete compatible bundle under an explicit ignored interim destination.
+Optional cleaner exercise runs both the existing validator and `process-ais`,
+then checksum-links the output bundle from the retrieval manifest. It asserts
+that the existing quality report still says completeness `unverified`.
+
+Only synthetic artifacts have exercised this boundary. The author submitted the
+bounded 2024-07-15 AccessAIS request, but NOAA was still processing it when the
+implementation completed. No real source bytes, delivery layout, cleaner run,
+or performance result are available yet, so the ADR 0017 acceptance gate has
+not passed.
 
 **One-extract AIS processing**
 
@@ -610,11 +646,14 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 111 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 136 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
 deterministic lineage/configuration hashing, configurable source locators, the
+retrieval manifest and its separated completeness states, source byte identity,
+CSV/ZIP content detection, archive safety and CRC validation, exact-date
+enforcement, retry/conflict behavior, redaction, atomic interim extraction,
 exact grid and water-area invariants, configured-extent clipping, deterministic
 spatial serialization and content identity, truthful execution timestamps,
 raw-output refusal, atomic-write failure behavior, abundance-conserving whale

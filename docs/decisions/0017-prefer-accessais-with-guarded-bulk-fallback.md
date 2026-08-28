@@ -125,9 +125,12 @@ observed timestamp bounds do not establish continuous coverage.
 
 ### Still unverified
 
-- No AccessAIS order has been submitted. Order identifiers, delivery contents,
-  archive layout, source filenames, download headers, range-resume behavior,
-  and exact date-boundary semantics have not been observed.
+- The author submitted the bounded 2024-07-15 acceptance-gate request, and NOAA
+  was still processing it when the local verification boundary was completed.
+  No artifact or token-free identifier has been supplied for inspection. The
+  delivery contents, archive layout, source filename, download headers,
+  range-resume behavior, and exact date-boundary semantics have not been
+  observed.
 - NOAA says AccessAIS and bulk files differ slightly in format and structure,
   with a 2026 upgrade planned to remove the differences. Whether an AccessAIS
   delivery satisfies the current exact 17-column cleaning header is unknown.
@@ -147,23 +150,25 @@ ranges in the table above. Use the **guarded one-day-at-a-time bulk route** only
 when AccessAIS cannot create or deliver a bounded request, or when an exercised
 delivery proves incompatible with the required processing boundary.
 
-This decision remains **Proposed**. The service limits, estimates, and bulk
-fallback are adequately documented, but the preferred order-and-delivery path
+This decision remains **Proposed**. The service limits, estimates, bulk fallback,
+and local verification boundary are documented, but the preferred delivery path
 has not been exercised and its output has not reached the existing cleaner.
 Acceptance requires the bounded one-day exercise below.
 
 AccessAIS order submission is an author-controlled action. It requires an email
-address, acceptance of NOAA's privacy statement, and an external order. Future
-code may validate and download an author-supplied delivery, but it must not
-submit orders or store email addresses. Bulk URLs are public and may later be
-retrieved by a guarded command without an account.
+address, acceptance of NOAA's privacy statement, and an external order. The
+implemented code validates an author-supplied local delivery but does not submit
+orders, store email addresses, or download from an expiring URL. Bulk URLs are
+public and may later be retrieved by a guarded command without an account;
+network retrieval is not implemented.
 
 ## Retrieval-manifest design
 
-Future implementation will generate the expected UTC dates from the accepted
-configuration and create exactly one current manifest entry for each date from
-`2024-07-01` through `2024-11-30`. The retrieval manifest is distinct from the
-existing one-date cleaning quality report.
+The implemented `noaa_ais_retrieval_manifest_v1` boundary creates one current
+entry per explicitly supplied expected UTC date and keeps retry attempts inside
+that entry. It is distinct from the existing one-date cleaning quality report.
+Generating and pre-populating all expected dates from `2024-07-01` through
+`2024-11-30` is not implemented yet.
 
 Each date entry records at least:
 
@@ -234,11 +239,13 @@ date, or manifest entry is a retrieval conflict and is handled here.
 
 ## Acceptance gate: one bounded complete-day exercise
 
-The author may, in a separate authorized session, submit one AccessAIS order for
-**2024-07-15**, WGS 84 bounds **longitude -122.0 to -117.0 and latitude 32.0 to
-35.0**. That date is useful because its partial bulk prefix and existing cleaner
-smoke result already provide a checksum-bound comparison point without being
-mistaken for complete-day evidence.
+The author submitted one AccessAIS request for **2024-07-15**, WGS 84 bounds
+**longitude -122.0 to -117.0 and latitude 32.0 to 35.0**. NOAA was still
+processing it when the local verification boundary was completed. No delivery
+artifact has been supplied, so submission itself does not pass this gate. That
+date remains useful because its partial bulk prefix and existing cleaner smoke
+result provide a checksum-bound comparison point without being mistaken for
+complete-day evidence.
 
 The read-only AccessAIS estimator returned **582,454 records and 59,895,276
 bytes** for that one-day request. This is an estimate, approximately 59.9 MB
@@ -269,11 +276,12 @@ gate.
 ## Consequences
 
 - Full-period transfer cannot start from this Proposed record. The immediate
-  next step is one user-controlled order, not five monthly orders and not 153
-  bulk downloads.
-- A future retrieval command needs a route adapter and manifest contract before
-  it invokes the current one-date cleaner. It must not change the cleaner's
-  `unverified` completeness field based only on retrieval success.
+  next step is receipt and read-only exercise of the submitted one-day delivery,
+  not five monthly orders and not 153 bulk downloads.
+- The local retrieval command implements artifact inspection, the manifest
+  contract, safe optional ZIP extraction, and an optional bridge to the current
+  one-date cleaner. It does not implement network transfer or resume. The bridge
+  asserts that the cleaner's `unverified` completeness field is unchanged.
 - Monthly AccessAIS partitions bound each order below the currently reported
   service limit and make resubmission local to one month. Only one is submitted
   at a time.

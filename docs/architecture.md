@@ -12,10 +12,11 @@
 > one-extract AIS cleaning, projected water-grid construction, and deterministic
 > whale-grid transfer are implemented and tested. Two clean whale-transfer runs
 > produced byte-identical output, and QGIS 4.2.1 visually verified the exact
-> generated water-grid and whale-grid GeoParquet artifacts. AIS retrieval,
-> vessel aggregation, exposure analysis, a final public layer representation,
-> and deployment remain unfinished. See the [roadmap](roadmap.md) for milestone
-> status.
+> generated water-grid and whale-grid GeoParquet artifacts. A local boundary now
+> verifies and manifests one supplied AIS delivery, but network retrieval and a
+> real-delivery exercise remain unfinished. Vessel aggregation, exposure
+> analysis, a final public layer representation, and deployment also remain
+> unfinished. See the [roadmap](roadmap.md) for milestone status.
 
 Three independent questions remain open and gate different work:
 
@@ -122,15 +123,20 @@ Python is the reproducible processing and analytical core.
 [`analysis/`](../analysis/README.md) has a uv-locked Python 3.13 environment,
 DuckDB as the production large-tabular engine, versioned configuration and
 source/processing/lineage contracts, read-only input validators, deterministic
-one-extract AIS cleaning, and deterministic EPSG:3310 water-grid construction.
-The grid process accepts an explicit polygon mask, clips it to the projected
-map/context boundary, intersects the exact configured grid, and writes actual
-per-cell water geometry and area as GeoParquet plus generation lineage. It does
-not retrieve the analytical-period AIS data, aggregate vessels, calculate
-relative exposure, or derive statistics. A separate deterministic, tested
-whale-grid command transfers modeled density by abundance-conserving
-area-weighted intersection, writes generation lineage, and produced
-byte-identical outputs in two clean real-data runs; the exact derived output was
+one-extract AIS cleaning, a local one-artifact AIS retrieval manifest boundary,
+and deterministic EPSG:3310 water-grid construction. The retrieval boundary
+performs no network request; it verifies retained bytes, archive safety and CRC,
+the exact source header, and expected-date membership, and can bridge safe
+interim extraction to the existing cleaner without changing observational
+completeness. The grid process accepts an explicit polygon mask, clips it to the
+projected map/context boundary, intersects the exact configured grid, and writes
+actual per-cell water geometry and area as GeoParquet plus generation lineage.
+It does not retrieve the analytical-period AIS data over the network, aggregate
+vessels, calculate relative exposure, or derive statistics. A separate
+deterministic, tested whale-grid command transfers modeled density by
+abundance-conserving area-weighted intersection, writes generation lineage, and
+produced byte-identical outputs in two clean real-data runs; the exact derived
+output was
 also visually verified in QGIS 4.2.1.
 
 Python owns or is planned to own:
@@ -361,8 +367,10 @@ project layers, and matching precomputed results.
   destinations, with a non-Esri public route retained if neither is suitable.
 - Git LFS is not planned for Version 1. Any demonstrated need requires a
   decision record before large binaries are added.
-- The AIS retrieval route remains an M3 decision. An entire national season is
-  never staged locally; the detailed retrieval guard belongs to
+- The AIS retrieval route remains a Proposed M3 decision. The local supplied-
+  artifact verification boundary is implemented, while network transfer and the
+  real one-day acceptance exercise are not. An entire national season is never
+  staged locally; the detailed retrieval guard belongs to
   [data/README.md](../data/README.md).
 
 DuckDB is the production large-tabular boundary per

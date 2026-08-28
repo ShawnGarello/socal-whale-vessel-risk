@@ -218,8 +218,13 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   one-day-at-a-time bulk retrieval as the proposed fallback. The read-only
   AccessAIS estimator endpoint observed during research is an undocumented web-
   application interface and must not be treated as a stable production API.
-  This is recorded design work only: no AccessAIS order, daily bulk download,
-  complete-day extract, or full-period retrieval has been performed.
+  A separate local command now inspects and manifests one explicit supplied
+  artifact, with content-based CSV/ZIP detection, safe member and CRC checks,
+  exact-header and expected-date validation, immutable retry/conflict behavior,
+  optional atomic interim extraction, and an optional checksum-bound bridge to
+  the existing cleaner. The author submitted the bounded 15 July request, but
+  NOAA was still processing it: no delivery artifact, daily bulk download,
+  complete-day extract, or full-period retrieval has been exercised.
 - [ADR 0018](decisions/0018-use-vessel-kilometres-for-grid-activity.md)
   records the **Proposed** vessel-activity aggregation design.
   Vessel-kilometres is the proposed primary additive grid metric. Group-specific
@@ -263,7 +268,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 111 passing tests using temporary synthetic CSVs
+- The combined self-contained suite has 136 passing tests using temporary synthetic CSVs
   and in-memory records. It covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
   geometry and abundance consistency, CRS/grid invariants, deterministic
@@ -346,9 +351,11 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 
 **Not implemented**
 
-- Production AIS retrieval code and real retrieval execution. ADR 0017 records
-  a Proposed route design, but no AccessAIS order, guarded daily bulk download,
-  complete-day extract, or analytical-period retrieval has been performed.
+- Network AIS transfer, range-resume, and real retrieval execution. The local
+  supplied-artifact validation and manifest boundary is implemented, but no
+  AccessAIS delivery artifact, guarded daily bulk download, complete-day
+  extract, or analytical-period retrieval has been exercised. The full
+  153-date manifest is not pre-populated automatically.
 - The vessel-activity aggregation proposed in ADR 0018, including deterministic
   segment construction, allocation within modeled-whale-support geometry,
   additive vessel-kilometres, and union-recomputed distinct counts. Behavioral

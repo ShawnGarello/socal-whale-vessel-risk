@@ -242,7 +242,7 @@ The vessel input to the exposure analysis: where large commercial vessels travel
 | **Product** | AIS Broadcast Points, daily nationwide files |
 | **Publisher** | NOAA Office for Coastal Management (Marine Cadastre), from U.S. Coast Guard Nationwide AIS (NAIS) |
 | **Bulk directory** | `https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{year}/` — one `AIS_YYYY_MM_DD.zip` per day |
-| **Custom extracts** | AccessAIS — <https://coast.noaa.gov/digitalcoast/tools/ais.html>. Read-only status, limit, and size-estimate endpoints were exercised on 2026-08-27; **no order or delivery was exercised**. See "Retrieval route" below |
+| **Custom extracts** | AccessAIS — <https://coast.noaa.gov/digitalcoast/tools/ais.html>. Read-only status, limit, and size-estimate endpoints were exercised on 2026-08-27. The author submitted the bounded 2024-07-15 acceptance-gate request; NOAA was still processing it, and **no delivery artifact was supplied or exercised**. See "Retrieval route" below |
 | **Documentation** | AIS FAQ (May 2026) — <https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf>; Vessel Type and Group Codes — <https://coast.noaa.gov/data/marinecadastre/ais/VesselTypeCodes2018.pdf> |
 | **Years verified available** | Bulk year index and daily files return HTTP 200 for **2019–2024** and **404 for 2025 and 2026**, checked 2026-08-25. The FAQ gives 2009 as the earliest year and 2015 as the start of the flat CSV format |
 
@@ -452,7 +452,17 @@ There is a near-empty gap between 50 m and 150 m separating small harbour and pa
 
 ### Retrieval route
 
-**Proposed in [ADR 0017](decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md), not accepted.** The preferred design is five sequential monthly AccessAIS extracts over the map/context bounds, with a guarded one-day-at-a-time bulk fallback. No order was placed and no complete day was downloaded, so neither route has been exercised end to end.
+**Proposed in [ADR 0017](decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md), not accepted.** The preferred design is five sequential monthly AccessAIS extracts over the map/context bounds, with a guarded one-day-at-a-time bulk fallback. The author submitted the bounded 2024-07-15 request, and NOAA was still processing it when the local verification boundary was completed. No delivery artifact or complete bulk day was supplied, so neither route has been exercised end to end.
+
+**Implemented local boundary.** The analysis package now inspects one explicit
+author-supplied artifact without network access, records the versioned retrieval
+manifest and attempt history, detects CSV or ZIP by content, verifies byte
+identity, validates safe ZIP structure and CRC where applicable, selects one
+unambiguous CSV member, requires the exact NOAA header, and rejects unexpected
+valid UTC dates. It can atomically materialize a verified ZIP member under
+ignored `data/interim/` and invoke the existing validator and cleaner without
+upgrading their observational-completeness state. This is synthetic-test
+evidence for the boundary, not evidence about an actual NOAA delivery.
 
 **Verified from official documentation.** AccessAIS provides point data for a selected area and period, limits orders to 2 GB and one active order per user, and expires a delivery after 14 days or five accesses. NOAA cannot restart an expired or failed order. The [AccessAIS help sheet](https://coast.noaa.gov/data/marinecadastre/ais/accessais-help.pdf) and [AIS FAQ](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf) are the sources. The FAQ also says AccessAIS and bulk outputs differ slightly in format and structure; current compatibility with the exact 17-column cleaner is therefore unverified.
 
@@ -470,9 +480,9 @@ The five estimates total **82,627,436 records and 8,496,345,497 bytes**. They ar
 
 **Bulk metadata verification on 2026-08-27.** The official [2024 bulk index](https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/) listed all 366 daily filenames; comparison against the 153-date analytical calendar found zero missing names. HEAD requests for the first, a middle, and the last analytical date returned HTTP 200, byte lengths, validators and byte-range support. Together with the five M2 prefix transfers, this verifies listing and partial-transfer behavior. It does **not** verify a complete archive, ZIP CRC, daily semantics or observational completeness.
 
-**Still unverified.** AccessAIS order creation, delivery schema, source filename, archive layout, range-resume behavior, identifier semantics and cleaner compatibility; complete bulk-file integrity; and any authoritative expected per-date record count. NOAA documents collection interruptions, so a small or empty day requires review and cannot automatically be labelled incomplete or low traffic.
+**Still unverified.** Successful AccessAIS delivery, delivery schema, source filename, archive layout, download/range-resume behavior, identifier semantics and real cleaner compatibility; complete bulk-file integrity; and any authoritative expected per-date record count. NOAA documents collection interruptions, so a small or empty day requires review and cannot automatically be labelled incomplete or low traffic.
 
-The local handling and manifest policy is in [../data/README.md](../data/README.md). The next bounded evidence step is an author-submitted AccessAIS order for 15 July only. No full-period transfer begins before that gate passes.
+The local handling and manifest policy is in [../data/README.md](../data/README.md). The next bounded evidence step is receipt and read-only exercise of the submitted 15 July delivery. No full-period transfer begins before that gate passes.
 
 ### Licensing, attribution, and redistribution
 
@@ -504,7 +514,7 @@ NOAA's own terms are the standard 17 U.S.C. § 403 public-domain statement.
 ### Remaining unresolved
 
 - **Whether the offshore part of the study area can be analysed at all**, which depends on distinguishing coverage from behaviour. This is the open question that keeps [ADR 0002](decisions/0002-southern-california-study-area-extent.md) at Proposed. It **cannot** be answered from these broadcast points, at any sample size, because a vessel no receiver heard leaves no trace in them.
-- **Whether the Proposed AccessAIS route can be accepted.** Metadata endpoints and monthly size estimates were exercised, but no order or delivery was. Cleaner compatibility and delivery semantics remain unverified; see ADR 0017.
+- **Whether the Proposed AccessAIS route can be accepted.** Metadata endpoints and monthly size estimates were exercised and the author submitted the bounded one-day request, but no delivery artifact was supplied. Real cleaner compatibility and delivery semantics remain unverified; see ADR 0017.
 - **Whether AccessAIS can filter by vessel type server-side.** No documented selector was found; not established and not assumed.
 - **Whether a length threshold is applied** on top of the type-group filter, and at what value.
 - **Whether the sample's clean coordinate result holds across the period.** 207,849 rows is a small fraction of ~10⁸.
