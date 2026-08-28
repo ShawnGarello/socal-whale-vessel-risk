@@ -7,9 +7,12 @@ one-extract AIS cleaning command, and
 construction of the exact EPSG:3310 analysis grid with actual per-cell water
 geometry from an explicitly supplied polygon mask. It also transfers the
 selected NOAA/SWFSC modeled blue-whale density surface to that water grid by
-abundance-conserving area weighting. It does not submit AccessAIS orders,
-download AIS, discover a season implicitly, aggregate vessel activity onto the
-grid, calculate relative exposure, or report inside-versus-outside statistics.
+abundance-conserving area weighting. A separate read-only evidence harness
+diagnoses consecutive observations from one explicitly supplied cleaned AIS
+bundle and can optionally test segment allocation against the exact water-grid
+contract. It does not submit AccessAIS orders, download AIS, process a season
+implicitly, produce a production vessel-activity grid, calculate relative
+exposure, or report inside-versus-outside statistics.
 
 Run all commands below from this directory.
 
@@ -31,6 +34,7 @@ python -m uv run pytest
 python -m uv build
 python -m uv run python -m whale_vessel_analysis --help
 python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help
+python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --help
 python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help
 ```
 
@@ -205,6 +209,63 @@ fields. The input CSV and every generated bundle remain local and Git-ignored.
 The command records the supplied path and SHA-256 but does not invent a
 publisher retrieval date; retrieval provenance remains something recorded when
 retrieval occurs.
+
+## Vessel-activity evidence harness
+
+The isolated harness consumes the exact three-file bundle written by
+`process-ais`; it never reads raw AIS, discovers adjacent files, or modifies an
+input. The output must be an explicit JSON path under the ignored
+`data/interim/` root:
+
+```text
+python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --cleaned-bundle <cleaner-output-directory> --output ..\data\interim\vessel-activity-evidence\report.json
+```
+
+There is no default maximum gap, implied-speed ceiling, or vessel-length
+threshold. Candidate evidence values are optional, repeatable command-line
+arguments and remain labelled as candidates in the report:
+
+```text
+--candidate-maximum-gap-seconds <seconds>
+--candidate-implied-speed-ceiling-knots <knots>
+--candidate-minimum-vessel-length-m <metres>
+```
+
+The report deterministically reorders observations by MMSI and UTC timestamp,
+constructs consecutive pairs, and records observation, distinct-MMSI,
+distinct-MMSI-date, time-gap, zero-length, group-change, non-increasing-time,
+endpoint-distance, implied-speed, and reported-SOG diagnostics by vessel group
+and for the commercial union. Commercial observation totals are additive, but
+commercial distinct counts are recomputed from the union rather than summed
+across passenger, cargo, and tanker groups. EPSG:3310 endpoint distances are
+compared with WGS 84 geodesic distances. Reported SOG availability remains a
+point attribute and is not substituted for implied segment speed.
+
+Supplying an exact grid is optional:
+
+```text
+--grid-input <projected-water-grid.parquet> [--expected-grid-sha256 <sha256>]
+```
+
+That path reuses the exact `projected_water_grid_v1` contract and optional
+checksum validation, transforms longitude/latitude with explicit x/y ordering,
+and intersects the unfiltered structural candidate segments with actual
+modeled-whale-support cell geometry. It reports in-support and outside-support
+length separately and checks piece-length conservation and duplicate
+allocation. Outside-support length means only outside the supplied biological
+model support; it is not labelled as land, dry area, or absent AIS coverage.
+No per-cell vessel-activity dataset is emitted.
+
+The deterministic report contains no execution timestamp. Its `report_id` is
+derived from its content, while the CLI prints actual UTC start/completion time
+and elapsed time separately. Writing is atomic, existing output requires
+`--overwrite`, an unrelated JSON file cannot be overwritten, and any destination
+outside `data/interim/` or beneath `data/raw/` is refused.
+
+Synthetic verification covers the diagnostic and optional-allocation boundary.
+It does not select a production rule. No verified complete-day cleaned bundle
+was available on this branch, so the 15 July complete-day evidence run and all
+real candidate values remain pending after the retrieval work is merged.
 
 ## Projected water-grid command
 

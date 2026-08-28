@@ -103,6 +103,11 @@ gap or plausibility threshold.
 
 ### Still unverified
 
+- An isolated evidence harness now exercises the proposed code shape with
+  synthetic cleaned bundles and exact synthetic grid geometry. That verifies
+  deterministic pairing, diagnostic arithmetic, candidate-value plumbing,
+  projected/geodesic comparison, and segment-piece conservation; it is not
+  complete-day or period evidence and selects no production parameter.
 - No complete scoped day has been used to measure consecutive gaps, implied
   speeds, edge-censored tracks, excluded-segment rates or the sensitivity of
   vessel-kilometres to candidate rules.
@@ -282,6 +287,40 @@ the overlay in EPSG:3310.
 | Offshore coverage boundary | **Unresolved in ADR 0002.** | Independent coverage evidence. Vessel aggregation over the map extent does not settle observability or authorize statistics there. |
 | Exposure weighting and high-exposure threshold | **Out of scope and unwritten.** | Wait for the grid-aligned inputs and accepted reporting domain in later milestones. |
 
+## Evidence harness implementation status
+
+The read-only `vessel_activity_evidence` module and its isolated CLI are
+implemented. They require one explicit current cleaner bundle, verify its
+contract and checksums, reorder observations deterministically by MMSI and UTC
+timestamp, and construct consecutive pairs without reading raw AIS. The
+deterministic ignored JSON report includes group and commercial-union
+observation counts; union-recomputed distinct MMSI and MMSI-date counts; gap,
+zero-length, group-change and non-increasing-time diagnostics; EPSG:3310 and
+WGS 84 geodesic endpoint-distance comparisons; implied-speed distributions;
+and separately named reported-SOG availability.
+
+Maximum-gap, implied-speed-ceiling, and minimum-length candidate values have no
+defaults and enter only through explicit repeatable runtime arguments. Their
+sensitivity scenarios are labelled as candidate evidence, and the unfiltered
+structural baseline remains visible. The harness does not accept or recommend a
+numeric rule.
+
+When an exact `projected_water_grid_v1` input is supplied, the optional
+non-production path reuses the versioned grid and optional checksum validation,
+projects with explicit x/y order, intersects lines with actual
+modeled-whale-support cell geometry, reports in-support and outside-support
+length separately, and verifies conservation and no duplicate allocation. It
+does not emit a per-cell vessel-activity dataset. Outside-support portions are
+not interpreted as land, dry area, or absent AIS coverage.
+
+Synthetic tests pass for the implemented boundary, including invalid grid CRS,
+contract and checksum, deterministic report identity, overwrite and raw-output
+refusal, atomic failure, and CLI exits. This implementation evidence does not
+resolve the items below. In particular, no complete-day bundle was available
+on this branch, the real 15 July run did not occur, vessel-hours and peak-memory
+comparison remain part of the bounded evidence step, and the full-period gates
+remain open.
+
 ## Bounded next evidence step
 
 After the user-authorized retrieval gate in
@@ -292,8 +331,9 @@ fallback is required, the complete national archive was reported as
 395,954,655 compressed bytes during M2. Do not retrieve either in this decision
 session.
 
-The evidence run produces an ignored, checksum-bound report rather than a
-production vessel grid. It must:
+The implemented harness is ready for this run after retrieval is merged. The
+evidence run produces an ignored, checksum-bound report rather than a
+production vessel grid. The complete bounded step must:
 
 1. run the existing validator and one-date cleaner unchanged;
 2. calculate candidate consecutive pairs after ADR 0013 cleaning;
@@ -322,9 +362,10 @@ validated analytical input.
 
 - Point-count heatmaps cannot become the Version 1 vessel input. Point counts
   remain valuable QA for missing or anomalous dates.
-- A deterministic, conservation-tested segment-to-grid process can be built
-  with synthetic inputs while the numeric thresholds remain unresolved, but it
-  must not produce a production result using hidden defaults.
+- A deterministic, conservation-tested segment-to-grid evidence process is now
+  implemented with synthetic inputs while the numeric thresholds remain
+  unresolved. It emits diagnostics only and cannot produce a production result
+  using hidden defaults.
 - The current cleaned files are sufficient for interior candidate segments but
   not for uncensored entry/exit portions. The future implementation must expose
   that limitation or revise the pre-segmentation boundary.
