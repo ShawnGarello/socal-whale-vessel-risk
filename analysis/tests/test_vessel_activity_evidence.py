@@ -211,6 +211,34 @@ def test_bundle_is_read_only_and_observations_are_deterministically_ordered(
     assert before == {path.name: path.read_bytes() for path in bundle_path.iterdir()}
 
 
+def test_bundle_rejects_tampered_quality_report(tmp_path: Path) -> None:
+    bundle_path = _bundle(tmp_path)
+    quality_path = bundle_path / "quality-report.json"
+    quality = json.loads(quality_path.read_text(encoding="utf-8"))
+    quality["scope_note"] = "tampered after cleaner publication"
+    quality_path.write_text(
+        json.dumps(quality, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(VesselActivityEvidenceError, match="quality report checksum"):
+        load_cleaned_bundle(bundle_path)
+
+
+def test_bundle_rejects_mismatched_sidecar_run_ids(tmp_path: Path) -> None:
+    bundle_path = _bundle(tmp_path)
+    metadata_path = bundle_path / "run-metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["run"]["run_id"] = "ais-tampered-run-identity"
+    metadata_path.write_text(
+        json.dumps(metadata, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(VesselActivityEvidenceError, match="same cleaner run_id"):
+        load_cleaned_bundle(bundle_path)
+
+
 def test_pairing_covers_full_zero_and_non_increasing_time_gaps() -> None:
     observations = (
         _observation("223456789", 10, -118.0),

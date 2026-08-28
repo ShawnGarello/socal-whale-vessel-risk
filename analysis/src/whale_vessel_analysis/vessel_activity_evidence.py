@@ -235,7 +235,9 @@ def _mapping(value: object, label: str) -> Mapping[str, object]:
 def _validate_bundle_metadata(
     bundle_path: Path, cleaned_sha256: str
 ) -> tuple[str, Mapping[str, object]]:
-    quality = _read_json_object(bundle_path / QUALITY_REPORT_FILENAME, "quality report")
+    quality_path = bundle_path / QUALITY_REPORT_FILENAME
+    quality_sha256 = _sha256_file(quality_path)
+    quality = _read_json_object(quality_path, "quality report")
     metadata = _read_json_object(bundle_path / RUN_METADATA_FILENAME, "run metadata")
     if quality.get("contract") != AIS_PROCESSING_CONTRACT:
         raise VesselActivityEvidenceError(
@@ -245,6 +247,9 @@ def _validate_bundle_metadata(
         raise VesselActivityEvidenceError(
             f"run metadata contract must be {AIS_PROCESSING_CONTRACT}"
         )
+    quality_run_id = quality.get("run_id")
+    if not isinstance(quality_run_id, str) or not quality_run_id.strip():
+        raise VesselActivityEvidenceError("quality report has no valid run_id")
     quality_output = _mapping(quality.get("output"), "quality report output")
     if quality_output.get("sha256") != cleaned_sha256:
         raise VesselActivityEvidenceError(
@@ -254,6 +259,10 @@ def _validate_bundle_metadata(
     run_id = run.get("run_id")
     if not isinstance(run_id, str) or not run_id.strip():
         raise VesselActivityEvidenceError("cleaner run metadata has no valid run_id")
+    if quality_run_id != run_id:
+        raise VesselActivityEvidenceError(
+            "quality report and run metadata do not share the same cleaner run_id"
+        )
     outputs = run.get("outputs")
     if not isinstance(outputs, list):
         raise VesselActivityEvidenceError("cleaner run metadata outputs must be a list")
@@ -266,6 +275,15 @@ def _validate_bundle_metadata(
     if len(cleaned_outputs) != 1 or cleaned_outputs[0].get("sha256") != cleaned_sha256:
         raise VesselActivityEvidenceError(
             "cleaned Parquet checksum does not match cleaner run metadata"
+        )
+    quality_outputs = [
+        item
+        for item in outputs
+        if isinstance(item, Mapping) and item.get("artifact_id") == "ais-quality-report"
+    ]
+    if len(quality_outputs) != 1 or quality_outputs[0].get("sha256") != quality_sha256:
+        raise VesselActivityEvidenceError(
+            "quality report checksum does not match cleaner run metadata"
         )
     temporal = _mapping(quality.get("temporal_coverage"), "temporal coverage")
     return run_id, temporal
