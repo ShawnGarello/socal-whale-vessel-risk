@@ -13,8 +13,11 @@
 > bundle, generates the projected per-cell water grid, and
 > transfers the selected modeled blue-whale density surface to that grid by
 > abundance-conserving area weighting. QGIS is the local inspection and visual-
-> verification tool. Network retrieval, real-delivery exercise, and later
-> derived processing remain unfinished.
+> verification tool. A one-bundle vessel evidence harness supplies cached
+> segment-piece, per-cell, vessel-hours and cleaned-point diagnostics without
+> producing a production vessel grid. Network retrieval, analytical-period AIS
+> processing, production vessel aggregation and later derived processing remain
+> unfinished.
 
 ---
 
@@ -111,18 +114,17 @@ interface rather than failing silently: it names the unset variable and shows th
 service's own response. That behaviour is verified. A **successful** basemap
 render has **not** been verified — see [roadmap.md](roadmap.md) M4.
 
-### Analysis (Python) — retrieval boundary, AIS extract, grid, and whale transfer
+### Analysis (Python) — retrieval, input processing, and evidence foundations
 
 The src-based package lives in [`../analysis/`](../analysis/). It owns versioned
 processing/source/lineage contracts, the selected DuckDB large-tabular boundary,
 read-only AIS/whale/VSR validators, a local AIS delivery-verification CLI,
 deterministic processing of one supplied NOAA AIS flat CSV extract, the
 deterministic EPSG:3310 water-grid process, abundance-conserving transfer of
-modeled blue-whale density to that grid, and synthetic tests. It does **not**
-submit orders, download AIS,
-aggregate vessels, or produce an exposure dataset or statistics. Run every
-command below from
-`analysis/`.
+modeled blue-whale density to that grid, a read-only one-bundle vessel-measure
+evidence harness, and synthetic tests. It does **not** submit orders, download
+AIS, produce a production vessel grid, or produce an exposure dataset or
+statistics. Run every command below from `analysis/`.
 
 **Prerequisites**
 
@@ -151,6 +153,7 @@ re-run; the built package declares only runtime requirements.
 | `python -m uv build` | Builds the source distribution and wheel. `analysis/dist/` is generated and must not be committed. |
 | `python -m uv run python -m whale_vessel_analysis --help` | Proves the package module and command boundary load. |
 | `python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help` | Proves the separate local AIS retrieval-verification boundary loads. |
+| `python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --help` | Proves the separate non-production vessel-evidence boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help` | Proves the separate whale-grid transfer boundary loads. |
 
 The toolchain decision is [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md).
@@ -278,6 +281,60 @@ analytical-period result. Its valid timestamps range from
 `2024-07-15T00:00:00Z` to `2024-07-15T15:40:54Z` because the source prefix is
 not strictly time ordered; this does not establish continuous coverage between
 those bounds, and completeness remains `unverified`.
+
+**One-bundle vessel-measure evidence**
+
+The focused command consumes one exact current cleaner bundle read-only and
+writes one deterministic JSON report under ignored `data/interim/`:
+
+```text
+python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --cleaned-bundle <cleaner-output-directory> --output ..\data\interim\vessel-activity-evidence\report.json [--grid-input <water-grid.parquet>] [--expected-grid-sha256 <sha256>]
+```
+
+Candidate gap, implied-speed and minimum-length values enter only through the
+three repeatable `--candidate-*` options shown by `--help`. None has a default.
+When a validated exact water grid is present, the command calculates stable
+parent segment/grid pieces once, then filters and aggregates that cache for the
+unfiltered structural baseline and each explicit scenario. Every scenario
+contains every grid cell, including zero-valued cells, with group and additive
+all-commercial vessel-kilometres and evidence-only vessel-hours. Additional
+scenarios do not repeat Shapely segment/grid intersections.
+
+Positive-length elapsed time uses the explicit constant-progress assumption and
+is allocated by piece/parent projected-length fraction. A zero-length pair
+assigns all time only for exactly one support cell; no match is outside-support
+time and multiple matches remain unallocated. Cleaned-point observation and
+union-recomputed distinct MMSI/MMSI-date context is separate from the candidate-
+filtered segment population. These are report diagnostics, not a production
+vessel-activity dataset. The command retains outside-support distance/time and
+outside/ambiguous points without interpreting the biological support mask as a
+shoreline or AIS observability boundary.
+
+The 2026-08-28 real no-threshold baseline used the read-only 113,799-row bounded
+15 July bundle and exact grid SHA-256
+`7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
+It produced report ID `vessel-evidence-8432d5193107b94d88873201` and exact JSON
+SHA-256 `60e6a02be98d8cf5edd45af56a5adcfac001681a71e868dd438c4db0894a4d6e`;
+a second clean output reproduced both. The harness-recorded processing interval
+inside `run_evidence` was 25.007583 seconds; it begins after Python imports, CLI
+parsing and configuration loading and is not an end-to-end CLI runtime. A
+separate process-tree RSS sampling protocol took 59.562371 seconds and observed
+approximately 309.441 MiB peak. These observations used different protocols;
+sampling may have contributed overhead, but the measurements do not isolate its
+effect. Independent end-to-end CLI runs took approximately 64.4 and 66.4 seconds
+while reproducing the exact report.
+
+Against the earlier aggregate harness's 228.968-second observation, the updated
+measurements provide directional evidence of improved runtime, not a generally
+reproducible speedup factor. The comparison between the earlier approximate 243
+MiB and the sampled repeat's approximate 309.441 MiB indicates a directional
+memory regression. Do not linearly extrapolate any one-day measurement to 153
+days.
+
+No production threshold has been selected. Source-transfer and observational
+completeness remain unverified, one day does not validate the analytical period,
+edge-support treatment remains unresolved, and this command produces neither a
+production vessel grid nor an exposure result.
 
 **Projected water-grid generation**
 
@@ -670,7 +727,7 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 155 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 164 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -685,9 +742,12 @@ transfer, independently enumerated conservation, source-overlap detection,
 explicit support coverage, target-contract validation, deterministic whale-grid
 serialization and lineage, vessel-evidence bundle-sidecar integrity,
 deterministic observation pairing, distance and implied-speed arithmetic,
-candidate-rule sensitivity, exact segment allocation and conservation,
-path-independent report identity, evidence-output safeguards, and all CLI
-boundaries.
+candidate-rule sensitivity, exact reusable segment-piece allocation,
+proportional and zero-length vessel-time allocation, per-cell group and additive
+totals, union-recomputed point distincts, outside and ambiguous classifications,
+proof that scenarios do not repeat geometry intersections, distance/time
+conservation, path-independent report identity, evidence-output safeguards, and
+all CLI boundaries.
 Tests create temporary CSVs and geometry or use data in memory; the ignored M2
 artifacts are not test prerequisites. Third-party libraries are not themselves
 unit-tested.

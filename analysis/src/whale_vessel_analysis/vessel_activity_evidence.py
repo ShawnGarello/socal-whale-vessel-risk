@@ -23,7 +23,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from pyproj import Geod, Transformer
 from shapely import STRtree, unary_union
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Point
 from shapely.geometry.base import BaseGeometry
 
 from whale_vessel_analysis.ais_processing import (
@@ -35,11 +35,13 @@ from whale_vessel_analysis.ais_processing import (
 from whale_vessel_analysis.config import PROJECTED_CRS, ProcessingConfig
 from whale_vessel_analysis.whale_grid import TargetGridInspection, load_target_grid
 
-EVIDENCE_REPORT_CONTRACT: Final = "vessel_activity_evidence_v1"
-EVIDENCE_PROCESSING_VERSION: Final = "1.0.0"
+EVIDENCE_REPORT_CONTRACT: Final = "vessel_activity_evidence_v2"
+EVIDENCE_PROCESSING_VERSION: Final = "2.0.0"
 WGS84_CRS: Final = "EPSG:4326"
 KNOTS_PER_METRE_PER_SECOND: Final = 1.9438444924406046
 LENGTH_TOLERANCE_M: Final = 1e-6
+TIME_TOLERANCE_SECONDS: Final = 1e-9
+CONSERVATION_RELATIVE_TOLERANCE: Final = 1e-12
 VESSEL_GROUPS: Final = ("passenger", "cargo", "tanker")
 ALL_COMMERCIAL: Final = "all_commercial"
 _EXPECTED_COLUMNS: Final = (
@@ -62,6 +64,22 @@ _PROJECT_RAW_ROOT: Final = (_PROJECT_ROOT / "data" / "raw").resolve()
 _PROJECT_INTERIM_ROOT: Final = (_PROJECT_ROOT / "data" / "interim").resolve()
 
 VesselGroup = Literal["passenger", "cargo", "tanker"]
+AllocationStatus = Literal[
+    "positive_length_in_support",
+    "positive_length_partially_outside_support",
+    "positive_length_outside_support",
+    "zero_length_in_support",
+    "zero_length_outside_support",
+    "zero_length_ambiguous",
+]
+ALLOCATION_STATUSES: Final[tuple[AllocationStatus, ...]] = (
+    "positive_length_in_support",
+    "positive_length_partially_outside_support",
+    "positive_length_outside_support",
+    "zero_length_in_support",
+    "zero_length_outside_support",
+    "zero_length_ambiguous",
+)
 
 
 class VesselActivityEvidenceError(ValueError):
@@ -141,6 +159,46 @@ class CandidateSensitivityEvaluation:
     minimum_vessel_length_m: tuple[float, ...]
     structural_baseline: tuple[CandidateSegment, ...]
     scenarios: tuple[CandidateScenarioEvaluation, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class SegmentPiece:
+    """One stable in-support piece of a structural parent segment."""
+
+    parent_segment_id: str
+    parent_sequence: int
+    vessel_group: VesselGroup
+    parent_elapsed_seconds: float
+    parent_projected_distance_m: float
+    cell_id: str
+    cell_order: int
+    piece_order: int
+    piece_distance_m: float
+    piece_elapsed_seconds: float
+    zero_length: bool
+
+
+@dataclass(frozen=True, slots=True)
+class SegmentPieceAllocation:
+    """One structural segment and all of its cached grid-allocation evidence."""
+
+    segment: CandidateSegment
+    segment_id: str
+    pieces: tuple[SegmentPiece, ...]
+    inside_support_distance_m: float
+    outside_support_distance_m: float
+    inside_support_elapsed_seconds: float
+    outside_support_elapsed_seconds: float
+    unallocated_elapsed_seconds: float
+    status: AllocationStatus
+
+
+@dataclass(frozen=True, slots=True)
+class SegmentPieceCache:
+    """Reusable exact intersections for the unfiltered structural population."""
+
+    target_grid: TargetGridInspection
+    allocations: tuple[SegmentPieceAllocation, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -889,6 +947,639 @@ def _censoring_diagnostics(observations: Sequence[Observation]) -> dict[str, obj
     }
 
 
+def _segment_id(segment: CandidateSegment) -> str:
+    material = {
+        "mmsi": segment.start.mmsi,
+        "start_observed_at_utc": _timestamp(segment.start.observed_at_utc),
+        "end_observed_at_utc": _timestamp(segment.end.observed_at_utc),
+        "start_longitude": segment.start.longitude,
+        "start_latitude": segment.start.latitude,
+        "end_longitude": segment.end.longitude,
+        "end_latitude": segment.end.latitude,
+        "start_vessel_group": segment.start.vessel_type_group,
+        "end_vessel_group": segment.end.vessel_type_group,
+    }
+    return (
+        "segment-"
+        + hashlib.sha256(_canonical_json(material).encode("utf-8")).hexdigest()[:24]
+    )
+
+
+def _geometry_intersection(left: BaseGeometry, right: BaseGeometry) -> BaseGeometry:
+    """Isolate exact intersection calls so cache reuse can be verified."""
+    return cast(BaseGeometry, left.intersection(right))
+
+
+def _linear_components(geometry: BaseGeometry) -> list[BaseGeometry]:
+    if geometry.is_empty:
+        return []
+    if geometry.geom_type in {"LineString", "LinearRing"}:
+        return [geometry]
+    if geometry.geom_type in {"MultiLineString", "GeometryCollection"}:
+        components: list[BaseGeometry] = []
+        for part in cast(Iterable[BaseGeometry], geometry.geoms):
+            components.extend(_linear_components(part))
+        return components
+    return []
+
+
+def _time_tolerance(elapsed_seconds: float) -> float:
+    return max(
+        TIME_TOLERANCE_SECONDS,
+        abs(elapsed_seconds) * CONSERVATION_RELATIVE_TOLERANCE,
+    )
+
+
+def _validate_elapsed_conservation(allocation: SegmentPieceAllocation) -> None:
+    elapsed = allocation.segment.elapsed_seconds
+    accounted = math.fsum(
+        (
+            allocation.inside_support_elapsed_seconds,
+            allocation.outside_support_elapsed_seconds,
+            allocation.unallocated_elapsed_seconds,
+        )
+    )
+    if not math.isclose(
+        elapsed,
+        accounted,
+        rel_tol=CONSERVATION_RELATIVE_TOLERANCE,
+        abs_tol=_time_tolerance(elapsed),
+    ):
+        raise VesselActivityEvidenceError(
+            "segment elapsed time is not conserved across in-support, "
+            "outside-support, and unallocated time"
+        )
+
+
+def build_segment_piece_cache(
+    segments: Sequence[CandidateSegment], target_grid: TargetGridInspection
+) -> SegmentPieceCache:
+    """Calculate exact structural segment/grid intersections exactly once."""
+    geometries = [cell.geometry for cell in target_grid.cells]
+    tree = STRtree(geometries)
+    structural = [segment for segment in segments if segment.structurally_eligible]
+    sequences = [segment.sequence for segment in structural]
+    if len(sequences) != len(set(sequences)):
+        raise VesselActivityEvidenceError(
+            "structural segment sequence values must be unique for cached allocation"
+        )
+    segment_ids = [_segment_id(segment) for segment in structural]
+    if len(segment_ids) != len(set(segment_ids)):
+        raise VesselActivityEvidenceError(
+            "structural segment identities must be unique for cached allocation"
+        )
+
+    allocations: list[SegmentPieceAllocation] = []
+    for segment, segment_id in zip(structural, segment_ids, strict=True):
+        elapsed = segment.elapsed_seconds
+        pieces: tuple[SegmentPiece, ...]
+        if segment.projected_distance_m <= LENGTH_TOLERANCE_M:
+            point = Point(segment.start_xy_m)
+            matching_indices = [
+                index
+                for index in sorted(int(value) for value in tree.query(point))
+                if geometries[index].covers(point)
+            ]
+            if len(matching_indices) == 1:
+                cell_order = matching_indices[0]
+                pieces = (
+                    SegmentPiece(
+                        parent_segment_id=segment_id,
+                        parent_sequence=segment.sequence,
+                        vessel_group=segment.start.vessel_type_group,
+                        parent_elapsed_seconds=elapsed,
+                        parent_projected_distance_m=segment.projected_distance_m,
+                        cell_id=target_grid.cells[cell_order].cell_id,
+                        cell_order=cell_order,
+                        piece_order=0,
+                        piece_distance_m=0.0,
+                        piece_elapsed_seconds=elapsed,
+                        zero_length=True,
+                    ),
+                )
+                allocation = SegmentPieceAllocation(
+                    segment=segment,
+                    segment_id=segment_id,
+                    pieces=pieces,
+                    inside_support_distance_m=0.0,
+                    outside_support_distance_m=0.0,
+                    inside_support_elapsed_seconds=elapsed,
+                    outside_support_elapsed_seconds=0.0,
+                    unallocated_elapsed_seconds=0.0,
+                    status="zero_length_in_support",
+                )
+            elif not matching_indices:
+                allocation = SegmentPieceAllocation(
+                    segment=segment,
+                    segment_id=segment_id,
+                    pieces=(),
+                    inside_support_distance_m=0.0,
+                    outside_support_distance_m=0.0,
+                    inside_support_elapsed_seconds=0.0,
+                    outside_support_elapsed_seconds=elapsed,
+                    unallocated_elapsed_seconds=0.0,
+                    status="zero_length_outside_support",
+                )
+            else:
+                allocation = SegmentPieceAllocation(
+                    segment=segment,
+                    segment_id=segment_id,
+                    pieces=(),
+                    inside_support_distance_m=0.0,
+                    outside_support_distance_m=0.0,
+                    inside_support_elapsed_seconds=0.0,
+                    outside_support_elapsed_seconds=0.0,
+                    unallocated_elapsed_seconds=elapsed,
+                    status="zero_length_ambiguous",
+                )
+            _validate_elapsed_conservation(allocation)
+            allocations.append(allocation)
+            continue
+
+        line = LineString([segment.start_xy_m, segment.end_xy_m])
+        raw_pieces: list[tuple[float, int, float, str, BaseGeometry]] = []
+        intersection_geometries: list[BaseGeometry] = []
+        for cell_order in sorted(int(value) for value in tree.query(line)):
+            intersection = _geometry_intersection(line, geometries[cell_order])
+            for component in _linear_components(intersection):
+                length = float(component.length)
+                if length <= LENGTH_TOLERANCE_M:
+                    continue
+                coordinates = list(component.coords)
+                start_position = float(line.project(Point(coordinates[0])))
+                end_position = float(line.project(Point(coordinates[-1])))
+                raw_pieces.append(
+                    (
+                        min(start_position, end_position),
+                        cell_order,
+                        length,
+                        component.wkb_hex,
+                        component,
+                    )
+                )
+                intersection_geometries.append(component)
+        raw_pieces.sort(key=lambda item: item[:4])
+        piece_length = math.fsum(item[2] for item in raw_pieces)
+        if not intersection_geometries:
+            union_length = 0.0
+        elif len(intersection_geometries) == 1:
+            union_length = float(intersection_geometries[0].length)
+        else:
+            union_length = float(unary_union(intersection_geometries).length)
+        tolerance = max(
+            LENGTH_TOLERANCE_M,
+            segment.projected_distance_m * CONSERVATION_RELATIVE_TOLERANCE,
+        )
+        if not math.isclose(
+            piece_length,
+            union_length,
+            rel_tol=CONSERVATION_RELATIVE_TOLERANCE,
+            abs_tol=tolerance,
+        ):
+            raise VesselActivityEvidenceError(
+                "segment-piece lengths do not conserve their union; exact modeled-"
+                "support cells would double allocate this parent segment"
+            )
+        if union_length > segment.projected_distance_m + tolerance:
+            raise VesselActivityEvidenceError(
+                "segment allocation exceeds parent projected length"
+            )
+        outside_distance = max(0.0, segment.projected_distance_m - union_length)
+        pieces = tuple(
+            SegmentPiece(
+                parent_segment_id=segment_id,
+                parent_sequence=segment.sequence,
+                vessel_group=segment.start.vessel_type_group,
+                parent_elapsed_seconds=elapsed,
+                parent_projected_distance_m=segment.projected_distance_m,
+                cell_id=target_grid.cells[cell_order].cell_id,
+                cell_order=cell_order,
+                piece_order=piece_order,
+                piece_distance_m=length,
+                piece_elapsed_seconds=(elapsed * length / segment.projected_distance_m),
+                zero_length=False,
+            )
+            for piece_order, (
+                _position,
+                cell_order,
+                length,
+                _wkb,
+                _geometry,
+            ) in enumerate(raw_pieces)
+        )
+        inside_elapsed = math.fsum(piece.piece_elapsed_seconds for piece in pieces)
+        outside_elapsed = elapsed * outside_distance / segment.projected_distance_m
+        if union_length <= LENGTH_TOLERANCE_M:
+            status: AllocationStatus = "positive_length_outside_support"
+        elif outside_distance <= LENGTH_TOLERANCE_M:
+            status = "positive_length_in_support"
+        else:
+            status = "positive_length_partially_outside_support"
+        allocation = SegmentPieceAllocation(
+            segment=segment,
+            segment_id=segment_id,
+            pieces=pieces,
+            inside_support_distance_m=union_length,
+            outside_support_distance_m=outside_distance,
+            inside_support_elapsed_seconds=inside_elapsed,
+            outside_support_elapsed_seconds=outside_elapsed,
+            unallocated_elapsed_seconds=0.0,
+            status=status,
+        )
+        _validate_elapsed_conservation(allocation)
+        allocations.append(allocation)
+    return SegmentPieceCache(target_grid=target_grid, allocations=tuple(allocations))
+
+
+def _group_additive_values(
+    values: Mapping[str, float], *, divisor: float = 1.0
+) -> dict[str, float]:
+    grouped = {group: _round(values[group] / divisor) for group in VESSEL_GROUPS}
+    grouped[ALL_COMMERCIAL] = _round(
+        math.fsum(values[group] for group in VESSEL_GROUPS) / divisor
+    )
+    return grouped
+
+
+def aggregate_segment_piece_cache(
+    cache: SegmentPieceCache,
+    segments: Sequence[CandidateSegment],
+    *,
+    population_label: str,
+) -> dict[str, object]:
+    """Aggregate a selected structural population without repeating intersections."""
+    selected_ids = {_segment_id(segment) for segment in segments}
+    if len(selected_ids) != len(segments):
+        raise VesselActivityEvidenceError(
+            "selected segment population contains duplicate parent identities"
+        )
+    available_ids = {allocation.segment_id for allocation in cache.allocations}
+    if not selected_ids <= available_ids:
+        raise VesselActivityEvidenceError(
+            "selected segment population is not a subset of the structural cache"
+        )
+    allocations = [
+        allocation
+        for allocation in cache.allocations
+        if allocation.segment_id in selected_ids
+    ]
+    metrics = (
+        "parent_length_m",
+        "in_support_length_m",
+        "outside_support_length_m",
+        "parent_elapsed_seconds",
+        "in_support_elapsed_seconds",
+        "outside_support_elapsed_seconds",
+        "unallocated_elapsed_seconds",
+    )
+    group_totals: dict[str, dict[str, float]] = {
+        group: {metric: 0.0 for metric in metrics} for group in VESSEL_GROUPS
+    }
+    group_segment_counts = {group: 0 for group in VESSEL_GROUPS}
+    cell_piece_counts = [0 for _cell in cache.target_grid.cells]
+    cell_distances = {
+        group: [0.0 for _cell in cache.target_grid.cells] for group in VESSEL_GROUPS
+    }
+    cell_elapsed = {
+        group: [0.0 for _cell in cache.target_grid.cells] for group in VESSEL_GROUPS
+    }
+    status_counts: dict[str, int] = defaultdict(int)
+    maximum_piece_difference = 0.0
+    for allocation in allocations:
+        segment = allocation.segment
+        group_name = segment.start.vessel_type_group
+        group_segment_counts[group_name] += 1
+        values = group_totals[group_name]
+        values["parent_length_m"] += segment.projected_distance_m
+        values["in_support_length_m"] += allocation.inside_support_distance_m
+        values["outside_support_length_m"] += allocation.outside_support_distance_m
+        values["parent_elapsed_seconds"] += segment.elapsed_seconds
+        values["in_support_elapsed_seconds"] += (
+            allocation.inside_support_elapsed_seconds
+        )
+        values["outside_support_elapsed_seconds"] += (
+            allocation.outside_support_elapsed_seconds
+        )
+        values["unallocated_elapsed_seconds"] += allocation.unallocated_elapsed_seconds
+        status_counts[allocation.status] += 1
+        allocation_piece_length = math.fsum(
+            piece.piece_distance_m for piece in allocation.pieces
+        )
+        maximum_piece_difference = max(
+            maximum_piece_difference,
+            abs(allocation_piece_length - allocation.inside_support_distance_m),
+        )
+        for piece in allocation.pieces:
+            cell_piece_counts[piece.cell_order] += 1
+            cell_distances[group_name][piece.cell_order] += piece.piece_distance_m
+            cell_elapsed[group_name][piece.cell_order] += piece.piece_elapsed_seconds
+
+    total_parent = math.fsum(
+        group_totals[group]["parent_length_m"] for group in VESSEL_GROUPS
+    )
+    total_inside = math.fsum(
+        group_totals[group]["in_support_length_m"] for group in VESSEL_GROUPS
+    )
+    total_outside = math.fsum(
+        group_totals[group]["outside_support_length_m"] for group in VESSEL_GROUPS
+    )
+    total_parent_elapsed = math.fsum(
+        group_totals[group]["parent_elapsed_seconds"] for group in VESSEL_GROUPS
+    )
+    total_inside_elapsed = math.fsum(
+        group_totals[group]["in_support_elapsed_seconds"] for group in VESSEL_GROUPS
+    )
+    total_outside_elapsed = math.fsum(
+        group_totals[group]["outside_support_elapsed_seconds"]
+        for group in VESSEL_GROUPS
+    )
+    total_unallocated_elapsed = math.fsum(
+        group_totals[group]["unallocated_elapsed_seconds"] for group in VESSEL_GROUPS
+    )
+    distance_difference = total_parent - total_inside - total_outside
+    time_difference = (
+        total_parent_elapsed
+        - total_inside_elapsed
+        - total_outside_elapsed
+        - total_unallocated_elapsed
+    )
+    if not math.isclose(
+        distance_difference,
+        0.0,
+        rel_tol=CONSERVATION_RELATIVE_TOLERANCE,
+        abs_tol=max(
+            LENGTH_TOLERANCE_M,
+            total_parent * CONSERVATION_RELATIVE_TOLERANCE,
+        ),
+    ):
+        raise VesselActivityEvidenceError(
+            "aggregate parent distance is not conserved by cached allocation"
+        )
+    if not math.isclose(
+        time_difference,
+        0.0,
+        rel_tol=CONSERVATION_RELATIVE_TOLERANCE,
+        abs_tol=_time_tolerance(total_parent_elapsed),
+    ):
+        raise VesselActivityEvidenceError(
+            "aggregate parent elapsed time is not conserved by cached allocation"
+        )
+
+    all_commercial_values = {
+        metric: math.fsum(group_totals[group][metric] for group in VESSEL_GROUPS)
+        for metric in metrics
+    }
+    group_report: dict[str, object] = {}
+    report_groups: tuple[str, ...] = (*VESSEL_GROUPS, ALL_COMMERCIAL)
+    for report_group_name in report_groups:
+        values = (
+            all_commercial_values
+            if report_group_name == ALL_COMMERCIAL
+            else group_totals[report_group_name]
+        )
+        group_report[report_group_name] = {
+            "segment_count": (
+                len(allocations)
+                if report_group_name == ALL_COMMERCIAL
+                else group_segment_counts[report_group_name]
+            ),
+            "parent_length_m": _round(values["parent_length_m"]),
+            "parent_length_km": _round(values["parent_length_m"] / 1_000),
+            "in_support_length_m": _round(values["in_support_length_m"]),
+            "in_support_length_km": _round(values["in_support_length_m"] / 1_000),
+            "outside_support_length_m": _round(values["outside_support_length_m"]),
+            "outside_support_length_km": _round(
+                values["outside_support_length_m"] / 1_000
+            ),
+            "parent_elapsed_seconds": _round(values["parent_elapsed_seconds"]),
+            "parent_vessel_hours": _round(values["parent_elapsed_seconds"] / 3_600),
+            "in_support_elapsed_seconds": _round(values["in_support_elapsed_seconds"]),
+            "in_support_vessel_hours": _round(
+                values["in_support_elapsed_seconds"] / 3_600
+            ),
+            "outside_support_elapsed_seconds": _round(
+                values["outside_support_elapsed_seconds"]
+            ),
+            "outside_support_vessel_hours": _round(
+                values["outside_support_elapsed_seconds"] / 3_600
+            ),
+            "unallocated_elapsed_seconds": _round(
+                values["unallocated_elapsed_seconds"]
+            ),
+            "unallocated_vessel_hours": _round(
+                values["unallocated_elapsed_seconds"] / 3_600
+            ),
+        }
+    per_cell: list[dict[str, object]] = []
+    for cell_order, cell in enumerate(cache.target_grid.cells):
+        distance_values = {
+            group: cell_distances[group][cell_order] for group in VESSEL_GROUPS
+        }
+        elapsed_values = {
+            group: cell_elapsed[group][cell_order] for group in VESSEL_GROUPS
+        }
+        per_cell.append(
+            {
+                "cell_id": cell.cell_id,
+                "segment_piece_count": cell_piece_counts[cell_order],
+                "vessel_kilometres": _group_additive_values(
+                    distance_values, divisor=1_000
+                ),
+                "vessel_hours": _group_additive_values(elapsed_values, divisor=3_600),
+            }
+        )
+    total_piece_length = math.fsum(
+        piece.piece_distance_m
+        for allocation in allocations
+        for piece in allocation.pieces
+    )
+    touched_cell_count = sum(count > 0 for count in cell_piece_counts)
+    return {
+        "status": "non-production diagnostic allocation",
+        "segment_population": population_label,
+        "target_grid": {
+            "contract": "projected_water_grid_v1",
+            "sha256": cache.target_grid.sha256,
+            "analysis_crs": PROJECTED_CRS,
+            "transformation": {"source_crs": WGS84_CRS, "always_xy": True},
+            "cell_geometry": "exact modeled-whale-support geometry",
+        },
+        "counts": {
+            "allocated_segment_count": len(allocations),
+            "zero_length_segment_count": sum(
+                allocation.segment.projected_distance_m <= LENGTH_TOLERANCE_M
+                for allocation in allocations
+            ),
+            "positive_length_piece_count": sum(
+                not piece.zero_length
+                for allocation in allocations
+                for piece in allocation.pieces
+            ),
+            "segment_piece_count": sum(cell_piece_counts),
+            "touched_cell_count": touched_cell_count,
+            "allocation_status_counts": {
+                status: status_counts[status] for status in ALLOCATION_STATUSES
+            },
+        },
+        "lengths": {
+            "parent_projected_length_m": _round(total_parent),
+            "parent_projected_length_km": _round(total_parent / 1_000),
+            "in_support_piece_length_m": _round(total_piece_length),
+            "in_support_piece_length_km": _round(total_piece_length / 1_000),
+            "in_support_union_intersection_length_m": _round(total_inside),
+            "in_support_union_intersection_length_km": _round(total_inside / 1_000),
+            "outside_support_length_m": _round(total_outside),
+            "outside_support_length_km": _round(total_outside / 1_000),
+        },
+        "vessel_hours_comparison": {
+            "status": "evidence-only comparison; not an accepted production rule",
+            "assumption": (
+                "constant progress along each positive-length straight segment; "
+                "piece time is proportional to parent projected length"
+            ),
+            "zero_length_semantics": (
+                "full elapsed time is assigned only for exactly one support cell; "
+                "no match is outside support and multiple matches are unallocated"
+            ),
+            "parent_elapsed_seconds": _round(total_parent_elapsed),
+            "parent_vessel_hours": _round(total_parent_elapsed / 3_600),
+            "in_support_elapsed_seconds": _round(total_inside_elapsed),
+            "in_support_vessel_hours": _round(total_inside_elapsed / 3_600),
+            "outside_support_elapsed_seconds": _round(total_outside_elapsed),
+            "outside_support_vessel_hours": _round(total_outside_elapsed / 3_600),
+            "unallocated_elapsed_seconds": _round(total_unallocated_elapsed),
+            "unallocated_vessel_hours": _round(total_unallocated_elapsed / 3_600),
+        },
+        "by_group": group_report,
+        "per_cell": per_cell,
+        "conservation": {
+            "passed": True,
+            "piece_minus_union_intersection_m": _round(
+                total_piece_length - total_inside
+            ),
+            "parent_minus_in_support_minus_outside_m": _round(distance_difference),
+            "parent_elapsed_minus_allocated_seconds": _round(time_difference),
+            "maximum_segment_piece_difference_m": _round(maximum_piece_difference),
+            "no_double_allocation": True,
+            "distance_absolute_tolerance_m": LENGTH_TOLERANCE_M,
+            "time_absolute_tolerance_seconds": TIME_TOLERANCE_SECONDS,
+            "relative_tolerance": CONSERVATION_RELATIVE_TOLERANCE,
+        },
+        "outside_support_note": (
+            "outside-support portions are outside the supplied biological model "
+            "support only; no land, dry-area, or AIS-coverage inference is made"
+        ),
+        "output_note": (
+            "per-cell values are evidence diagnostics inside this JSON report; no "
+            "production vessel-activity dataset is emitted"
+        ),
+    }
+
+
+def _point_context_diagnostics(
+    observations: Sequence[Observation], target_grid: TargetGridInspection
+) -> dict[str, object]:
+    geometries = [cell.geometry for cell in target_grid.cells]
+    tree = STRtree(geometries)
+    transformer = Transformer.from_crs(WGS84_CRS, PROJECTED_CRS, always_xy=True)
+    counts = {group: [0 for _cell in target_grid.cells] for group in VESSEL_GROUPS}
+    mmsi = {
+        group: [set[str]() for _cell in target_grid.cells] for group in VESSEL_GROUPS
+    }
+    mmsi_dates = {
+        group: [set[tuple[str, str]]() for _cell in target_grid.cells]
+        for group in VESSEL_GROUPS
+    }
+    outside_counts = {group: 0 for group in VESSEL_GROUPS}
+    ambiguous_counts = {group: 0 for group in VESSEL_GROUPS}
+    for observation in observations:
+        point = Point(
+            _finite_xy(transformer, observation.longitude, observation.latitude)
+        )
+        matching_indices = [
+            index
+            for index in sorted(int(value) for value in tree.query(point))
+            if geometries[index].covers(point)
+        ]
+        group = observation.vessel_type_group
+        if not matching_indices:
+            outside_counts[group] += 1
+            continue
+        if len(matching_indices) > 1:
+            ambiguous_counts[group] += 1
+            continue
+        cell_order = matching_indices[0]
+        counts[group][cell_order] += 1
+        mmsi[group][cell_order].add(observation.mmsi)
+        mmsi_dates[group][cell_order].add((observation.mmsi, observation.utc_date))
+
+    per_cell: list[dict[str, object]] = []
+    inside_count = 0
+    for cell_order, cell in enumerate(target_grid.cells):
+        observation_values = {
+            group: counts[group][cell_order] for group in VESSEL_GROUPS
+        }
+        unique_mmsi_values = {
+            group: len(mmsi[group][cell_order]) for group in VESSEL_GROUPS
+        }
+        unique_mmsi_date_values = {
+            group: len(mmsi_dates[group][cell_order]) for group in VESSEL_GROUPS
+        }
+        union_mmsi = set().union(*(mmsi[group][cell_order] for group in VESSEL_GROUPS))
+        union_mmsi_dates = set().union(
+            *(mmsi_dates[group][cell_order] for group in VESSEL_GROUPS)
+        )
+        all_observations = sum(observation_values.values())
+        inside_count += all_observations
+        per_cell.append(
+            {
+                "cell_id": cell.cell_id,
+                "observation_count": {
+                    **observation_values,
+                    ALL_COMMERCIAL: all_observations,
+                },
+                "distinct_mmsi": {
+                    **unique_mmsi_values,
+                    ALL_COMMERCIAL: len(union_mmsi),
+                },
+                "distinct_mmsi_date": {
+                    **unique_mmsi_date_values,
+                    ALL_COMMERCIAL: len(union_mmsi_dates),
+                },
+            }
+        )
+    outside_all = sum(outside_counts.values())
+    ambiguous_all = sum(ambiguous_counts.values())
+    return {
+        "status": "cleaned-observation population context; not candidate-filtered",
+        "population_note": (
+            "point and distinct-vessel values describe all cleaned observations; "
+            "candidate segment rules do not filter this population"
+        ),
+        "classification": (
+            "a point is assigned only when exact support geometry covers it in "
+            "exactly one cell; no match is outside support and multiple matches "
+            "are ambiguous"
+        ),
+        "counts": {
+            "cleaned_observation_count": len(observations),
+            "in_support_observation_count": inside_count,
+            "outside_support_observation_count": {
+                **outside_counts,
+                ALL_COMMERCIAL: outside_all,
+            },
+            "ambiguous_observation_count": {
+                **ambiguous_counts,
+                ALL_COMMERCIAL: ambiguous_all,
+            },
+            "conservation_passed": (
+                inside_count + outside_all + ambiguous_all == len(observations)
+            ),
+        },
+        "per_cell": per_cell,
+    }
+
+
 def allocate_segments_to_grid(
     segments: Sequence[CandidateSegment],
     target_grid: TargetGridInspection,
@@ -896,144 +1587,29 @@ def allocate_segments_to_grid(
     population_label: str = "unfiltered structural baseline",
 ) -> dict[str, object]:
     """Allocate one named structural-candidate population for diagnostics only."""
-    geometries = [cell.geometry for cell in target_grid.cells]
-    support_union = cast(BaseGeometry, unary_union(geometries))
-    tree = STRtree(geometries)
-    total_parent = 0.0
-    total_piece = 0.0
-    total_union = 0.0
-    piece_count = 0
-    allocated_segment_count = 0
-    zero_length_count = 0
-    touched_cells: set[str] = set()
-    maximum_difference = 0.0
-    group_totals: dict[str, dict[str, float | int]] = {
-        group: {"segment_count": 0, "parent_length_m": 0.0, "in_support_length_m": 0.0}
-        for group in VESSEL_GROUPS
-    }
-    for segment in segments:
-        if not segment.structurally_eligible:
-            continue
-        allocated_segment_count += 1
-        group = group_totals[segment.start.vessel_type_group]
-        group["segment_count"] = cast(int, group["segment_count"]) + 1
-        group["parent_length_m"] = (
-            cast(float, group["parent_length_m"]) + segment.projected_distance_m
-        )
-        total_parent += segment.projected_distance_m
-        if segment.projected_distance_m <= LENGTH_TOLERANCE_M:
-            zero_length_count += 1
-            continue
-        line = LineString([segment.start_xy_m, segment.end_xy_m])
-        cell_piece_length = 0.0
-        candidate_indices = sorted(int(value) for value in tree.query(line))
-        for index in candidate_indices:
-            intersection = line.intersection(geometries[index])
-            length = float(intersection.length)
-            if length <= LENGTH_TOLERANCE_M:
-                continue
-            cell_piece_length += length
-            piece_count += 1
-            touched_cells.add(target_grid.cells[index].cell_id)
-        union_length = float(line.intersection(support_union).length)
-        difference = cell_piece_length - union_length
-        maximum_difference = max(maximum_difference, abs(difference))
-        tolerance = max(LENGTH_TOLERANCE_M, segment.projected_distance_m * 1e-12)
-        if not math.isclose(
-            cell_piece_length, union_length, rel_tol=1e-12, abs_tol=tolerance
-        ):
-            raise VesselActivityEvidenceError(
-                "segment-piece lengths do not conserve the intersection with the "
-                "union of exact modeled-whale-support cell geometries"
-            )
-        if union_length > segment.projected_distance_m + tolerance:
-            raise VesselActivityEvidenceError(
-                "segment allocation exceeds parent projected length"
-            )
-        total_piece += cell_piece_length
-        total_union += union_length
-        group["in_support_length_m"] = (
-            cast(float, group["in_support_length_m"]) + union_length
-        )
-    outside = total_parent - total_union
-    if outside < -LENGTH_TOLERANCE_M:
-        raise VesselActivityEvidenceError(
-            "aggregate allocated length exceeds parent length"
-        )
-    outside = max(0.0, outside)
-    group_report: dict[str, object] = {}
-    for group_name, values in group_totals.items():
-        parent = cast(float, values["parent_length_m"])
-        inside = cast(float, values["in_support_length_m"])
-        group_report[group_name] = {
-            "segment_count": values["segment_count"],
-            "parent_length_m": _round(parent),
-            "parent_length_km": _round(parent / 1_000),
-            "in_support_length_m": _round(inside),
-            "in_support_length_km": _round(inside / 1_000),
-            "outside_support_length_m": _round(max(0.0, parent - inside)),
-            "outside_support_length_km": _round(max(0.0, parent - inside) / 1_000),
-        }
-    return {
-        "status": "non-production diagnostic allocation",
-        "segment_population": population_label,
-        "target_grid": {
-            "contract": "projected_water_grid_v1",
-            "sha256": target_grid.sha256,
-            "analysis_crs": PROJECTED_CRS,
-            "transformation": {"source_crs": WGS84_CRS, "always_xy": True},
-            "cell_geometry": "exact modeled-whale-support geometry",
-        },
-        "counts": {
-            "allocated_segment_count": allocated_segment_count,
-            "zero_length_segment_count": zero_length_count,
-            "positive_length_piece_count": piece_count,
-            "touched_cell_count": len(touched_cells),
-        },
-        "lengths": {
-            "parent_projected_length_m": _round(total_parent),
-            "parent_projected_length_km": _round(total_parent / 1_000),
-            "in_support_piece_length_m": _round(total_piece),
-            "in_support_piece_length_km": _round(total_piece / 1_000),
-            "in_support_union_intersection_length_m": _round(total_union),
-            "in_support_union_intersection_length_km": _round(total_union / 1_000),
-            "outside_support_length_m": _round(outside),
-            "outside_support_length_km": _round(outside / 1_000),
-        },
-        "by_group": group_report,
-        "conservation": {
-            "passed": True,
-            "piece_minus_union_intersection_m": _round(total_piece - total_union),
-            "parent_minus_in_support_minus_outside_m": _round(
-                total_parent - total_union - outside
-            ),
-            "maximum_segment_piece_difference_m": _round(maximum_difference),
-            "no_double_allocation": True,
-            "absolute_tolerance_m": LENGTH_TOLERANCE_M,
-            "relative_tolerance": 1e-12,
-        },
-        "outside_support_note": (
-            "outside-support portions are outside the supplied biological model "
-            "support only; no land, dry-area, or AIS-coverage inference is made"
-        ),
-        "output_note": "no per-cell vessel-activity dataset is emitted",
-    }
+    structural = tuple(segment for segment in segments if segment.structurally_eligible)
+    cache = build_segment_piece_cache(structural, target_grid)
+    return aggregate_segment_piece_cache(
+        cache, structural, population_label=population_label
+    )
 
 
 def _grid_allocation_diagnostics(
+    observations: Sequence[Observation],
     evaluation: CandidateSensitivityEvaluation,
     target_grid: TargetGridInspection,
 ) -> dict[str, object]:
-    baseline = allocate_segments_to_grid(
+    cache = build_segment_piece_cache(evaluation.structural_baseline, target_grid)
+    baseline = aggregate_segment_piece_cache(
+        cache,
         evaluation.structural_baseline,
-        target_grid,
         population_label="unfiltered structural baseline",
     )
     scenario_allocations: list[dict[str, object]] = []
     for scenario in evaluation.scenarios:
-        allocation = allocate_segments_to_grid(
+        allocation = aggregate_segment_piece_cache(
+            cache,
             scenario.retained_segments,
-            target_grid,
             population_label=f"explicit candidate scenario {scenario.scenario_id}",
         )
         scenario_allocations.append(
@@ -1046,11 +1622,27 @@ def _grid_allocation_diagnostics(
         )
     return {
         "performed": True,
+        "reusable_segment_piece_representation": {
+            "status": "calculated once for the structural baseline and reused",
+            "structural_parent_segment_count": len(cache.allocations),
+            "cached_segment_piece_count": sum(
+                len(allocation.pieces) for allocation in cache.allocations
+            ),
+            "candidate_population_count": len(evaluation.scenarios),
+            "geometry_intersection_pass_count": 1,
+            "scenario_behavior": (
+                "candidate scenarios filter cached parent records and do not repeat "
+                "Shapely segment/grid intersections"
+            ),
+        },
         "baseline": baseline,
         "candidate_scenarios": scenario_allocations,
+        "cleaned_observation_point_context": _point_context_diagnostics(
+            observations, target_grid
+        ),
         "interpretation": (
-            "each explicitly supplied candidate scenario is allocated independently; "
-            "the baseline remains unfiltered by gap, implied speed, or vessel length"
+            "the baseline remains unfiltered by gap, implied speed, or vessel length; "
+            "candidate scenarios aggregate the same cached structural pieces"
         ),
     }
 
@@ -1113,7 +1705,9 @@ def build_evidence_report(
         "optional_grid_allocation": (
             {"performed": False}
             if target_grid is None
-            else _grid_allocation_diagnostics(sensitivity, target_grid)
+            else _grid_allocation_diagnostics(
+                bundle.observations, sensitivity, target_grid
+            )
         ),
         "prohibited_interpretations": [
             "not a production vessel-activity grid",

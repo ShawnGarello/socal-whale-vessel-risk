@@ -251,13 +251,33 @@ Supplying an exact grid is optional:
 
 That path reuses the exact `projected_water_grid_v1` contract and optional
 checksum validation, transforms longitude/latitude with explicit x/y ordering,
-and intersects actual modeled-whale-support cell geometry first with the
-unfiltered structural baseline and then independently with every explicitly
-supplied candidate scenario. Each population reports in-support and
-outside-support vessel-kilometres separately and checks piece-length
-conservation and duplicate allocation. Outside-support length means only
-outside the supplied biological model support; it is not labelled as land, dry
-area, or absent AIS coverage. No per-cell vessel-activity dataset is emitted.
+and intersects every structurally eligible segment with actual modeled-whale-
+support cell geometry exactly once. The resulting deterministic parent/piece
+representation carries parent identity, group, elapsed time and projected
+distance; stable cell and piece order; piece distance; outside-support distance;
+and explicit positive-length, zero-length, outside-support and ambiguous status.
+The unfiltered structural baseline and every explicitly supplied candidate
+scenario filter and aggregate that same cache; scenarios do not repeat Shapely
+segment/grid intersections.
+
+Each population reports every target cell in stable grid order, including zero-
+valued cells. Per-cell evidence contains segment-piece count and passenger,
+cargo, tanker and additive all-commercial vessel-kilometres and vessel-hours.
+Vessel-hours are a separately named evidence-only comparison under an explicit
+constant-progress assumption: positive-length elapsed time is proportional to
+piece/parent projected length. A zero-length pair assigns all time only when its
+coincident point belongs to exactly one support cell; no match is retained as
+outside-support time and multiple matches remain unallocated. Parent distance
+and elapsed time are conserved within recorded tolerances.
+
+The report also classifies every cleaned observation against exact support
+geometry and gives each target cell observation, distinct-MMSI and distinct-
+MMSI-date counts by group and for the recomputed commercial union. Outside-
+support and multiple-cell point counts remain separate. This point population
+is not filtered by candidate segment rules. Outside support means only outside
+the supplied biological model support; it is not labelled as land, dry area, or
+absent AIS coverage. These per-cell values remain diagnostics inside the ignored
+JSON report; no per-cell vessel-activity dataset is emitted.
 
 The deterministic report contains no execution timestamp. Its `report_id` is
 derived from stable checksums, contracts, cleaner run identity, observations,
@@ -269,22 +289,55 @@ atomic, existing output requires `--overwrite`, an unrelated JSON file cannot be
 overwritten, and any destination outside `data/interim/` or beneath `data/raw/`
 is refused.
 
-Synthetic verification covers the diagnostic and optional-allocation boundary.
-The author also exercised the partial harness read-only against the real bounded
-2024-07-15 cleaned bundle and exact water grid on 2026-08-28. The run processed
-113,799 observations and 113,620 structural segments, touched 1,303 grid cells,
-and passed segment-length conservation. The unfiltered baseline's total parent
-segment distance was 25,560.766 km: 24,096.858 km inside the supplied
-modeled-whale-support grid and 1,463.908 km outside that support. Runtime was
-228.968 seconds and the approximate peak working set was 243 MiB.
+Synthetic verification covers exact distance/time splitting, partial outside
+support, every zero-length placement state, group and union totals, point-union
+distinct counts, intersection-cache reuse, deterministic ordering and identity,
+and the existing input/output safeguards.
 
-The maximum implied speed was 431,402 knots. That physically implausible value
-confirms that the unfiltered baseline is diagnostic only and that an explicit,
-evidence-supported plausibility rule remains necessary; the run does not select
-one. This remains a partial evidence harness: it does not calculate
-vessel-hours, emit per-cell scenario sensitivity, or produce a production
-vessel grid. Source-transfer completeness and observational completeness remain
-unverified.
+The updated harness was exercised read-only against the real bounded 2024-07-15
+cleaned bundle and exact water grid on 2026-08-28, without any candidate
+threshold arguments. `vessel_activity_evidence_v2` processing version `2.0.0`
+processed 113,799 observations and 113,620 structural segments into 77,887
+cached in-support pieces, touched 1,303 of 4,516 cells, and passed distance,
+elapsed-time and no-double-allocation checks. The total parent distance was
+25,560.766048547 km: 24,096.858442602 km inside support and 1,463.907605945 km
+outside. Parent vessel time was 3,672.903055556 hours: 1,929.780498228 inside,
+1,743.122557328 outside and 0 unallocated. Cleaned-point context classified
+71,482 observations inside support, 42,316 outside and one as multiple-cell
+ambiguous.
+
+The 2,166,881-byte report has path-independent ID
+`vessel-evidence-8432d5193107b94d88873201` and exact local SHA-256
+`60e6a02be98d8cf5edd45af56a5adcfac001681a71e868dd438c4db0894a4d6e`.
+A second clean output reproduced both identities. The cleaned input SHA-256 is
+`efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`,
+cleaner run ID is `ais-362502c6a37b53e681b745f5`, and exact grid SHA-256 is
+`7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
+
+The harness-recorded processing interval inside `run_evidence` was 25.007583
+seconds. That interval begins after Python imports, CLI parsing and
+configuration loading, so it is not an end-to-end CLI runtime. A separate
+deterministic repeat under a process-tree RSS sampling protocol took 59.562371
+seconds and observed an approximate 309.441 MiB peak. These timing observations
+used different protocols; sampling may have contributed overhead, but the
+measurements do not isolate its effect. Independent end-to-end CLI runs took
+approximately 64.4 and 66.4 seconds while reproducing the exact report.
+
+Compared with the prior aggregate-only harness's 228.968-second observation,
+these measurements provide directional evidence of improved runtime, not a
+generally reproducible speedup factor. Compared with the earlier approximate
+243 MiB working-set measurement, memory regressed by about 66 MiB (27%); the
+methods are both approximate, so this comparison is directional rather than
+exact. No one-day performance figure is extrapolated to 153 days.
+
+The maximum implied speed remained 431,402.639804 knots. That physically
+implausible value confirms that the unfiltered baseline is diagnostic only and
+that an explicit, evidence-supported plausibility rule remains necessary. No
+production threshold was selected, and no real candidate threshold was
+supplied, so real per-cell candidate effects remain unexercised. Source-transfer
+and observational completeness remain unverified; one day does not validate the
+analytical period; edge-support treatment remains unresolved; and no production
+vessel grid or exposure result exists.
 
 ## Projected water-grid command
 
