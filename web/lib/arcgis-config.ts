@@ -41,6 +41,14 @@ export interface ArcgisConfig {
   warnings: string[];
 }
 
+/** SDK configuration surface changed by this anonymous browser application. */
+export interface ArcgisSdkConfigLike {
+  apiKey?: string | null;
+  request: {
+    useIdentity: boolean;
+  };
+}
+
 /** Treats blank and whitespace-only environment values as unset. */
 function clean(value: string | undefined): string | null {
   if (typeof value !== "string") return null;
@@ -74,6 +82,23 @@ export function resolveArcgisConfig(env: ArcgisEnv): ArcgisConfig {
   const basemapId = clean(env.basemapId) ?? DEFAULT_BASEMAP_ID;
 
   return { apiKey, basemapId, warnings };
+}
+
+/**
+ * Applies browser configuration before the first ArcGIS service request.
+ *
+ * Identity prompts are always disabled because Version 1 serves anonymous,
+ * public content. A rejected request must reach the application's visible
+ * failure handling instead of opening an ArcGIS sign-in dialog.
+ */
+export function configureArcgisSdk(
+  sdkConfig: ArcgisSdkConfigLike,
+  config: ArcgisConfig,
+): void {
+  if (config.apiKey !== null) {
+    sdkConfig.apiKey = config.apiKey;
+  }
+  sdkConfig.request.useIdentity = false;
 }
 
 /** Shape of the component's `loadErrorSources` entries that this app reads. */
