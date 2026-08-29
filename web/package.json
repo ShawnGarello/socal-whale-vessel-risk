@@ -6,11 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typegen": "next typegen",
+    "typecheck": "npm run typegen && npm run typecheck:generated",
+    "typecheck:generated": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "verify:clean": "npm ci && npm run typegen && npm run format:check && npm run lint && npm run typecheck:generated && npm test && npm run build"
   },
   "dependencies": {
     "@arcgis/core": "^5.1.20",
