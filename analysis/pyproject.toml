@@ -20,6 +20,7 @@ dependencies = [
 whale-vessel-analysis = "whale_vessel_analysis.cli:main"
 whale-vessel-ais-retrieval = "whale_vessel_analysis.ais_retrieval_cli:main"
 whale-vessel-activity-evidence = "whale_vessel_analysis.vessel_activity_evidence_cli:main"
+whale-vessel-multiday-ais = "whale_vessel_analysis.multiday_ais_cli:main"
 whale-vessel-grid = "whale_vessel_analysis.spatial_cli:main"
 whale-vessel-whale-grid = "whale_vessel_analysis.whale_grid_cli:main"
 
