@@ -71,9 +71,16 @@ TRANSFER_COMPLETENESS_REASON: Final = (
     "boundary, not by cleaned-input assembly"
 )
 IDENTITY_NOTE: Final = (
-    "period_input_id is derived from contracts, expected dates, stable checksums "
-    "and cleaner identities; local paths and real execution timestamps are "
-    "execution provenance only"
+    "period_input_id is derived from contracts, expected dates, the deterministic "
+    "cleaned-Parquet checksums and the deterministic cleaner run identities; the "
+    "quality-report and run-metadata checksums are recorded and validated for "
+    "integrity but excluded from it, because those sidecars embed local paths and "
+    "real execution timestamps"
+)
+SIDECAR_IDENTITY_NOTE: Final = (
+    "quality_report_sha256 and run_metadata_sha256 verify the bundle that was "
+    "inspected; they are not part of period_input_id because the cleaner records "
+    "local paths and real execution timestamps inside those sidecars"
 )
 SCOPE_NOTE: Final = (
     "This manifest is a cleaned-input assembly boundary. It selects no maximum "
@@ -251,6 +258,98 @@ def _unverified_retention_state() -> dict[str, object]:
     }
 
 
+LINKAGE_FIELDS: Final = (
+    "cleaned_parquet_sha256",
+    "quality_report_sha256",
+    "run_metadata_sha256",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class RetrievalDateState:
+    """One retrieval-manifest date as this contract records it."""
+
+    manifest_state: dict[str, object]
+    retention_state: dict[str, object]
+    cleaning_reference: Mapping[str, object] | None
+
+
+def _linkage(
+    status: str, reason: str, reference: Mapping[str, object] | None = None
+) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "status": status,
+        "reason": reason,
+        "reference_contract": (
+            None if reference is None else reference.get("contract")
+        ),
+    }
+    for field in LINKAGE_FIELDS:
+        payload[f"reference_{field}"] = (
+            None if reference is None else reference.get(field)
+        )
+    return payload
+
+
+def _unsupplied_linkage() -> dict[str, object]:
+    return _linkage(
+        "not_supplied", "no retrieval manifest was supplied for this period input"
+    )
+
+
+def _cleaner_linkage(
+    utc_date: str,
+    entry: Mapping[str, object],
+    reference: Mapping[str, object] | None,
+) -> dict[str, object]:
+    """Bind one retrieval cleaning_reference to the recorded cleaner bundle."""
+    if reference is None:
+        return _linkage(
+            "unverified",
+            "the supplied retrieval manifest records no cleaning_reference for "
+            "this UTC date",
+        )
+    compatibility = entry.get("cleaner_bundle_compatibility")
+    if compatibility is None:
+        return _linkage(
+            "unverified",
+            "no compatible cleaner bundle is recorded for this UTC date, so the "
+            "retrieval cleaning_reference cannot be bound to one",
+            reference,
+        )
+    recorded = require_mapping(compatibility, "cleaner_bundle_compatibility")
+    present = [field for field in LINKAGE_FIELDS if reference.get(field) is not None]
+    mismatched = [
+        field for field in present if reference.get(field) != recorded.get(field)
+    ]
+    if mismatched:
+        raise MultiDayAISInputError(
+            f"retrieval cleaning_reference for {utc_date} identifies a different "
+            f"cleaner bundle than the recorded one ({', '.join(sorted(mismatched))} "
+            "differ)"
+        )
+    if not present:
+        return _linkage(
+            "unverified",
+            "the retrieval cleaning_reference carries no cleaner checksum to bind",
+            reference,
+        )
+    missing = [field for field in LINKAGE_FIELDS if field not in present]
+    if missing:
+        return _linkage(
+            "unverified",
+            "the retrieval cleaning_reference matches the recorded bundle but omits "
+            f"{', '.join(sorted(missing))}",
+            reference,
+        )
+    return _linkage(
+        "verified",
+        "cleaned-Parquet, quality-report and run-metadata checksums match the "
+        "retrieval manifest's cleaning_reference",
+        reference,
+    )
+
+
 def _missing_entry(utc_date: str) -> dict[str, object]:
     return {
         "utc_date": utc_date,
@@ -258,6 +357,7 @@ def _missing_entry(utc_date: str) -> dict[str, object]:
         "status_reason": "no compatible verified cleaner bundle has been recorded",
         "retrieval_manifest_state": _unsupplied_retrieval_state(),
         "independent_retention_state": _unverified_retention_state(),
+        "retrieval_to_cleaner_linkage": _unsupplied_linkage(),
         "cleaner_bundle_compatibility": None,
         "observational_completeness": _observational_completeness(),
         "attempt_history": [],
@@ -339,13 +439,27 @@ def _retrieval_reference(
         ).get("entry_status")
         == "verified"
     ]
+    linked = [
+        entry
+        for entry in entries
+        if require_mapping(
+            entry["retrieval_to_cleaner_linkage"], "retrieval_to_cleaner_linkage"
+        ).get("status")
+        == "verified"
+    ]
     return {
         "status": "supplied" if supplied else "not_supplied",
         "manifest_contract": RETRIEVAL_MANIFEST_CONTRACT if supplied else None,
         "verified_retrieval_date_count": len(verified),
+        "verified_cleaner_linkage_date_count": len(linked),
         "note": (
             "retrieval-manifest state is recorded separately; it neither gates nor "
             "satisfies cleaned-input readiness"
+        ),
+        "linkage_note": (
+            "a date is linkage-verified only when the retrieval manifest's "
+            "cleaning_reference checksums match the recorded cleaner bundle; a "
+            "mismatched reference is refused rather than recorded"
         ),
     }
 
@@ -385,8 +499,6 @@ def period_input_identity_material(manifest: Mapping[str, object]) -> dict[str, 
                 "cleaner_processing_version": mapping.get("cleaner_processing_version"),
                 "cleaner_run_id": mapping.get("cleaner_run_id"),
                 "cleaned_parquet_sha256": mapping.get("cleaned_parquet_sha256"),
-                "quality_report_sha256": mapping.get("quality_report_sha256"),
-                "run_metadata_sha256": mapping.get("run_metadata_sha256"),
                 "cleaned_rows": mapping.get("cleaned_rows"),
                 "observed_utc_date": mapping.get("observed_utc_date"),
             }
@@ -465,6 +577,9 @@ def load_period_manifest(path: Path) -> dict[str, object]:
         )
         require_mapping(
             entry.get("independent_retention_state"), "independent_retention_state"
+        )
+        require_mapping(
+            entry.get("retrieval_to_cleaner_linkage"), "retrieval_to_cleaner_linkage"
         )
         observed.append(utc_date)
     if len(set(observed)) != len(observed):
@@ -691,6 +806,7 @@ def _compatibility_payload(inspection: CleanedDayInspection) -> dict[str, object
         "status": "compatible",
         **inspection.identity_dict(),
         "temporal_coverage": dict(inspection.temporal_coverage),
+        "sidecar_identity_note": SIDECAR_IDENTITY_NOTE,
         "completeness_note": (
             "observed timestamp bounds do not establish complete UTC-day coverage"
         ),
@@ -805,7 +921,7 @@ def _apply_inspection(
 
 def _retrieval_states(
     retrieval_manifest_path: Path,
-) -> dict[str, tuple[dict[str, object], dict[str, object]]]:
+) -> dict[str, RetrievalDateState]:
     if not retrieval_manifest_path.is_file():
         raise MultiDayAISInputError(
             f"retrieval manifest does not exist: {retrieval_manifest_path}"
@@ -814,7 +930,7 @@ def _retrieval_states(
         retrieval = load_retrieval_manifest(retrieval_manifest_path.resolve())
     except AISRetrievalError as exc:
         raise MultiDayAISInputError(str(exc)) from exc
-    states: dict[str, tuple[dict[str, object], dict[str, object]]] = {}
+    states: dict[str, RetrievalDateState] = {}
     for raw_entry in cast(list[object], retrieval["entries"]):
         entry = require_mapping(raw_entry, "retrieval manifest entry")
         utc_date = cast(str, entry["utc_date"])
@@ -863,21 +979,29 @@ def _retrieval_states(
                 "byte identity and independent completeness are distinct states"
             ),
         }
-        states[utc_date] = (manifest_state, retention_state)
+        compatibility = entry.get("cleaning_compatibility")
+        reference: Mapping[str, object] | None = None
+        if isinstance(compatibility, Mapping):
+            raw_reference = compatibility.get("cleaning_reference")
+            if isinstance(raw_reference, Mapping):
+                reference = raw_reference
+        manifest_state["cleaning_reference_present"] = reference is not None
+        states[utc_date] = RetrievalDateState(
+            manifest_state=manifest_state,
+            retention_state=retention_state,
+            cleaning_reference=reference,
+        )
     return states
 
 
 def _apply_retrieval_states(
     manifest: dict[str, object],
-    states: Mapping[str, tuple[dict[str, object], dict[str, object]]],
+    states: Mapping[str, RetrievalDateState],
 ) -> None:
     for entry in _entries(manifest):
         utc_date = cast(str, entry["utc_date"])
-        if utc_date in states:
-            manifest_state, retention_state = states[utc_date]
-            entry["retrieval_manifest_state"] = manifest_state
-            entry["independent_retention_state"] = retention_state
-        else:
+        state = states.get(utc_date)
+        if state is None:
             entry["retrieval_manifest_state"] = {
                 "status": "absent",
                 "manifest_contract": RETRIEVAL_MANIFEST_CONTRACT,
@@ -885,8 +1009,19 @@ def _apply_retrieval_states(
                 "source_availability_status": None,
                 "date_verification_status": None,
                 "attempt_count": 0,
+                "cleaning_reference_present": False,
             }
             entry["independent_retention_state"] = _unverified_retention_state()
+            entry["retrieval_to_cleaner_linkage"] = _linkage(
+                "unverified",
+                "the supplied retrieval manifest has no entry for this UTC date",
+            )
+            continue
+        entry["retrieval_manifest_state"] = state.manifest_state
+        entry["independent_retention_state"] = state.retention_state
+        entry["retrieval_to_cleaner_linkage"] = _cleaner_linkage(
+            utc_date, entry, state.cleaning_reference
+        )
 
 
 def record_cleaned_days(

@@ -89,6 +89,8 @@ def build_cleaned_bundle(
     quality_contract: str = AIS_PROCESSING_CONTRACT,
     reported_rows: int | None = None,
     completeness_status: str = "unverified",
+    started_at: str = "2026-08-28T00:00:00Z",
+    completed_at: str = "2026-08-28T00:00:01Z",
 ) -> Path:
     """Write one synthetic three-file cleaner bundle with consistent checksums."""
     directory.mkdir(parents=True, exist_ok=True)
@@ -142,8 +144,8 @@ def build_cleaned_bundle(
         "contract": AIS_PROCESSING_CONTRACT,
         "run": {
             "run_id": metadata_run_id or run_id,
-            "started_at": "2026-08-28T00:00:00Z",
-            "completed_at": "2026-08-28T00:00:01Z",
+            "started_at": started_at,
+            "completed_at": completed_at,
             "steps": [
                 {"name": "validate-noaa-flat-csv-header", "version": "1.0.0"},
                 {
