@@ -504,12 +504,13 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   select no threshold. The
   implemented one-bundle harness supplies non-production per-cell evidence,
   reusable candidate aggregation, vessel-hours comparison and point/distinct-
-  vessel context only. One real no-threshold bounded-day run occurred, but real
-  candidate effects, behavioral plausibility filtering, a maximum interpolation
-  gap, an implied-speed rule, edge-support treatment, any vessel-length
-  threshold, period-wide stability and final speed summaries remain
-  unexercised, unimplemented or unresolved rather than receiving provisional
-  values.
+  vessel context only. One real no-threshold bounded-day run and four candidate
+  combinations crossing 300/1,800-second maximum gaps with 30/50-knot
+  implied-speed ceilings were exercised, including real per-cell effects. No
+  production threshold was selected; behavioral plausibility filtering, an
+  accepted maximum interpolation gap or implied-speed rule, edge-support
+  treatment, any vessel-length threshold, period-wide stability and final speed
+  summaries remain unimplemented or unresolved.
 - Normalization of whale values or any vessel-derived spatial dataset. The
   whale input is grid-aligned without normalization; normalization remains part
   of the deferred exposure-method decision.
