@@ -9,8 +9,10 @@
 > ArcGIS Pro is optional and unnecessary for Version 1; no ArcGIS Pro project
 > is planned as a repository component. The analysis package validates source
 > inputs and configuration, verifies and manifests one explicitly supplied AIS
-> delivery, processes one explicitly supplied AIS extract into an atomic local
-> bundle, generates the projected per-cell water grid, and
+> delivery, partitions one explicitly supplied multi-date AccessAIS delivery
+> into deterministic daily inputs, processes those inputs sequentially into
+> atomic local bundles, records them resumably in the period-input manifest,
+> generates the projected per-cell water grid, and
 > transfers the selected modeled blue-whale density surface to that grid by
 > abundance-conserving area weighting. QGIS is the local inspection and visual-
 > verification tool. A one-bundle vessel evidence harness supplies cached
@@ -130,7 +132,8 @@ render has **not** been verified — see [roadmap.md](roadmap.md) M4.
 
 The src-based package lives in [`../analysis/`](../analysis/). It owns versioned
 processing/source/lineage contracts, the selected DuckDB large-tabular boundary,
-read-only AIS/whale/VSR validators, a local AIS delivery-verification CLI,
+read-only AIS/whale/VSR validators, a local AIS delivery-verification CLI, a
+bounded local multi-date AccessAIS intake and daily-cleaning orchestrator,
 deterministic processing of one supplied NOAA AIS flat CSV extract, the
 deterministic EPSG:3310 water-grid process, abundance-conserving transfer of
 modeled blue-whale density to that grid, a read-only one-bundle vessel-measure
@@ -166,6 +169,7 @@ re-run; the built package declares only runtime requirements.
 | `python -m uv build` | Builds the source distribution and wheel. `analysis/dist/` is generated and must not be committed. |
 | `python -m uv run python -m whale_vessel_analysis --help` | Proves the package module and command boundary load. |
 | `python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help` | Proves the separate local AIS retrieval-verification boundary loads. |
+| `python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli --help` | Proves the bounded local AccessAIS period-intake boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --help` | Proves the separate non-production vessel-evidence boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help` | Proves the separate multi-day cleaned-input boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help` | Proves the separate whale-grid transfer boundary loads. |
@@ -245,6 +249,29 @@ measured design with optimization, bounded date-sized processing, DuckDB
 spilling or memory controls, or another demonstrated approach. The full evidence
 and removal accounting are in the [source register](data-sources.md#retrieval-route).
 ADR 0017 remains Proposed.
+
+**Author-supplied multi-date AccessAIS intake**
+
+The local intake accepts one explicit direct CSV or safe ZIP plus inclusive
+requested dates. It performs no order submission, scraping, email automation,
+cookie storage, or URL retention. `prepare` streams and accounts for every
+source row, publishes deterministic one-date CSV slices atomically under
+ignored `data/interim/`, and records malformed timestamps and out-of-request
+dates without silently dropping them. `run` invokes the existing one-date
+cleaner sequentially and records each compatible bundle immediately in the
+existing period manifest, so a retry skips verified successful dates.
+
+```text
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli status --intake-dir ..\data\interim\accessais-period-intake\delivery
+```
+
+The delivery contract keeps independent byte-transfer completeness,
+observational completeness, and 153-date period readiness separate. None is
+upgraded by a plausible row count, timestamp range, filename, or presence of
+all requested dates. Contract details and the bounded one-day compatibility
+evidence are in the [analysis README](../analysis/README.md#prepare-one-author-supplied-multi-date-accessais-delivery).
 
 **One-extract AIS processing**
 
@@ -825,7 +852,7 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 164 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 237 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -833,6 +860,10 @@ deterministic lineage/configuration hashing, configurable source locators, the
 retrieval manifest and its separated completeness states, source byte identity,
 CSV/ZIP content detection, archive safety and CRC validation, exact-date
 enforcement, retry/conflict behavior, redaction, atomic interim extraction,
+multi-date delivery partitioning, row conservation, malformed and
+out-of-request timestamp accounting, deterministic daily identities,
+interruption/resume behavior, daily-cleaner compatibility, period-manifest
+population, and refusal to upgrade completeness or readiness without evidence,
 exact grid and water-area invariants, configured-extent clipping, deterministic
 spatial serialization and content identity, truthful execution timestamps,
 raw-output refusal, atomic-write failure behavior, abundance-conserving whale
