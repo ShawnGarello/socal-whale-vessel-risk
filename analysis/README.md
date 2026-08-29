@@ -245,6 +245,7 @@ mistaken for another:
 | `utc_date` | One expected accepted analytical-period date. Entries are unique and cover the complete period. |
 | `retrieval_manifest_state` | What the optional read-only `noaa_ais_retrieval_manifest_v1` boundary recorded for that date, or `not_supplied`. |
 | `independent_retention_state` | Retained-byte identity, independent byte completeness, and archive verification, taken only from the retrieval boundary. These stay `unverified` without it. |
+| `retrieval_to_cleaner_linkage` | Whether the retrieval manifest's own `cleaning_reference` checksums bind to this recorded bundle. `not_supplied` without a retrieval manifest, `unverified` when no reference exists, `verified` when all three cleaner checksums match. A reference naming a different bundle is refused, not recorded. |
 | `cleaner_bundle_compatibility` | The verified three-file bundle: cleaner contract, processing version, shared run identity, cleaned-Parquet, quality-report and run-metadata checksums, row count, exclusive UTC date, and the cleaner's own temporal coverage. |
 | `status` | `missing`, `compatible`, or `conflict`, with a reason and append-only attempt history. |
 | `observational_completeness` | Always `unverified`, per date and for the period. Retrieval and cleaning integrity cannot establish receiver coverage or records that were never observed. |
@@ -265,6 +266,15 @@ boundary before it can occupy a date:
 7. that date inside the accepted period; and
 8. an unchanged `unverified` completeness claim — an upgraded claim is refused.
 
+When a retrieval manifest is supplied, its per-date `cleaning_reference` is
+bound to the recorded bundle rather than merely sitting beside it. Every
+checksum the reference carries — cleaned Parquet, quality report, run metadata —
+must equal the recorded bundle's. A reference naming a different bundle is
+refused and nothing is published, so a retrieval entry cannot be presented as
+evidence for a cleaned input it did not produce. A reference that is absent, or
+that carries only some of the three checksums, leaves the linkage `unverified`
+with the reason recorded.
+
 A date already holding a compatible entry accepts an identical bundle as
 reusable retry evidence. Different bytes create a `conflict` that preserves the
 recorded identity and the attempt history rather than replacing them; a further
@@ -281,13 +291,24 @@ deliberately insufficient: observed timestamp bounds, a filename, and a
 plausible row count are not evidence; retrieval transfer completeness is a
 separate unverified state; and observational completeness remains unverified.
 
-`period_input_id` is derived from the contracts, the expected dates, the stable
-per-date checksums, and the cleaner identities. Local paths, attempt timestamps,
-and execution timestamps are retained as provenance in `local_provenance` and in
-the attempt history, and are excluded from that identity, so identical bytes
-recorded from different directories produce the same `period_input_id`. Loading
-a manifest recomputes both the readiness summary and the identity and refuses a
-file whose recorded values disagree.
+`period_input_id` is derived from the contracts, the expected dates, and the
+per-date analytical identity: the deterministic cleaned-Parquet checksum, the
+deterministic cleaner run identity, the row count, and the observed UTC date.
+
+The quality-report and run-metadata checksums are **recorded and validated** on
+every bundle, but they are deliberately **excluded from that identity**. The
+cleaner writes local absolute paths and real UTC execution timestamps into those
+two sidecars, so regenerating the same analytical data in another directory or
+at another time changes their bytes while the cleaned Parquet and the cleaner
+run ID stay identical. Including them would have made a supposedly stable
+identifier depend on where and when the cleaner ran. Attempt timestamps and
+local paths are likewise kept as provenance in `local_provenance` and in the
+attempt history rather than in the identity.
+
+Equivalent identity is not tolerance of different bytes: within one manifest, a
+second bundle whose recorded checksums differ from the current entry still
+creates a `conflict`. Loading a manifest recomputes both the readiness summary
+and the identity and refuses a file whose recorded values disagree.
 
 ### Bounded DuckDB scanning
 
@@ -329,16 +350,19 @@ and retrieval manifest kept their prior checksums.
   run metadata SHA-256
   `54cd72e719ba56e112ac146195d1df9e5bdda99ab588704897210cea35423637`,
   and cleaner run ID `ais-362502c6a37b53e681b745f5`.
-- Path-independent `period_input_id`
-  `multiday-ais-0e08bce424308c3ce929b89d`. A repeat invocation with the same
-  bundle was recorded as `identical_retry` and reproduced that identifier while
-  appending a second attempt, so the manifest file bytes changed and the content
-  identity did not.
+- Path- and clock-independent `period_input_id`
+  `multiday-ais-aeaf8f584d830ed98ef2b52d`. A repeat invocation with the same
+  bundle is recorded as `identical_retry` and reproduces that identifier while
+  appending a second attempt, so the manifest file bytes change and the content
+  identity does not.
 - The retrieval state was recorded separately and truthfully: entry status
   `retrieved`, retained byte identity `verified` for the 59,497,346-byte source
   with SHA-256
   `694ea3e8364de21467dea0affeb77e954d339e155d316dc4115b87ac01ffcca3`,
   and independent byte completeness `unverified`.
+- `retrieval_to_cleaner_linkage` was `verified`: the retrieval manifest's own
+  `cleaning_reference` named the same cleaned-Parquet, quality-report, and
+  run-metadata checksums as the supplied bundle.
 - Period `independent_transfer_completeness` and `observational_completeness`
   both remained `unverified`.
 - `scan` with `--memory-limit 2GB` streamed 113,799 observations in three

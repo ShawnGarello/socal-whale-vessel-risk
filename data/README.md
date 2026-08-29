@@ -259,8 +259,12 @@ to it.
 
 The manifest pre-populates all 153 accepted UTC dates and keeps one current
 entry per date, with expected date, retrieval-manifest state, independently
-verified retained-byte/archive state, cleaner-bundle compatibility,
-missing/conflicting status, and observational completeness as separate fields.
+verified retained-byte/archive state, retrieval-to-cleaner linkage,
+cleaner-bundle compatibility, missing/conflicting status, and observational
+completeness as separate fields. A supplied retrieval entry's own
+`cleaning_reference` checksums are validated against the recorded bundle rather
+than associated by UTC date alone; a reference naming a different bundle is
+refused.
 Observational completeness stays `unverified` everywhere, and a bundle whose
 cleaner reports an upgraded completeness claim is refused. An identical bundle
 is reusable retry evidence; different bytes create a `conflict` that preserves

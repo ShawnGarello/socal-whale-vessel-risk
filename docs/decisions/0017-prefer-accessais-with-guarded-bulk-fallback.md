@@ -254,14 +254,15 @@ one current entry per date. Each entry keeps these separately visible:
    `noaa_ais_retrieval_manifest_v1`, or `not_supplied`;
 3. the independently verified retained-byte and archive state, taken only from
    that retrieval boundary and otherwise `unverified`;
-4. cleaner-bundle compatibility — the exact three-file bundle, supported cleaner
+4. the retrieval-to-cleaner linkage, described below;
+5. cleaner-bundle compatibility — the exact three-file bundle, supported cleaner
    contract and processing version, one shared cleaner run identity, matching
    cleaned-Parquet and quality-report checksums, the exact cleaner schema,
    exactly one UTC date read from the Parquet and cross-checked against the
    quality report's observed date and row count, and membership in the accepted
    period;
-5. a `missing` or `conflict` status with its reason and attempt history; and
-6. observational completeness, which stays `unverified` for every date and for
+6. a `missing` or `conflict` status with its reason and attempt history; and
+7. observational completeness, which stays `unverified` for every date and for
    the period.
 
 An identical bundle re-supplied for a date already recorded is reusable retry
@@ -277,10 +278,23 @@ observed timestamp bounds, a filename, and a plausible row count. It also states
 that retrieval transfer completeness is a separate unverified state that neither
 gates nor satisfies cleaned-input readiness.
 
-`period_input_id` is derived from the contracts, the expected dates, the stable
-per-date checksums, and the cleaner identities. Local paths, attempt timestamps,
-and execution timestamps are retained as provenance and excluded from it, so
-identical bytes recorded from different worktrees produce the same identifier.
+The `cleaning_reference` this record already specifies is now *bound*, not
+merely co-located. When a supplied retrieval entry carries one, every cleaner
+checksum it names — cleaned Parquet, quality report, run metadata — must equal
+the recorded bundle's. A reference identifying a different bundle is refused and
+nothing is published, so a verified retrieval entry cannot stand beside a cleaned
+input it did not produce simply because their UTC dates agree. An absent or
+partial reference leaves the linkage `unverified` with its reason recorded.
+
+`period_input_id` is derived from the contracts, the expected dates, the
+deterministic cleaned-Parquet checksums, and the deterministic cleaner run
+identities. The quality-report and run-metadata checksums are recorded and
+validated for integrity but excluded from it: this record's own cleaner writes
+local absolute paths and real UTC execution timestamps into those two sidecars,
+so including them would make the identifier change when the same analytical data
+is regenerated in another directory or at another time. Attempt timestamps and
+local paths are likewise provenance rather than identity. Within one manifest,
+different recorded bytes still create a conflict.
 
 The accompanying bounded relation re-verifies each recorded cleaned-Parquet
 checksum, then scans the daily Parquet partitions through DuckDB with an
@@ -297,11 +311,14 @@ vessel-activity grid is produced; those remain owned by
 
 Recording the existing bounded 2024-07-15 cleaner bundle read-only, together
 with this record's retrieval manifest for that date, produced one compatible
-date, 152 missing dates, `not_ready` period readiness, and path-independent
-`period_input_id` `multiday-ais-0e08bce424308c3ce929b89d`. Neither source
-artifact was modified. The retrieval state was carried across truthfully as
-entry status `retrieved`, retained byte identity `verified`, and independent
-byte completeness `unverified`. The bounded scan streamed 113,799 observations
+date, 152 missing dates, `not_ready` period readiness, and path- and
+clock-independent `period_input_id` `multiday-ais-aeaf8f584d830ed98ef2b52d`.
+Neither source artifact was modified. The retrieval state was carried across
+truthfully as entry status `retrieved`, retained byte identity `verified`, and
+independent byte completeness `unverified`. That entry's recorded
+`cleaning_reference` named the same cleaned-Parquet, quality-report, and
+run-metadata checksums as the supplied bundle, so the retrieval-to-cleaner
+linkage verified against real evidence. The bounded scan streamed 113,799 observations
 and reported 113,620 whole-period consecutive pairs, matching the structural
 segment count the one-bundle evidence harness produced independently for that
 input.
