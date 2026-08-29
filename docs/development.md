@@ -308,10 +308,17 @@ subcommands print JSON.
 
 The manifest begins with all 153 accepted UTC dates and keeps one current entry
 per date. Expected date, optional retrieval-manifest state, independently
-verified retained-byte and archive state, cleaner-bundle compatibility, missing
-or conflicting status, and observational completeness are separate fields, so
-none can substitute for another. Observational completeness is always
-`unverified`.
+verified retained-byte and archive state, retrieval-to-cleaner linkage,
+cleaner-bundle compatibility, missing or conflicting status, and observational
+completeness are separate fields, so none can substitute for another.
+Observational completeness is always `unverified`.
+
+When a retrieval manifest is supplied, its per-date `cleaning_reference` is
+validated against the recorded bundle instead of merely matching on UTC date.
+Every checksum the reference carries must equal the recorded bundle's; a
+reference naming a different bundle is refused and nothing is published. An
+absent or partial reference leaves the linkage `unverified` with its reason
+recorded.
 
 Every supplied bundle passes the existing sidecar and checksum boundary before
 occupying a date: the exact three files, the supported cleaner contract and
@@ -329,8 +336,12 @@ contract is never overwritten.
 The period is `ready` only when all 153 expected dates carry a compatible
 verified current entry. Timestamp bounds, filenames, and plausible row counts
 are explicitly recorded as insufficient. `period_input_id` derives from the
-contracts, expected dates, stable checksums, and cleaner identities; local paths
-and real execution timestamps are kept as provenance and excluded from it.
+contracts, expected dates, deterministic cleaned-Parquet checksums, and
+deterministic cleaner run identities. The quality-report and run-metadata
+checksums are recorded and validated but excluded from it, because the cleaner
+writes local paths and real execution timestamps into those sidecars: including
+them would change the identifier when the same analytical data is regenerated
+elsewhere or later. Different recorded bytes still conflict within one manifest.
 
 `scan` re-verifies each recorded cleaned-Parquet checksum, requires an explicit
 memory limit with a unit and an explicit spill directory under ignored
@@ -347,10 +358,12 @@ edge-support rule is applied, and no segment or vessel grid is produced.
 On 2026-08-28 the command recorded the existing bounded 2024-07-15 cleaner
 bundle and retrieval manifest read-only, leaving both unchanged. It produced one
 compatible date, 152 missing dates, `not_ready` readiness, `unverified`
-observational completeness, and path-independent
-`period_input_id` `multiday-ais-0e08bce424308c3ce929b89d`. The retrieval state
+observational completeness, and path- and clock-independent
+`period_input_id` `multiday-ais-aeaf8f584d830ed98ef2b52d`. The retrieval state
 was recorded separately as entry status `retrieved` with verified retained byte
-identity and `unverified` independent byte completeness. `scan` streamed 113,799
+identity and `unverified` independent byte completeness, and its own
+`cleaning_reference` bound to the supplied bundle, giving a `verified`
+retrieval-to-cleaner linkage. `scan` streamed 113,799
 observations in three 50,000-row batches and reported 113,620 whole-period
 consecutive pairs, matching the structural segment count the one-bundle evidence
 harness produced independently for the same input; with one date present,

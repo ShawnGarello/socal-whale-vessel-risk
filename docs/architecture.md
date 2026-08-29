@@ -142,12 +142,17 @@ also visually verified in QGIS 4.2.1.
 A further implemented boundary assembles explicitly supplied one-date cleaner
 bundles into a versioned multi-day period-input manifest. It keeps expected
 date, retrieval-manifest state, independently verified retained-byte and archive
-state, cleaner-bundle compatibility, missing or conflicting status, and
-unverified observational completeness as separate states; it marks the period
-ready only when all 153 expected dates carry a compatible verified current
-entry; and it derives a period identity from contracts, expected dates, stable
-checksums, and cleaner identities rather than from local paths or execution
-timestamps. Its bounded DuckDB relation scans the verified daily Parquet
+state, retrieval-to-cleaner linkage, cleaner-bundle compatibility, missing or
+conflicting status, and unverified observational completeness as separate
+states; it validates a supplied retrieval manifest's own `cleaning_reference`
+checksums against the recorded bundle rather than associating them by date
+alone; it marks the period ready only when all 153 expected dates carry a
+compatible verified current entry; and it derives a period identity from
+contracts, expected dates, deterministic cleaned-Parquet checksums, and
+deterministic cleaner run identities. The quality-report and run-metadata
+checksums are validated for integrity but excluded from that identity, because
+the cleaner records local paths and real execution timestamps inside those
+sidecars. Its bounded DuckDB relation scans the verified daily Parquet
 partitions with an explicit memory limit and spill directory, streams a
 deterministic global ordering as Arrow record batches instead of concatenating
 the period in Python, and preserves same-vessel continuity across midnight. It

@@ -332,7 +332,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 208 passing tests using temporary
+- The combined self-contained suite has 216 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
@@ -354,9 +354,11 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   entries, bundle-checksum and sidecar tampering, mismatched quality-report and
   run-metadata identities, path-independent period identity, cross-midnight
   ordering for one MMSI, absence of an artificial daily partition break,
-  ordering stability regardless of recorded input order, streamed DuckDB
-  scanning without Python materialization, memory and spill validation, and all
-  CLI boundaries.
+  ordering stability regardless of recorded input order, one period identity
+  across real and synthetic bundles regenerated at different paths and
+  execution times, matching/mismatching/absent/partial retrieval
+  `cleaning_reference` linkage, streamed DuckDB scanning without Python
+  materialization, memory and spill validation, and all CLI boundaries.
 - A focused whale-grid command validates the selected NOAA/SWFSC source and the
   exact versioned water-grid input, reprojects source polygons with explicit x/y
   order, detects material source-interior overlap, and transfers modeled density
@@ -430,8 +432,9 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   supplied one-date cleaner bundles into one analytical-period input manifest.
   It initializes all 153 accepted UTC dates and keeps expected date,
   retrieval-manifest state, independently verified retained-byte/archive state,
-  cleaner-bundle compatibility, missing/conflicting status, and unverified
-  observational completeness as separate states. Every supplied bundle is
+  retrieval-to-cleaner linkage, cleaner-bundle compatibility,
+  missing/conflicting status, and unverified observational completeness as
+  separate states. Every supplied bundle is
   validated through the existing sidecar and checksum boundary: the exact three
   files, the supported cleaner contract and processing version, one shared
   cleaner run identity, matching cleaned-Parquet and quality-report checksums,
@@ -441,10 +444,18 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   reusable evidence; different bytes create a conflict that preserves the
   recorded identity and attempt history. The period is `ready` only when all 153
   dates hold a compatible verified current entry; timestamp bounds, filenames,
-  and plausible row counts are explicitly recorded as insufficient. The
-  deterministic `period_input_id` derives from contracts, expected dates, stable
-  checksums, and cleaner identities, while local paths and real execution
-  timestamps stay as provenance outside it.
+  and plausible row counts are explicitly recorded as insufficient. When a
+  retrieval manifest is supplied, its per-date `cleaning_reference` checksums
+  are validated against the recorded bundle instead of matching on UTC date
+  alone; a reference naming a different bundle is refused, and an absent or
+  partial reference leaves the linkage explicitly unverified. The deterministic
+  `period_input_id` derives from contracts, expected dates, deterministic
+  cleaned-Parquet checksums and deterministic cleaner run identities. The
+  quality-report and run-metadata checksums are recorded and validated but
+  excluded from it, because the cleaner writes local paths and real execution
+  timestamps into those sidecars; regenerating the same analytical data
+  elsewhere or later therefore keeps one identity, while different recorded
+  bytes still conflict.
 - A focused three-verb CLI (`record`, `status`, `scan`) takes explicit paths,
   performs no discovery outside them, writes only an explicit ignored
   `data/interim/` destination, publishes atomically, refuses raw destinations and
@@ -464,10 +475,12 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 - The 2026-08-28 real read-only smoke run recorded the existing bounded
   2024-07-15 cleaner bundle and retrieval manifest without modifying either. It
   reported exactly one compatible date, 152 missing dates, `not_ready` period
-  readiness, and `unverified` observational completeness, with path-independent
-  `period_input_id` `multiday-ais-0e08bce424308c3ce929b89d`. The retrieval state
-  was recorded separately as entry status `retrieved` with verified retained byte
-  identity and `unverified` independent byte completeness. The bounded scan
+  readiness, and `unverified` observational completeness, with path- and
+  clock-independent `period_input_id` `multiday-ais-aeaf8f584d830ed98ef2b52d`.
+  The retrieval state was recorded separately as entry status `retrieved` with
+  verified retained byte identity and `unverified` independent byte
+  completeness; its own `cleaning_reference` bound to the supplied bundle, so
+  the retrieval-to-cleaner linkage was `verified`. The bounded scan
   streamed 113,799 observations in three 50,000-row Arrow batches and reported
   113,620 whole-period consecutive pairs — the same structural segment count the
   one-bundle evidence harness produced independently for that input. With one
