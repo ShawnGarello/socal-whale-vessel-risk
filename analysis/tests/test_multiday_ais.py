@@ -479,6 +479,279 @@ def test_period_status_reports_the_unfinished_states(
     assert status["period_input_id"].startswith("multiday-ais-")
 
 
+def _write_source_csv(path: Path) -> None:
+    values = {
+        "MMSI": "123456789",
+        "BaseDateTime": "2024-07-15T00:00:00",
+        "LAT": "34.0",
+        "LON": "-118.0",
+        "SOG": "12.5",
+        "COG": "145.0",
+        "Heading": "145",
+        "VesselName": "SYNTHETIC VESSEL",
+        "IMO": "IMO1234567",
+        "CallSign": "TEST1",
+        "VesselType": "70",
+        "Status": "0",
+        "Length": "200",
+        "Width": "30",
+        "Draft": "9.5",
+        "Cargo": "70",
+        "TransceiverClass": "A",
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as destination:
+        writer = csv.writer(destination, lineterminator="\n")
+        writer.writerow(AIS_PUBLISHED_HEADER)
+        writer.writerow([values[field] for field in AIS_PUBLISHED_HEADER])
+
+
+def test_regenerated_real_bundles_keep_one_period_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The same analytical data cleaned twice, elsewhere and later, is one input."""
+    interim, _ = _roots(tmp_path, monkeypatch)
+    first_csv = tmp_path / "first" / "source.csv"
+    second_csv = tmp_path / "second" / "source.csv"
+    _write_source_csv(first_csv)
+    _write_source_csv(second_csv)
+    first_bundle = tmp_path / "first" / "bundle"
+    second_bundle = tmp_path / "second" / "bundle"
+    first_result = process_ais_csv(first_csv, first_bundle, load_default_config())
+    second_result = process_ais_csv(second_csv, second_bundle, load_default_config())
+
+    first_inspection = inspect_cleaned_day(first_bundle)
+    second_inspection = inspect_cleaned_day(second_bundle)
+    assert first_result.run_id == second_result.run_id
+    assert first_inspection.cleaned_sha256 == second_inspection.cleaned_sha256
+    assert (
+        first_inspection.quality_report_sha256
+        != second_inspection.quality_report_sha256
+    )
+    assert first_inspection.run_metadata_sha256 != second_inspection.run_metadata_sha256
+
+    first = record_cleaned_days(interim / "first.json", [first_bundle], clock=_clock)
+    second = record_cleaned_days(interim / "second.json", [second_bundle], clock=_clock)
+    assert first.period_input_id == second.period_input_id
+
+    recorded = _entry(dict(first.manifest), "2024-07-15")[
+        "cleaner_bundle_compatibility"
+    ]
+    assert recorded["quality_report_sha256"] == first_inspection.quality_report_sha256
+    assert recorded["run_metadata_sha256"] == first_inspection.run_metadata_sha256
+    material = json.dumps(
+        multiday_ais.period_input_identity_material(first.manifest), sort_keys=True
+    )
+    assert first_inspection.quality_report_sha256 not in material
+    assert first_inspection.run_metadata_sha256 not in material
+    assert first_inspection.cleaned_sha256 in material
+
+
+def test_regenerated_synthetic_sidecars_keep_one_period_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    rows = synthetic_rows("2024-10-01")
+    first_bundle = build_cleaned_bundle(tmp_path / "one" / "2024-10-01", rows)
+    second_bundle = build_cleaned_bundle(
+        tmp_path / "two" / "2024-10-01",
+        rows,
+        started_at="2027-01-01T09:00:00Z",
+        completed_at="2027-01-01T09:00:05Z",
+    )
+    first_inspection = inspect_cleaned_day(first_bundle)
+    second_inspection = inspect_cleaned_day(second_bundle)
+    assert first_inspection.cleaned_sha256 == second_inspection.cleaned_sha256
+    assert (
+        first_inspection.quality_report_sha256
+        != second_inspection.quality_report_sha256
+    )
+    assert first_inspection.run_metadata_sha256 != second_inspection.run_metadata_sha256
+
+    first = record_cleaned_days(interim / "one.json", [first_bundle], clock=_clock)
+    second = record_cleaned_days(interim / "two.json", [second_bundle], clock=_clock)
+    assert first.period_input_id == second.period_input_id
+
+
+def test_regenerated_sidecars_still_conflict_within_one_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Equivalent identity is not silent tolerance of different recorded bytes."""
+    interim, _ = _roots(tmp_path, monkeypatch)
+    rows = synthetic_rows("2024-10-02")
+    manifest_path = interim / "manifest.json"
+    first_bundle = build_cleaned_bundle(tmp_path / "one" / "2024-10-02", rows)
+    second_bundle = build_cleaned_bundle(
+        tmp_path / "two" / "2024-10-02",
+        rows,
+        started_at="2027-01-01T09:00:00Z",
+        completed_at="2027-01-01T09:00:05Z",
+    )
+    record_cleaned_days(manifest_path, [first_bundle], clock=_clock)
+    update = record_cleaned_days(manifest_path, [second_bundle], clock=_clock)
+    assert update.outcomes[0].outcome == "conflict"
+
+
+def _retrieval_manifest_with_reference(
+    path: Path, utc_date: str, reference: dict[str, Any] | None
+) -> Path:
+    from whale_vessel_analysis import ais_retrieval
+
+    retrieval = ais_retrieval._empty_manifest()
+    retrieval["entries"] = [
+        {
+            "utc_date": utc_date,
+            "status": "retrieved",
+            "status_reason": "identity verified",
+            "source_availability": {"status": "available", "evidence": "local"},
+            "retrieval_verification": {
+                "status": "identity_verified",
+                "identity": {"byte_size": 10, "sha256": "b" * 64},
+                "byte_completeness": {
+                    "status": "unverified",
+                    "evidence": "no independent source byte count",
+                },
+                "archive": {"container_detected_by_content": "csv"},
+            },
+            "date_verification": {"status": "verified"},
+            "cleaning_compatibility": {
+                "status": ("exercised_compatible" if reference else "not_verified"),
+                "cleaner_exercised": reference is not None,
+                "cleaning_reference": reference,
+            },
+            "attempt_history": [{"attempt_number": 1}],
+        }
+    ]
+    ais_retrieval._refresh_manifest_summary(retrieval)
+    path.write_text(json.dumps(retrieval), encoding="utf-8")
+    return path
+
+
+def test_matching_cleaning_reference_verifies_retrieval_to_cleaner_linkage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, day_bundle: Callable[..., Path]
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    bundle = day_bundle("2024-07-22")
+    inspection = inspect_cleaned_day(bundle)
+    retrieval_path = _retrieval_manifest_with_reference(
+        interim / "retrieval.json",
+        "2024-07-22",
+        {
+            "contract": "noaa_marine_cadastre_ais_extract_v2",
+            "cleaned_parquet_sha256": inspection.cleaned_sha256,
+            "quality_report_sha256": inspection.quality_report_sha256,
+            "run_metadata_sha256": inspection.run_metadata_sha256,
+        },
+    )
+    update = record_cleaned_days(
+        interim / "manifest.json",
+        [bundle],
+        retrieval_manifest_path=retrieval_path,
+        clock=_clock,
+    )
+    linkage = _entry(dict(update.manifest), "2024-07-22")[
+        "retrieval_to_cleaner_linkage"
+    ]
+    assert linkage["status"] == "verified"
+    assert linkage["reference_cleaned_parquet_sha256"] == inspection.cleaned_sha256
+    reference: dict[str, Any] = update.manifest["retrieval_manifest_reference"]
+    assert reference["verified_cleaner_linkage_date_count"] == 1
+
+
+def test_mismatched_cleaning_reference_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, day_bundle: Callable[..., Path]
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    bundle = day_bundle("2024-07-23")
+    inspection = inspect_cleaned_day(bundle)
+    retrieval_path = _retrieval_manifest_with_reference(
+        interim / "retrieval.json",
+        "2024-07-23",
+        {
+            "contract": "noaa_marine_cadastre_ais_extract_v2",
+            "cleaned_parquet_sha256": "d" * 64,
+            "quality_report_sha256": inspection.quality_report_sha256,
+            "run_metadata_sha256": inspection.run_metadata_sha256,
+        },
+    )
+    manifest_path = interim / "manifest.json"
+    with pytest.raises(
+        MultiDayAISInputError, match="identifies a different cleaner bundle"
+    ):
+        record_cleaned_days(
+            manifest_path,
+            [bundle],
+            retrieval_manifest_path=retrieval_path,
+            clock=_clock,
+        )
+    assert not manifest_path.exists()
+
+
+def test_absent_cleaning_reference_records_unverified_linkage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, day_bundle: Callable[..., Path]
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    retrieval_path = _retrieval_manifest_with_reference(
+        interim / "retrieval.json", "2024-07-24", None
+    )
+    update = record_cleaned_days(
+        interim / "manifest.json",
+        [day_bundle("2024-07-24")],
+        retrieval_manifest_path=retrieval_path,
+        clock=_clock,
+    )
+    manifest = dict(update.manifest)
+    linkage = _entry(manifest, "2024-07-24")["retrieval_to_cleaner_linkage"]
+    assert linkage["status"] == "unverified"
+    assert "no cleaning_reference" in linkage["reason"]
+    absent = _entry(manifest, "2024-07-25")["retrieval_to_cleaner_linkage"]
+    assert absent["status"] == "unverified"
+    assert "no entry for this UTC date" in absent["reason"]
+    reference: dict[str, Any] = manifest["retrieval_manifest_reference"]
+    assert reference["verified_cleaner_linkage_date_count"] == 0
+
+
+def test_partial_cleaning_reference_is_matched_but_stays_unverified(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, day_bundle: Callable[..., Path]
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    bundle = day_bundle("2024-07-26")
+    inspection = inspect_cleaned_day(bundle)
+    retrieval_path = _retrieval_manifest_with_reference(
+        interim / "retrieval.json",
+        "2024-07-26",
+        {
+            "contract": "noaa_marine_cadastre_ais_extract_v2",
+            "cleaned_parquet_sha256": inspection.cleaned_sha256,
+        },
+    )
+    update = record_cleaned_days(
+        interim / "manifest.json",
+        [bundle],
+        retrieval_manifest_path=retrieval_path,
+        clock=_clock,
+    )
+    linkage = _entry(dict(update.manifest), "2024-07-26")[
+        "retrieval_to_cleaner_linkage"
+    ]
+    assert linkage["status"] == "unverified"
+    assert "omits" in linkage["reason"]
+
+
+def test_no_retrieval_manifest_leaves_linkage_not_supplied(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, day_bundle: Callable[..., Path]
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    update = record_cleaned_days(
+        interim / "manifest.json", [day_bundle("2024-07-27")], clock=_clock
+    )
+    linkage = _entry(dict(update.manifest), "2024-07-27")[
+        "retrieval_to_cleaner_linkage"
+    ]
+    assert linkage["status"] == "not_supplied"
+    assert linkage["reference_cleaned_parquet_sha256"] is None
+
+
 def test_real_cleaner_bundle_is_accepted_by_the_period_contract(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
