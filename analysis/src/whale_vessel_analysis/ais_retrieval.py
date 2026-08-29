@@ -387,8 +387,8 @@ def inspect_ais_container[CSVInspectionT](
             signature = source.read(4)
         if signature not in _ZIP_SIGNATURES:
             with path.open("rb") as source:
-                result = inspect_csv_stream(source)
-            return AISContainerInspection("csv", (), None, None), result
+                csv_result = inspect_csv_stream(source)
+            return AISContainerInspection("csv", (), None, None), csv_result
         with zipfile.ZipFile(path) as archive:
             infos = archive.infolist()
             normalized_names = tuple(
@@ -407,17 +407,17 @@ def inspect_ais_container[CSVInspectionT](
                     f"archive contains multiple ambiguous CSV members: {names}"
                 )
             selected = csv_infos[0]
-            result: CSVInspectionT | None = None
+            zip_result: CSVInspectionT | None = None
             for info in infos:
                 if info.is_dir():
                     continue
                 with archive.open(info, "r") as member:
                     if info is selected:
-                        result = inspect_csv_stream(member)
+                        zip_result = inspect_csv_stream(member)
                     else:
                         for _chunk in iter(lambda: member.read(1024 * 1024), b""):
                             pass
-            if result is None:
+            if zip_result is None:
                 raise AISRetrievalError("selected CSV member could not be read")
             return (
                 AISContainerInspection(
@@ -426,7 +426,7 @@ def inspect_ais_container[CSVInspectionT](
                     safe_archive_member_name(selected.filename),
                     True,
                 ),
-                result,
+                zip_result,
             )
     except AISRetrievalError:
         raise
