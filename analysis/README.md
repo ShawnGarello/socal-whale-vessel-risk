@@ -501,9 +501,11 @@ exact. No one-day performance figure is extrapolated to 153 days.
 The maximum implied speed remained 431,402.639804 knots. That physically
 implausible value confirms that the unfiltered baseline is diagnostic only and
 that an explicit, evidence-supported plausibility rule remains necessary. No
-production threshold was selected, and no real candidate threshold was
-supplied, so real per-cell candidate effects remain unexercised. Source-transfer
-and observational completeness remain unverified; one day does not validate the
+production threshold was selected. Four candidate combinations crossing
+300/1,800-second maximum gaps with 30/50-knot implied-speed ceilings were
+exercised on this one bounded day, including real per-cell effects. Period-wide
+stability and production thresholds remain unresolved. Source-transfer and
+observational completeness remain unverified; one day does not validate the
 analytical period; edge-support treatment remains unresolved; and no production
 vessel grid or exposure result exists.
 
