@@ -332,7 +332,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 164 passing tests using temporary
+- The combined self-contained suite has 216 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
@@ -349,7 +349,16 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   per-cell group/additive totals, point ambiguity, proof that scenarios do not
   repeat intersections, distance/time conservation, invalid grid inputs,
   deterministic evidence identity, overwrite and raw-output refusal, failed-run
-  atomicity, and all CLI boundaries.
+  atomicity, a one-date period manifest leaving 152 dates missing, 153 synthetic
+  dates becoming ready, missing/duplicate/out-of-period/conflicting date
+  entries, bundle-checksum and sidecar tampering, mismatched quality-report and
+  run-metadata identities, path-independent period identity, cross-midnight
+  ordering for one MMSI, absence of an artificial daily partition break,
+  ordering stability regardless of recorded input order, one period identity
+  across real and synthetic bundles regenerated at different paths and
+  execution times, matching/mismatching/absent/partial retrieval
+  `cleaning_reference` linkage, streamed DuckDB scanning without Python
+  materialization, memory and spill validation, and all CLI boundaries.
 - A focused whale-grid command validates the selected NOAA/SWFSC source and the
   exact versioned water-grid input, reprojects source polygons with explicit x/y
   order, detects material source-interior overlap, and transfers modeled density
@@ -419,6 +428,66 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   behavior, coastline and island gaps, and a plausible broad source-scale
   modeled-density pattern, with no unexplained holes, slivers, displacement, or
   projection artifacts.
+- A versioned `multiday_cleaned_ais_input_v1` boundary now assembles explicitly
+  supplied one-date cleaner bundles into one analytical-period input manifest.
+  It initializes all 153 accepted UTC dates and keeps expected date,
+  retrieval-manifest state, independently verified retained-byte/archive state,
+  retrieval-to-cleaner linkage, cleaner-bundle compatibility,
+  missing/conflicting status, and unverified observational completeness as
+  separate states. Every supplied bundle is
+  validated through the existing sidecar and checksum boundary: the exact three
+  files, the supported cleaner contract and processing version, one shared
+  cleaner run identity, matching cleaned-Parquet and quality-report checksums,
+  the exact cleaner schema, exactly one UTC date read from the Parquet and
+  cross-checked against the quality report, membership in the accepted period,
+  and an unchanged `unverified` completeness claim. An identical retry is
+  reusable evidence; different bytes create a conflict that preserves the
+  recorded identity and attempt history. The period is `ready` only when all 153
+  dates hold a compatible verified current entry; timestamp bounds, filenames,
+  and plausible row counts are explicitly recorded as insufficient. When a
+  retrieval manifest is supplied, its per-date `cleaning_reference` checksums
+  are validated against the recorded bundle instead of matching on UTC date
+  alone; a reference naming a different bundle is refused, and an absent or
+  partial reference leaves the linkage explicitly unverified. The deterministic
+  `period_input_id` derives from contracts, expected dates, deterministic
+  cleaned-Parquet checksums and deterministic cleaner run identities. The
+  quality-report and run-metadata checksums are recorded and validated but
+  excluded from it, because the cleaner writes local paths and real execution
+  timestamps into those sidecars; regenerating the same analytical data
+  elsewhere or later therefore keeps one identity, while different recorded
+  bytes still conflict.
+- A focused three-verb CLI (`record`, `status`, `scan`) takes explicit paths,
+  performs no discovery outside them, writes only an explicit ignored
+  `data/interim/` destination, publishes atomically, refuses raw destinations and
+  arbitrary overwrites, and returns distinct exit codes for success, refusal,
+  not-ready, and recorded conflict.
+- The bounded DuckDB relation re-verifies each recorded cleaned-Parquet checksum,
+  requires an explicit memory limit with a unit and an explicit ignored spill
+  directory, and scans daily Parquet partitions without concatenating the period
+  in Python, Pandas, Polars, or PyArrow. Aggregates run in SQL and ordered
+  results stream as bounded Arrow record batches in the deterministic global
+  order MMSI, UTC timestamp, latitude, longitude, vessel type code, vessel group.
+  Consecutive pairs are formed across the whole period per MMSI, so no vessel is
+  split solely because the UTC date changed; the continuity summary reports how
+  many pairs an artificial daily partitioning would have lost. No maximum gap,
+  implied-speed, length, or edge-support rule is applied and no segment or
+  vessel grid is emitted.
+- The 2026-08-28 real read-only smoke run recorded the existing bounded
+  2024-07-15 cleaner bundle and retrieval manifest without modifying either. It
+  reported exactly one compatible date, 152 missing dates, `not_ready` period
+  readiness, and `unverified` observational completeness, with path- and
+  clock-independent `period_input_id` `multiday-ais-aeaf8f584d830ed98ef2b52d`.
+  The retrieval state was recorded separately as entry status `retrieved` with
+  verified retained byte identity and `unverified` independent byte
+  completeness; its own `cleaning_reference` bound to the supplied bundle, so
+  the retrieval-to-cleaner linkage was `verified`. The bounded scan
+  streamed 113,799 observations in three 50,000-row Arrow batches and reported
+  113,620 whole-period consecutive pairs — the same structural segment count the
+  one-bundle evidence harness produced independently for that input. With one
+  date present, cross-date pairs were 0. Three end-to-end scans took
+  approximately 0.63, 0.68, and 0.78 seconds. One date does not validate the
+  analytical period, and neither transfer nor observational completeness was
+  established.
 
 **Not implemented**
 
@@ -427,9 +496,12 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   direct-CSV exercise are complete, but independent transfer completeness,
   monthly/full-period memory safety, a guarded daily bulk download, and the
   153-date retrieval remain unverified or unexercised.
-- The production vessel-activity aggregation proposed in ADR 0018, including a
-  multi-day segment manifest, accepted filtering rules, a final per-cell
+- The production vessel-activity aggregation proposed in ADR 0018, including
+  period segment construction, accepted filtering rules, a final per-cell
   vessel-kilometres dataset, and validated period-wide distinct counts. The
+  multi-day cleaned-input manifest and its bounded, midnight-continuous DuckDB
+  relation exist as the input foundation only; they construct no segment and
+  select no threshold. The
   implemented one-bundle harness supplies non-production per-cell evidence,
   reusable candidate aggregation, vessel-hours comparison and point/distinct-
   vessel context only. One real no-threshold bounded-day run occurred, but real

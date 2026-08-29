@@ -8,12 +8,12 @@ effects of only those candidate values supplied explicitly by the caller.
 from __future__ import annotations
 
 import hashlib
-import json
 import math
 import os
 import uuid
 from collections import defaultdict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -29,8 +29,18 @@ from shapely.geometry.base import BaseGeometry
 from whale_vessel_analysis.ais_processing import (
     AIS_PROCESSING_CONTRACT,
     CLEANED_FILENAME,
-    QUALITY_REPORT_FILENAME,
-    RUN_METADATA_FILENAME,
+)
+from whale_vessel_analysis.cleaned_ais_bundle import (
+    CLEANED_BUNDLE_FILENAMES,
+    CLEANED_COLUMNS,
+    CleanedAISBundleError,
+    canonical_json,
+    read_json_object,
+    require_mapping,
+    sha256_file,
+    validate_bundle_layout,
+    validate_bundle_sidecars,
+    validate_cleaned_schema,
 )
 from whale_vessel_analysis.config import PROJECTED_CRS, ProcessingConfig
 from whale_vessel_analysis.whale_grid import TargetGridInspection, load_target_grid
@@ -44,21 +54,8 @@ TIME_TOLERANCE_SECONDS: Final = 1e-9
 CONSERVATION_RELATIVE_TOLERANCE: Final = 1e-12
 VESSEL_GROUPS: Final = ("passenger", "cargo", "tanker")
 ALL_COMMERCIAL: Final = "all_commercial"
-_EXPECTED_COLUMNS: Final = (
-    "mmsi",
-    "observed_at_utc",
-    "latitude",
-    "longitude",
-    "sog_knots",
-    "cog_degrees",
-    "heading_degrees",
-    "vessel_type_code",
-    "vessel_type_group",
-    "length_m",
-)
-_BUNDLE_FILES: Final = frozenset(
-    {CLEANED_FILENAME, QUALITY_REPORT_FILENAME, RUN_METADATA_FILENAME}
-)
+_EXPECTED_COLUMNS: Final = CLEANED_COLUMNS
+_BUNDLE_FILES: Final = CLEANED_BUNDLE_FILENAMES
 _PROJECT_ROOT: Final = Path(__file__).resolve().parents[3]
 _PROJECT_RAW_ROOT: Final = (_PROJECT_ROOT / "data" / "raw").resolve()
 _PROJECT_INTERIM_ROOT: Final = (_PROJECT_ROOT / "data" / "interim").resolve()
@@ -84,6 +81,15 @@ ALLOCATION_STATUSES: Final[tuple[AllocationStatus, ...]] = (
 
 class VesselActivityEvidenceError(ValueError):
     """Raised when evidence input, processing, or output is invalid."""
+
+
+@contextmanager
+def _shared_bundle_errors() -> Iterator[None]:
+    """Present shared cleaned-bundle failures under this module's error type."""
+    try:
+        yield
+    except CleanedAISBundleError as exc:
+        raise VesselActivityEvidenceError(str(exc)) from exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -249,15 +255,11 @@ def _timestamp(value: datetime) -> str:
 
 
 def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as source:
-        for chunk in iter(lambda: source.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    return sha256_file(path)
 
 
 def _canonical_json(value: object) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return canonical_json(value)
 
 
 def _content_report_id(report: Mapping[str, object]) -> str:
@@ -273,107 +275,26 @@ def _content_report_id(report: Mapping[str, object]) -> str:
 
 
 def _read_json_object(path: Path, label: str) -> Mapping[str, object]:
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise VesselActivityEvidenceError(
-            f"{label} is not readable JSON: {path}"
-        ) from exc
-    if not isinstance(value, dict):
-        raise VesselActivityEvidenceError(f"{label} must contain a JSON object")
-    return cast(Mapping[str, object], value)
+    with _shared_bundle_errors():
+        return read_json_object(path, label)
 
 
 def _mapping(value: object, label: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping):
-        raise VesselActivityEvidenceError(f"{label} must be an object")
-    return cast(Mapping[str, object], value)
+    with _shared_bundle_errors():
+        return require_mapping(value, label)
 
 
 def _validate_bundle_metadata(
     bundle_path: Path, cleaned_sha256: str
 ) -> tuple[str, Mapping[str, object]]:
-    quality_path = bundle_path / QUALITY_REPORT_FILENAME
-    quality_sha256 = _sha256_file(quality_path)
-    quality = _read_json_object(quality_path, "quality report")
-    metadata = _read_json_object(bundle_path / RUN_METADATA_FILENAME, "run metadata")
-    if quality.get("contract") != AIS_PROCESSING_CONTRACT:
-        raise VesselActivityEvidenceError(
-            f"quality report contract must be {AIS_PROCESSING_CONTRACT}"
-        )
-    if metadata.get("contract") != AIS_PROCESSING_CONTRACT:
-        raise VesselActivityEvidenceError(
-            f"run metadata contract must be {AIS_PROCESSING_CONTRACT}"
-        )
-    quality_run_id = quality.get("run_id")
-    if not isinstance(quality_run_id, str) or not quality_run_id.strip():
-        raise VesselActivityEvidenceError("quality report has no valid run_id")
-    quality_output = _mapping(quality.get("output"), "quality report output")
-    if quality_output.get("sha256") != cleaned_sha256:
-        raise VesselActivityEvidenceError(
-            "cleaned Parquet checksum does not match the quality report"
-        )
-    run = _mapping(metadata.get("run"), "run metadata run")
-    run_id = run.get("run_id")
-    if not isinstance(run_id, str) or not run_id.strip():
-        raise VesselActivityEvidenceError("cleaner run metadata has no valid run_id")
-    if quality_run_id != run_id:
-        raise VesselActivityEvidenceError(
-            "quality report and run metadata do not share the same cleaner run_id"
-        )
-    outputs = run.get("outputs")
-    if not isinstance(outputs, list):
-        raise VesselActivityEvidenceError("cleaner run metadata outputs must be a list")
-    cleaned_outputs = [
-        item
-        for item in outputs
-        if isinstance(item, Mapping)
-        and item.get("artifact_id") == "cleaned-ais-parquet"
-    ]
-    if len(cleaned_outputs) != 1 or cleaned_outputs[0].get("sha256") != cleaned_sha256:
-        raise VesselActivityEvidenceError(
-            "cleaned Parquet checksum does not match cleaner run metadata"
-        )
-    quality_outputs = [
-        item
-        for item in outputs
-        if isinstance(item, Mapping) and item.get("artifact_id") == "ais-quality-report"
-    ]
-    if len(quality_outputs) != 1 or quality_outputs[0].get("sha256") != quality_sha256:
-        raise VesselActivityEvidenceError(
-            "quality report checksum does not match cleaner run metadata"
-        )
-    temporal = _mapping(quality.get("temporal_coverage"), "temporal coverage")
-    return run_id, temporal
+    with _shared_bundle_errors():
+        sidecars = validate_bundle_sidecars(bundle_path, cleaned_sha256)
+    return sidecars.cleaner_run_id, sidecars.temporal_coverage
 
 
 def _validate_schema(schema: pa.Schema) -> None:
-    if tuple(schema.names) != _EXPECTED_COLUMNS:
-        raise VesselActivityEvidenceError(
-            "cleaned Parquet columns do not match the one-extract cleaner contract"
-        )
-    expected_types = (
-        pa.types.is_string,
-        pa.types.is_timestamp,
-        pa.types.is_floating,
-        pa.types.is_floating,
-        pa.types.is_floating,
-        pa.types.is_floating,
-        pa.types.is_floating,
-        pa.types.is_integer,
-        pa.types.is_string,
-        pa.types.is_floating,
-    )
-    for field, predicate in zip(schema, expected_types, strict=True):
-        if not predicate(field.type):
-            raise VesselActivityEvidenceError(
-                f"cleaned Parquet column {field.name} has invalid type {field.type}"
-            )
-    timestamp_type = schema.field("observed_at_utc").type
-    if not isinstance(timestamp_type, pa.TimestampType) or timestamp_type.tz is None:
-        raise VesselActivityEvidenceError(
-            "cleaned Parquet observed_at_utc must be timezone-aware"
-        )
+    with _shared_bundle_errors():
+        validate_cleaned_schema(schema)
 
 
 def _finite_number(value: object, label: str, row_index: int) -> float:
@@ -472,17 +393,8 @@ def _observations(table: pa.Table) -> tuple[Observation, ...]:
 
 def load_cleaned_bundle(bundle_path: Path) -> CleanedBundleInspection:
     """Validate and read an explicitly supplied current cleaner bundle."""
-    bundle_path = bundle_path.resolve()
-    if not bundle_path.is_dir():
-        raise VesselActivityEvidenceError(
-            f"cleaned AIS bundle does not exist: {bundle_path}"
-        )
-    entries = {entry.name for entry in bundle_path.iterdir()}
-    if entries != _BUNDLE_FILES:
-        raise VesselActivityEvidenceError(
-            "cleaned AIS bundle must contain exactly cleaned.parquet, "
-            "quality-report.json, and run-metadata.json"
-        )
+    with _shared_bundle_errors():
+        bundle_path = validate_bundle_layout(bundle_path)
     cleaned_path = bundle_path / CLEANED_FILENAME
     cleaned_sha256 = _sha256_file(cleaned_path)
     cleaner_run_id, temporal_coverage = _validate_bundle_metadata(

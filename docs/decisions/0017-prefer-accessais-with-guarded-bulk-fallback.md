@@ -238,6 +238,98 @@ A period is retrieval-complete only when all 153 current entries have status
 timestamps, a plausible row count, or a filename alone never satisfies this
 gate.
 
+## Downstream multi-day cleaned-input boundary
+
+The retrieval manifest above records whether a UTC date was *delivered and
+verified*. A separate implemented boundary,
+`multiday_cleaned_ais_input_v1`, records whether that date's *cleaned analytical
+input* exists and is compatible. The two are deliberately different manifests
+with different contracts, and neither satisfies the other.
+
+The period manifest initializes the same complete 153-date calendar and keeps
+one current entry per date. Each entry keeps these separately visible:
+
+1. the expected UTC date;
+2. the retrieval-manifest state for that date, copied read-only from a supplied
+   `noaa_ais_retrieval_manifest_v1`, or `not_supplied`;
+3. the independently verified retained-byte and archive state, taken only from
+   that retrieval boundary and otherwise `unverified`;
+4. the retrieval-to-cleaner linkage, described below;
+5. cleaner-bundle compatibility — the exact three-file bundle, supported cleaner
+   contract and processing version, one shared cleaner run identity, matching
+   cleaned-Parquet and quality-report checksums, the exact cleaner schema,
+   exactly one UTC date read from the Parquet and cross-checked against the
+   quality report's observed date and row count, and membership in the accepted
+   period;
+6. a `missing` or `conflict` status with its reason and attempt history; and
+7. observational completeness, which stays `unverified` for every date and for
+   the period.
+
+An identical bundle re-supplied for a date already recorded is reusable retry
+evidence. Different bytes create a `conflict` that preserves the recorded
+identity and the attempt history rather than replacing them, mirroring the
+retrieval boundary's immutability rule. A bundle whose cleaner reports an
+upgraded completeness claim is refused, so the `unverified` state established
+here cannot be laundered downstream.
+
+The period is `ready` only when all 153 expected dates carry a compatible
+verified current entry. The manifest names what is explicitly insufficient:
+observed timestamp bounds, a filename, and a plausible row count. It also states
+that retrieval transfer completeness is a separate unverified state that neither
+gates nor satisfies cleaned-input readiness.
+
+The `cleaning_reference` this record already specifies is now *bound*, not
+merely co-located. When a supplied retrieval entry carries one, every cleaner
+checksum it names — cleaned Parquet, quality report, run metadata — must equal
+the recorded bundle's. A reference identifying a different bundle is refused and
+nothing is published, so a verified retrieval entry cannot stand beside a cleaned
+input it did not produce simply because their UTC dates agree. An absent or
+partial reference leaves the linkage `unverified` with its reason recorded.
+
+`period_input_id` is derived from the contracts, the expected dates, the
+deterministic cleaned-Parquet checksums, and the deterministic cleaner run
+identities. The quality-report and run-metadata checksums are recorded and
+validated for integrity but excluded from it: this record's own cleaner writes
+local absolute paths and real UTC execution timestamps into those two sidecars,
+so including them would make the identifier change when the same analytical data
+is regenerated in another directory or at another time. Attempt timestamps and
+local paths are likewise provenance rather than identity. Within one manifest,
+different recorded bytes still create a conflict.
+
+The accompanying bounded relation re-verifies each recorded cleaned-Parquet
+checksum, then scans the daily Parquet partitions through DuckDB with an
+explicit memory limit and an explicit spill directory under ignored
+`data/interim/`. The period is never concatenated in Python, Pandas, Polars, or
+PyArrow: aggregates run in SQL and ordered results stream as bounded Arrow
+record batches. Consecutive pairs are formed across the whole period per MMSI,
+so a vessel is not split solely because the UTC date changed. No maximum gap,
+implied-speed, length, or edge-support rule is applied, and no segment or
+vessel-activity grid is produced; those remain owned by
+[ADR 0018](0018-use-vessel-kilometres-for-grid-activity.md).
+
+### What the 2026-08-28 multi-day smoke run did and did not establish
+
+Recording the existing bounded 2024-07-15 cleaner bundle read-only, together
+with this record's retrieval manifest for that date, produced one compatible
+date, 152 missing dates, `not_ready` period readiness, and path- and
+clock-independent `period_input_id` `multiday-ais-aeaf8f584d830ed98ef2b52d`.
+Neither source artifact was modified. The retrieval state was carried across
+truthfully as entry status `retrieved`, retained byte identity `verified`, and
+independent byte completeness `unverified`. That entry's recorded
+`cleaning_reference` named the same cleaned-Parquet, quality-report, and
+run-metadata checksums as the supplied bundle, so the retrieval-to-cleaner
+linkage verified against real evidence. The bounded scan streamed 113,799 observations
+and reported 113,620 whole-period consecutive pairs, matching the structural
+segment count the one-bundle evidence harness produced independently for that
+input.
+
+This exercises the assembly boundary on one real date. It does not retrieve any
+further date, does not establish independent transfer completeness, does not
+establish observational completeness, and does not make the analytical period
+available. **This record stays Proposed.** Full-period acquisition still depends
+on independent transfer-completeness evidence and a measured processing design
+that makes monthly or full-period execution safe.
+
 ## Safe transfer, retry, and resume behavior
 
 - Download to a uniquely named `.partial` file in the target filesystem. Hash

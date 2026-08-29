@@ -139,6 +139,26 @@ produced byte-identical outputs in two clean real-data runs; the exact derived
 output was
 also visually verified in QGIS 4.2.1.
 
+A further implemented boundary assembles explicitly supplied one-date cleaner
+bundles into a versioned multi-day period-input manifest. It keeps expected
+date, retrieval-manifest state, independently verified retained-byte and archive
+state, retrieval-to-cleaner linkage, cleaner-bundle compatibility, missing or
+conflicting status, and unverified observational completeness as separate
+states; it validates a supplied retrieval manifest's own `cleaning_reference`
+checksums against the recorded bundle rather than associating them by date
+alone; it marks the period ready only when all 153 expected dates carry a
+compatible verified current entry; and it derives a period identity from
+contracts, expected dates, deterministic cleaned-Parquet checksums, and
+deterministic cleaner run identities. The quality-report and run-metadata
+checksums are validated for integrity but excluded from that identity, because
+the cleaner records local paths and real execution timestamps inside those
+sidecars. Its bounded DuckDB relation scans the verified daily Parquet
+partitions with an explicit memory limit and spill directory, streams a
+deterministic global ordering as Arrow record batches instead of concatenating
+the period in Python, and preserves same-vessel continuity across midnight. It
+selects no plausibility threshold, constructs no segment, and emits no
+vessel-activity grid.
+
 Python owns or is planned to own:
 
 - source retrieval boundaries and large-tabular handling;
@@ -368,10 +388,16 @@ project layers, and matching precomputed results.
 - Git LFS is not planned for Version 1. Any demonstrated need requires a
   decision record before large binaries are added.
 - The AIS retrieval route remains a Proposed M3 decision. The local supplied-
-  artifact verification boundary is implemented, while network transfer and the
-  real one-day acceptance exercise are not. An entire national season is never
-  staged locally; the detailed retrieval guard belongs to
+  artifact verification boundary and one real bounded one-day compatibility
+  exercise are implemented; network transfer, independent transfer
+  completeness, and analytical-period acquisition are not. An entire national
+  season is never staged locally; the detailed retrieval guard belongs to
   [data/README.md](../data/README.md).
+- The multi-day cleaned-input relation scans daily Parquet partitions through
+  DuckDB under an explicit memory limit and an explicit ignored spill directory,
+  and streams ordered results rather than materializing the period in Python.
+  This bounds the assembly step; it does not establish that full-period
+  retrieval or cleaning is safe.
 
 DuckDB is the production large-tabular boundary per
 [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md). The

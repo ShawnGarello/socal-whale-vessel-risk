@@ -10,9 +10,12 @@ selected NOAA/SWFSC modeled blue-whale density surface to that water grid by
 abundance-conserving area weighting. A separate read-only evidence harness
 diagnoses consecutive observations from one explicitly supplied cleaned AIS
 bundle and can optionally test segment allocation against the exact water-grid
-contract. It does not submit AccessAIS orders, download AIS, process a season
-implicitly, produce a production vessel-activity grid, calculate relative
-exposure, or report inside-versus-outside statistics.
+contract. A further boundary assembles explicitly supplied one-date cleaner
+bundles into a versioned multi-day period-input manifest and scans its verified
+daily Parquet partitions through a bounded DuckDB relation. It does not submit
+AccessAIS orders, download AIS, process a season implicitly, produce a
+production vessel-activity grid, calculate relative exposure, or report
+inside-versus-outside statistics.
 
 Run all commands below from this directory.
 
@@ -35,6 +38,7 @@ python -m uv build
 python -m uv run python -m whale_vessel_analysis --help
 python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help
 python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --help
+python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help
 python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help
 ```
 
@@ -209,6 +213,170 @@ fields. The input CSV and every generated bundle remain local and Git-ignored.
 The command records the supplied path and SHA-256 but does not invent a
 publisher retrieval date; retrieval provenance remains something recorded when
 retrieval occurs.
+
+## Multi-day cleaned AIS period input
+
+A separate command assembles independently verified one-date cleaner bundles
+into one versioned `multiday_cleaned_ais_input_v1` period-input manifest. It
+reads only the paths it is given, writes only the explicit manifest path under
+the ignored `data/interim/` root, and publishes atomically. It downloads
+nothing, selects no plausibility threshold, constructs no segment, and emits no
+vessel-activity grid.
+
+```text
+python -m uv run python -m whale_vessel_analysis.multiday_ais_cli record --manifest ..\data\interim\m3-multiday-ais-foundation\period-manifest.json --cleaned-bundle <cleaner-output-directory> [--cleaned-bundle <another>] [--retrieval-manifest <retrieval-manifest.json>]
+python -m uv run python -m whale_vessel_analysis.multiday_ais_cli status --manifest <period-manifest.json>
+python -m uv run python -m whale_vessel_analysis.multiday_ais_cli scan --manifest <period-manifest.json> --memory-limit 2GB --temp-directory ..\data\interim\m3-multiday-ais-foundation\duckdb-temp [--threads <n>] [--batch-size <rows>] [--require-ready]
+```
+
+Exit codes are explicit: `0` succeeded, `2` refused an input, destination, or
+contract check, `3` succeeded while the analytical period is not ready, and `4`
+recorded a conflicting date entry. Every command prints JSON diagnostics.
+
+### What the contract keeps separate
+
+The manifest starts from all 153 accepted UTC dates in
+[ADR 0005](../docs/decisions/0005-analytical-period.md) and keeps one current
+entry per date. Each entry records these states independently, so none can be
+mistaken for another:
+
+| State | Meaning |
+|---|---|
+| `utc_date` | One expected accepted analytical-period date. Entries are unique and cover the complete period. |
+| `retrieval_manifest_state` | What the optional read-only `noaa_ais_retrieval_manifest_v1` boundary recorded for that date, or `not_supplied`. |
+| `independent_retention_state` | Retained-byte identity, independent byte completeness, and archive verification, taken only from the retrieval boundary. These stay `unverified` without it. |
+| `retrieval_to_cleaner_linkage` | Whether the retrieval manifest's own `cleaning_reference` checksums bind to this recorded bundle. `not_supplied` without a retrieval manifest, `unverified` when no reference exists, `verified` when all three cleaner checksums match. A reference naming a different bundle is refused, not recorded. |
+| `cleaner_bundle_compatibility` | The verified three-file bundle: cleaner contract, processing version, shared run identity, cleaned-Parquet, quality-report and run-metadata checksums, row count, exclusive UTC date, and the cleaner's own temporal coverage. |
+| `status` | `missing`, `compatible`, or `conflict`, with a reason and append-only attempt history. |
+| `observational_completeness` | Always `unverified`, per date and for the period. Retrieval and cleaning integrity cannot establish receiver coverage or records that were never observed. |
+
+### What a supplied bundle must satisfy
+
+Every supplied bundle is validated through the existing sidecar and checksum
+boundary before it can occupy a date:
+
+1. exactly `cleaned.parquet`, `quality-report.json`, and `run-metadata.json`;
+2. the supported cleaner contract `noaa_marine_cadastre_ais_extract_v2` and its
+   `clean-and-scope-ais-extract` processing version `2.0.0`;
+3. one cleaner run identity shared by the quality report and the run metadata;
+4. cleaned-Parquet and quality-report checksums matching both sidecars;
+5. the exact cleaner output schema, including a timezone-aware timestamp;
+6. exactly one UTC date, read from the Parquet through DuckDB and cross-checked
+   against the quality report's observed date and row count;
+7. that date inside the accepted period; and
+8. an unchanged `unverified` completeness claim — an upgraded claim is refused.
+
+When a retrieval manifest is supplied, its per-date `cleaning_reference` is
+bound to the recorded bundle rather than merely sitting beside it. Every
+checksum the reference carries — cleaned Parquet, quality report, run metadata —
+must equal the recorded bundle's. A reference naming a different bundle is
+refused and nothing is published, so a retrieval entry cannot be presented as
+evidence for a cleaned input it did not produce. A reference that is absent, or
+that carries only some of the three checksums, leaves the linkage `unverified`
+with the reason recorded.
+
+A date already holding a compatible entry accepts an identical bundle as
+reusable retry evidence. Different bytes create a `conflict` that preserves the
+recorded identity and the attempt history rather than replacing them; a further
+bundle for a conflicting date is recorded as `conflict_pending_review`. A date
+outside the accepted period, an incomplete bundle, tampered bytes, or mismatched
+sidecar identities are refused without publishing anything.
+
+### Readiness and identity
+
+`period_input_readiness` is `ready` only when all 153 expected dates hold a
+compatible verified current entry. One valid date produces an explicitly
+incomplete manifest listing 152 missing dates. The manifest names what is
+deliberately insufficient: observed timestamp bounds, a filename, and a
+plausible row count are not evidence; retrieval transfer completeness is a
+separate unverified state; and observational completeness remains unverified.
+
+`period_input_id` is derived from the contracts, the expected dates, and the
+per-date analytical identity: the deterministic cleaned-Parquet checksum, the
+deterministic cleaner run identity, the row count, and the observed UTC date.
+
+The quality-report and run-metadata checksums are **recorded and validated** on
+every bundle, but they are deliberately **excluded from that identity**. The
+cleaner writes local absolute paths and real UTC execution timestamps into those
+two sidecars, so regenerating the same analytical data in another directory or
+at another time changes their bytes while the cleaned Parquet and the cleaner
+run ID stay identical. Including them would have made a supposedly stable
+identifier depend on where and when the cleaner ran. Attempt timestamps and
+local paths are likewise kept as provenance in `local_provenance` and in the
+attempt history rather than in the identity.
+
+Equivalent identity is not tolerance of different bytes: within one manifest, a
+second bundle whose recorded checksums differ from the current entry still
+creates a `conflict`. Loading a manifest recomputes both the readiness summary
+and the identity and refuses a file whose recorded values disagree.
+
+### Bounded DuckDB scanning
+
+`scan` opens the manifest's compatible daily Parquet partitions as one DuckDB
+relation. It re-verifies every recorded cleaned-Parquet checksum first, then
+requires an explicit memory limit with a unit and an explicit temporary/spill
+directory under ignored `data/interim/`; a uniquely named spill subdirectory is
+created for the run and removed afterwards. Scanned per-date row counts must
+match the manifest.
+
+The full period is never concatenated in Python, Pandas, Polars, or PyArrow.
+Aggregates are computed in SQL, and ordered results are streamed as bounded
+Arrow record batches. The deterministic global order is `mmsi`,
+`observed_at_utc`, `latitude`, `longitude`, `vessel_type_code`,
+`vessel_type_group`, and it does not depend on the order bundles were recorded
+in.
+
+Continuity is preserved across midnight: consecutive pairs are formed over the
+whole period per MMSI, so a vessel is not split solely because the UTC date
+changed. The reported `continuity` summary compares that whole-period adjacency
+with an artificially date-partitioned one and states how many pairs the daily
+partitioning would have lost. This is a continuity diagnostic only. No maximum
+interpolation gap, implied-speed rule, length threshold, or edge-support
+treatment is applied, and no segment or vessel-activity grid is produced.
+
+### Verified real read-only smoke run
+
+On 2026-08-28 the command recorded the existing bounded 2024-07-15 cleaner
+bundle read-only, together with the existing retrieval manifest for that date.
+Neither source was modified; the cleaned Parquet, quality report, run metadata,
+and retrieval manifest kept their prior checksums.
+
+- One compatible date, `2024-07-15`, with 152 missing expected dates and
+  `period_input_readiness: not_ready`.
+- Cleaned Parquet SHA-256
+  `efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`,
+  quality report SHA-256
+  `744d358759774072b34f62fdbc7e9e3c4d39fe2c537cc03ce4d37b05c72e92ea`,
+  run metadata SHA-256
+  `54cd72e719ba56e112ac146195d1df9e5bdda99ab588704897210cea35423637`,
+  and cleaner run ID `ais-362502c6a37b53e681b745f5`.
+- Path- and clock-independent `period_input_id`
+  `multiday-ais-aeaf8f584d830ed98ef2b52d`. A repeat invocation with the same
+  bundle is recorded as `identical_retry` and reproduces that identifier while
+  appending a second attempt, so the manifest file bytes change and the content
+  identity does not.
+- The retrieval state was recorded separately and truthfully: entry status
+  `retrieved`, retained byte identity `verified` for the 59,497,346-byte source
+  with SHA-256
+  `694ea3e8364de21467dea0affeb77e954d339e155d316dc4115b87ac01ffcca3`,
+  and independent byte completeness `unverified`.
+- `retrieval_to_cleaner_linkage` was `verified`: the retrieval manifest's own
+  `cleaning_reference` named the same cleaned-Parquet, quality-report, and
+  run-metadata checksums as the supplied bundle.
+- Period `independent_transfer_completeness` and `observational_completeness`
+  both remained `unverified`.
+- `scan` with `--memory-limit 2GB` streamed 113,799 observations in three
+  50,000-row Arrow batches and reported 113,620 whole-period consecutive pairs.
+  That count equals the structural segment count the one-bundle evidence harness
+  independently produced for the same input. With only one date present,
+  `cross_utc_date_pairs` and `pairs_lost_to_date_partitioning` were both 0, as
+  expected. Three end-to-end `scan` invocations took approximately 0.63, 0.68,
+  and 0.78 seconds.
+
+This is one date. It does not validate the analytical period, does not establish
+transfer or observational completeness, and produces no analytical result. The
+generated manifest and spill directory stay under ignored
+`data/interim/m3-multiday-ais-foundation/`.
 
 ## Vessel-activity evidence harness
 
