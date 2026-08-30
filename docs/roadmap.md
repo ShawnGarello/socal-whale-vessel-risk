@@ -68,7 +68,7 @@ Obtain and inspect the actual candidate datasets, and determine what analysis th
 
 | Deliverable | State |
 |---|---|
-| A small, retrievable sample of each candidate dataset, inspected locally | **Done.** Sixteen artifacts, each with a recorded size and SHA-256 |
+| A small, retrievable sample of each candidate dataset, inspected locally | **Done.** Eighteen artifacts, each with a recorded size and SHA-256 |
 | For each source: confirmed format, CRS, spatial extent and resolution, temporal coverage, value meaning and units, and licence or terms of use | **Done**, except redistribution terms for the VSR geometry |
 | A written definition of the Southern California study area: extent, projected CRS, and analysis grid | **Partial.** Projected CRS ([0003](decisions/0003-projected-coordinate-system.md)) and grid ([0004](decisions/0004-analysis-grid-resolution.md)) are accepted. Extent is split: the **map extent is proposed**, the **analytical domain is open** ([0002](decisions/0002-southern-california-study-area-extent.md)) |
 | A decision on the analytical period | **Done** ([0005](decisions/0005-analytical-period.md)) |
@@ -80,7 +80,7 @@ Obtain and inspect the actual candidate datasets, and determine what analysis th
 
 | Criterion | State |
 |---|---|
-| Every Version 1 input has an identified, retrievable, authoritative source with recorded provenance | **Met.** Source URL or query endpoint, method and parameters, retrieval date, local filename, byte size and SHA-256 are recorded for all sixteen artifacts in [data-sources.md](data-sources.md), and `python tools/m2_verify.py verify` checks them against the local files. This criterion was previously claimed as met when the checksums did not exist |
+| Every Version 1 input has an identified, retrievable, authoritative source with recorded provenance | **Met.** Source URL or query endpoint, method and parameters, retrieval date, local filename, byte size and SHA-256 are recorded for all eighteen artifacts in [data-sources.md](data-sources.md), and `python tools/m2_verify.py verify` parses that register and verifies all eighteen artifact identities against the local files. The separate [analytical-domain evidence command](analytical-domain-evidence.md#reproducible-calculation) regenerates the candidate-domain report and mask. This criterion was previously claimed as met when the checksums did not exist |
 | The whale model layer's values are understood well enough to state what they mean in the application legend | **Met.** `DENSITY` is animals per km², publisher-defined, with a per-cell coefficient of variation |
 | The AIS extract needed for the study area and analytical period has been scoped, and its volume is known | **Met, with the volume qualified.** The period is fixed and the retrieval footprint is bounded, but the volume is an **order-of-magnitude planning estimate** — 60 to 90 million study-area records, ≈56 GB of transfer — extrapolated from five 34-minute windows all at the same time of day. It is not a measurement and nothing analytical rests on it |
 | The VSR boundary geometry is confirmed as obtainable from an authoritative source, or a documented derivation from published coordinates is agreed on | **Met.** A closed, land-clipped polygon is retrievable, and seven of the program's eight published points lie exactly on its boundary |
@@ -97,7 +97,7 @@ Neither is more important than the other for calling M2 done — both criteria a
 
 ### Open items, in order of how much they constrain the work
 
-1. **The analytical and statistical domain is undecided.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md) is **Proposed**, not Accepted. NOAA states AIS coverage is unavailable more than 40–50 miles offshore, and 42.3% of the proposed water area — holding 34.6% of the in-box VSR zone — lies west of −120.5, where the sampled record density falls off. **A snapshot cannot distinguish sparse reception from low traffic**, and the two imply opposite treatments. Until a domain is accepted, **no inside-versus-outside statistic may be published.** Three candidates and the evidence each needs are in the record.
+1. **The analytical and statistical domain is undecided.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md) is **Proposed**, not Accepted. The [analytical-domain evidence](analytical-domain-evidence.md) now tests authoritative-coastline and NAIS-receiver candidates across all 40/50-mile and statute/nautical interpretations with fractional 5 km-grid geometry. VSR representation varies materially from 66.63% to 95.72%, while NOAA neither states the unit nor guarantees observation everywhere inside the stated range. **Broadcast-point density cannot distinguish sparse reception from low traffic.** Until the publisher supplies the exact threshold and inside-boundary treatment or sufficient 2024 receiver coverage/operations, **no inside-versus-outside statistic may be published.**
 
 2. **Redistribution of the VSR zone geometry is unresolved.** Publicly shared by BWBS/CMSF with attribution and no stated prohibition, but no grant either, and the publisher is not a federal agency. Options: obtain permission, reference the published service rather than copy it, or substitute a federally published geometry. **Gates public hosting, not analysis.**
 
@@ -362,7 +362,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 261 passing tests using temporary
+- The combined self-contained suite has 278 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
