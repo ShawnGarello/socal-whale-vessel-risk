@@ -371,11 +371,13 @@ def _box_filter(geometries: np.ndarray, values: Mapping[str, float]) -> np.ndarr
 
 
 def _write_masks(path: Path, measurements: list[CandidateMeasurement]) -> str:
+    geometries = [shapely.normalize(item.geometry) for item in measurements]
+    geometry_types = sorted({geometry.geom_type for geometry in geometries})
     records = {
         "scenario_id": [item.scenario.id for item in measurements],
         "basis": [item.scenario.basis for item in measurements],
         "distance_m": [item.scenario.distance_m for item in measurements],
-        "geometry": [shapely.normalize(item.geometry).wkb for item in measurements],
+        "geometry": [geometry.wkb for geometry in geometries],
     }
     geo = {
         "version": "1.1.0",
@@ -383,7 +385,7 @@ def _write_masks(path: Path, measurements: list[CandidateMeasurement]) -> str:
         "columns": {
             "geometry": {
                 "encoding": "WKB",
-                "geometry_types": ["MultiPolygon"],
+                "geometry_types": geometry_types,
                 "crs": CRS.from_epsg(3310).to_json_dict(),
             }
         },

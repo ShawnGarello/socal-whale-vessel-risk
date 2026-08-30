@@ -66,16 +66,18 @@ VSR densification is necessary. Projecting only stored vertices turns long geogr
 Evidence identity from the clean run:
 
 - Evidence ID: `domain-evidence-0b3b7aa4ce0c050303886751`
-- Report: 6,752 bytes; SHA-256 `74f4caecf392f7c6df8cd162566f4c7b494bddfb58f45acd27ccc22faad91f10`
-- Eight-feature EPSG:3310 mask GeoParquet: 887,811 bytes; SHA-256 `b521fed1378e6b946ec3c1b114f941583c16d683d2b5c0f9ba3444601131daf5`
+- Report: 6,752 bytes; SHA-256 `eb7963f6ccf625b1547d01ae768dadabfb3f47207d29c24fa5df47e387df5d98`
+- Eight-feature EPSG:3310 mask GeoParquet: 887,833 bytes; SHA-256 `4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77`
 - Exact water-grid SHA-256: `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`
 - Configuration SHA-256: `ce408896a0f2c86e50f895aa120e3e2a1538695a9a67e5adda58e5a9669a7fee`
+
+The mask GeoParquet metadata declares both `Polygon` and `MultiPolygon`, matching the six Polygon and two MultiPolygon geometries decoded from its WKB column. The evidence ID and measurements are unchanged; the report checksum changed because the report records the corrected mask checksum.
 
 Both outputs remain under ignored `data/interim/`; neither is a production dataset.
 
 ### Visual verification
 
-On 2026-08-28, QGIS 4.2.1 (Belém do Pará) opened the exact mask GeoParquet with SHA-256 `b521fed1378e6b946ec3c1b114f941583c16d683d2b5c0f9ba3444601131daf5` directly through OGR. QGIS reported eight valid EPSG:3310 features and aligned them with the exact 4,516-cell EPSG:3310 water grid and the source VSR polygon. A 2,200 × 1,400 ignored render (SHA-256 `7d2f2da26410440908471ec4b3c78e50bab4dbcfdce892c7d25717fc8147f67f`) was inspected at full extent. It showed the expected nested coast- and receiver-distance boundaries, circular receiver influence around offshore-island sites, coastline and island gaps, exact truncation by biological support/map edges, and alignment with the VSR boundary. No unexplained displacement, axis reversal, hole filling, spike, or projection artifact was visible. The render and script remain ignored verification evidence and do not modify generation lineage.
+On 2026-08-29, QGIS 4.2.1 (Belém do Pará) opened the corrected mask GeoParquet with SHA-256 `4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77` directly through OGR. QGIS reported eight valid EPSG:3310 features and aligned them with the exact 4,516-cell EPSG:3310 water grid and the source VSR polygon. A 2,200 × 1,400 ignored render (SHA-256 `7d2f2da26410440908471ec4b3c78e50bab4dbcfdce892c7d25717fc8147f67f`) was inspected at full extent. It showed the expected nested coast- and receiver-distance boundaries, circular receiver influence around offshore-island sites, coastline and island gaps, exact truncation by biological support/map edges, and alignment with the VSR boundary. No unexplained displacement, axis reversal, hole filling, spike, or projection artifact was visible. The render and script remain ignored verification evidence and do not modify generation lineage.
 
 ## Candidate measurements
 
