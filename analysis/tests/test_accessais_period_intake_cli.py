@@ -11,6 +11,7 @@ import pytest
 from whale_vessel_analysis import accessais_period_intake, multiday_ais
 from whale_vessel_analysis.accessais_period_intake_cli import main
 from whale_vessel_analysis.ais import AIS_PUBLISHED_HEADER
+from whale_vessel_analysis.multiday_ais import load_period_manifest
 
 
 def _roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
@@ -27,9 +28,9 @@ def _roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return interim
 
 
-def _write_csv(path: Path, timestamp: str) -> None:
+def _write_csv(path: Path, timestamp: str, *, mmsi: str = "123456789") -> None:
     values = {
-        "MMSI": "123456789",
+        "MMSI": mmsi,
         "BaseDateTime": timestamp,
         "LAT": "34.0",
         "LON": "-118.0",
@@ -142,3 +143,99 @@ def test_cli_conflict_has_distinct_exit_and_preserves_output(
     assert "conflict recorded" in captured.err
     assert (intake / "daily" / "2024-07-01.csv").is_file()
     assert not (intake / "daily" / "2024-07-02.csv").exists()
+
+
+def test_shared_cleaned_root_refuses_conflicting_overlap_without_replacement(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    interim = _roots(tmp_path, monkeypatch)
+    first = tmp_path / "first.csv"
+    second = tmp_path / "second.csv"
+    _write_csv(first, "2024-07-01T00:00:00", mmsi="100000001")
+    _write_csv(second, "2024-07-01T00:00:00", mmsi="199999999")
+    manifest = interim / "period.json"
+    cleaned_root = interim / "cleaned"
+
+    def run_args(source: Path, name: str) -> list[str]:
+        return [
+            "run",
+            "--input",
+            str(source),
+            "--intake-dir",
+            str(interim / "intake" / name),
+            "--requested-start",
+            "2024-07-01",
+            "--requested-end",
+            "2024-07-01",
+            "--cleaned-root",
+            str(cleaned_root),
+            "--period-manifest",
+            str(manifest),
+        ]
+
+    assert main(run_args(first, "first")) == 3
+    capsys.readouterr()
+    established_bundle = cleaned_root / "2024-07-01"
+    established_bytes = {
+        path.name: path.read_bytes() for path in established_bundle.iterdir()
+    }
+
+    assert main(run_args(second, "second")) == 2
+    captured = capsys.readouterr()
+    assert "does not belong to the established daily slice" in captured.err
+    assert established_bytes == {
+        path.name: path.read_bytes() for path in established_bundle.iterdir()
+    }
+
+    stored = load_period_manifest(manifest)
+    entry = next(item for item in stored["dates"] if item["utc_date"] == "2024-07-01")
+    assert entry["status"] == "compatible"
+    assert [attempt["outcome"] for attempt in entry["attempt_history"]] == ["recorded"]
+    assert stored["period_input_readiness"]["compatible_date_count"] == 1
+    assert stored["period_input_readiness"]["conflicting_date_count"] == 0
+
+
+def test_run_records_independently_produced_cleaner_conflict_with_exit_four(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    interim = _roots(tmp_path, monkeypatch)
+    first = tmp_path / "first.csv"
+    second = tmp_path / "second.csv"
+    _write_csv(first, "2024-07-01T00:00:00", mmsi="100000001")
+    _write_csv(second, "2024-07-01T00:00:00", mmsi="199999999")
+    manifest = interim / "period.json"
+
+    def run_args(source: Path, name: str) -> list[str]:
+        return [
+            "run",
+            "--input",
+            str(source),
+            "--intake-dir",
+            str(interim / "intake" / name),
+            "--requested-start",
+            "2024-07-01",
+            "--requested-end",
+            "2024-07-01",
+            "--cleaned-root",
+            str(interim / "cleaned" / name),
+            "--period-manifest",
+            str(manifest),
+        ]
+
+    assert main(run_args(first, "first")) == 3
+    capsys.readouterr()
+    assert main(run_args(second, "second")) == 4
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["conflicting_dates"] == ["2024-07-01"]
+
+    stored = load_period_manifest(manifest)
+    entry = next(item for item in stored["dates"] if item["utc_date"] == "2024-07-01")
+    assert entry["status"] == "conflict"
+    assert [attempt["outcome"] for attempt in entry["attempt_history"]] == [
+        "recorded",
+        "conflict",
+    ]

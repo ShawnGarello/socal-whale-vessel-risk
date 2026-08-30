@@ -9,9 +9,10 @@
 > ArcGIS Pro is optional and unnecessary for Version 1; no ArcGIS Pro project
 > is planned as a repository component. The analysis package validates source
 > inputs and configuration, verifies and manifests one explicitly supplied AIS
-> delivery, partitions one explicitly supplied multi-date AccessAIS delivery
-> into deterministic daily inputs, processes those inputs sequentially into
-> atomic local bundles, records them resumably in the period-input manifest,
+> delivery, partitions explicitly supplied multi-date AccessAIS deliveries one
+> at a time into deterministic daily inputs, processes those inputs
+> sequentially into atomic local bundles, and accumulates them resumably in the
+> period-input manifest,
 > generates the projected per-cell water grid, and
 > transfers the selected modeled blue-whale density surface to that grid by
 > abundance-conserving area weighting. QGIS is the local inspection and visual-
@@ -252,19 +253,25 @@ ADR 0017 remains Proposed.
 
 **Author-supplied multi-date AccessAIS intake**
 
-The local intake accepts one explicit direct CSV or safe ZIP plus inclusive
-requested dates. It performs no order submission, scraping, email automation,
-cookie storage, or URL retention. `prepare` streams and accounts for every
-source row, publishes deterministic one-date CSV slices atomically under
-ignored `data/interim/`, and records malformed timestamps and out-of-request
-dates without silently dropping them. `run` invokes the existing one-date
-cleaner sequentially and records each compatible bundle immediately in the
-existing period manifest, so a retry skips verified successful dates.
+The local intake accepts one explicit direct CSV or safe ZIP at a time plus its
+inclusive requested dates. It performs no order submission, scraping, email
+automation, cookie storage, or URL retention. `prepare` streams and accounts
+for every source row, publishes deterministic one-date CSV slices atomically
+under ignored `data/interim/`, and records malformed timestamps and
+out-of-request dates without silently dropping them. Repeated `run` invocations
+use unique delivery intake directories and the same cleaned root and period
+manifest. Each invokes the existing one-date cleaner sequentially and records
+each compatible bundle immediately, so retry or identical overlap skips only a
+verified successful identity. A conflicting overlapping slice through this
+shared cleaned root is refused with exit code `2` before replacing the
+established bundle. Exit code `4` is reserved for a delivery conflict at an
+already-owned intake directory or a conflict recorded from an explicitly
+supplied, independently produced incompatible cleaner bundle.
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> [--source-content-length <independently-retained-byte-count>]
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli status --intake-dir ..\data\interim\accessais-period-intake\delivery
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli status --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id>
 ```
 
 The delivery contract keeps independent byte-transfer completeness,
@@ -272,6 +279,12 @@ observational completeness, and 153-date period readiness separate. None is
 upgraded by a plausible row count, timestamp range, filename, or presence of
 all requested dates. Contract details and the bounded one-day compatibility
 evidence are in the [analysis README](../analysis/README.md#prepare-one-author-supplied-multi-date-accessais-delivery).
+That section also gives the exact smallest useful author-run pilot: 2024-07-15
+through 2024-07-16 UTC, WGS 84 longitude -122 to -117 and latitude 32 to 35,
+only after the current AccessAIS estimate is confirmed below 2 GB. It lists the
+non-sensitive provenance and independent transfer/archive evidence to retain.
+The repository does not submit or automate that author-controlled pilot, and
+the pilot does not authorize five later monthly orders.
 
 **One-extract AIS processing**
 
@@ -852,7 +865,7 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 278 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 283 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -860,8 +873,10 @@ deterministic lineage/configuration hashing, configurable source locators, the
 retrieval manifest and its separated completeness states, source byte identity,
 CSV/ZIP content detection, archive safety and CRC validation, exact-date
 enforcement, retry/conflict behavior, redaction, atomic interim extraction,
-multi-date delivery partitioning, row conservation, malformed and
-out-of-request timestamp accounting, deterministic daily identities,
+multi-date delivery partitioning, row conservation, separate disjoint-delivery
+accumulation, identical overlap, conflicting cleaner identity with prior-date
+preservation and distinct CLI diagnostics, malformed and out-of-request
+timestamp accounting, deterministic daily identities,
 canonical slice-path and managed-destination safeguards, interruption/resume
 behavior, strict row-count typing, per-date manifest/slice reconciliation,
 daily-cleaner compatibility, period-manifest population, and refusal to upgrade
