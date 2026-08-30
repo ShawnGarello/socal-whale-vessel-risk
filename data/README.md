@@ -259,8 +259,11 @@ keeps at most eight daily CSV writers open. It records source byte size and
 SHA-256, byte-detected content type, archive members and CRC state, the exact
 NOAA header, requested dates, all observed valid UTC dates, rows by date,
 malformed/unassignable timestamps, valid out-of-request rows, and every daily
-slice checksum. Row accounting must reconcile before atomic publication. Input
-dates need not be contiguous in source row order.
+slice checksum. Row accounting must reconcile before atomic publication.
+Validation requires non-boolean integer row counts, exact agreement between
+slice dates and reported present requested dates, and per-date equality between
+each slice and `rows_by_utc_date`; matching totals alone do not pass. Input dates
+need not be contiguous in source row order.
 
 Daily slices use the exact published header, contain one valid UTC date, live
 under ignored `data/interim/`, and carry stable path-independent identities.

@@ -331,6 +331,121 @@ def test_tampered_manifest_rejects_noncanonical_daily_slice_path(
         load_delivery_manifest(intake)
 
 
+def test_manifest_rejects_redistributed_per_date_row_counts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    intake = interim / "intake"
+    _write_csv(
+        source,
+        [
+            _row("2024-07-01T00:00:00", mmsi="100000001"),
+            _row("2024-07-01T00:01:00", mmsi="100000002"),
+            _row("2024-07-02T00:00:00", mmsi="200000001"),
+        ],
+    )
+    prepare_accessais_delivery(source, intake, REQUESTED, clock=_clock)
+    manifest_path = intake / "delivery-manifest.json"
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload["rows_by_utc_date"] = {"2024-07-01": 1, "2024-07-02": 2}
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(
+        AccessAISPeriodIntakeError,
+        match="row_count does not match rows_by_utc_date",
+    ):
+        load_delivery_manifest(intake)
+
+
+@pytest.mark.parametrize(
+    ("location", "value"),
+    [
+        pytest.param("row-accounting", "1", id="row-accounting-string"),
+        pytest.param("row-accounting", True, id="row-accounting-boolean"),
+        pytest.param("rows-by-date", "1", id="rows-by-date-string"),
+        pytest.param("rows-by-date", True, id="rows-by-date-boolean"),
+        pytest.param("daily-slice", "1", id="daily-slice-string"),
+        pytest.param("daily-slice", True, id="daily-slice-boolean"),
+    ],
+)
+def test_manifest_rejects_string_and_boolean_row_counts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    location: str,
+    value: object,
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    intake = interim / "intake"
+    _write_csv(source, [_row("2024-07-01T00:00:00")])
+    prepare_accessais_delivery(source, intake, REQUESTED, clock=_clock)
+    manifest_path = intake / "delivery-manifest.json"
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if location == "row-accounting":
+        payload["row_accounting"]["source_data_rows"] = value
+    elif location == "rows-by-date":
+        payload["rows_by_utc_date"]["2024-07-01"] = value
+    elif location == "daily-slice":
+        payload["daily_slices"][0]["row_count"] = value
+    else:
+        raise AssertionError(f"unhandled count location: {location}")
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(AccessAISPeriodIntakeError, match="non-boolean integer count"):
+        load_delivery_manifest(intake)
+
+
+def test_manifest_rejects_missing_daily_slice_date(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    intake = interim / "intake"
+    _write_csv(
+        source,
+        [
+            _row("2024-07-01T00:00:00", mmsi="100000001"),
+            _row("2024-07-02T00:00:00", mmsi="200000001"),
+        ],
+    )
+    prepare_accessais_delivery(source, intake, REQUESTED, clock=_clock)
+    manifest_path = intake / "delivery-manifest.json"
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload["daily_slices"] = [
+        item for item in payload["daily_slices"] if item["utc_date"] == "2024-07-01"
+    ]
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(
+        AccessAISPeriodIntakeError,
+        match="slice dates must exactly match present_requested_utc_dates",
+    ):
+        load_delivery_manifest(intake)
+
+
+def test_manifest_rejects_unexpected_daily_slice_date(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    intake = interim / "intake"
+    _write_csv(source, [_row("2024-07-01T00:00:00")])
+    prepare_accessais_delivery(source, intake, REQUESTED, clock=_clock)
+    manifest_path = intake / "delivery-manifest.json"
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    unexpected = dict(payload["daily_slices"][0])
+    unexpected["utc_date"] = "2024-07-02"
+    payload["daily_slices"].append(unexpected)
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(
+        AccessAISPeriodIntakeError,
+        match="slice dates must exactly match present_requested_utc_dates",
+    ):
+        load_delivery_manifest(intake)
+
+
 def test_orchestration_refuses_tampered_slice_traversal_before_cleaning(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
