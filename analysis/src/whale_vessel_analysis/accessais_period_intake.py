@@ -45,6 +45,7 @@ from whale_vessel_analysis.multiday_ais import (
     load_period_manifest,
     period_status,
     record_cleaned_days,
+    validate_manifest_destination,
 )
 
 ACCESSAIS_PERIOD_DELIVERY_CONTRACT: Final = "accessais_period_delivery_v1"
@@ -243,6 +244,38 @@ def validate_intake_directory(path: Path, label: str) -> Path:
     if resolved.exists() and not resolved.is_dir():
         raise AccessAISPeriodIntakeError(f"{label} is not a directory: {resolved}")
     return resolved
+
+
+def _paths_overlap(first: Path, second: Path) -> bool:
+    return (
+        first == second or first.is_relative_to(second) or second.is_relative_to(first)
+    )
+
+
+def _validate_orchestration_destinations(
+    intake_directory: Path, cleaned_root: Path, period_manifest_path: Path
+) -> tuple[Path, Path, Path]:
+    """Resolve and reject overlapping managed paths before any output is written."""
+    intake = validate_intake_directory(intake_directory, "intake directory")
+    cleaned = validate_intake_directory(cleaned_root, "cleaned bundle root")
+    if _paths_overlap(intake, cleaned):
+        raise AccessAISPeriodIntakeError(
+            "intake directory and cleaned bundle root must be disjoint"
+        )
+    manifest = period_manifest_path.resolve()
+    if manifest == intake or manifest.is_relative_to(intake):
+        raise AccessAISPeriodIntakeError(
+            "period manifest cannot be placed inside the intake directory"
+        )
+    if manifest == cleaned or manifest.is_relative_to(cleaned):
+        raise AccessAISPeriodIntakeError(
+            "period manifest cannot be placed inside the cleaned bundle root"
+        )
+    try:
+        manifest = validate_manifest_destination(manifest)
+    except MultiDayAISInputError as exc:
+        raise AccessAISPeriodIntakeError(str(exc)) from exc
+    return intake, cleaned, manifest
 
 
 def _write_json(path: Path, payload: Mapping[str, object]) -> None:
@@ -751,6 +784,10 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
     daily_directory = resolved / DAILY_DIRECTORY_NAME
     if not daily_directory.is_dir():
         raise AccessAISPeriodIntakeError("delivery daily slice directory is missing")
+    if not daily_directory.resolve().is_relative_to(resolved):
+        raise AccessAISPeriodIntakeError(
+            "delivery daily slice directory escapes the intake directory"
+        )
     slices = payload.get("daily_slices")
     if not isinstance(slices, list):
         raise AccessAISPeriodIntakeError("delivery daily_slices must be a list")
@@ -760,14 +797,30 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
     for raw_slice in slices:
         if not isinstance(raw_slice, dict):
             raise AccessAISPeriodIntakeError("every daily slice must be an object")
-        utc_date = cast(str, raw_slice.get("utc_date"))
+        utc_date_value = raw_slice.get("utc_date")
+        if not isinstance(utc_date_value, str):
+            raise AccessAISPeriodIntakeError("daily slice utc_date must be a string")
+        utc_date = utc_date_value
         if utc_date in observed_slice_dates or utc_date not in requested.dates():
             raise AccessAISPeriodIntakeError(
                 "daily slices must have unique in-request UTC dates"
             )
         observed_slice_dates.add(utc_date)
         expected_names.add(f"{utc_date}.csv")
+        expected_relative_path = f"{DAILY_DIRECTORY_NAME}/{utc_date}.csv"
+        relative_path = raw_slice.get("relative_path")
+        if not isinstance(relative_path, str) or relative_path != (
+            expected_relative_path
+        ):
+            raise AccessAISPeriodIntakeError(
+                f"daily slice {utc_date} relative_path must be exactly "
+                f"{expected_relative_path}"
+            )
         path = daily_directory / f"{utc_date}.csv"
+        if not path.resolve().is_relative_to(resolved):
+            raise AccessAISPeriodIntakeError(
+                f"daily slice {utc_date} escapes the intake directory"
+            )
         if not path.is_file() or sha256_file(path) != raw_slice.get("sha256"):
             raise AccessAISPeriodIntakeError(
                 f"daily slice {utc_date} is missing or does not match its checksum"
@@ -977,7 +1030,7 @@ def _daily_slice_records(
     return tuple(
         (
             cast(str, item["utc_date"]),
-            directory / cast(str, item["relative_path"]),
+            directory / DAILY_DIRECTORY_NAME / f"{cast(str, item['utc_date'])}.csv",
             cast(str, item["sha256"]),
         )
         for item in sorted(slices, key=lambda item: cast(str, item["utc_date"]))
@@ -1041,6 +1094,11 @@ def orchestrate_accessais_delivery(
     ),
 ) -> OrchestrationResult:
     """Prepare, sequentially clean, and immediately record each available date."""
+    intake_directory, cleaned_root, period_manifest_path = (
+        _validate_orchestration_destinations(
+            intake_directory, cleaned_root, period_manifest_path
+        )
+    )
     preparation = prepare_accessais_delivery(
         source_path,
         intake_directory,
@@ -1048,7 +1106,6 @@ def orchestrate_accessais_delivery(
         source_content_length=source_content_length,
         clock=clock,
     )
-    cleaned_root = validate_intake_directory(cleaned_root, "cleaned bundle root")
     cleaned_root.mkdir(parents=True, exist_ok=True)
     cleaned_dates: list[str] = []
     recorded_existing_dates: list[str] = []
@@ -1081,6 +1138,11 @@ def orchestrate_accessais_delivery(
             recorded_existing_dates.append(utc_date)
             continue
         cleaner(slice_path, bundle, config)
+        if _cleaner_input_sha256(bundle) != slice_sha:
+            raise AccessAISPeriodIntakeError(
+                f"new cleaner bundle for {utc_date} does not record the "
+                "established daily-slice SHA-256"
+            )
         record_cleaned_days(period_manifest_path, [bundle], clock=clock)
         cleaned_dates.append(utc_date)
     if not period_manifest_path.is_file():

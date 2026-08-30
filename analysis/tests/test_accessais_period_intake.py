@@ -292,6 +292,84 @@ def test_retry_reuses_and_conflict_preserves_established_slices(
     assert (output / "daily" / "2024-07-01.csv").read_bytes() == daily_before
 
 
+@pytest.mark.parametrize(
+    "relative_path",
+    [
+        pytest.param(None, id="missing"),
+        pytest.param(7, id="non-string"),
+        pytest.param("../outside.csv", id="parent-traversal"),
+        pytest.param("/outside.csv", id="posix-absolute"),
+        pytest.param("C:/outside.csv", id="windows-absolute"),
+        pytest.param(r"daily\2024-07-01.csv", id="backslashes"),
+        pytest.param("daily/./2024-07-01.csv", id="alternate-spelling"),
+        pytest.param("daily/2024-07-02.csv", id="different-date"),
+    ],
+)
+def test_tampered_manifest_rejects_noncanonical_daily_slice_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    relative_path: object,
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    intake = interim / "intake"
+    _write_csv(source, [_row("2024-07-01T00:00:00")])
+    prepare_accessais_delivery(source, intake, REQUESTED, clock=_clock)
+    manifest_path = intake / "delivery-manifest.json"
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    daily_slice = payload["daily_slices"][0]
+    if relative_path is None:
+        daily_slice.pop("relative_path")
+    else:
+        daily_slice["relative_path"] = relative_path
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(
+        AccessAISPeriodIntakeError,
+        match=r"relative_path must be exactly daily/2024-07-01\.csv",
+    ):
+        load_delivery_manifest(intake)
+
+
+def test_orchestration_refuses_tampered_slice_traversal_before_cleaning(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    intake = interim / "intake"
+    _write_csv(source, [_row("2024-07-01T00:00:00")])
+    outside = tmp_path / "data" / "outside.csv"
+    _write_csv(outside, [_row("2024-07-01T00:00:00", mmsi="900000009")])
+    prepare_accessais_delivery(source, intake, REQUESTED, clock=_clock)
+    manifest_path = intake / "delivery-manifest.json"
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload["daily_slices"][0]["relative_path"] = "../../outside.csv"
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+    cleaner_called = False
+
+    def cleaner(input_path: Path, output: Path, config: Any) -> Any:
+        nonlocal cleaner_called
+        cleaner_called = True
+        return process_ais_csv(input_path, output, config)
+
+    with pytest.raises(AccessAISPeriodIntakeError, match="relative_path"):
+        orchestrate_accessais_delivery(
+            source,
+            intake,
+            interim / "cleaned",
+            interim / "period.json",
+            REQUESTED,
+            load_default_config(),
+            clock=_clock,
+            cleaner=cleaner,
+        )
+
+    assert cleaner_called is False
+    assert outside.is_file()
+    assert not (interim / "cleaned").exists()
+    assert not (interim / "period.json").exists()
+
+
 def test_atomic_publication_failure_cleans_temporary_directory(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -362,6 +440,88 @@ def test_daily_slices_are_cleaner_compatible_and_populate_period_manifest(
     assert stored["independent_transfer_completeness"]["status"] == "unverified"
     assert stored["observational_completeness"]["status"] == "unverified"
     assert result.preparation.manifest["period_availability"]["status"] == "not_claimed"
+
+
+def test_new_cleaner_bundle_must_record_the_daily_slice_sha_before_period_recording(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    different_input = tmp_path / "different.csv"
+    _write_csv(source, [_row("2024-07-01T00:00:00", mmsi="100000001")])
+    _write_csv(different_input, [_row("2024-07-01T00:00:00", mmsi="200000002")])
+    period_manifest = interim / "period.json"
+
+    def wrong_input_cleaner(input_path: Path, output: Path, config: Any) -> Any:
+        assert input_path.name == "2024-07-01.csv"
+        return process_ais_csv(different_input, output, config)
+
+    with pytest.raises(
+        AccessAISPeriodIntakeError,
+        match="does not record the established daily-slice SHA-256",
+    ):
+        orchestrate_accessais_delivery(
+            source,
+            interim / "intake",
+            interim / "cleaned",
+            period_manifest,
+            REQUESTED,
+            load_default_config(),
+            clock=_clock,
+            cleaner=wrong_input_cleaner,
+        )
+
+    assert (interim / "cleaned" / "2024-07-01").is_dir()
+    assert not period_manifest.exists()
+
+
+@pytest.mark.parametrize(
+    ("case", "message"),
+    [
+        ("same-managed-root", "must be disjoint"),
+        ("cleaned-inside-intake", "must be disjoint"),
+        ("intake-inside-cleaned", "must be disjoint"),
+        ("manifest-inside-intake", "inside the intake directory"),
+        ("manifest-inside-cleaned", "inside the cleaned bundle root"),
+    ],
+)
+def test_orchestration_rejects_overlapping_managed_paths_before_writing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    case: str,
+    message: str,
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    _write_csv(source, [_row("2024-07-01T00:00:00")])
+    intake = interim / "intake"
+    cleaned = interim / "cleaned"
+    manifest = interim / "period.json"
+    if case == "same-managed-root":
+        cleaned = intake
+    elif case == "cleaned-inside-intake":
+        cleaned = intake / "cleaned"
+    elif case == "intake-inside-cleaned":
+        intake = cleaned / "intake"
+    elif case == "manifest-inside-intake":
+        manifest = intake / "period.json"
+    elif case == "manifest-inside-cleaned":
+        manifest = cleaned / "period.json"
+    else:
+        raise AssertionError(f"unhandled test case: {case}")
+
+    with pytest.raises(AccessAISPeriodIntakeError, match=message):
+        orchestrate_accessais_delivery(
+            source,
+            intake,
+            cleaned,
+            manifest,
+            REQUESTED,
+            load_default_config(),
+            clock=_clock,
+        )
+
+    assert list(interim.iterdir()) == []
 
 
 def test_interruption_then_resume_skips_successfully_recorded_date(
