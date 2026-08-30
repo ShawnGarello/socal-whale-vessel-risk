@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
 import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 from pyproj import Transformer
-from shapely.geometry import LineString, Point, box
+from shapely import from_wkb
+from shapely.geometry import LineString, MultiPolygon, Point, box
 
 from whale_vessel_analysis import domain_evidence
 from whale_vessel_analysis.domain_evidence import (
+    CandidateMeasurement,
     DomainEvidenceError,
     Scenario,
     measure_candidate,
@@ -159,6 +163,43 @@ def test_candidate_measurement_uses_fractional_geometry() -> None:
     assert result.partly_inside_cell_count == 1
     assert result.wholly_outside_cell_count == 1
     assert result.to_dict(10000)["inside_fraction_of_candidate"] == pytest.approx(2 / 3)
+
+
+def test_mask_metadata_geometry_types_match_decoded_wkb(tmp_path: Path) -> None:
+    polygon = box(0, 0, 1, 1)
+    multipolygon = MultiPolygon([box(2, 0, 3, 1), box(4, 0, 5, 1)])
+    measurements = [
+        CandidateMeasurement(
+            scenario=Scenario("polygon", "coastline", 1, "statute_mile"),
+            included_water_area_m2=1,
+            inside_vsr_area_m2=1,
+            outside_vsr_area_m2=0,
+            fully_inside_cell_count=1,
+            partly_inside_cell_count=0,
+            wholly_outside_cell_count=0,
+            geometry=polygon,
+        ),
+        CandidateMeasurement(
+            scenario=Scenario("multipolygon", "receivers", 1, "nautical_mile"),
+            included_water_area_m2=2,
+            inside_vsr_area_m2=1,
+            outside_vsr_area_m2=1,
+            fully_inside_cell_count=2,
+            partly_inside_cell_count=0,
+            wholly_outside_cell_count=0,
+            geometry=multipolygon,
+        ),
+    ]
+    output = tmp_path / "masks.parquet"
+
+    domain_evidence._write_masks(output, measurements)
+
+    table = pq.read_table(output)
+    metadata = json.loads(table.schema.metadata[b"geo"])
+    decoded = from_wkb(table["geometry"].to_numpy(zero_copy_only=False))
+    declared_types = metadata["columns"]["geometry"]["geometry_types"]
+    actual_types = sorted({geometry.geom_type for geometry in decoded})
+    assert declared_types == actual_types == ["MultiPolygon", "Polygon"]
 
 
 @pytest.mark.parametrize(
