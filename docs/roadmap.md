@@ -611,7 +611,13 @@ Built on the `feat/web-foundation` branch. The application is in
   state, and SDK teardown on unmount. No project layers and no analytical
   content.
 - Formatting (Prettier), linting (ESLint), type checking (`tsc --noEmit`), and
-  tests (Vitest, 12 passing) configured and run.
+  tests (Vitest, 18 passing) configured and run.
+- Clean-checkout verification is implemented and exercised through
+  `npm run verify:clean`: it installs dependencies from the committed lockfile,
+  generates Next.js route types, runs formatting, linting, type checking, and
+  tests in order, then produces the local static export. This verifies the
+  local build path only; it does not verify a deployment or successful keyed
+  basemap rendering.
 - Credential handling: `web/.env.example` carries variable names only, all other
   `.env*` files are ignored, and no credential is tracked.
 - Build output (`web/out/`, `web/.next/`) and `node_modules/` are ignored and
