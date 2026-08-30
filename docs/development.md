@@ -262,8 +262,11 @@ out-of-request dates without silently dropping them. Repeated `run` invocations
 use unique delivery intake directories and the same cleaned root and period
 manifest. Each invokes the existing one-date cleaner sequentially and records
 each compatible bundle immediately, so retry or identical overlap skips only a
-verified successful identity. A recorded cleaner-identity conflict is preserved
-and returned with exit code `4`.
+verified successful identity. A conflicting overlapping slice through this
+shared cleaned root is refused with exit code `2` before replacing the
+established bundle. Exit code `4` is reserved for a delivery conflict at an
+already-owned intake directory or a conflict recorded from an explicitly
+supplied, independently produced incompatible cleaner bundle.
 
 ```text
 python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> [--source-content-length <independently-retained-byte-count>]
@@ -280,8 +283,8 @@ That section also gives the exact smallest useful author-run pilot: 2024-07-15
 through 2024-07-16 UTC, WGS 84 longitude -122 to -117 and latitude 32 to 35,
 only after the current AccessAIS estimate is confirmed below 2 GB. It lists the
 non-sensitive provenance and independent transfer/archive evidence to retain.
-The synthetic accumulation gate does not authorize that order or five later
-monthly orders.
+The repository does not submit or automate that author-controlled pilot, and
+the pilot does not authorize five later monthly orders.
 
 **One-extract AIS processing**
 
@@ -862,7 +865,7 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 282 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 283 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
