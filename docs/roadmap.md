@@ -246,9 +246,14 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   cleaner, verifies that each newly created bundle records the established
   daily-slice input SHA-256, and records compatible bundles immediately through
   `multiday_cleaned_ais_input_v1`. An interrupted retry skips only dates whose
-  exact compatible cleaner identity is already recorded. This implements local
-  intake and preparation, not AccessAIS order submission, email/application
-  automation, network retrieval, segment construction, or vessel aggregation.
+  exact compatible cleaner identity is already recorded. Separate explicit
+  deliveries can use unique intake directories while accumulating into the
+  same cleaned root and 153-date period manifest. Synthetic integration tests
+  verify disjoint deliveries, identical overlap, conflicting cleaner identity,
+  preservation of earlier successes, and conflict exit diagnostics. This
+  implements local intake and preparation, not AccessAIS order submission,
+  email/application automation, network retrieval, segment construction, or
+  vessel aggregation.
 - [ADR 0018](decisions/0018-use-vessel-kilometres-for-grid-activity.md)
   records the **Proposed** vessel-activity aggregation design.
   Vessel-kilometres is the proposed primary additive grid metric. Group-specific
@@ -342,6 +347,13 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   compatibility evidence for one direct-CSV date, not real multi-date or
   monthly scaling evidence; transfer and observational completeness remain
   `unverified`.
+- The same immutable one-day source was rerun read-only through the updated
+  accumulation gate on 2026-08-30. Source size/checksum, all 582,419 assigned
+  rows, the byte-identical daily slice, the 113,799-row cleaner identity and
+  Parquet checksum, and the one-compatible/152-missing period state were
+  unchanged. A second invocation reused the delivery and skipped the compatible
+  date. No new runtime or memory measurement was made. This is one-day
+  regression evidence, not real multi-date evidence.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -362,7 +374,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 278 passing tests using temporary
+- The combined self-contained suite has 282 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
@@ -379,8 +391,10 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   per-cell group/additive totals, point ambiguity, proof that scenarios do not
   repeat intersections, distance/time conservation, invalid grid inputs,
   deterministic evidence identity, overwrite and raw-output refusal, failed-run
-  atomicity, multi-date delivery partitioning and row conservation, strict daily
-  manifest paths and traversal refusal, strict count types and per-date
+  atomicity, multi-date delivery partitioning and row conservation, separate
+  disjoint-delivery accumulation, identical overlap, conflicting cleaner
+  identity with prior-date preservation and conflict exit diagnostics, strict
+  daily manifest paths and traversal refusal, strict count types and per-date
   reconciliation, managed-path separation, cleaner-input checksum binding,
   interruption/resume, a one-date period manifest leaving 152 dates missing,
   153 synthetic dates becoming ready,

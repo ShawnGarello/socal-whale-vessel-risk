@@ -277,12 +277,18 @@ refused.
 
 The `run` verb processes daily slices sequentially through the existing
 one-date cleaner and records each successful bundle immediately into
-`multiday_cleaned_ais_input_v1`. A resume skips an already recorded compatible
-date and can record a cleaner bundle completed before interruption without
-cleaning it again. This is bounded local preparation, not network automation or
-production vessel aggregation. The intake and cleaned roots must be disjoint,
-the period manifest cannot be inside either, and a newly cleaned bundle is not
-recorded unless its input SHA-256 matches its established daily slice.
+`multiday_cleaned_ais_input_v1`. Separate explicit deliveries accumulate safely
+by using one unique intake directory per delivery and reusing one cleaned root
+and one period manifest. A resume or identical overlap skips an already
+recorded compatible date only after revalidating its daily-slice checksum and
+cleaner identity. A cleaner bundle completed before interruption can be
+recorded without cleaning it again. Different bytes or cleaner identities do
+not replace an established date, and the intake CLI reports a recorded
+cleaner-identity conflict with exit code `4`. This is bounded local
+preparation, not network automation or production vessel aggregation. Every
+intake root must be disjoint from the cleaned root, the period manifest cannot
+be inside either, and a newly cleaned bundle is not recorded unless its input
+SHA-256 matches its established daily slice.
 
 Transfer completeness and observational completeness remain separate. Direct
 CSV transfer completeness stays `unverified` unless the author independently
@@ -296,6 +302,22 @@ byte-identical daily CSV, reproduced the prior 113,799-row cleaned Parquet, and
 recorded one compatible date with 152 missing dates. Transfer and observational
 completeness remained `unverified`. This is not a multi-date or monthly scaling
 exercise, and it does not authorize five monthly orders.
+
+Synthetic tests now verify accumulation from two disjoint deliveries,
+identical overlapping established identity, conflicting cleaner identity,
+preservation of prior successful dates, and the existing retry/resume,
+row-accounting, path-separation, readiness, and completeness boundaries. They
+do not replace a real multi-date exercise. The smallest useful author-run pilot
+is an explicit 2024-07-15 through 2024-07-16 UTC request over WGS 84 longitude
+-122 to -117 and latitude 32 to 35. Before submission, its current AccessAIS
+estimate must remain below the documented 2 GB limit. At retrieval, record the
+NOAA filename, requested dates and bounds, actual UTC retrieval timestamp,
+retained byte size and SHA-256, plus independent `Content-Length` or unchanged
+ZIP/archive-integrity evidence when available. Retain no email address, cookie,
+token, or expiring URL. Run it from a new delivery-specific intake directory
+against the established shared cleaned root and period manifest. A successful
+two-date pilot still leaves 151 expected dates missing and authorizes neither
+five monthly orders nor a monthly/full-period scaling claim.
 
 ### Multi-day cleaned-input manifest and bounded scanning
 
