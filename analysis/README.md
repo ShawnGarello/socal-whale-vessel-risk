@@ -14,10 +14,14 @@ diagnoses consecutive observations from one explicitly supplied cleaned AIS
 bundle and can optionally test segment allocation against the exact water-grid
 contract. A further boundary assembles explicitly supplied one-date cleaner
 bundles into a versioned multi-day period-input manifest and scans its verified
-daily Parquet partitions through a bounded DuckDB relation. It does not submit
-AccessAIS orders, download AIS, process a season implicitly, produce a
-production vessel-activity grid, calculate relative exposure, or report
-inside-versus-outside statistics.
+daily Parquet partitions through a bounded DuckDB relation. A focused candidate
+vessel-grid boundary streams that relation, forms whole-period consecutive
+pairs, applies explicitly supplied gap and implied-speed rules, and allocates
+retained segment distance to the exact projected water grid. It writes
+candidate per-cell vessel-kilometres and union-recomputed distinct-vessel
+descriptors under ignored `data/derived/`. It does not submit AccessAIS orders,
+download AIS, process a season implicitly, accept final vessel rules, calculate
+relative exposure, or report inside-versus-outside statistics.
 
 Run all commands below from this directory.
 
@@ -42,6 +46,7 @@ python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help
 python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli --help
 python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --help
 python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help
+python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --help
 python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help
 ```
 
@@ -694,6 +699,120 @@ stability and production thresholds remain unresolved. Source-transfer and
 observational completeness remain unverified; one day does not validate the
 analytical period; edge-support treatment remains unresolved; and no production
 vessel grid or exposure result exists.
+
+## Candidate multi-day vessel-grid aggregation
+
+The focused `vessel_grid_cli` promotes the reusable consecutive-pair,
+plausibility-filter, exact-intersection, conservation, and distinct-union logic
+from the evidence harness into a bounded multi-day processing boundary. It
+consumes one existing `multiday_cleaned_ais_input_v1` manifest through the
+bounded DuckDB relation and one exact `projected_water_grid_v1` GeoParquet. It
+does not read raw AIS, discover adjacent files, or concatenate the period in
+Python.
+
+Every methodological choice needed by the command is required at runtime; none
+has an analytical default:
+
+```text
+python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --manifest <period-manifest.json> --grid-input <water-grid.parquet> --output-dir ..\data\derived\<candidate-bundle> --maximum-gap-seconds <candidate-seconds> --implied-speed-ceiling-knots <candidate-knots> --period-readiness-treatment <require-ready|allow-incomplete-candidate> --edge-treatment censor-at-cleaned-extent --support-treatment exact-water-geometry-exclude-and-report --memory-limit <size-with-unit> --temp-directory ..\data\interim\<duckdb-spill> [--expected-grid-sha256 <sha256>] [--threads <n>] [--batch-size <rows>] [--config <config.toml>] [--overwrite]
+```
+
+`--maximum-gap-seconds` and `--implied-speed-ceiling-knots` are explicit
+candidate assumptions, not accepted rules. The exclusion precedence is invalid
+coordinate transformation, non-increasing time, vessel-group change, maximum
+gap, then implied speed. The implied speed is EPSG:3310 projected endpoint
+distance divided by elapsed time; reported SOG is not substituted for it. The
+command has no vessel-length option: length filtering remains disabled and
+unresolved because AIS length is not gross tonnage and no defensible mapping to
+the program's approximately 300 GT population has been accepted.
+
+The two single-choice treatment arguments are deliberately still required:
+
+- `censor-at-cleaned-extent` records that the upstream cleaner removed points
+  outside the map/context extent. The command does not invent entry or exit
+  paths before the first or after the last retained observation.
+- `exact-water-geometry-exclude-and-report` allocates only line length inside
+  the exact modeled-whale-support water geometry. Outside-support portions are
+  reported separately and are not called land or absent AIS coverage.
+
+`require-ready` refuses a period manifest unless all 153 accepted dates are
+compatible. `allow-incomplete-candidate` permits an explicitly partial
+candidate run while retaining the manifest's missing-date inventory and
+unverified observational-completeness state in output metadata. It does not
+upgrade or imply analytical-period completeness.
+
+### Pairing, allocation, and ambiguity
+
+DuckDB forms `lead` pairs per MMSI in the deterministic whole-period order
+`mmsi`, UTC timestamp, latitude, longitude, vessel type code, vessel group.
+UTC dates do not partition the window, so a valid cross-midnight pair is
+treated like any other pair. Ordered rows stream to Python in bounded Arrow
+batches under the explicit DuckDB memory and spill settings.
+
+For each retained positive-length pair, the command constructs one straight
+segment in EPSG:3310 and splits it across intersected exact water geometries.
+Each segment's allocated, outside-support, ambiguous-boundary, and invalid-
+geometry distances must reconcile to its parent length within an absolute
+`1e-6` metre and relative `1e-12` tolerance. Per-cell output totals must also
+reconcile with allocated piece distance.
+
+Zero-length pairs are retained as valid candidate segments and contribute zero
+vessel-kilometres. Their location is reported as unambiguous in-support,
+outside-support, or multiple-cell boundary ambiguity. A positive-length segment
+coincident with overlapping cell boundaries is not assigned arbitrarily: its
+in-support union length is reported as ambiguous-boundary distance and excluded
+from cell totals. Invalid source values fail the verified input boundary;
+unexpected intersection failures are separately counted and their parent
+distance stays visible in conservation accounting.
+
+Every cleaned point is independently classified against exact cell support for
+descriptive vessel counts. A point is assigned only when exactly one cell
+covers it; no match is outside support and multiple matches are ambiguous.
+`distinct_mmsi_all_commercial` and `distinct_mmsi_dates_all_commercial` are
+recomputed from the underlying union of commercial identities in that cell.
+They are never sums of passenger, cargo, and tanker distinct counts.
+
+### Candidate output bundle
+
+The output is one named atomic directory beneath ignored `data/derived/`:
+
+| File | Contract and purpose |
+|---|---|
+| `vessel-grid.parquet` | Deterministic GeoParquet 1.1.0 under `candidate_vessel_grid_v1`, in exact water-grid row order with target geometry preserved byte for byte. |
+| `quality-report.json` | Deterministic `candidate_vessel_grid_quality_v1` metadata: source identities, explicit parameters, observation and segment populations, exclusions, support/ambiguity counts, and conservation checks. |
+| `run-metadata.json` | `candidate_vessel_grid_lineage_v1` execution lineage with actual UTC timestamps, local source locators, input/output checksums, software versions, processing steps, and validation records. |
+
+The GeoParquet preserves the target identity, parent bounds, actual water area,
+and geometry fields. For passenger, cargo, tanker, and all commercial vessels,
+it adds:
+
+- `vessel_km_<group>`;
+- `vessel_km_per_water_km2_<group>`, using the stored modeled-support water area;
+- `distinct_mmsi_<group>`; and
+- `distinct_mmsi_dates_<group>`.
+
+All target cells are present, including zero-activity cells. The grid and
+quality-report bytes are deterministic for unchanged verified inputs,
+configuration, parameters, and code. Real execution timestamps occur only in
+run metadata and do not affect the content-derived candidate grid ID.
+
+The writer refuses `data/raw/`, any destination outside `data/derived/`, the
+derived root itself, input/output overlap, an existing destination without
+`--overwrite`, and overwrite of anything except a complete bundle carrying its
+own lineage contract. It builds all three files in a unique sibling temporary
+directory and publishes the bundle by directory rename; a failed publication
+leaves no partial target.
+
+Synthetic tests cover cross-midnight continuity, multi-cell splitting, gap and
+implied-speed exclusions, distance conservation, zero-length and outside-
+support handling, boundary ambiguity, group/additive vessel-kilometres,
+union-recomputed distinct counts, deterministic Parquet and JSON bytes, invalid
+parameters and inputs, atomic failure, overwrite, raw-output refusal, and the
+CLI's lack of hidden methodological defaults. No real multi-date delivery or
+real candidate vessel-grid run has been executed. Period-wide stability,
+accepted thresholds, alternative edge support, observational completeness,
+and a final vessel-activity input therefore remain unresolved; ADR 0018 remains
+Proposed.
 
 ## Projected water-grid command
 
