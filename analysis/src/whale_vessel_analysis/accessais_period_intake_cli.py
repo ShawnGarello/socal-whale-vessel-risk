@@ -151,6 +151,8 @@ def _run(args: argparse.Namespace) -> int:
         )
         payload = orchestration_result.to_dict()
         _emit(payload)
+        if orchestration_result.conflicting_dates:
+            return EXIT_CONFLICT
         ready = _is_period_ready(
             cast(dict[str, object], orchestration_result.period_status)
         )
