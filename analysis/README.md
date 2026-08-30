@@ -3,8 +3,9 @@
 This directory is the Python package for the M3 offline-processing workflow. It
 provides versioned spatial and source-input contracts, read-only validators,
 traceable lineage metadata, a local AIS retrieval-verification boundary, a real
-one-extract AIS cleaning command, bounded local intake of one author-supplied
-multi-date AccessAIS CSV or ZIP, and
+one-extract AIS cleaning command, bounded local intake of explicitly supplied
+multi-date AccessAIS CSV or ZIP deliveries one at a time, safe accumulation of
+their compatible daily outputs into one 153-date period manifest, and
 construction of the exact EPSG:3310 analysis grid with actual per-cell water
 geometry from an explicitly supplied polygon mask. It also transfers the
 selected NOAA/SWFSC modeled blue-whale density surface to that water grid by
@@ -174,8 +175,8 @@ python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli sta
 
 Exit codes are `0` for a successful prepare/status or a run whose full 153-date
 period is ready, `2` for a refused input/destination/contract, `3` for a
-successful run whose period remains not ready, and `4` after a delivery
-conflict is recorded without replacement.
+successful run whose period remains not ready, and `4` after a delivery or
+cleaner-identity conflict is recorded without replacement.
 
 The versioned `accessais_period_delivery_v1` manifest records source size and
 SHA-256; content type detected from bytes; archive/member/CRC evidence; the
@@ -223,6 +224,70 @@ existing archive-integrity rule. Observational completeness always remains
 `unverified`. The existing period manifest remains the sole readiness boundary
 and becomes ready only with all 153 accepted dates.
 
+### Accumulate separate deliveries safely
+
+Repeat `run` once per explicit author-supplied delivery. Give every delivery a
+unique intake directory, while reusing the same cleaned root and period
+manifest:
+
+```text
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-a.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-a-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-b.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-b-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
+```
+
+The intake and cleaned roots remain disjoint. Reusing the cleaned root lets an
+overlapping date skip only when its established daily-slice checksum and exact
+compatible cleaner identity still match. If an overlapping slice differs, the
+prescribed shared-root workflow refuses it with exit code `2` before replacing
+or recording against the established cleaner bundle. Exit code `4` is reserved
+for a delivery conflict at an already-owned intake directory or a period
+conflict recorded from an explicitly supplied, independently produced
+incompatible cleaner bundle. The normal shared-root workflow does not stage
+such a candidate beside the canonical date bundle. Previously compatible dates
+remain recorded. Do not reuse an intake directory for a different delivery,
+and do not create separate period manifests for deliveries intended to form
+one analytical-period input.
+
+Synthetic integration tests establish this composition boundary with two
+disjoint deliveries, an overlapping identical established identity, and a
+conflicting later cleaner identity. Existing tests separately cover identical
+delivery retry, interruption and resume, immediate preservation of successful
+dates, exact delivery and per-date row accounting, path separation, all 153
+dates being required for readiness, and refusal to upgrade transfer or
+observational completeness. These are synthetic contract tests, not evidence
+that a real multi-date delivery or larger-scale execution has passed.
+
+### Smallest useful author-run real multi-date pilot
+
+Request exactly **2024-07-15 through 2024-07-16 UTC** over the existing explicit
+WGS 84 bounds **longitude -122 to -117 and latitude 32 to 35**. This two-date
+request is the smallest pilot that exercises a real multi-date delivery while
+overlapping the already verified 15 July date and adding one new date. Before
+submitting it, use the AccessAIS interface to confirm its current estimate is
+below the documented 2 GB request limit; record the estimate as an estimate,
+not as an expected delivered count or size. If it is not below the limit, do
+not submit it or silently change the requested dates or bounds; record the
+pilot as blocked.
+
+At retrieval time, retain the NOAA filename, requested dates and bounds, actual
+UTC retrieval timestamp, retained byte size, and SHA-256. Also retain an
+independent HTTP `Content-Length` when it is available, or preserve the delivered
+archive unchanged so ZIP structure and CRC can provide archive-integrity
+evidence. Do not retain an email address, cookie, token, or expiring delivery
+URL. Keep the delivery immutable under ignored local storage and run it with a
+new delivery-specific intake directory against the same cleaned root and period
+manifest used for the established 15 July input.
+
+The pilot passes its bounded gate only if streaming row accounting reconciles,
+both daily slices validate, the 15 July established identity is reused, 16 July
+is recorded compatibly, prior dates remain intact, and all completeness states
+stay truthful. An exit code `3` is expected because 151 dates will still be
+missing. A conflicting overlapping slice in this shared-root pilot is refused
+with exit `2` before canonical-bundle replacement. Exit `4` indicates one of
+the separately recorded conflict cases above. The repository does not submit
+or automate this author-controlled pilot, and the pilot does not authorize five
+monthly orders, accept ADR 0017, or establish safe monthly/full-period scaling.
+
 ### Verified one-day compatibility exercise
 
 On 2026-08-28 the new `run` path read the permitted 2024-07-15 AccessAIS CSV
@@ -250,6 +315,17 @@ startup. Sampling adds overhead and can miss a peak. Its method differs from
 the earlier approximately 1.59 GiB one-day cleaner observation, so the numbers
 are not directly comparable. This is one direct-CSV date, not a monthly or
 multi-date scaling result, and no value is extrapolated to 153 dates.
+
+The same immutable source was rerun read-only through the updated accumulation
+gate on 2026-08-30 under ignored `data/interim/`. It retained the same
+59,497,346-byte source SHA-256, reconciled all 582,419 rows to 2024-07-15,
+emitted the same byte-identical daily slice, and reproduced the 113,799-row
+cleaner run ID and cleaned-Parquet SHA-256 above. A second invocation was an
+identical delivery retry and skipped the already compatible date. The period
+remained `not_ready` with one compatible and 152 missing dates; transfer and
+observational completeness remained `unverified`. This repeated one-day
+regression is not real multi-date evidence and includes no new runtime or
+memory claim.
 
 ## Process one AIS extract
 

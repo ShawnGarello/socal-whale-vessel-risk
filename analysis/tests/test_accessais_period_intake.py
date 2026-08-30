@@ -557,6 +557,186 @@ def test_daily_slices_are_cleaner_compatible_and_populate_period_manifest(
     assert result.preparation.manifest["period_availability"]["status"] == "not_claimed"
 
 
+def test_disjoint_deliveries_accumulate_in_one_period_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    first_source = tmp_path / "first-delivery.csv"
+    second_source = tmp_path / "second-delivery.csv"
+    _write_csv(
+        first_source,
+        [
+            _row("2024-07-01T00:01:00", mmsi="100000001"),
+            _row("2024-07-01T00:02:00", mmsi="100000002"),
+        ],
+    )
+    _write_csv(
+        second_source,
+        [_row("2024-07-03T00:01:00", mmsi="300000003")],
+    )
+    period_manifest = interim / "period" / "manifest.json"
+
+    first = orchestrate_accessais_delivery(
+        first_source,
+        interim / "intake" / "first",
+        interim / "cleaned" / "first",
+        period_manifest,
+        RequestedPeriod(date(2024, 7, 1), date(2024, 7, 1)),
+        load_default_config(),
+        clock=_clock,
+    )
+    second = orchestrate_accessais_delivery(
+        second_source,
+        interim / "intake" / "second",
+        interim / "cleaned" / "second",
+        period_manifest,
+        RequestedPeriod(date(2024, 7, 3), date(2024, 7, 3)),
+        load_default_config(),
+        clock=_clock,
+    )
+
+    stored = load_period_manifest(period_manifest)
+    assert first.cleaned_dates == ("2024-07-01",)
+    assert second.cleaned_dates == ("2024-07-03",)
+    assert first.conflicting_dates == second.conflicting_dates == ()
+    assert _entry(stored, "2024-07-01")["status"] == "compatible"
+    assert _entry(stored, "2024-07-03")["status"] == "compatible"
+    readiness = stored["period_input_readiness"]
+    assert readiness["status"] == "not_ready"
+    assert readiness["expected_date_count"] == 153
+    assert readiness["compatible_date_count"] == 2
+    assert readiness["missing_date_count"] == 151
+    assert readiness["conflicting_date_count"] == 0
+    assert readiness["missing_expected_utc_dates"] == [
+        utc_date
+        for utc_date in multiday_ais.accepted_utc_dates()
+        if utc_date not in {"2024-07-01", "2024-07-03"}
+    ]
+    assert readiness["conflicting_utc_dates"] == []
+    assert readiness["insufficient_evidence"] == list(
+        multiday_ais.INSUFFICIENT_READINESS_EVIDENCE
+    )
+    assert first.preparation.manifest["row_accounting"]["source_data_rows"] == 2
+    assert first.preparation.manifest["rows_by_utc_date"] == {"2024-07-01": 2}
+    assert second.preparation.manifest["row_accounting"]["source_data_rows"] == 1
+    assert second.preparation.manifest["rows_by_utc_date"] == {"2024-07-03": 1}
+    assert stored["independent_transfer_completeness"]["status"] == "unverified"
+    assert stored["observational_completeness"]["status"] == "unverified"
+
+
+def test_overlapping_delivery_reuses_identical_established_date_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    first_source = tmp_path / "first-delivery.csv"
+    overlapping_source = tmp_path / "overlapping-delivery.csv"
+    shared_row = _row("2024-07-02T00:01:00", mmsi="200000002")
+    _write_csv(
+        first_source,
+        [
+            _row("2024-07-01T00:01:00", mmsi="100000001"),
+            shared_row,
+        ],
+    )
+    _write_csv(
+        overlapping_source,
+        [
+            shared_row,
+            _row("2024-07-03T00:01:00", mmsi="300000003"),
+        ],
+    )
+    period_manifest = interim / "period.json"
+    cleaned_root = interim / "cleaned"
+
+    first = orchestrate_accessais_delivery(
+        first_source,
+        interim / "intake" / "first",
+        cleaned_root,
+        period_manifest,
+        RequestedPeriod(date(2024, 7, 1), date(2024, 7, 2)),
+        load_default_config(),
+        clock=_clock,
+    )
+    retry = orchestrate_accessais_delivery(
+        overlapping_source,
+        interim / "intake" / "overlap",
+        cleaned_root,
+        period_manifest,
+        RequestedPeriod(date(2024, 7, 2), date(2024, 7, 3)),
+        load_default_config(),
+        clock=_clock,
+    )
+
+    stored = load_period_manifest(period_manifest)
+    entry = _entry(stored, "2024-07-02")
+    assert first.preparation.delivery_id != retry.preparation.delivery_id
+    assert retry.conflicting_dates == ()
+    assert retry.skipped_successful_dates == ("2024-07-02",)
+    assert retry.cleaned_dates == ("2024-07-03",)
+    assert entry["status"] == "compatible"
+    assert [attempt["outcome"] for attempt in entry["attempt_history"]] == ["recorded"]
+    assert stored["period_input_readiness"]["compatible_date_count"] == 3
+    assert stored["period_input_readiness"]["missing_date_count"] == 150
+
+
+def test_overlapping_conflict_preserves_prior_successful_dates_and_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    first_source = tmp_path / "first-delivery.csv"
+    conflicting_source = tmp_path / "conflicting-delivery.csv"
+    _write_csv(
+        first_source,
+        [
+            _row("2024-07-01T00:01:00", mmsi="100000001"),
+            _row("2024-07-02T00:01:00", mmsi="200000002"),
+        ],
+    )
+    _write_csv(
+        conflicting_source,
+        [_row("2024-07-02T00:01:00", mmsi="299999999")],
+    )
+    period_manifest = interim / "period.json"
+
+    orchestrate_accessais_delivery(
+        first_source,
+        interim / "intake" / "first",
+        interim / "cleaned" / "first",
+        period_manifest,
+        RequestedPeriod(date(2024, 7, 1), date(2024, 7, 2)),
+        load_default_config(),
+        clock=_clock,
+    )
+    before = load_period_manifest(period_manifest)
+    established_identity = dict(
+        _entry(before, "2024-07-02")["cleaner_bundle_compatibility"]
+    )
+
+    conflict = orchestrate_accessais_delivery(
+        conflicting_source,
+        interim / "intake" / "conflict",
+        interim / "cleaned" / "conflict",
+        period_manifest,
+        RequestedPeriod(date(2024, 7, 2), date(2024, 7, 2)),
+        load_default_config(),
+        clock=_clock,
+    )
+
+    stored = load_period_manifest(period_manifest)
+    conflicted_entry = _entry(stored, "2024-07-02")
+    assert conflict.conflicting_dates == ("2024-07-02",)
+    assert _entry(stored, "2024-07-01")["status"] == "compatible"
+    assert conflicted_entry["status"] == "conflict"
+    assert conflicted_entry["cleaner_bundle_compatibility"] == established_identity
+    assert [attempt["outcome"] for attempt in conflicted_entry["attempt_history"]] == [
+        "recorded",
+        "conflict",
+    ]
+    assert stored["period_input_readiness"]["status"] == "not_ready"
+    assert stored["period_input_readiness"]["conflicting_utc_dates"] == ["2024-07-02"]
+    assert stored["observational_completeness"]["status"] == "unverified"
+
+
 def test_new_cleaner_bundle_must_record_the_daily_slice_sha_before_period_recording(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

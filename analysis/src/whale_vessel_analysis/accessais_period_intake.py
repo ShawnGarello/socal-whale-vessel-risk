@@ -176,6 +176,7 @@ class OrchestrationResult:
     cleaned_dates: tuple[str, ...]
     recorded_existing_dates: tuple[str, ...]
     skipped_successful_dates: tuple[str, ...]
+    conflicting_dates: tuple[str, ...]
     period_status: Mapping[str, object]
 
     def to_dict(self) -> dict[str, object]:
@@ -184,6 +185,7 @@ class OrchestrationResult:
             "cleaned_dates": list(self.cleaned_dates),
             "recorded_existing_dates": list(self.recorded_existing_dates),
             "skipped_successful_dates": list(self.skipped_successful_dates),
+            "conflicting_dates": list(self.conflicting_dates),
             "period_status": dict(self.period_status),
             "execution_note": (
                 "daily slices are cleaned sequentially and each successful bundle "
@@ -1147,6 +1149,7 @@ def orchestrate_accessais_delivery(
     cleaned_dates: list[str] = []
     recorded_existing_dates: list[str] = []
     skipped_dates: list[str] = []
+    conflicting_dates: list[str] = []
     for utc_date, slice_path, slice_sha in _daily_slice_records(
         preparation.output_directory, preparation.manifest
     ):
@@ -1171,7 +1174,9 @@ def orchestrate_accessais_delivery(
                     f"existing cleaner bundle for {utc_date} does not belong to the "
                     "established daily slice"
                 )
-            record_cleaned_days(period_manifest_path, [bundle], clock=clock)
+            update = record_cleaned_days(period_manifest_path, [bundle], clock=clock)
+            if any(outcome.entry_status == "conflict" for outcome in update.outcomes):
+                conflicting_dates.append(utc_date)
             recorded_existing_dates.append(utc_date)
             continue
         cleaner(slice_path, bundle, config)
@@ -1180,7 +1185,9 @@ def orchestrate_accessais_delivery(
                 f"new cleaner bundle for {utc_date} does not record the "
                 "established daily-slice SHA-256"
             )
-        record_cleaned_days(period_manifest_path, [bundle], clock=clock)
+        update = record_cleaned_days(period_manifest_path, [bundle], clock=clock)
+        if any(outcome.entry_status == "conflict" for outcome in update.outcomes):
+            conflicting_dates.append(utc_date)
         cleaned_dates.append(utc_date)
     if not period_manifest_path.is_file():
         raise AccessAISPeriodIntakeError(
@@ -1192,5 +1199,6 @@ def orchestrate_accessais_delivery(
         tuple(cleaned_dates),
         tuple(recorded_existing_dates),
         tuple(skipped_dates),
+        tuple(conflicting_dates),
         period_status(final_period),
     )
