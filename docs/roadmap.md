@@ -80,7 +80,7 @@ Obtain and inspect the actual candidate datasets, and determine what analysis th
 
 | Criterion | State |
 |---|---|
-| Every Version 1 input has an identified, retrievable, authoritative source with recorded provenance | **Met.** Source URL or query endpoint, method and parameters, retrieval date, local filename, byte size and SHA-256 are recorded for all eighteen artifacts in [data-sources.md](data-sources.md), and `python tools/m2_verify.py verify` checks the original M2 manifest against its local files. This criterion was previously claimed as met when the checksums did not exist |
+| Every Version 1 input has an identified, retrievable, authoritative source with recorded provenance | **Met.** Source URL or query endpoint, method and parameters, retrieval date, local filename, byte size and SHA-256 are recorded for all eighteen artifacts in [data-sources.md](data-sources.md), and `python tools/m2_verify.py verify` parses that register and verifies all eighteen artifact identities against the local files. The separate [analytical-domain evidence command](analytical-domain-evidence.md#reproducible-calculation) regenerates the candidate-domain report and mask. This criterion was previously claimed as met when the checksums did not exist |
 | The whale model layer's values are understood well enough to state what they mean in the application legend | **Met.** `DENSITY` is animals per km², publisher-defined, with a per-cell coefficient of variation |
 | The AIS extract needed for the study area and analytical period has been scoped, and its volume is known | **Met, with the volume qualified.** The period is fixed and the retrieval footprint is bounded, but the volume is an **order-of-magnitude planning estimate** — 60 to 90 million study-area records, ≈56 GB of transfer — extrapolated from five 34-minute windows all at the same time of day. It is not a measurement and nothing analytical rests on it |
 | The VSR boundary geometry is confirmed as obtainable from an authoritative source, or a documented derivation from published coordinates is agreed on | **Met.** A closed, land-clipped polygon is retrievable, and seven of the program's eight published points lie exactly on its boundary |
@@ -362,7 +362,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 277 passing tests using temporary
+- The combined self-contained suite has 278 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
