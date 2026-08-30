@@ -237,10 +237,13 @@ python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run
 
 The intake and cleaned roots remain disjoint. Reusing the cleaned root lets an
 overlapping date skip only when its established daily-slice checksum and exact
-compatible cleaner identity still match. Different delivery bytes at an
-already owned intake path are recorded as a non-replacing delivery conflict;
-an independently produced incompatible cleaner bundle is recorded as a
-non-replacing period conflict and `run` exits `4`. Previously compatible dates
+compatible cleaner identity still match. If an overlapping slice differs, the
+prescribed shared-root workflow refuses it with exit code `2` before replacing
+or recording against the established cleaner bundle. Exit code `4` is reserved
+for a delivery conflict at an already-owned intake directory or a period
+conflict recorded from an explicitly supplied, independently produced
+incompatible cleaner bundle. The normal shared-root workflow does not stage
+such a candidate beside the canonical date bundle. Previously compatible dates
 remain recorded. Do not reuse an intake directory for a different delivery,
 and do not create separate period manifests for deliveries intended to form
 one analytical-period input.
@@ -279,9 +282,11 @@ The pilot passes its bounded gate only if streaming row accounting reconciles,
 both daily slices validate, the 15 July established identity is reused, 16 July
 is recorded compatibly, prior dates remain intact, and all completeness states
 stay truthful. An exit code `3` is expected because 151 dates will still be
-missing. Exit `4` requires conflict review; exit `2` is a refusal. This pilot
-does not authorize five monthly orders, accept ADR 0017, or establish safe
-monthly/full-period scaling.
+missing. A conflicting overlapping slice in this shared-root pilot is refused
+with exit `2` before canonical-bundle replacement. Exit `4` indicates one of
+the separately recorded conflict cases above. The repository does not submit
+or automate this author-controlled pilot, and the pilot does not authorize five
+monthly orders, accept ADR 0017, or establish safe monthly/full-period scaling.
 
 ### Verified one-day compatibility exercise
 

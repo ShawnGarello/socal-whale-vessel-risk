@@ -282,13 +282,16 @@ by using one unique intake directory per delivery and reusing one cleaned root
 and one period manifest. A resume or identical overlap skips an already
 recorded compatible date only after revalidating its daily-slice checksum and
 cleaner identity. A cleaner bundle completed before interruption can be
-recorded without cleaning it again. Different bytes or cleaner identities do
-not replace an established date, and the intake CLI reports a recorded
-cleaner-identity conflict with exit code `4`. This is bounded local
-preparation, not network automation or production vessel aggregation. Every
-intake root must be disjoint from the cleaned root, the period manifest cannot
-be inside either, and a newly cleaned bundle is not recorded unless its input
-SHA-256 matches its established daily slice.
+recorded without cleaning it again. A conflicting overlapping slice in the
+prescribed shared cleaned root is refused with exit code `2` before replacing
+the established bundle. Exit code `4` is reserved for a delivery conflict at
+an already-owned intake directory or an explicitly recorded independently
+produced incompatible cleaner bundle. Different bytes or cleaner identities do
+not replace an established date. This is bounded local preparation, not
+network automation or production vessel aggregation. Every intake root must be
+disjoint from the cleaned root, the period manifest cannot be inside either,
+and a newly cleaned bundle is not recorded unless its input SHA-256 matches its
+established daily slice.
 
 Transfer completeness and observational completeness remain separate. Direct
 CSV transfer completeness stays `unverified` unless the author independently
@@ -317,7 +320,8 @@ ZIP/archive-integrity evidence when available. Retain no email address, cookie,
 token, or expiring URL. Run it from a new delivery-specific intake directory
 against the established shared cleaned root and period manifest. A successful
 two-date pilot still leaves 151 expected dates missing and authorizes neither
-five monthly orders nor a monthly/full-period scaling claim.
+five monthly orders nor a monthly/full-period scaling claim. The repository
+does not submit or automate this author-controlled pilot.
 
 ### Multi-day cleaned-input manifest and bounded scanning
 

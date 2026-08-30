@@ -249,11 +249,12 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   exact compatible cleaner identity is already recorded. Separate explicit
   deliveries can use unique intake directories while accumulating into the
   same cleaned root and 153-date period manifest. Synthetic integration tests
-  verify disjoint deliveries, identical overlap, conflicting cleaner identity,
-  preservation of earlier successes, and conflict exit diagnostics. This
-  implements local intake and preparation, not AccessAIS order submission,
-  email/application automation, network retrieval, segment construction, or
-  vessel aggregation.
+  verify disjoint deliveries, identical overlap, shared-root conflict refusal
+  before canonical-bundle replacement, independently produced cleaner-identity
+  conflict recording, preservation of earlier successes, and distinct conflict
+  exit diagnostics. This implements local intake and preparation, not
+  AccessAIS order submission, email/application automation, network retrieval,
+  segment construction, or vessel aggregation.
 - [ADR 0018](decisions/0018-use-vessel-kilometres-for-grid-activity.md)
   records the **Proposed** vessel-activity aggregation design.
   Vessel-kilometres is the proposed primary additive grid metric. Group-specific
@@ -374,7 +375,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 282 passing tests using temporary
+- The combined self-contained suite has 283 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
@@ -392,9 +393,10 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   repeat intersections, distance/time conservation, invalid grid inputs,
   deterministic evidence identity, overwrite and raw-output refusal, failed-run
   atomicity, multi-date delivery partitioning and row conservation, separate
-  disjoint-delivery accumulation, identical overlap, conflicting cleaner
-  identity with prior-date preservation and conflict exit diagnostics, strict
-  daily manifest paths and traversal refusal, strict count types and per-date
+  disjoint-delivery accumulation, identical overlap, shared-root conflict
+  refusal, independently recorded cleaner conflict with prior-date preservation,
+  and distinct conflict exit diagnostics, strict daily manifest paths and
+  traversal refusal, strict count types and per-date
   reconciliation, managed-path separation, cleaner-input checksum binding,
   interruption/resume, a one-date period manifest leaving 152 dates missing,
   153 synthetic dates becoming ready,
