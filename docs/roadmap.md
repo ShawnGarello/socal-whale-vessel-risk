@@ -170,7 +170,8 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 
 ### Progress
 
-**Foundation, first AIS processing slice, projected water grid, and whale transfer implemented and verified**
+**Foundation, first AIS processing slice, projected water grid, whale transfer,
+and candidate vessel-grid aggregation implemented and verified synthetically**
 
 - A Python 3.13 src package exists under [`../analysis/`](../analysis/) with a
   committed `pyproject.toml` and `uv.lock`. uv sync/lock, Ruff format/lint,
@@ -263,9 +264,9 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   of retained commercial points rather than summed across passenger, cargo, and
   tanker groups. The modeled-whale-support geometry is biological model
   support, not an authoritative shoreline, general water mask, or AIS
-  observability boundary. The production segment/grid process and the
-  unresolved gap, implied-speed, edge-support, and vessel-length parameters
-  have not been implemented or settled.
+  observability boundary. A production-capable candidate segment/grid process
+  is now implemented, but the gap, implied-speed, edge-support, and vessel-
+  length choices remain unresolved and ADR 0018 remains Proposed.
 - An isolated, read-only vessel-activity evidence harness now validates one
   explicit current cleaner bundle and constructs deterministic consecutive
   pairs for diagnostics. It reports group and commercial-union observation and
@@ -375,7 +376,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 283 passing tests using temporary
+- The combined self-contained suite has 295 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
@@ -408,7 +409,12 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   across real and synthetic bundles regenerated at different paths and
   execution times, matching/mismatching/absent/partial retrieval
   `cleaning_reference` linkage, streamed DuckDB scanning without Python
-  materialization, memory and spill validation, and all CLI boundaries.
+  materialization, memory and spill validation, candidate whole-period pairing,
+  explicit gap and implied-speed exclusions, exact multi-cell vessel-kilometre
+  allocation, output conservation, zero-length/outside-support/boundary-
+  ambiguity treatment, union-recomputed distinct-vessel output, deterministic
+  candidate GeoParquet and quality JSON, candidate-bundle atomicity and output
+  safeguards, and all CLI boundaries.
 - A focused whale-grid command validates the selected NOAA/SWFSC source and the
   exact versioned water-grid input, reprojects source polygons with explicit x/y
   order, detects material source-interior overlap, and transfers modeled density
@@ -522,6 +528,33 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   many pairs an artificial daily partitioning would have lost. No maximum gap,
   implied-speed, length, or edge-support rule is applied and no segment or
   vessel grid is emitted.
+- A focused candidate vessel-grid boundary now consumes that verified relation
+  and the exact `projected_water_grid_v1` contract. It requires explicit maximum
+  gap, implied-speed ceiling, period-readiness, cleaned-extent censoring, and
+  exact-support allocation arguments; none has an analytical default. Length
+  filtering has no command option and remains recorded as disabled and
+  unresolved. Whole-period DuckDB `lead` pairing preserves valid cross-midnight
+  segments while ordered Arrow batches keep Python processing bounded.
+- Retained straight segments are split across exact modeled-whale-support water
+  geometry in EPSG:3310. Candidate per-cell vessel-kilometres are emitted for
+  passenger, cargo, tanker, and their additive commercial total, together with
+  vessel-kilometres per stored support-water area. Descriptive distinct MMSI and
+  MMSI-date values are recomputed from underlying identity unions for all
+  commercial vessels rather than summed from group counts. Zero-length,
+  outside-support, invalid-intersection, point-boundary, and positive-length
+  boundary-ambiguity populations remain explicit. Parent, allocated, outside,
+  ambiguous, and invalid distances conserve within recorded absolute and
+  relative tolerances.
+- The atomic `candidate_vessel_grid_v1` bundle is restricted to ignored
+  `data/derived/` and contains deterministic GeoParquet and quality JSON plus
+  time-bearing lineage metadata. It preserves exact grid identity, ordering,
+  areas, and geometry, includes every cell including zeros, refuses raw or
+  non-derived output, input/output overlap, arbitrary overwrite, and partial
+  publication, and records source artifact checksums, candidate parameters,
+  exclusions, counts, conservation, software versions, and validation steps.
+  Synthetic tests verify the production boundary. No real multi-date delivery
+  or real candidate vessel-grid run was executed, so no parameter was accepted
+  and no period-wide vessel input was produced.
 - The 2026-08-28 real read-only smoke run recorded the existing bounded
   2024-07-15 cleaner bundle and retrieval manifest without modifying either. It
   reported exactly one compatible date, 152 missing dates, `not_ready` period
@@ -547,31 +580,25 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   are complete, but no real multi-date delivery has been exercised. Independent
   transfer completeness, monthly/full-period memory safety, a guarded daily
   bulk download, and the 153-date retrieval remain unverified or unexercised.
-- The production vessel-activity aggregation proposed in ADR 0018, including
-  period segment construction, accepted filtering rules, a final per-cell
-  vessel-kilometres dataset, and validated period-wide distinct counts. The
-  multi-day cleaned-input manifest and its bounded, midnight-continuous DuckDB
-  relation exist as the input foundation only; they construct no segment and
-  select no threshold. The
-  implemented one-bundle harness supplies non-production per-cell evidence,
-  reusable candidate aggregation, vessel-hours comparison and point/distinct-
-  vessel context only. One real no-threshold bounded-day run and four candidate
-  combinations crossing 300/1,800-second maximum gaps with 30/50-knot
-  implied-speed ceilings were exercised, including real per-cell effects. No
-  production threshold was selected; behavioral plausibility filtering, an
-  accepted maximum interpolation gap or implied-speed rule, edge-support
-  treatment, any vessel-length threshold, period-wide stability and final speed
-  summaries remain unimplemented or unresolved.
-- Normalization of whale values or any vessel-derived spatial dataset. The
-  whale input is grid-aligned without normalization; normalization remains part
-  of the deferred exposure-method decision.
+- The final vessel-activity input proposed in ADR 0018. Candidate period segment
+  construction, explicit filtering, exact grid allocation, per-cell vessel-
+  kilometres, union-recomputed distinct counts, quality metadata, and lineage
+  are implemented and synthetically verified. No real multi-date delivery or
+  candidate grid has been processed. No production threshold was selected;
+  accepted maximum-gap and implied-speed rules, alternative edge support,
+  vessel-length population treatment, period-wide stability, observational
+  completeness, and final speed summaries remain unresolved. The implemented
+  output therefore remains a candidate result and ADR 0018 remains Proposed.
+- Normalization of whale or vessel values. Both grid-aligned candidate inputs
+  preserve physical or source units; normalization remains part of the deferred
+  exposure-method decision.
 - A successful GDAL/Pyogrio read-back of the GeoParquet on this machine; its
   driver attempted to load a missing `duckdb.dll`. PyArrow read-back and
   GeoParquet metadata validation passed, but ArcGIS compatibility remains
   unverified.
-- Lineage beyond the one-extract AIS bundle, projected water grid, and whale-grid
-  transfer, or an end-to-end analytical-period rerun. These outputs are
-  processing inputs, not analytical results.
+- End-to-end analytical-period lineage and rerun. Candidate vessel-grid lineage
+  now joins the one-extract AIS, projected water-grid, and whale-grid lineage
+  boundaries, but no full-period source set or final analytical result exists.
 - Anything gated by the unresolved analytical/statistical domain: the exposure
   calculation and surface, inside-versus-outside statistics, and their output
   contracts.
