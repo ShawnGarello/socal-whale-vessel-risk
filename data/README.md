@@ -238,6 +238,65 @@ not a linear forecast. Monthly or full-period processing is not authorized or
 shown safe until optimization, bounded date-sized processing, spilling or
 memory controls, or another measured design resolves it.
 
+### Author-supplied multi-date AccessAIS intake
+
+The implemented `accessais_period_delivery_v1` boundary accepts one explicit
+author-supplied direct CSV or safe ZIP and exact requested start/end dates. It
+does not submit an AccessAIS order, automate email, persist an email address or
+cookie, or retain an expiring/tokenized URL. The supplied delivery remains
+unchanged wherever the author placed it. If it is retained as source evidence,
+that location remains under ignored `data/raw/`; all generated daily slices,
+manifests, cleaner bundles, and DuckDB working files remain under
+`data/interim/`.
+
+```text
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli --help
+```
+
+The intake reuses the one-delivery content detection and ZIP safety boundary,
+then scans the selected CSV as a stream. It holds one source row at a time and
+keeps at most eight daily CSV writers open. It records source byte size and
+SHA-256, byte-detected content type, archive members and CRC state, the exact
+NOAA header, requested dates, all observed valid UTC dates, rows by date,
+malformed/unassignable timestamps, valid out-of-request rows, and every daily
+slice checksum. Row accounting must reconcile before atomic publication.
+Validation requires non-boolean integer row counts, exact agreement between
+slice dates and reported present requested dates, and per-date equality between
+each slice and `rows_by_utc_date`; matching totals alone do not pass. Input dates
+need not be contiguous in source row order.
+
+Daily slices use the exact published header, contain one valid UTC date, live
+under ignored `data/interim/`, and carry stable path-independent identities.
+The intake bundle is published by atomic directory rename. An identical retry
+revalidates and reuses it. Different source bytes or requested dates are
+recorded as a conflict attempt without replacing established identity or
+slices. An arbitrary existing directory is never overwritten. Each manifest
+slice path must use the exact `daily/<UTC-date>.csv` spelling and remain inside
+the intake bundle; absolute, traversal, backslash, and alternate paths are
+refused.
+
+The `run` verb processes daily slices sequentially through the existing
+one-date cleaner and records each successful bundle immediately into
+`multiday_cleaned_ais_input_v1`. A resume skips an already recorded compatible
+date and can record a cleaner bundle completed before interruption without
+cleaning it again. This is bounded local preparation, not network automation or
+production vessel aggregation. The intake and cleaned roots must be disjoint,
+the period manifest cannot be inside either, and a newly cleaned bundle is not
+recorded unless its input SHA-256 matches its established daily slice.
+
+Transfer completeness and observational completeness remain separate. Direct
+CSV transfer completeness stays `unverified` unless the author independently
+retained a matching source `Content-Length`; a complete safe ZIP with passing
+CRC uses the existing archive-integrity evidence rule. Date presence, midnight
+timestamp bounds, and plausible row counts upgrade neither state.
+
+The 2026-08-28 read-only compatibility run used only the permitted one-day
+direct CSV. It reconciled all 582,419 rows to 2024-07-15, generated a
+byte-identical daily CSV, reproduced the prior 113,799-row cleaned Parquet, and
+recorded one compatible date with 152 missing dates. Transfer and observational
+completeness remained `unverified`. This is not a multi-date or monthly scaling
+exercise, and it does not authorize five monthly orders.
+
 ### Multi-day cleaned-input manifest and bounded scanning
 
 The implemented `multiday_cleaned_ais_input_v1` boundary is a second, separate

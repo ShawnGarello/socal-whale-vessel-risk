@@ -3,7 +3,8 @@
 This directory is the Python package for the M3 offline-processing workflow. It
 provides versioned spatial and source-input contracts, read-only validators,
 traceable lineage metadata, a local AIS retrieval-verification boundary, a real
-one-extract AIS cleaning command, and
+one-extract AIS cleaning command, bounded local intake of one author-supplied
+multi-date AccessAIS CSV or ZIP, and
 construction of the exact EPSG:3310 analysis grid with actual per-cell water
 geometry from an explicitly supplied polygon mask. It also transfers the
 selected NOAA/SWFSC modeled blue-whale density surface to that water grid by
@@ -37,6 +38,7 @@ python -m uv run pytest
 python -m uv build
 python -m uv run python -m whale_vessel_analysis --help
 python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli --help
 python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --help
 python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help
 python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help
@@ -140,6 +142,114 @@ bounded date-sized processing, spilling or memory controls, or another measured
 design before execution. The full evidence and removal accounting are in the
 [source register](../docs/data-sources.md#retrieval-route). ADR 0017 remains
 Proposed because independent transfer completeness and scaling are unresolved.
+
+## Prepare one author-supplied multi-date AccessAIS delivery
+
+The separate `accessais_period_intake_cli` accepts one explicit local AccessAIS
+delivery and exact inclusive requested dates. It performs no network action: it
+does not submit an order, scrape the AccessAIS application, send or retain an
+email address, save cookies, or record an expiring/tokenized delivery URL. The
+supplied file remains read-only and may be either direct CSV or ZIP when the
+existing content-detection, safe-member, unambiguous-CSV, and ZIP CRC rules
+pass.
+
+Prepare deterministic one-date interim CSVs without cleaning them:
+
+```text
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 [--source-content-length <independently-retained-byte-count>]
+```
+
+Run the ordered resumable path through the existing one-date cleaner and
+`multiday_cleaned_ais_input_v1` manifest:
+
+```text
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
+```
+
+Validate an established intake bundle and report its current status:
+
+```text
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli status --intake-dir ..\data\interim\accessais-period-intake\delivery
+```
+
+Exit codes are `0` for a successful prepare/status or a run whose full 153-date
+period is ready, `2` for a refused input/destination/contract, `3` for a
+successful run whose period remains not ready, and `4` after a delivery
+conflict is recorded without replacement.
+
+The versioned `accessais_period_delivery_v1` manifest records source size and
+SHA-256; content type detected from bytes; archive/member/CRC evidence; the
+exact published header; requested start/end dates; every observed valid UTC
+date and its row count; missing requested dates; valid out-of-request rows; and
+malformed or otherwise unassignable timestamp rows. Its conservation equation
+requires every source data row to be either assigned to one requested-date
+slice or counted in one of the latter two exception populations. A malformed
+timestamp is never silently dropped. Manifest validation accepts only
+non-boolean integer row counts, requires slice dates to equal the reported
+present requested dates, and binds each slice row count to the same date in
+`rows_by_utc_date`; conserving only the overall total is insufficient.
+
+Partitioning is a standard-library streaming scan. It holds one 17-field row at
+a time and keeps at most eight daily writers open; it does not load the
+delivery into Python, Pandas, Polars, or PyArrow. Source order is retained
+within each date, so noncontiguous and unsorted date rows are supported. Every
+daily CSV carries the exact header, contains only one valid UTC date, and has a
+path-independent artifact identity plus byte size and SHA-256 linked to the
+delivery identity. The complete intake directory is first built at a unique
+temporary path and published by directory rename. Existing arbitrary output is
+refused; an identical retry revalidates and reuses the bundle; different bytes
+or requested dates append a conflict attempt without replacing established
+slices or identity. Manifest validation requires every slice path to be exactly
+`daily/<UTC-date>.csv`; absolute paths, parent traversal, backslashes, alternate
+spellings, and paths escaping the intake directory are refused.
+
+`run` cleans slices sequentially and records each successful cleaner bundle
+immediately through the existing period-manifest validator. On resume, a date
+already recorded with the exact compatible cleaner identity and daily-slice
+input SHA-256 is skipped. A cleaner bundle completed before an interruption but
+not yet recorded is validated and recorded without rerunning the cleaner. This
+bounds transient work to the delivery stream, at most eight open slice writers,
+and one daily cleaner execution; accumulated daily and cleaned artifacts remain
+under ignored `data/interim/`. The intake and cleaned roots must be disjoint,
+and the period manifest cannot be inside either root. A newly created cleaner
+bundle is not recorded until its input SHA-256 matches the established daily
+slice.
+
+Requested-date presence is inventory evidence, not completeness evidence. The
+delivery manifest keeps independent transfer completeness separate and marks a
+direct CSV `unverified` unless an independently retained matching source
+`Content-Length` is supplied; a safe complete ZIP with passing CRC follows the
+existing archive-integrity rule. Observational completeness always remains
+`unverified`. The existing period manifest remains the sole readiness boundary
+and becomes ready only with all 153 accepted dates.
+
+### Verified one-day compatibility exercise
+
+On 2026-08-28 the new `run` path read the permitted 2024-07-15 AccessAIS CSV
+without modifying it. The 59,497,346-byte source still had SHA-256
+`694ea3e8364de21467dea0affeb77e954d339e155d316dc4115b87ac01ffcca3`.
+Streaming intake reconciled all 582,419 rows to that requested date, with zero
+malformed/unassignable timestamps and zero out-of-request rows. The generated
+daily slice was byte-identical to the direct CSV and had the same checksum.
+
+The orchestration reproduced cleaner run ID `ais-362502c6a37b53e681b745f5`,
+113,799 cleaned rows, and cleaned-Parquet SHA-256
+`efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`.
+It recorded delivery ID `accessais-period-71ac80a3b7ff60cbc8748b8c` and the
+existing path/clock-independent period input ID
+`multiday-ais-aeaf8f584d830ed98ef2b52d`. The period correctly remained
+`not_ready` with one compatible and 152 missing dates. Independent transfer and
+observational completeness both remained `unverified`.
+
+A directly spawned end-to-end CLI process took 83.735669 seconds under a
+0.01-second process-tree RSS sampling protocol and showed an approximate
+990.379 MiB peak across 1,669 samples. The interval includes direct-CSV
+fingerprinting, streaming partitioning, generated-slice validation, the daily
+cleaner, and period recording; it excludes the outer uv measurement-wrapper
+startup. Sampling adds overhead and can miss a peak. Its method differs from
+the earlier approximately 1.59 GiB one-day cleaner observation, so the numbers
+are not directly comparable. This is one direct-CSV date, not a monthly or
+multi-date scaling result, and no value is extrapolated to 153 dates.
 
 ## Process one AIS extract
 
