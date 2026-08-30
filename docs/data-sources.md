@@ -51,6 +51,8 @@ used or required for any of them.**
 | 5 | Marine Cadastre AIS FAQ (May 2026) | `https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf` | `GET`, no parameters | 2026-08-25 |
 | 6 | AIS Vessel Type and Group Codes | `https://coast.noaa.gov/data/marinecadastre/ais/VesselTypeCodes2018.pdf` | `GET`, no parameters | 2026-08-25 |
 | 7 | AIS daily prefixes, five dates | `https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/AIS_<date>.zip` | `GET` with header `Range: bytes=0-8388607`, returning HTTP 206. **Only the first 8 MiB of each file was transferred.** Dates: `2024_07_15`, `2024_08_15`, `2024_09_16`, `2024_10_15`, `2024_11_15` | 2026-08-25 (`2024_07_15`), 2026-08-26 (the other four) |
+| 8 | NOAA NGS CUSP West shoreline | `https://geodesy.noaa.gov/dist_shoreline/West.zip` | `GET`, no parameters. Current West-region archive linked by the NOAA Shoreline Data Explorer; HTTP `Last-Modified` was `Wed, 05 Aug 2026 16:46:26 GMT` | 2026-08-28 |
+| 9 | NOAA OCM AIS Base Stations | `https://marinecadastre.gov/downloads/data/mc/AISBaseStation.zip` | `GET`, no parameters. Direct distribution linked by InPort item 73206; HTTP `Last-Modified` was `Thu, 01 Aug 2024 16:25:30 GMT` | 2026-08-28 |
 
 **Why the AIS retrieval looks unusual.** Each daily file is a zip containing one
 CSV, and is 330–420 MB. Retrieving five of them in full would be 1.8 GB for a
@@ -84,9 +86,13 @@ Paths are relative to the repository root. Verify with
 | 14 | `data/interim/m2-inspection/AIS_2024_10_15.head_sample.csv` | 22620135 | `3e925b56a1555935b9379d428b76a94eb0db3c30aa830b832a1d91967911f8b3` | **Derived from #13.** 204,861 data rows |
 | 15 | `data/raw/noaa-ais-2024/AIS_2024_11_15.head8MB.part` | 8388608 | `7a72e3cdcd92b605133cd6f17274c1c4b89eeb2b71f25f277978fe2e1fc3ec51` | Partial HTTP 206 response |
 | 16 | `data/interim/m2-inspection/AIS_2024_11_15.head_sample.csv` | 22807974 | `937f028539cd8d79b15700217a5fed3f6f91f3d8285a236245220ae32cc3799c` | **Derived from #15.** 207,129 data rows |
+| 17 | `data/raw/noaa-ngs-cusp-west/West.zip` | 42501564 | `53da33c37f6385fb7b64c59d96371b91eaa73b6e6c837e1f18147a8354015b85` | As downloaded. Contains the four components of the `West` Shapefile; evidence reads the member directly from the immutable archive |
+| 18 | `data/raw/noaa-ais-base-stations/AISBaseStation.zip` | 21061 | `8b317017783fd654a918e6cbf78edfea0d9df9eb6630157c019de7ddfa513003` | As downloaded. Contains `AISBaseStation.gpkg`; evidence reads it directly from the immutable archive |
 
-Total local footprint: roughly 300 MB, of which about 90 MB is downloaded bytes
+Original M2 local footprint: roughly 300 MB, of which about 90 MB is downloaded bytes
 and the rest is extracted geodatabases and decompressed samples.
+The domain-evidence additions contribute another 42.5 MB of downloaded source
+archives plus ignored extractions and derived evidence outputs.
 
 **Full compressed size of each sampled AIS day**, read from the server's
 `Content-Length` on the retrieval date. Used only to scale the volume estimate,
@@ -119,6 +125,24 @@ candidate comparison. Tool versions and the exact invocation are recorded in
 **Figures that are not regenerable are not quoted.** Where a value in this
 register came from a publisher's webpage or PDF rather than from a computation,
 the source is named at the point of use.
+
+---
+
+## Analytical-domain supporting inputs
+
+These sources support the open AIS-observability decision. They are not biological, vessel-activity, or management inputs, and neither is a measured coverage surface. Full calculations and candidate measurements are in [analytical-domain-evidence.md](analytical-domain-evidence.md).
+
+### NOAA NGS Continually Updated Shoreline Product, West
+
+**Verification status: verified from official metadata and the downloaded archive.** NOAA NGS describes CUSP as available contemporary high-resolution national shoreline. The West archive contains 82,963 valid LineStrings in EPSG:4269 with source date, source resolution, horizontal-accuracy, extraction-method, and shoreline-feature attributes. The explicit expanded Southern California filter touches 13,435 features. Source dates in that subset vary because CUSP combines the best available source by location; it is not one simultaneous survey.
+
+Metadata is [InPort item 60812](https://www.fisheries.noaa.gov/inport/item/60812); the exact distribution and provenance are recorded above. Access constraints are none. NOAA requests credit and supplies warranty, navigation, and litigation disclaimers. The metadata warns that completeness reflects the component sources and may not constitute a complete shoreline dataset. The evidence uses it only to construct distance sensitivity masks at tens of kilometres, not as a property or navigation boundary.
+
+### NOAA OCM AIS Base Stations
+
+**Verification status: verified from official metadata and the downloaded archive.** The 2024-08-01 source contains 290 valid EPSG:4269 points: 136 `NAIS` and 154 `LOMA`. NOAA says station identity and location were extracted from the 2024 USCG Light List Volumes I and V and corrected during loading. Reported horizontal accuracy is 10 m at 95% confidence; conceptual consistency is verified; attribute accuracy and completeness are explicitly untested. The expanded Southern California evidence filter contains nine NAIS stations.
+
+Metadata is [InPort item 73206](https://www.fisheries.noaa.gov/inport/item/73206); the exact distribution and provenance are recorded above. Data use is constrained to coastal and ocean planning. The source does not provide antenna height, uptime, outage history, terrain shadowing, or a reception radius. The current AIS FAQ points to this dataset for station locations, but a circular buffer around the points remains a geometry scenario rather than an observed-coverage product.
 
 ---
 
@@ -649,7 +673,7 @@ The program publishes eight points under the heading "2026 VSR Zone Points", wit
 | **Geometry** | Single valid `Polygon` — outer ring of 37,239 vertices plus **104 interior rings** |
 | **CRS** | Service is stored in EPSG:3857; requested and returned as EPSG:4326 |
 | **Extent** | lon −125.46 to −117.104, lat 32.5498 to 41.9985 |
-| **Area** | **142,155 km²**, computed in EPSG:3310 (California Albers, equal-area) |
+| **Area** | **143,035.5 km²** in EPSG:3310 after source-CRS edges are densified to at most 0.01° before projection. The earlier 142,155 km² figure projected stored vertices only; long geographic segments became projected chords and the resulting polygon was invalid for overlay. Densification limits of 0.005° and 0.001° change the statewide result by only 0.007 and 0.009 km² |
 | **Interior rings** | Islands, excluded from the zone. Areas match published island areas: 250.3 km² at (−119.75, 34.01) = Santa Cruz; 214.7 at (−120.11, 33.97) = Santa Rosa; 193.8 at (−118.43, 33.38) = Santa Catalina; 146.7 at (−118.49, 32.90) = San Clemente; 58.6 at (−119.51, 33.25) = San Nicolas; 38.5 at (−120.37, 34.04) = San Miguel; 2.6 at (−119.04, 33.48) = Santa Barbara Island. Total hole area 916.8 km² |
 | **Landward boundary** | Follows the coastline. The 37,239-vertex outer ring and the island holes together confirm the polygon is already land-clipped — **the project does not need to supply a shoreline or make a closure assumption** |
 
@@ -659,13 +683,13 @@ The program publishes eight points under the heading "2026 VSR Zone Points", wit
 |---|---|---|---|---|---|---|---|---|
 | Distance | 0 m | 0 m | 0 m | 0 m | 0 m | 0 m | **455 m** | 0 m |
 
-Seven of the eight published points lie exactly on the boundary. Point 7 (33.30, −121.21) is 455 m from it. The map PDF gives a finer value for the same point — 33°18.066′, −121°12.7234′ — which is 377 m from the boundary, so the discrepancy is not simply the webpage's two-decimal rounding. **It is a real, small inconsistency between the published point list and the published geometry.** At 455 m against a 142,155 km² zone it does not affect any statistic this project will report, but it is recorded rather than smoothed over, and the geometry — not the point list — is what the analysis uses.
+Seven of the eight published points lie exactly on the boundary. Point 7 (33.30, −121.21) is 455 m from it. The map PDF gives a finer value for the same point — 33°18.066′, −121°12.7234′ — which is 377 m from the boundary, so the discrepancy is not simply the webpage's two-decimal rounding. **It is a real, small inconsistency between the published point list and the published geometry.** At 455 m against a 143,035.5 km² zone it does not affect any statistic this project will report, but it is recorded rather than smoothed over, and the geometry — not the point list — is what the analysis uses.
 
 ### Which portion applies to the Southern California study area
 
 There is one zone, so the question is which part of it the study area must contain rather than which zone to pick.
 
-- The portion of the zone south of 35°N covers **56,011 km², 39.4% of the whole zone.**
+- The portion of the zone south of 35°N covers **56,627.6 km², 39.6% of the whole zone**, after the same 0.01° pre-projection densification.
 - Its bounds are lon −122.07 to −117.10, lat 32.5498 to 35.0.
 - Point tests confirm the zone includes the Santa Barbara Channel, the Point Conception approach, Santa Monica Bay, the San Pedro Channel and Long Beach outer anchorage, the Catalina offshore lane, and the San Diego approach.
 - Point tests confirm it **excludes** Tanner/Cortes Bank (−119.10, 32.75) and the waters well offshore of the Bight.

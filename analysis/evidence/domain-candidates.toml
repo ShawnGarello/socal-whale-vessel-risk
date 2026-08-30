@@ -1,0 +1,77 @@
+schema_version = 1
+analysis_crs = "EPSG:3310"
+shoreline_crs = "EPSG:4269"
+station_crs = "EPSG:4269"
+vsr_crs = "EPSG:4326"
+shoreline_member = "West.shp"
+station_member = "AISBaseStation.gpkg"
+shoreline_simplification_m = 25.0
+vsr_segment_max_degrees = 0.01
+buffer_quadrant_segments = 32
+cell_area_tolerance_m2 = 0.1
+
+[source_sha256]
+grid = "7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031"
+shoreline_archive = "53da33c37f6385fb7b64c59d96371b91eaa73b6e6c837e1f18147a8354015b85"
+station_archive = "8b317017783fd654a918e6cbf78edfea0d9df9eb6630157c019de7ddfa513003"
+vsr = "2358bd39df3f3ca084b8ef8c3ea3321c7d93fe9bec76f5a2d61e01370549c783"
+
+[shoreline_filter]
+lon_min = -123.5
+lat_min = 30.5
+lon_max = -115.5
+lat_max = 36.5
+
+[station_filter]
+lon_min = -124.0
+lat_min = 30.0
+lon_max = -115.0
+lat_max = 37.0
+
+[[scenarios]]
+id = "coast_40_statute_miles"
+basis = "coastline"
+distance = 40
+unit = "statute_mile"
+
+[[scenarios]]
+id = "coast_40_nautical_miles"
+basis = "coastline"
+distance = 40
+unit = "nautical_mile"
+
+[[scenarios]]
+id = "coast_50_statute_miles"
+basis = "coastline"
+distance = 50
+unit = "statute_mile"
+
+[[scenarios]]
+id = "coast_50_nautical_miles"
+basis = "coastline"
+distance = 50
+unit = "nautical_mile"
+
+[[scenarios]]
+id = "receivers_40_statute_miles"
+basis = "receivers"
+distance = 40
+unit = "statute_mile"
+
+[[scenarios]]
+id = "receivers_40_nautical_miles"
+basis = "receivers"
+distance = 40
+unit = "nautical_mile"
+
+[[scenarios]]
+id = "receivers_50_statute_miles"
+basis = "receivers"
+distance = 50
+unit = "statute_mile"
+
+[[scenarios]]
+id = "receivers_50_nautical_miles"
+basis = "receivers"
+distance = 50
+unit = "nautical_mile"
