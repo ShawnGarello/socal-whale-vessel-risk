@@ -196,7 +196,9 @@ delivery identity. The complete intake directory is first built at a unique
 temporary path and published by directory rename. Existing arbitrary output is
 refused; an identical retry revalidates and reuses the bundle; different bytes
 or requested dates append a conflict attempt without replacing established
-slices or identity.
+slices or identity. Manifest validation requires every slice path to be exactly
+`daily/<UTC-date>.csv`; absolute paths, parent traversal, backslashes, alternate
+spellings, and paths escaping the intake directory are refused.
 
 `run` cleans slices sequentially and records each successful cleaner bundle
 immediately through the existing period-manifest validator. On resume, a date
@@ -205,7 +207,10 @@ input SHA-256 is skipped. A cleaner bundle completed before an interruption but
 not yet recorded is validated and recorded without rerunning the cleaner. This
 bounds transient work to the delivery stream, at most eight open slice writers,
 and one daily cleaner execution; accumulated daily and cleaned artifacts remain
-under ignored `data/interim/`.
+under ignored `data/interim/`. The intake and cleaned roots must be disjoint,
+and the period manifest cannot be inside either root. A newly created cleaner
+bundle is not recorded until its input SHA-256 matches the established daily
+slice.
 
 Requested-date presence is inventory evidence, not completeness evidence. The
 delivery manifest keeps independent transfer completeness separate and marks a
