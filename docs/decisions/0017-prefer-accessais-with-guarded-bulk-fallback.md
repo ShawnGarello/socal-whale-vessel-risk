@@ -152,6 +152,55 @@ excluding the immutable raw CSV. The roughly 1.59 GiB peak memory is a real
 scaling concern, not a basis for linear extrapolation. Monthly/full-period
 processing has not been shown safe.
 
+### Observed through the bounded period-intake foundation
+
+The implemented `accessais_period_delivery_v1` boundary now accepts one
+explicit author-supplied multi-date AccessAIS direct CSV or safe ZIP and exact
+requested start/end dates. It reuses the existing byte-content detection,
+archive member-safety, unambiguous-CSV, CRC, and exact-header boundary. It does
+not submit an order, automate email, retain an email address or cookie, or save
+an expiring/tokenized URL.
+
+The selected CSV is scanned with the standard library one row at a time while
+at most eight requested-date writers are open. Valid in-request rows are
+partitioned by parsed UTC date even when source dates are noncontiguous or out
+of row order. The delivery manifest separately counts malformed/unassignable
+timestamps and valid out-of-request rows, records rows by every observed valid
+date, and requires source-row conservation before atomically publishing
+deterministic daily slices under ignored `data/interim/`. Identical retries are
+reused; a different delivery or requested range records a conflict without
+replacing established identity or slices.
+
+The ordered `run` path invokes the existing one-date cleaner sequentially and
+records each successful bundle immediately through
+`multiday_cleaned_ais_input_v1`. Resume skips a date only after validating the
+exact daily-slice input checksum and compatible recorded cleaner identity. A
+bundle completed before interruption can be validated and recorded without
+recleaning. This is local data intake and preparation, not network transfer,
+segment construction, vessel aggregation, or exposure analysis.
+
+The new path was exercised read-only against the same permitted 2024-07-15
+direct CSV on 2026-08-28. All 582,419 source rows were assigned to that date;
+malformed/unassignable and out-of-request counts were both zero. The generated
+daily slice was byte-identical to the 59,497,346-byte source with SHA-256
+`694ea3e8364de21467dea0affeb77e954d339e155d316dc4115b87ac01ffcca3`.
+Sequential orchestration reproduced cleaner run ID
+`ais-362502c6a37b53e681b745f5`, the 113,799-row cleaned checksum above, delivery
+ID `accessais-period-71ac80a3b7ff60cbc8748b8c`, and period input ID
+`multiday-ais-aeaf8f584d830ed98ef2b52d`. The period remained `not_ready` with
+152 missing dates. No independent source length or stable object validator was
+available, so transfer completeness and observational completeness both
+remained `unverified`.
+
+Under a separate 0.01-second process-tree RSS sampling protocol, the directly
+spawned end-to-end CLI took 83.735669 seconds and showed an approximate 990.379
+MiB peak across 1,669 samples. It includes intake fingerprinting, streaming
+partitioning, generated-slice validation, daily cleaning, and period recording,
+but excludes the outer uv measurement-wrapper startup. Sampling adds overhead
+and can miss a peak. Its method differs from the earlier approximately 1.59 GiB
+cleaner observation, so they are not directly comparable. This one direct-CSV
+date supplies no monthly or multi-date scaling evidence.
+
 ### Inferred
 
 - Five sequential monthly AccessAIS orders are the smallest simple partition
@@ -169,6 +218,10 @@ processing has not been shown safe.
 - Safe monthly or full-period processing. The measured one-day peak memory
   requires optimization, bounded date-sized processing, spilling or memory
   controls, or another measured design before execution.
+- A real multi-date AccessAIS delivery. Synthetic tests exercise unsorted dates,
+  row conservation, malformed and out-of-request timestamps, missing dates,
+  ZIP safety, conflicts, interruption and resume, but they are not a monthly
+  smoke run or transfer measurement.
 - No complete bulk daily archive has been downloaded, opened through its ZIP
   central directory, or checked through its CRC. NOAA publishes no checksum in
   the bulk index, so a locally computed SHA-256 would identify retrieved bytes
@@ -390,7 +443,9 @@ filename, and a one-date manifest entry. It:
 3. recorded timestamp bounds and row counts without treating them as proof of
    transfer or observational completeness;
 4. reproduced the cleaned checksum and run ID; and
-5. measured DuckDB runtime, peak RSS, and generated disk footprint.
+5. measured DuckDB runtime, peak RSS, and generated disk footprint; and
+6. exercised the bounded period-intake, deterministic daily-slice, sequential
+   cleaner, resumable period-recording, and incomplete-period status path.
 
 Route acceptance additionally requires independently supported transfer
 completeness and a measured processing design that makes the proposed monthly
@@ -411,6 +466,10 @@ monthly or full-period retrieval begins from this partially passed gate.
   `observational_completeness_preserved: true` only when the cleaner's
   `unverified` completeness field is unchanged and rejects an attempted
   upgrade.
+- The local period-intake command implements bounded multi-date partitioning and
+  resumable sequential cleaner orchestration for one supplied delivery. It does
+  not resolve delivery transfer completeness, prove monthly scaling, or make
+  the analytical period available.
 - Monthly AccessAIS partitions bound each order below the currently reported
   service limit and make resubmission local to one month. Only one is submitted
   at a time.

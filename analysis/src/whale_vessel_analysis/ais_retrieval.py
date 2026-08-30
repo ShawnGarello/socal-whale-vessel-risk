@@ -12,7 +12,7 @@ import shutil
 import stat
 import tempfile
 import zipfile
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path, PurePosixPath
@@ -281,6 +281,16 @@ class CSVBundleResult:
     reused: bool
 
 
+@dataclass(frozen=True, slots=True)
+class AISContainerInspection:
+    """Content-detected CSV/ZIP structure shared by local intake boundaries."""
+
+    container: Literal["csv", "zip"]
+    archive_members: tuple[str, ...]
+    selected_csv_member: str | None
+    crc_valid: bool | None
+
+
 def _utc_timestamp(value: datetime) -> str:
     return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
@@ -328,7 +338,8 @@ def _redact_free_text(value: str) -> str:
     return _SECRET_PAIR_PATTERN.sub(r"\1=[redacted]", redacted)
 
 
-def _fingerprint_regular_file(path: Path) -> tuple[int, str, int]:
+def fingerprint_regular_file(path: Path) -> tuple[int, str, int]:
+    """Return size, SHA-256, and mtime for one immutable regular-file boundary."""
     try:
         metadata = path.lstat()
     except FileNotFoundError as exc:
@@ -345,7 +356,8 @@ def _fingerprint_regular_file(path: Path) -> tuple[int, str, int]:
     return metadata.st_size, digest.hexdigest(), metadata.st_mtime_ns
 
 
-def _safe_member_name(name: str) -> str:
+def safe_archive_member_name(name: str) -> str:
+    """Validate one archive member path under the shared retrieval safety rules."""
     normalized = name.replace("\\", "/")
     path = PurePosixPath(normalized)
     if (
@@ -359,6 +371,69 @@ def _safe_member_name(name: str) -> str:
     if _EMAIL_PATTERN.search(name) or _SECRET_PAIR_PATTERN.search(name):
         raise AISRetrievalError("archive member name contains sensitive text")
     return normalized
+
+
+def inspect_ais_container[CSVInspectionT](
+    path: Path, inspect_csv_stream: Callable[[IO[bytes]], CSVInspectionT]
+) -> tuple[AISContainerInspection, CSVInspectionT]:
+    """Inspect content-detected CSV/ZIP structure and one selected CSV stream.
+
+    The callback must consume the selected CSV stream. For ZIP input this helper
+    additionally drains every other member so Python's ZIP reader validates each
+    member CRC before the container is accepted.
+    """
+    try:
+        with path.open("rb") as source:
+            signature = source.read(4)
+        if signature not in _ZIP_SIGNATURES:
+            with path.open("rb") as source:
+                csv_result = inspect_csv_stream(source)
+            return AISContainerInspection("csv", (), None, None), csv_result
+        with zipfile.ZipFile(path) as archive:
+            infos = archive.infolist()
+            normalized_names = tuple(
+                safe_archive_member_name(info.filename) for info in infos
+            )
+            csv_infos = [
+                info
+                for info, normalized in zip(infos, normalized_names, strict=True)
+                if not info.is_dir() and normalized.lower().endswith(".csv")
+            ]
+            if not csv_infos:
+                raise AISRetrievalError("archive contains no CSV member")
+            if len(csv_infos) > 1:
+                names = ", ".join(info.filename for info in csv_infos)
+                raise AISRetrievalError(
+                    f"archive contains multiple ambiguous CSV members: {names}"
+                )
+            selected = csv_infos[0]
+            zip_result: CSVInspectionT | None = None
+            for info in infos:
+                if info.is_dir():
+                    continue
+                with archive.open(info, "r") as member:
+                    if info is selected:
+                        zip_result = inspect_csv_stream(member)
+                    else:
+                        for _chunk in iter(lambda: member.read(1024 * 1024), b""):
+                            pass
+            if zip_result is None:
+                raise AISRetrievalError("selected CSV member could not be read")
+            return (
+                AISContainerInspection(
+                    "zip",
+                    normalized_names,
+                    safe_archive_member_name(selected.filename),
+                    True,
+                ),
+                zip_result,
+            )
+    except AISRetrievalError:
+        raise
+    except (zipfile.BadZipFile, RuntimeError, OSError) as exc:
+        raise AISRetrievalError(
+            f"ZIP archive or member CRC validation failed: {exc}"
+        ) from exc
 
 
 def _inspect_csv_stream(source: IO[bytes], expected_date: date) -> CSVDateInspection:
@@ -434,66 +509,15 @@ def inspect_ais_artifact(
 ) -> ArtifactInspection:
     """Inspect a local artifact without modifying or extracting it."""
     path = path.resolve()
-    byte_size, sha256, initial_mtime_ns = _fingerprint_regular_file(path)
+    byte_size, sha256, initial_mtime_ns = fingerprint_regular_file(path)
     if source_content_length is not None and source_content_length != byte_size:
         raise AISRetrievalError(
             f"source Content-Length {source_content_length} does not match "
             f"local byte size {byte_size}"
         )
-    with path.open("rb") as source:
-        signature = source.read(4)
-    if signature in _ZIP_SIGNATURES:
-        try:
-            with zipfile.ZipFile(path) as archive:
-                infos = archive.infolist()
-                normalized_names = tuple(
-                    _safe_member_name(info.filename) for info in infos
-                )
-                csv_infos = [
-                    info
-                    for info, normalized in zip(infos, normalized_names, strict=True)
-                    if not info.is_dir() and normalized.lower().endswith(".csv")
-                ]
-                if not csv_infos:
-                    raise AISRetrievalError("archive contains no CSV member")
-                if len(csv_infos) > 1:
-                    names = ", ".join(info.filename for info in csv_infos)
-                    raise AISRetrievalError(
-                        f"archive contains multiple ambiguous CSV members: {names}"
-                    )
-                selected = csv_infos[0]
-                date_inspection: CSVDateInspection | None = None
-                for info in infos:
-                    if info.is_dir():
-                        continue
-                    with archive.open(info, "r") as member:
-                        if info is selected:
-                            date_inspection = _inspect_csv_stream(
-                                member, expected_utc_date
-                            )
-                        else:
-                            for _chunk in iter(lambda: member.read(1024 * 1024), b""):
-                                pass
-                if date_inspection is None:
-                    raise AISRetrievalError("selected CSV member could not be read")
-        except (zipfile.BadZipFile, RuntimeError, OSError) as exc:
-            raise AISRetrievalError(
-                f"ZIP archive or member CRC validation failed: {exc}"
-            ) from exc
-        container: Literal["csv", "zip"] = "zip"
-        members = normalized_names
-        selected_member: str | None = _safe_member_name(selected.filename)
-        crc_valid: bool | None = True
-    else:
-        try:
-            with path.open("rb") as source:
-                date_inspection = _inspect_csv_stream(source, expected_utc_date)
-        except OSError as exc:
-            raise AISRetrievalError(f"could not read source CSV: {path}") from exc
-        container = "csv"
-        members = ()
-        selected_member = None
-        crc_valid = None
+    container_inspection, date_inspection = inspect_ais_container(
+        path, lambda source: _inspect_csv_stream(source, expected_utc_date)
+    )
     final_metadata = path.stat()
     if (
         final_metadata.st_size != byte_size
@@ -503,10 +527,10 @@ def inspect_ais_artifact(
     return ArtifactInspection(
         byte_size=byte_size,
         sha256=sha256,
-        container=container,
-        archive_members=members,
-        selected_csv_member=selected_member,
-        crc_valid=crc_valid,
+        container=container_inspection.container,
+        archive_members=container_inspection.archive_members,
+        selected_csv_member=container_inspection.selected_csv_member,
+        crc_valid=container_inspection.crc_valid,
         source_content_length_match=(None if source_content_length is None else True),
         date_inspection=date_inspection,
     )
@@ -865,7 +889,7 @@ def _sha256(path: Path) -> str:
 def _require_inspected_source_identity(
     source_path: Path, inspection: ArtifactInspection
 ) -> None:
-    byte_size, sha256, _mtime_ns = _fingerprint_regular_file(source_path)
+    byte_size, sha256, _mtime_ns = fingerprint_regular_file(source_path)
     if byte_size != inspection.byte_size or sha256 != inspection.sha256:
         raise AISRetrievalError(
             "source artifact no longer matches the inspected byte size and SHA-256"
@@ -970,7 +994,7 @@ def materialize_verified_csv_bundle(
                 matching = [
                     info
                     for info in archive.infolist()
-                    if _safe_member_name(info.filename)
+                    if safe_archive_member_name(info.filename)
                     == inspection.selected_csv_member
                 ]
                 if len(matching) != 1:
