@@ -1,0 +1,23 @@
+.attribution {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-end: 0;
+  z-index: 3;
+  margin: 0;
+  max-width: 100%;
+  padding: 0.3rem 0.55rem;
+  background: rgb(16 22 28 / 92%);
+  color: var(--shell-fg);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+@media (forced-colors: active) {
+  .attribution {
+    border-block-start: 1px solid CanvasText;
+    border-inline-start: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+}
