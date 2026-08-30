@@ -625,9 +625,17 @@ def _validate_slice_content(path: Path, utc_date: str, expected_rows: int) -> No
         )
 
 
+def _strict_nonnegative_count(value: object, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise AccessAISPeriodIntakeError(f"{label} must be a non-boolean integer count")
+    if value < 0:
+        raise AccessAISPeriodIntakeError(f"{label} cannot be negative")
+    return value
+
+
 def _validate_manifest_accounting(
     payload: Mapping[str, object], requested: RequestedPeriod
-) -> None:
+) -> tuple[dict[str, int], frozenset[str]]:
     row_accounting = payload.get("row_accounting")
     rows_by_date = payload.get("rows_by_utc_date")
     coverage = payload.get("requested_date_coverage")
@@ -639,33 +647,46 @@ def _validate_manifest_accounting(
         raise AccessAISPeriodIntakeError(
             "delivery row accounting and date coverage must be objects"
         )
-    try:
-        source_rows = int(row_accounting["source_data_rows"])
-        valid_rows = int(row_accounting["valid_timestamp_rows"])
-        malformed_rows = int(row_accounting["malformed_or_unassignable_timestamp_rows"])
-        assigned_rows = int(
-            row_accounting["valid_in_request_rows_assigned_to_daily_slices"]
-        )
-        outside_rows = int(row_accounting["valid_out_of_request_rows"])
-        normalized_rows_by_date = {
-            cast(str, key): int(value) for key, value in rows_by_date.items()
-        }
-    except (KeyError, TypeError, ValueError) as exc:
-        raise AccessAISPeriodIntakeError(
-            "delivery row accounting contains invalid counts"
-        ) from exc
-    if any(
-        value < 0
-        for value in (
-            source_rows,
-            valid_rows,
-            malformed_rows,
-            assigned_rows,
-            outside_rows,
-            *normalized_rows_by_date.values(),
-        )
-    ):
-        raise AccessAISPeriodIntakeError("delivery row counts cannot be negative")
+    source_rows = _strict_nonnegative_count(
+        row_accounting.get("source_data_rows"), "source_data_rows"
+    )
+    valid_rows = _strict_nonnegative_count(
+        row_accounting.get("valid_timestamp_rows"), "valid_timestamp_rows"
+    )
+    malformed_rows = _strict_nonnegative_count(
+        row_accounting.get("malformed_or_unassignable_timestamp_rows"),
+        "malformed_or_unassignable_timestamp_rows",
+    )
+    assigned_rows = _strict_nonnegative_count(
+        row_accounting.get("valid_in_request_rows_assigned_to_daily_slices"),
+        "valid_in_request_rows_assigned_to_daily_slices",
+    )
+    outside_rows = _strict_nonnegative_count(
+        row_accounting.get("valid_out_of_request_rows"),
+        "valid_out_of_request_rows",
+    )
+    normalized_rows_by_date: dict[str, int] = {}
+    for raw_date, raw_count in rows_by_date.items():
+        if not isinstance(raw_date, str):
+            raise AccessAISPeriodIntakeError(
+                "rows_by_utc_date keys must be UTC-date strings"
+            )
+        try:
+            parsed_date = date.fromisoformat(raw_date)
+        except ValueError as exc:
+            raise AccessAISPeriodIntakeError(
+                f"rows_by_utc_date key is not a valid UTC date: {raw_date}"
+            ) from exc
+        if parsed_date.isoformat() != raw_date:
+            raise AccessAISPeriodIntakeError(
+                f"rows_by_utc_date key is not canonical ISO format: {raw_date}"
+            )
+        count = _strict_nonnegative_count(raw_count, f"rows_by_utc_date[{raw_date}]")
+        if count == 0:
+            raise AccessAISPeriodIntakeError(
+                f"rows_by_utc_date[{raw_date}] must be positive"
+            )
+        normalized_rows_by_date[raw_date] = count
     requested_dates = set(requested.dates())
     observed_dates = set(normalized_rows_by_date)
     expected_assigned = sum(
@@ -700,6 +721,7 @@ def _validate_manifest_accounting(
         raise AccessAISPeriodIntakeError(
             "delivery date coverage does not match rows_by_utc_date"
         )
+    return normalized_rows_by_date, frozenset(requested_dates & observed_dates)
 
 
 def _validate_completeness_states(payload: Mapping[str, object]) -> None:
@@ -779,7 +801,9 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
         ) from exc
     if payload.get("delivery_id") != expected_id:
         raise AccessAISPeriodIntakeError("delivery_id does not match manifest content")
-    _validate_manifest_accounting(payload, requested)
+    rows_by_date, present_requested_dates = _validate_manifest_accounting(
+        payload, requested
+    )
     _validate_completeness_states(payload)
     daily_directory = resolved / DAILY_DIRECTORY_NAME
     if not daily_directory.is_dir():
@@ -794,6 +818,7 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
     expected_names: set[str] = set()
     observed_slice_dates: set[str] = set()
     assigned_slice_rows = 0
+    validated_slices: list[tuple[dict[str, object], str]] = []
     for raw_slice in slices:
         if not isinstance(raw_slice, dict):
             raise AccessAISPeriodIntakeError("every daily slice must be an object")
@@ -806,6 +831,12 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
                 "daily slices must have unique in-request UTC dates"
             )
         observed_slice_dates.add(utc_date)
+        validated_slices.append((raw_slice, utc_date))
+    if observed_slice_dates != present_requested_dates:
+        raise AccessAISPeriodIntakeError(
+            "daily slice dates must exactly match present_requested_utc_dates"
+        )
+    for raw_slice, utc_date in validated_slices:
         expected_names.add(f"{utc_date}.csv")
         expected_relative_path = f"{DAILY_DIRECTORY_NAME}/{utc_date}.csv"
         relative_path = raw_slice.get("relative_path")
@@ -825,13 +856,19 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
             raise AccessAISPeriodIntakeError(
                 f"daily slice {utc_date} is missing or does not match its checksum"
             )
-        try:
-            row_count = int(raw_slice["row_count"])
-            byte_size = int(raw_slice["byte_size"])
-        except (KeyError, TypeError, ValueError) as exc:
+        row_count = _strict_nonnegative_count(
+            raw_slice.get("row_count"), f"daily slice {utc_date} row_count"
+        )
+        if row_count != rows_by_date[utc_date]:
             raise AccessAISPeriodIntakeError(
-                f"daily slice {utc_date} identity fields are invalid"
-            ) from exc
+                f"daily slice {utc_date} row_count does not match rows_by_utc_date"
+            )
+        byte_size_value = raw_slice.get("byte_size")
+        if isinstance(byte_size_value, bool) or not isinstance(byte_size_value, int):
+            raise AccessAISPeriodIntakeError(
+                f"daily slice {utc_date} byte_size must be a non-boolean integer"
+            )
+        byte_size = byte_size_value
         if byte_size != path.stat().st_size:
             raise AccessAISPeriodIntakeError(
                 f"daily slice {utc_date} byte size does not match its manifest"

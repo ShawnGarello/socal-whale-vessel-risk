@@ -184,7 +184,10 @@ date and its row count; missing requested dates; valid out-of-request rows; and
 malformed or otherwise unassignable timestamp rows. Its conservation equation
 requires every source data row to be either assigned to one requested-date
 slice or counted in one of the latter two exception populations. A malformed
-timestamp is never silently dropped.
+timestamp is never silently dropped. Manifest validation accepts only
+non-boolean integer row counts, requires slice dates to equal the reported
+present requested dates, and binds each slice row count to the same date in
+`rows_by_utc_date`; conserving only the overall total is insufficient.
 
 Partitioning is a standard-library streaming scan. It holds one 17-field row at
 a time and keeps at most eight daily writers open; it does not load the

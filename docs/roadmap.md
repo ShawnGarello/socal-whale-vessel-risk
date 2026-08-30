@@ -237,8 +237,11 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   out-of-request timestamp row, and atomically publishes deterministic
   exact-date cleaner inputs. Manifest validation binds every slice to exactly
   `daily/<UTC-date>.csv`; alternate spellings, traversal, and paths escaping the
-  intake are refused. Intake and cleaner roots must be disjoint, and the period
-  manifest cannot be placed inside either managed bundle.
+  intake are refused. Row counts must be non-boolean integers, slice dates must
+  equal the reported present requested dates, and each slice count must equal
+  its date's `rows_by_utc_date` count rather than merely conserve the total.
+  Intake and cleaner roots must be disjoint, and the period manifest cannot be
+  placed inside either managed bundle.
 - The intake orchestration cleans one daily slice at a time through the existing
   cleaner, verifies that each newly created bundle records the established
   daily-slice input SHA-256, and records compatible bundles immediately through
@@ -359,7 +362,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 252 passing tests using temporary
+- The combined self-contained suite has 261 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
@@ -377,9 +380,10 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   repeat intersections, distance/time conservation, invalid grid inputs,
   deterministic evidence identity, overwrite and raw-output refusal, failed-run
   atomicity, multi-date delivery partitioning and row conservation, strict daily
-  manifest paths and traversal refusal, managed-path separation, cleaner-input
-  checksum binding, interruption/resume, a one-date period manifest leaving 152
-  dates missing, 153 synthetic dates becoming ready,
+  manifest paths and traversal refusal, strict count types and per-date
+  reconciliation, managed-path separation, cleaner-input checksum binding,
+  interruption/resume, a one-date period manifest leaving 152 dates missing,
+  153 synthetic dates becoming ready,
   missing/duplicate/out-of-period/conflicting date
   entries, bundle-checksum and sidecar tampering, mismatched quality-report and
   run-metadata identities, path-independent period identity, cross-midnight
