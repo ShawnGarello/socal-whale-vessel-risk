@@ -852,7 +852,7 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 237 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 252 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -862,8 +862,9 @@ CSV/ZIP content detection, archive safety and CRC validation, exact-date
 enforcement, retry/conflict behavior, redaction, atomic interim extraction,
 multi-date delivery partitioning, row conservation, malformed and
 out-of-request timestamp accounting, deterministic daily identities,
-interruption/resume behavior, daily-cleaner compatibility, period-manifest
-population, and refusal to upgrade completeness or readiness without evidence,
+canonical slice-path and managed-destination safeguards, interruption/resume
+behavior, daily-cleaner compatibility, period-manifest population, and refusal
+to upgrade completeness or readiness without evidence,
 exact grid and water-area invariants, configured-extent clipping, deterministic
 spatial serialization and content identity, truthful execution timestamps,
 raw-output refusal, atomic-write failure behavior, abundance-conserving whale

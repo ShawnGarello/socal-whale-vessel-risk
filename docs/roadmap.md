@@ -230,6 +230,22 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   unverified because no HTTP length or object validator was retained;
   observational completeness and the full analytical-period retrieval also
   remain unverified.
+- A separate `accessais_period_delivery_v1` boundary now accepts one explicit
+  author-supplied multi-date AccessAIS direct CSV or safe ZIP. It reuses the
+  content-based and archive-safety checks, streams without materializing the
+  delivery in Python, accounts for every valid, malformed/unassignable, and
+  out-of-request timestamp row, and atomically publishes deterministic
+  exact-date cleaner inputs. Manifest validation binds every slice to exactly
+  `daily/<UTC-date>.csv`; alternate spellings, traversal, and paths escaping the
+  intake are refused. Intake and cleaner roots must be disjoint, and the period
+  manifest cannot be placed inside either managed bundle.
+- The intake orchestration cleans one daily slice at a time through the existing
+  cleaner, verifies that each newly created bundle records the established
+  daily-slice input SHA-256, and records compatible bundles immediately through
+  `multiday_cleaned_ais_input_v1`. An interrupted retry skips only dates whose
+  exact compatible cleaner identity is already recorded. This implements local
+  intake and preparation, not AccessAIS order submission, email/application
+  automation, network retrieval, segment construction, or vessel aggregation.
 - [ADR 0018](decisions/0018-use-vessel-kilometres-for-grid-activity.md)
   records the **Proposed** vessel-activity aggregation design.
   Vessel-kilometres is the proposed primary additive grid metric. Group-specific
@@ -312,6 +328,17 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   invalid/missing MMSIs and 2,233 missing vessel types; the cleaner accounted
   for and removed them. Peak RSS of approximately 1.59 GiB is a scaling
   concern: monthly and full-period execution is not shown safe or authorized.
+- The same real direct CSV was exercised through the bounded period-intake and
+  orchestration path. Streaming intake assigned all 582,419 source rows to
+  2024-07-15 with no malformed or out-of-request timestamps, emitted a byte-
+  identical daily slice, reproduced the cleaner identity and 113,799-row
+  Parquet checksum, and recorded one compatible date with 152 missing. The
+  directly spawned end-to-end CLI took 83.735669 seconds and showed an
+  approximate 990.379 MiB sampled process-tree RSS peak under a different
+  protocol from the earlier cleaner measurement. This is backward-
+  compatibility evidence for one direct-CSV date, not real multi-date or
+  monthly scaling evidence; transfer and observational completeness remain
+  `unverified`.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -332,7 +359,7 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 216 passing tests using temporary
+- The combined self-contained suite has 252 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
@@ -349,8 +376,11 @@ Turn raw source data into validated, derived geospatial datasets through an orde
   per-cell group/additive totals, point ambiguity, proof that scenarios do not
   repeat intersections, distance/time conservation, invalid grid inputs,
   deterministic evidence identity, overwrite and raw-output refusal, failed-run
-  atomicity, a one-date period manifest leaving 152 dates missing, 153 synthetic
-  dates becoming ready, missing/duplicate/out-of-period/conflicting date
+  atomicity, multi-date delivery partitioning and row conservation, strict daily
+  manifest paths and traversal refusal, managed-path separation, cleaner-input
+  checksum binding, interruption/resume, a one-date period manifest leaving 152
+  dates missing, 153 synthetic dates becoming ready,
+  missing/duplicate/out-of-period/conflicting date
   entries, bundle-checksum and sidecar tampering, mismatched quality-report and
   run-metadata identities, path-independent period identity, cross-midnight
   ordering for one MMSI, absence of an artificial daily partition break,
@@ -492,10 +522,11 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 **Not implemented**
 
 - Network AIS transfer, range-resume, and analytical-period retrieval. The local
-  supplied-artifact validation, manifest boundary, and one real AccessAIS
-  direct-CSV exercise are complete, but independent transfer completeness,
-  monthly/full-period memory safety, a guarded daily bulk download, and the
-  153-date retrieval remain unverified or unexercised.
+  supplied-artifact validation, bounded multi-date delivery intake, resumable
+  daily-cleaner orchestration, and one real direct-CSV compatibility exercise
+  are complete, but no real multi-date delivery has been exercised. Independent
+  transfer completeness, monthly/full-period memory safety, a guarded daily
+  bulk download, and the 153-date retrieval remain unverified or unexercised.
 - The production vessel-activity aggregation proposed in ADR 0018, including
   period segment construction, accepted filtering rules, a final per-cell
   vessel-kilometres dataset, and validated period-wide distinct counts. The

@@ -267,14 +267,19 @@ under ignored `data/interim/`, and carry stable path-independent identities.
 The intake bundle is published by atomic directory rename. An identical retry
 revalidates and reuses it. Different source bytes or requested dates are
 recorded as a conflict attempt without replacing established identity or
-slices. An arbitrary existing directory is never overwritten.
+slices. An arbitrary existing directory is never overwritten. Each manifest
+slice path must use the exact `daily/<UTC-date>.csv` spelling and remain inside
+the intake bundle; absolute, traversal, backslash, and alternate paths are
+refused.
 
 The `run` verb processes daily slices sequentially through the existing
 one-date cleaner and records each successful bundle immediately into
 `multiday_cleaned_ais_input_v1`. A resume skips an already recorded compatible
 date and can record a cleaner bundle completed before interruption without
 cleaning it again. This is bounded local preparation, not network automation or
-production vessel aggregation.
+production vessel aggregation. The intake and cleaned roots must be disjoint,
+the period manifest cannot be inside either, and a newly cleaned bundle is not
+recorded unless its input SHA-256 matches its established daily slice.
 
 Transfer completeness and observational completeness remain separate. Direct
 CSV transfer completeness stays `unverified` unless the author independently

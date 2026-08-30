@@ -12,11 +12,15 @@
 > one-extract AIS cleaning, projected water-grid construction, and deterministic
 > whale-grid transfer are implemented and tested. Two clean whale-transfer runs
 > produced byte-identical output, and QGIS 4.2.1 visually verified the exact
-> generated water-grid and whale-grid GeoParquet artifacts. A local boundary now
-> verifies and manifests one supplied AIS delivery, but network retrieval and a
-> real-delivery exercise remain unfinished. Vessel aggregation, exposure
-> analysis, a final public layer representation, and deployment also remain
-> unfinished. See the [roadmap](roadmap.md) for milestone status.
+> generated water-grid and whale-grid GeoParquet artifacts. Local boundaries now
+> verify and manifest one supplied AIS artifact and use bounded streaming to
+> partition one author-supplied multi-date AccessAIS CSV or safe ZIP into
+> deterministic daily cleaner inputs with resumable sequential period-manifest
+> recording. The backward-compatible one-day path was exercised with a real
+> direct CSV; a real multi-date delivery, network retrieval, and analytical-
+> period acquisition remain unfinished. Vessel aggregation, exposure analysis,
+> a final public layer representation, and deployment also remain unfinished.
+> See the [roadmap](roadmap.md) for milestone status.
 
 Three independent questions remain open and gate different work:
 
@@ -124,13 +128,22 @@ Python is the reproducible processing and analytical core.
 DuckDB as the production large-tabular engine, versioned configuration and
 source/processing/lineage contracts, read-only input validators, deterministic
 one-extract AIS cleaning, a local one-artifact AIS retrieval manifest boundary,
-and deterministic EPSG:3310 water-grid construction. The retrieval boundary
+a bounded local multi-date AccessAIS delivery-intake boundary, resumable
+sequential daily cleaning and period-manifest recording, and deterministic
+EPSG:3310 water-grid construction. The retrieval boundary
 performs no network request; it verifies retained bytes, archive safety and CRC,
 the exact source header, and expected-date membership, and can bridge safe
 interim extraction to the existing cleaner without changing observational
-completeness. The grid process accepts an explicit polygon mask, clips it to the
-projected map/context boundary, intersects the exact configured grid, and writes
-actual per-cell water geometry and area as GeoParquet plus generation lineage.
+completeness. The period-intake boundary performs no network or AccessAIS order
+automation. It streams one supplied direct CSV or safe ZIP, accounts for every
+row, atomically publishes exact-date daily slices, validates their canonical
+manifest paths, and keeps transfer completeness, observational completeness,
+and 153-date period readiness separate. Its managed intake, cleaner-output, and
+period-manifest paths cannot overlap: the two directory roots are disjoint, and
+the manifest cannot be inside either. The grid process accepts an explicit
+polygon mask, clips it to the projected map/context boundary, intersects the
+exact configured grid, and writes actual per-cell water geometry and area as
+GeoParquet plus generation lineage.
 It does not retrieve the analytical-period AIS data over the network, aggregate
 vessels, calculate relative exposure, or derive statistics. A separate
 deterministic, tested whale-grid command transfers modeled density by
@@ -388,9 +401,11 @@ project layers, and matching precomputed results.
 - Git LFS is not planned for Version 1. Any demonstrated need requires a
   decision record before large binaries are added.
 - The AIS retrieval route remains a Proposed M3 decision. The local supplied-
-  artifact verification boundary and one real bounded one-day compatibility
-  exercise are implemented; network transfer, independent transfer
-  completeness, and analytical-period acquisition are not. An entire national
+  artifact verification boundary, bounded multi-date delivery intake, resumable
+  daily-cleaner orchestration, and one real bounded one-day compatibility
+  exercise are implemented. No real multi-date delivery has been exercised;
+  network transfer, independent transfer completeness, safe monthly scaling,
+  and analytical-period acquisition are not established. An entire national
   season is never staged locally; the detailed retrieval guard belongs to
   [data/README.md](../data/README.md).
 - The multi-day cleaned-input relation scans daily Parquet partitions through
