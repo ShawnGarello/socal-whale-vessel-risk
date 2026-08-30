@@ -960,6 +960,56 @@ Applies to all future implementation work as well as documentation work.
 - **Do not rewrite existing commits** — no amend, squash, rebase, or force-update of work that already exists — unless explicitly asked to.
 - **Do not push or merge without explicit authorization.** Branches stay local until the author says otherwise.
 
+## Pull request and continuous integration workflow
+
+The intended path from implementation to `main` is:
+
+1. Implement the scoped change and its documentation.
+2. Create structured local commits that preserve coherent review units.
+3. Have another session perform an independent audit of the exact branch.
+4. Address findings in new correction commits, then repeat the independent
+   audit as needed. Do not amend commits that have already been audited.
+5. Push the feature branch only after the author explicitly authorizes it.
+6. Open a pull request targeting `main`.
+7. Let GitHub Actions create and run both CI jobs.
+8. Verify the exact pull-request diff and confirm that both checks passed on
+   the current head commit.
+9. Merge through GitHub only after review and checks are complete.
+
+The workflow at [`../.github/workflows/ci.yml`](../.github/workflows/ci.yml)
+runs for every pull request and for pushes to `main`, without path filters. It
+uses read-only repository contents permission and creates these stable jobs on
+Ubuntu 24.04:
+
+- **`analysis`** installs uv 0.12.6 with Python 3.13, restores and installs the
+  committed environment with `uv sync --locked`, then runs `uv lock --check`,
+  `uv run ruff format --check .`, `uv run ruff check .`, strict `uv run mypy`
+  over the source path configured in `pyproject.toml`, `uv run pytest`, and
+  `uv build` from `analysis/`.
+- **`web`** installs Node.js 22, caches npm downloads against
+  `web/package-lock.json`, runs `npm ci`, then runs `npm run typegen`,
+  `npm run format:check`, `npm run lint`, `npm run typecheck:generated`,
+  `npm test`, and `npm run build` from `web/`. CI behavior is enabled and
+  Next.js telemetry is disabled. No ArcGIS API key is provided; the established
+  supported missing-key build path remains the CI path.
+
+CI is an independent clean-Linux reproduction of the repository's automated
+checks. It does not replace code review, scientific review, QGIS visual
+inspection of exact derived spatial outputs, real-data verification, ArcGIS
+account and capability checks, or deployment verification.
+
+The repository owner must manually configure the `main`-branch ruleset after
+this bootstrap workflow has been merged and the job names have been observed on
+GitHub. That ruleset should require pull requests and the stable `analysis` and
+`web` status checks. The workflow does not configure or prove those repository
+settings, and they are not active merely because this file exists. Once the
+ruleset is enabled, `main` should be updated through pull requests rather than
+direct pushes.
+
+This is continuous integration only. No deployment workflow, continuous
+delivery, ArcGIS publishing, hosting automation, or repository credential has
+been added.
+
 ## Review before merge
 
 Before a branch is merged:
