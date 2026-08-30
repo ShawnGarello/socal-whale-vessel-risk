@@ -1,7 +1,7 @@
 # 0002 — Southern California study area extent
 
 **Status:** Proposed
-**Date:** 2026-08-25, reopened 2026-08-26, evidence updated 2026-08-28
+**Date:** 2026-08-25, reopened 2026-08-26, evidence corrected 2026-08-29
 
 > This record was briefly marked Accepted. An audit found that the evidence
 > behind it did not support accepting a single extent for both mapping and
@@ -89,7 +89,7 @@ The new evidence supports a future **coverage-qualified mask**, not a second unq
 - Processing over the full map extent and restricting at the reporting step is the right order: it keeps the domain decision reversible, so accepting a domain later is a change to one reporting step rather than a reprocessing run. **It does not produce the evidence needed to settle the domain** — see "Why same-source comparison cannot settle this" below.
 - The analysis reports on the **Southern California portion of the 2026 VSR zone, not the whole zone**, under any candidate. Every statistic must say so.
 - The map extent **truncates the zone at 35.0°N**, where the zone continues north. Exposure near that edge is an artefact of the extent and results must not be read across it.
-- Using the whale model's coverage as the water mask means the analysis domain and the biological input share a footprint, so no cell can carry vessel activity without a whale value. It also means the study area inherits the model's coastline, which is a modelling product rather than an authoritative shoreline. **This is one reason a real coastline dataset is needed before a distance-from-shore criterion can be applied** — see alternative 1.
+- Using the whale model's coverage as the water mask means the analysis domain and the biological input share a footprint, so no cell can carry vessel activity without a whale value. The mask edge remains biological-model support rather than a coastline. NOAA NGS CUSP now supplies the separate authoritative shoreline needed to calculate distance-from-coast candidates reproducibly; it does not establish that AIS observation is complete inside any candidate.
 
 ## Alternatives considered
 
@@ -99,16 +99,16 @@ These are the candidate analytical domains, not candidate map extents. The map e
 
 Restrict statistics to water within a stated distance of the coastline, chosen to sit inside NOAA's 40–50 mile statement.
 
-- **For:** every reported number comes from water where the publisher says the input works. It is the most defensible option and the easiest to explain.
+- **For:** if the publisher confirms an exact conservative threshold and inside-boundary treatment, every reported number could be limited to the resulting coverage-qualified population. It would be straightforward to explain.
 - **Against:** it discards a third or more of the in-box VSR zone from the statistics, so the headline becomes a statement about the nearshore portion of the zone rather than about the zone. That is a real scope reduction and would have to be recorded as one.
-- **Evidence needed to accept:** an authoritative coastline for the study area — not the whale model's clipped edge — and a stated, justified distance threshold. NOAA's "40 to 50 miles" does not say statute or nautical, so the project must pick and say so. A sensitivity check across the range would show whether the choice matters.
+- **Evidence needed to accept:** CUSP now supplies the authoritative coastline. What remains is a stated, justified distance and unit, confirmation that the resulting inside area may be treated as coverage-qualified despite receiver outages and other reception variation, and confirmation that CUSP is the coast basis meant by that threshold. The completed sensitivity calculation shows that the choice materially changes the population.
 
 ### 2. Coverage-qualified mask inside the broader extent
 
-Compute over the full map extent, but classify each cell by whether the vessel input is considered observable there, and report statistics separately for the observable region and for the whole.
+Compute vessel activity over the full map extent for reversible processing, then intersect cells fractionally with an accepted observability mask. Headline statistics use only the coverage-qualified population. The remainder stays visible only as explicitly masked or qualified map context, never as observed low traffic and never as a second whole-map statistic.
 
-- **For:** keeps the full zone visible and in the analysis, while refusing to present unqualified numbers over it. Probably the most informative option for a reader.
-- **Against:** two sets of numbers is exactly the framing that invites a reader to quote the more convenient one. It also requires defining the mask, which is alternative 1's problem plus a presentation problem.
+- **For:** keeps the full zone visible for context while restricting every headline number to the defensible statistical population.
+- **Against:** it still requires an exact, evidence-supported mask and clear presentation of excluded and partial-cell areas. The present publisher evidence does not supply that boundary.
 - **Evidence needed to accept:** a defensible basis for the mask, drawn from **outside the broadcast-point data itself.** Two candidates. First, NOAA's published 40–50 mile statement, used to derive a distance-from-coastline mask — the same requirement as alternative 1, differing only in what is done with the water beyond it. Second, the **AIS Base Stations** dataset, which publishes receiver locations and would support a range-from-receiver mask, closer to the actual physical constraint than distance from shore. A range mask would have to state its limitations plainly: it models where reception is *plausible* from geometry alone, and takes no account of antenna height, terrain shadowing, transmitter power, sea state, or the tropospheric ducting the FAQ says carries some signals far beyond normal range. It bounds the problem; it does not measure coverage.
 - **What cannot supply this evidence:** any comparison against another product derived from the same land-receiver feed — see the note below.
 
