@@ -7,6 +7,7 @@ import "@arcgis/map-components/components/arcgis-zoom";
 import type { ArcgisMap } from "@arcgis/map-components/components/arcgis-map";
 import {
   INITIAL_VIEWPOINT,
+  configureArcgisSdk,
   describeLoadErrors,
   resolveArcgisConfig,
 } from "@/lib/arcgis-config";
@@ -26,13 +27,6 @@ const config = resolveArcgisConfig({
   basemapId: process.env.NEXT_PUBLIC_ARCGIS_BASEMAP,
 });
 
-// The SDK requires the key to be set before the first request to a secured
-// service. Module scope runs when this chunk is imported, which is before the
-// map element below is ever rendered.
-if (config.apiKey !== null) {
-  esriConfig.apiKey = config.apiKey;
-}
-
 // This is an anonymous public application: nobody signs in, and it reads only
 // publicly shared content. Left at its default, the SDK answers a rejected
 // request by opening its own username/password dialog and waiting, so a missing
@@ -41,7 +35,11 @@ if (config.apiKey !== null) {
 // fail immediately instead, which the states below can report. Verified
 // against SDK 5.1: without this, an unauthenticated basemap request returns 401
 // and the view never becomes ready.
-esriConfig.request.useIdentity = false;
+//
+// The SDK also requires the key to be set before the first secured request.
+// Module scope runs before the map element below is rendered, so both settings
+// are applied in time.
+configureArcgisSdk(esriConfig, config);
 
 /**
  * How long to wait for the view before calling initialization failed.

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_BASEMAP_ID,
   INITIAL_VIEWPOINT,
+  configureArcgisSdk,
   describeLoadErrors,
   resolveArcgisConfig,
 } from "./arcgis-config";
@@ -60,6 +61,32 @@ describe("resolveArcgisConfig", () => {
     expect(resolveArcgisConfig({ apiKey: "a-key", basemapId: "  " }).basemapId).toBe(
       DEFAULT_BASEMAP_ID,
     );
+  });
+});
+
+describe("configureArcgisSdk", () => {
+  it("sets a provided browser key and suppresses identity prompts", () => {
+    const sdkConfig = {
+      apiKey: "",
+      request: { useIdentity: true },
+    };
+
+    configureArcgisSdk(sdkConfig, resolveArcgisConfig({ apiKey: "a-key" }));
+
+    expect(sdkConfig.apiKey).toBe("a-key");
+    expect(sdkConfig.request.useIdentity).toBe(false);
+  });
+
+  it("suppresses identity prompts when the browser key is missing", () => {
+    const sdkConfig = {
+      apiKey: "",
+      request: { useIdentity: true },
+    };
+
+    configureArcgisSdk(sdkConfig, resolveArcgisConfig({}));
+
+    expect(sdkConfig.apiKey).toBe("");
+    expect(sdkConfig.request.useIdentity).toBe(false);
   });
 });
 

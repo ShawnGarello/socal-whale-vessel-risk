@@ -73,11 +73,13 @@ install with pnpm, Yarn, or Bun — see [ADR 0007](decisions/0007-use-npm-for-th
 | `npm install` | Installs dependencies from the committed lockfile. |
 | `npm run dev` | Development server on <http://localhost:3000>. |
 | `npm run lint` | ESLint, using `eslint-config-next` flat config. |
-| `npm run typecheck` | `tsc --noEmit` over the whole project. |
+| `npm run typegen` | Generates Next.js route-aware types without a full build. |
+| `npm run typecheck` | Generates Next.js route-aware types, then runs `tsc --noEmit` over the whole project. |
 | `npm test` | Vitest, run once. `npm run test:watch` for watch mode. |
 | `npm run format` | Rewrites files with Prettier. |
 | `npm run format:check` | Fails if anything is unformatted. |
 | `npm run build` | Production build **and static export**. |
+| `npm run verify:clean` | Reinstalls locked dependencies, generates Next.js types, and runs every web quality gate plus the static export in clean-checkout order. |
 
 There is no `npm start`. `next start` serves a Node build, and this application
 is exported as static files, so the script would only mislead.
@@ -91,6 +93,13 @@ server to check the real build locally; opening the files directly over
 chunks over HTTP.
 
 `web/out/` and `web/.next/` are Git-ignored and must never be committed.
+
+For a new or deliberately reset checkout, run `npm run verify:clean`. It runs
+the complete reproducibility gate in this order: `npm ci`, `next typegen`,
+Prettier check, ESLint, `tsc --noEmit`, Vitest, and `next build`. The last step
+creates and validates the static export. `next typegen` is the supported Next.js
+mechanism for generating the ignored route-aware helpers (including
+`LayoutProps`) before TypeScript runs; generated `.next/` types remain local.
 
 The export is roughly 30 MB on disk, almost all of it ArcGIS Maps SDK chunks.
 That is the on-disk size, not the download: the SDK is code-split and the
