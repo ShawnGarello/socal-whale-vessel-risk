@@ -54,10 +54,12 @@ The current [NOAA AIS FAQ](https://coast.noaa.gov/data/marinecadastre/ais/faq.pd
 Run from `analysis/` after obtaining the four ignored source artifacts:
 
 ```text
-python -m uv run --locked python -m whale_vessel_analysis.domain_evidence_cli --config evidence/domain-candidates.toml --grid ..\data\interim\m2-domain-evidence\noaa-whale-footprint-water-grid.parquet --shoreline-archive ..\data\raw\noaa-ngs-cusp-west\West.zip --station-archive ..\data\raw\noaa-ais-base-stations\AISBaseStation.zip --vsr ..\data\raw\bwbs-vsr-2026\bwbs_ca_vsr_zone_2026.geojson --report ..\data\interim\m2-domain-evidence\domain-evidence-report.json --masks ..\data\interim\m2-domain-evidence\domain-candidate-masks.parquet
+python -m uv run --locked python -m whale_vessel_analysis.domain_evidence_cli --config evidence/domain-candidates.toml --grid ..\data\interim\m2-domain-evidence\noaa-whale-footprint-water-grid.parquet --shoreline-archive ..\data\raw\noaa-ngs-cusp-west\West.zip --station-archive ..\data\raw\noaa-ais-base-stations\AISBaseStation.zip --vsr ..\data\raw\bwbs-vsr-2026\bwbs_ca_vsr_zone_2026.geojson --report ..\data\interim\m2-domain-evidence\domain-evidence-report.json --masks ..\data\interim\m2-domain-evidence\domain-candidate-masks.parquet --overwrite
 ```
 
 The evidence-only configuration is [`../analysis/evidence/domain-candidates.toml`](../analysis/evidence/domain-candidates.toml). It checksum-gates every input, states both mile conversions, records the 25 m shoreline simplification, densifies VSR edges to at most 0.01 degrees before projection, and approximates buffer quadrants with 32 segments. Each candidate is intersected with every exact EPSG:3310 grid-water geometry. Cell counts and areas come from polygon intersections; no centroid, majority, or whole-cell assignment is used.
+
+The report and mask must be distinct `.json` and `.parquet` paths beneath the ignored `data/interim/` root and must be distinct from every input. Their validated parent directories are created automatically. Existing destinations are refused by default. `--overwrite` is safe only for replacing a complete, internally consistent analytical-domain report-and-mask pair; arbitrary files and incomplete pairs are refused. Both files are staged and published as one rollback-protected pair, so a reported write failure leaves neither a new partial pair nor one half of a prior pair replaced.
 
 VSR densification is necessary. Projecting only stored vertices turns long geographic segments into projected chords and produced an invalid polygon. Densification at 0.01 degrees yields a valid polygon; limits of 0.005 and 0.001 degrees change statewide projected area by only 0.007 and 0.009 km². Within the accepted grid, the densified VSR intersection is 56,506.330 km².
 
