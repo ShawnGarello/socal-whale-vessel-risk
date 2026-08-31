@@ -1,7 +1,7 @@
 # 0002 — Southern California study area extent
 
 **Status:** Proposed
-**Date:** 2026-08-25, reopened 2026-08-26, evidence corrected 2026-08-29
+**Date:** 2026-08-25, reopened 2026-08-26, evidence corrected 2026-08-29, authoritative closure attempted 2026-08-31
 
 > This record was briefly marked Accepted. An audit found that the evidence
 > behind it did not support accepting a single extent for both mapping and
@@ -17,7 +17,7 @@
 - **The blue-whale model** covers longitude −131 to −117.10 and latitude 30.05 to 48.51, clipped to water. It covers everything Southern California needs.
 - **The 2026 VSR zone** is a single statewide polygon of 143,035.5 km² after its geographic edges are densified before EPSG:3310 projection. Its portion south of 35°N is 56,627.6 km², bounded by longitude −122.07 to −117.10 and latitude 32.55 to 35.0.
 
-**The vessel input is the problem.** NOAA states that this AIS product comes from roughly 200 land-based receiving stations and that *"coverage is currently unavailable for … waters extending more than 40 to 50 miles from the coast."* There is no satellite AIS in the product. The FAQ does not say statute or nautical miles. The range is 64.374–80.467 km under the statute interpretation and 74.080–92.600 km under the nautical interpretation. Older official NAIS material describes about 50 nautical miles, but that does not silently change the current source's wording. The Southern California portion of the VSR zone reaches several hundred kilometres offshore at its western vertex.
+**The vessel input is the problem.** NOAA states that this AIS product comes from roughly 200 land-based receiving stations and that *"coverage is currently unavailable for … waters extending more than 40 to 50 miles from the coast."* There is no satellite AIS in the product. That FAQ sentence does not say statute or nautical miles or define "coast." USCG's current waterway-analysis instruction supplies a more specific NAIS system interpretation separately: at least 50 nautical miles from each reception antenna site. The Southern California portion of the VSR zone reaches several hundred kilometres offshore at its western vertex.
 
 ### 2026-08-28 evidence update
 
@@ -25,7 +25,33 @@ NOAA NGS CUSP now supplies an independently published coastline, and NOAA OCM's 
 
 All four range/unit interpretations were tested against both inputs on the accepted 5 km water grid. Coastline buffers include 57,027–71,940 km² of water and represent 82.94–95.72% of the in-grid VSR area. Receiver buffers include 46,098–64,717 km² and represent 66.63–85.62%. Every boundary cell is intersected fractionally; no centroid, majority, or whole-cell classification is used.
 
-This does not identify one defensible domain. NOAA's range statement describes where data are generally unavailable, not guaranteed observation inside the line. The base-station metadata marks completeness untested and provides no antenna height, operating interval, outage record, or reception footprint. Buffering its points therefore replaces one unsupported geometry choice with another. The spread among scenarios is analytically material.
+At the time, this did not identify one defensible domain. NOAA's range statement describes where data are generally unavailable, not guaranteed observation inside the line. The base-station metadata marks completeness untested and provides no antenna height, operating interval, outage record, or reception footprint. The spread among scenarios is analytically material. The later authoritative search below supplies a general performance basis for one receiver scenario but does not supply 2024 operating history.
+
+### 2026-08-31 authoritative closure attempt
+
+Only NOAA OCM/MarineCadastre, USCG NAVCEN, and official federal metadata and technical material were searched. AIS broadcast-point density and NOAA transit-count layers were not used because neither can reveal transmissions the same land-receiver feed did not capture.
+
+| Publisher and exact source | Source date; access date | Establishes | Does not establish |
+|---|---|---|---|
+| NOAA OCM, [*Automatic Identification System Frequently Asked Questions*](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf), pp. 1–3 | May 2026; accessed 2026-08-31 | Public NAIS data generally are unavailable beyond "40 to 50 miles from coast"; NAIS has about 200 land receivers; sensor interruptions occur; the USCG feed typically does not give NOAA their cause or duration. | Whether "miles" are statute or nautical; what "coast" means; a guaranteed inside boundary; station-specific 2024 outages or coverage. |
+| USCG NAVCEN, [Work Instruction 2022-01, *Waterway Analysis Tactics, Techniques and Procedures*](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/nsra/NAVCEN%20Work%20Instruction%202022-01%20v2.pdf), pp. 1, 7 | September 2022; Change 01 dated 2023-09-22; accessed 2026-08-31 | NAIS provides coastal AIS signal-reception coverage to at least **50 nautical miles from each NAIS reception antenna site**; USCG calls this a 50-mile performance standard and says reception can extend farther. This supplies the unit, boundary basis, and general inside-boundary treatment. | Whether every listed Southern California site operated throughout July 1–November 30, 2024; station-specific outages; whether every received message reached NOAA's public daily files. |
+| NOAA OCM, [AIS Base Stations, InPort item 73206](https://www.fisheries.noaa.gov/inport/item/73206) | Published 2024-08-01; metadata updated 2025-11-11; accessed 2026-08-31 | Locations and identities derived from USCG Light Lists; nine NAIS points in the expanded Southern California filter; 10 m stated horizontal accuracy. | Attribute accuracy or completeness, which NOAA marks untested; antenna properties, operations, outages, or coverage geometry. |
+| USCG NAVCEN, [*2024 Light List, Volume VI, Pacific Coast and Pacific Islands*](https://www.navcen.uscg.gov/sites/default/files/pdf/lightLists/LightList_V6_2024.pdf), front matter pp. xix, xlii–xliii | 2024; accessed 2026-08-31 | NAIS uses approximately 200 VHF receiver sites and lists the relevant Southern California station names and coordinates. | Commissioning dates, operating intervals, outages, antenna properties, or station-specific footprints. |
+| USCG NAVCEN, [*How AIS Works*](https://www.navcen.uscg.gov/how-ais-works) | No publication or update date shown; accessed 2026-08-31 | General AIS range depends principally on antenna height; nominal ship-to-ship range at sea is 20 nautical miles and terrain can obstruct reception. | A NAIS performance boundary or 2024 station operations. |
+| USCG NAVCEN, [*Pacific Seacoast Level of Service Study*](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/pacific/Pacific_Seacoast_Final.pdf) and [enclosure 3](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/pacific/Encl_3_Pacific_SeaCoast_D11_D13_NAIS_coverage_maps_sites_with_24_NM_range.PNG) | 2020-06-17; accessed 2026-08-31 | A historical District 11 schematic shows station-centred 24-nautical-mile circles for shore-transmitted AIS aids to navigation. | 2024 ship-to-shore reception coverage; the purpose, year, and range differ from this analysis. |
+| USCG NAVCEN, [*Vessel Information Verification Service Coverage*](https://www.navcen.uscg.gov/sites/default/files/pdf/AIS/VIVS_Coverage.pdf) | No date shown; accessed 2026-08-31 | A national, low-resolution service-coverage illustration exists. | A dated 2024 Southern California boundary, station operations, or geometry precise enough for the analytical grid. |
+
+**Finding.** NOAA's sentence remains ambiguous on its own, but the USCG instruction provides an official NAIS interpretation that supports one already-calculated scenario: the union of 50-nautical-mile buffers around the 2024 published NAIS reception sites. "To at least" and "performance standard" support calling water inside that union **system-performance-qualified**. They do not support calling it continuously observed, complete, or an empirical reception footprint. No parameter changed, so the existing evidence does not need regeneration.
+
+**Exact questions still unanswered.** No public official source found identifies when each of the nine Southern California sites was operational during July 1–November 30, 2024, what outages occurred, or whether every message received by NAIS reached NOAA's public daily files. The current NOAA FAQ instead says outage cause and duration typically are not supplied with the USCG feed.
+
+**Proposed author decision.** Consider the existing `receivers_50_nautical_miles` mask as the analytical and statistical domain, explicitly described as a scope-reduced, system-performance-qualified domain rather than observed coverage. This would retain unknown 2024 receiver and feed interruptions as observational-completeness limitations and would continue to exclude all cells beyond the mask from headline statistics. ADR 0002 remains Proposed pending author review. If the author does not approve that scope reduction, the remaining route is publisher clarification about 2024 station operations and feed completeness; no arbitrary fallback domain is authorized.
+
+Questions suitable for a publisher clarification request, but not sent by this project, are:
+
+1. Were the nine listed Southern California NAIS reception sites operational throughout July 1–November 30, 2024, and are station-level outage intervals available?
+2. Does the 50-nautical-mile reception performance standard apply to each of those listed sites during that period?
+3. Did the NOAA OCM public daily AIS files preserve all messages delivered by NAIS, or were there additional feed, processing, or publication gaps?
 
 Three candidate extents were measured, using the whale model's own water coverage as the water mask. Areas in EPSG:3310:
 
@@ -80,7 +106,7 @@ The form it takes — a hard clip, a mask rendered as a distinct "outside reliab
 
 The new evidence supports a future **coverage-qualified mask**, not a second unqualified full-map statistic. Once an exact boundary is accepted, headline results exclude all area beyond it. The application may retain the full map for whale, VSR, and regional context, but outside cells must be explicitly shown as outside defensible AIS observability and never as observed low traffic. Partial cells retain exact qualified geometry and area fractions.
 
-**Smallest remaining evidence for acceptance:** either NOAA OCM or USCG must identify a conservative distance and unit, the coast basis it means, and whether the inside may be treated as coverage-qualified for this public product; or publish 2024 Southern California receiver coverage/operations sufficient to construct an exact mask. Without one of those, selecting the smallest scenario would be conservatism by analyst preference rather than evidence.
+**Smallest remaining step for acceptance:** author approval of the evidence-supported 50-nautical-mile receiver mask as an explicit, system-performance-qualified scope reduction, with unknown 2024 operations retained as a limitation; or publisher clarification supplying period-specific receiver operations and public-feed completeness. The evidence does not support a coastline mask or an arbitrary smaller fallback.
 
 ## Consequences
 
@@ -108,8 +134,8 @@ Restrict statistics to water within a stated distance of the coastline, chosen t
 Compute vessel activity over the full map extent for reversible processing, then intersect cells fractionally with an accepted observability mask. Headline statistics use only the coverage-qualified population. The remainder stays visible only as explicitly masked or qualified map context, never as observed low traffic and never as a second whole-map statistic.
 
 - **For:** keeps the full zone visible for context while restricting every headline number to the defensible statistical population.
-- **Against:** it still requires an exact, evidence-supported mask and clear presentation of excluded and partial-cell areas. The present publisher evidence does not supply that boundary.
-- **Evidence needed to accept:** a defensible basis for the mask, drawn from **outside the broadcast-point data itself.** Two candidates. First, NOAA's published 40–50 mile statement, used to derive a distance-from-coastline mask — the same requirement as alternative 1, differing only in what is done with the water beyond it. Second, the **AIS Base Stations** dataset, which publishes receiver locations and would support a range-from-receiver mask, closer to the actual physical constraint than distance from shore. A range mask would have to state its limitations plainly: it models where reception is *plausible* from geometry alone, and takes no account of antenna height, terrain shadowing, transmitter power, sea state, or the tropospheric ducting the FAQ says carries some signals far beyond normal range. It bounds the problem; it does not measure coverage.
+- **Against:** it still requires clear presentation of excluded and partial-cell areas. The USCG standard is general rather than a station-specific 2024 operating record, and the NOAA station inventory has untested completeness.
+- **Evidence needed to accept:** the basis must come from **outside the broadcast-point data itself.** USCG's 50-nautical-mile-from-each-reception-site performance standard and NOAA's 2024 station locations now supply that basis for the existing receiver mask. Author acceptance must preserve the distinction between system-performance-qualified geometry and messages actually received, including unknown station and feed interruptions. NOAA's unitless coastline wording still does not support a coastline mask.
 - **What cannot supply this evidence:** any comparison against another product derived from the same land-receiver feed — see the note below.
 
 ### Why same-source comparison cannot settle this
