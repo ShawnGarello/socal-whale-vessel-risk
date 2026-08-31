@@ -26,11 +26,14 @@ Verification status now differs between entries and is stated at the top of each
 
 ## Retrieval provenance and local artifacts
 
-**Owns the provenance manifest for M2.** Every finding in this register was read
-from one of the artifacts below. They are **not committed** — they live under the
-ignored local data root described in [../data/README.md](../data/README.md) —
-so this table is what makes them re-obtainable and what proves a local copy is
-the same file that was inspected.
+**Owns the provenance manifest for M2.** Every finding based on a retained local
+artifact was read from one of the artifacts below. They are **not committed** —
+they live under the ignored local data root described in
+[../data/README.md](../data/README.md) — so this table is what makes them
+re-obtainable and what proves a local copy is the same file that was inspected.
+Contextual webpages and documents that were read live but not retained locally
+are explicitly identified as live cited references at the point of use; they
+are outside this checksum manifest.
 
 The sizes and checksums here are load-bearing, not decorative.
 [`tools/m2_verify.py`](../tools/m2_verify.py) parses the *Local artifacts* table
@@ -53,6 +56,8 @@ used or required for any of them.**
 | 7 | AIS daily prefixes, five dates | `https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/AIS_<date>.zip` | `GET` with header `Range: bytes=0-8388607`, returning HTTP 206. **Only the first 8 MiB of each file was transferred.** Dates: `2024_07_15`, `2024_08_15`, `2024_09_16`, `2024_10_15`, `2024_11_15` | 2026-08-25 (`2024_07_15`), 2026-08-26 (the other four) |
 | 8 | NOAA NGS CUSP West shoreline | `https://geodesy.noaa.gov/dist_shoreline/West.zip` | `GET`, no parameters. Current West-region archive linked by the NOAA Shoreline Data Explorer; HTTP `Last-Modified` was `Wed, 05 Aug 2026 16:46:26 GMT` | 2026-08-28 |
 | 9 | NOAA OCM AIS Base Stations | `https://marinecadastre.gov/downloads/data/mc/AISBaseStation.zip` | `GET`, no parameters. Direct distribution linked by InPort item 73206; HTTP `Last-Modified` was `Thu, 01 Aug 2024 16:25:30 GMT` | 2026-08-28 |
+| 10 | USCG NAVCEN Work Instruction 2022-01, revision 2 | `https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/nsra/NAVCEN%20Work%20Instruction%202022-01%20v2.pdf` | Anonymous HTTPS `GET`, no parameters; HTTP 200, `Content-Type: application/pdf` | 2026-08-31 |
+| 11 | USCG 2024 Light List, Volume VI | `https://www.navcen.uscg.gov/sites/default/files/pdf/lightLists/LightList_V6_2024.pdf` | Anonymous HTTPS `GET`, no parameters; HTTP 200, `Content-Type: application/pdf` | 2026-08-31 |
 
 **Why the AIS retrieval looks unusual.** Each daily file is a zip containing one
 CSV, and is 330–420 MB. Retrieving five of them in full would be 1.8 GB for a
@@ -88,11 +93,14 @@ Paths are relative to the repository root. Verify with
 | 16 | `data/interim/m2-inspection/AIS_2024_11_15.head_sample.csv` | 22807974 | `937f028539cd8d79b15700217a5fed3f6f91f3d8285a236245220ae32cc3799c` | **Derived from #15.** 207,129 data rows |
 | 17 | `data/raw/noaa-ngs-cusp-west/West.zip` | 42501564 | `53da33c37f6385fb7b64c59d96371b91eaa73b6e6c837e1f18147a8354015b85` | As downloaded. Contains the four components of the `West` Shapefile; evidence reads the member directly from the immutable archive |
 | 18 | `data/raw/noaa-ais-base-stations/AISBaseStation.zip` | 21061 | `8b317017783fd654a918e6cbf78edfea0d9df9eb6630157c019de7ddfa513003` | As downloaded. Contains `AISBaseStation.gpkg`; evidence reads it directly from the immutable archive |
+| 19 | `data/raw/uscg-navcen-waterway-analysis/NAVCEN Work Instruction 2022-01 v2.pdf` | 476012 | `583b267fcd578a78f9d3a8b25969c7d0ca4f0e921a3450c6a8efeecb1dec60ef` | As downloaded; authoritative general NAIS reception-performance evidence |
+| 20 | `data/raw/uscg-light-list-volume-vi-2024/LightList_V6_2024.pdf` | 4038214 | `adbddd6c04573c1b719611fdcf9e1d3cdb223877de6e84c26e205dbddece51c7` | As downloaded; authoritative 2024 station-list evidence |
 
 Original M2 local footprint: roughly 300 MB, of which about 90 MB is downloaded bytes
 and the rest is extracted geodatabases and decompressed samples.
 The domain-evidence additions contribute another 42.5 MB of downloaded source
 archives plus ignored extractions and derived evidence outputs.
+The two retained USCG PDFs add 4,514,226 bytes.
 
 **Full compressed size of each sampled AIS day**, read from the server's
 `Content-Length` on the retrieval date. Used only to scale the volume estimate,
@@ -130,7 +138,7 @@ the source is named at the point of use.
 
 ## Analytical-domain supporting inputs
 
-These sources support the open AIS-observability decision. They are not biological, vessel-activity, or management inputs, and neither is a measured coverage surface. Full calculations and candidate measurements are in [analytical-domain-evidence.md](analytical-domain-evidence.md).
+These sources support the open AIS-observability decision. They are not biological, vessel-activity, or management inputs, and none is a measured 2024 coverage surface. Full calculations and candidate measurements are in [analytical-domain-evidence.md](analytical-domain-evidence.md).
 
 ### NOAA NGS Continually Updated Shoreline Product, West
 
@@ -142,7 +150,15 @@ Metadata is [InPort item 60812](https://www.fisheries.noaa.gov/inport/item/60812
 
 **Verification status: verified from official metadata and the downloaded archive.** The 2024-08-01 source contains 290 valid EPSG:4269 points: 136 `NAIS` and 154 `LOMA`. NOAA says station identity and location were extracted from the 2024 USCG Light List Volumes I and V and corrected during loading. Reported horizontal accuracy is 10 m at 95% confidence; conceptual consistency is verified; attribute accuracy and completeness are explicitly untested. The expanded Southern California evidence filter contains nine NAIS stations.
 
-Metadata is [InPort item 73206](https://www.fisheries.noaa.gov/inport/item/73206); the exact distribution and provenance are recorded above. Data use is constrained to coastal and ocean planning. The source does not provide antenna height, uptime, outage history, terrain shadowing, or a reception radius. The current AIS FAQ points to this dataset for station locations, but a circular buffer around the points remains a geometry scenario rather than an observed-coverage product.
+Metadata is [InPort item 73206](https://www.fisheries.noaa.gov/inport/item/73206); the exact distribution and provenance are recorded above. Data use is constrained to coastal and ocean planning. The source does not provide antenna height, uptime, outage history, terrain shadowing, or a reception radius. The current AIS FAQ points to this dataset for station locations. USCG's general NAIS performance documentation supplies a radius interpretation separately, but the points still do not constitute an observed 2024 coverage product.
+
+### USCG NAIS reception-performance documentation
+
+**Verification status: verified from official USCG NAVCEN material on 2026-08-31.** [NAVCEN Work Instruction 2022-01, *Waterway Analysis Tactics, Techniques and Procedures*](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/nsra/NAVCEN%20Work%20Instruction%202022-01%20v2.pdf), issued September 2022 and changed on 2023-09-22, states on page 7 that NAIS provides coastal AIS signal-reception coverage to at least 50 nautical miles from each reception antenna site. It calls that distance a 50-mile performance standard and says tower height, local topography, and shipboard antennas can extend reception beyond it. This is an authoritative unit, boundary basis, and inside-boundary performance interpretation for NAIS. It supports the existing 50-nautical-mile receiver-buffer scenario as a system-performance geometry; it does not make that scenario a record of messages actually received.
+
+The [2024 USCG Light List, Volume VI, Pacific Coast and Pacific Islands](https://www.navcen.uscg.gov/sites/default/files/pdf/lightLists/LightList_V6_2024.pdf) lists the Southern California NAIS stations and coordinates in its front matter and describes the national network as approximately 200 VHF receiver sites. It does not state station commissioning dates, operating intervals, outages, antenna properties, or coverage footprints. The [NOAA OCM AIS FAQ, May 2026](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf) says the data received from USCG typically do not identify the cause or duration of NAIS sensor interruptions; it characterizes most gaps generally as hours to a couple of days affecting a small number of stations, not as a 2024 Southern California operating record. No public official source found in the 2026-08-31 closure attempt supplied that record.
+
+The closure attempt also read the USCG NAVCEN [*How AIS Works*](https://www.navcen.uscg.gov/how-ais-works) page, [*Pacific Seacoast Level of Service Study*](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/pacific/Pacific_Seacoast_Final.pdf) and [24-nautical-mile enclosure](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/pacific/Encl_3_Pacific_SeaCoast_D11_D13_NAIS_coverage_maps_sites_with_24_NM_range.PNG), and [*Vessel Information Verification Service Coverage*](https://www.navcen.uscg.gov/sites/default/files/pdf/AIS/VIVS_Coverage.pdf) as **live cited references accessed 2026-08-31**. They are not retained local artifacts and are outside the checksum manifest. They supply contextual limitations and rejected comparison geometry, not the authoritative premise for the proposed 50-nautical-mile receiver domain. Their exact relevance and non-findings are recorded in [ADR 0002](decisions/0002-southern-california-study-area-extent.md).
 
 ---
 
