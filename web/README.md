@@ -6,9 +6,13 @@ no analysis runs here.
 
 The map client uses the ArcGIS Maps SDK for JavaScript and is designed to read
 ArcGIS platform services and authorized items through a scoped browser API key.
-Successful API-key-backed access remains unverified. Project layers will use the
-public representation selected after real output, performance, redistribution,
-and account-type evidence exists. Candidates are ArcGIS
+Local API-key-backed access to the `arcgis/oceans` basemap, pan/zoom, and the
+ready-map attribution handoff were verified in Chrome at the three required
+viewports on 2026-08-31. Deployed-origin access remains unverified, and this
+local basemap result does not establish account or project-layer hosting
+capabilities. Project layers will use the public representation selected after
+real output, performance, redistribution, and account-type evidence exists.
+Candidates are ArcGIS
 Location Platform limited feature/vector-tile/map-tile services, ArcGIS Online
 organization-hosted layers, and a non-Esri public fallback if neither is
 suitable. No route is implemented, and paid usage is not authorized.
