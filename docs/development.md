@@ -1079,13 +1079,14 @@ checks. It does not replace code review, scientific review, QGIS visual
 inspection of exact derived spatial outputs, real-data verification, ArcGIS
 account and capability checks, or deployment verification.
 
-The repository owner must manually configure the `main`-branch ruleset after
-this bootstrap workflow has been merged and the job names have been observed on
-GitHub. That ruleset should require pull requests and the stable `analysis` and
-`web` status checks. The workflow does not configure or prove those repository
-settings, and they are not active merely because this file exists. Once the
-ruleset is enabled, `main` should be updated through pull requests rather than
-direct pushes.
+The repository-level
+[`Protect main with PR and CI`](https://github.com/ShawnGarello/socal-whale-vessel-risk/rules/21908245)
+ruleset was enabled and read back through GitHub's API on 2026-08-31 after both
+job names had run successfully. It targets `main` with no bypass actor, requires
+a pull request but no human approval, permits merge commits, requires
+the GitHub Actions `analysis` and `web` checks against the current `main`, and
+blocks branch deletion and force pushes. Direct updates to `main` are therefore
+not part of the working process; use the pull-request sequence above.
 
 This is continuous integration only. No deployment workflow, continuous
 delivery, ArcGIS publishing, hosting automation, or repository credential has
