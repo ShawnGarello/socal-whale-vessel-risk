@@ -305,10 +305,13 @@ origins, and must never carry publishing, content-management, organization, or
 account-management privileges. Publishing credentials never enter the
 application or repository.
 
-The missing-key failure path is implemented and verified. Successful rendering
-with a real, scoped API key remains unverified. Whether the account can issue
-the needed credential and whether the intended services work from the deployed
-origin also remain to be checked.
+The missing-key failure path is implemented and verified. On 2026-08-31 a real,
+scoped browser key successfully rendered the `arcgis/oceans` basemap from the
+authorized localhost origin in Chrome at all three required viewports; pan,
+zoom, readiness, attribution handoff, and responsive containment were verified.
+That local service-access result does not identify the account type or establish
+project-layer hosting. Account capabilities and service access from a future
+deployed origin remain to be checked.
 
 ### Next.js, TypeScript, and the ArcGIS Maps SDK for JavaScript
 
@@ -328,8 +331,9 @@ The client is responsible for:
 - client-side view state and other presentational interactions.
 
 It does not retrieve raw inputs, transform analytical data, calculate exposure,
-or derive reportable statistics. No deployment exists yet, and successful
-API-key-backed map rendering has not been observed.
+or derive reportable statistics. Local API-key-backed basemap rendering has
+been observed and verified; no deployment exists, so deployed-origin rendering
+remains unverified.
 
 ### ArcGIS Pro
 
