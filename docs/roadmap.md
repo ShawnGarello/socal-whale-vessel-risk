@@ -264,7 +264,7 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   of retained commercial points rather than summed across passenger, cargo, and
   tanker groups. The modeled-whale-support geometry is biological model
   support, not an authoritative shoreline, general water mask, or AIS
-  observability boundary. A production-capable candidate segment/grid process
+  observability boundary. A candidate segment/grid processing foundation
   is now implemented, but the gap, implied-speed, edge-support, and vessel-
   length choices remain unresolved and ADR 0018 remains Proposed.
 - An isolated, read-only vessel-activity evidence harness now validates one
@@ -376,7 +376,7 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 295 passing tests using temporary
+- The combined self-contained suite has 297 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
@@ -413,8 +413,10 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   explicit gap and implied-speed exclusions, exact multi-cell vessel-kilometre
   allocation, output conservation, zero-length/outside-support/boundary-
   ambiguity treatment, union-recomputed distinct-vessel output, deterministic
-  candidate GeoParquet and quality JSON, candidate-bundle atomicity and output
-  safeguards, and all CLI boundaries.
+  candidate GeoParquet and quality JSON, manifest-provenance-independent output
+  identity, evidence/candidate parity for their shared nonambiguous logic,
+  sanitized execution settings in lineage, candidate-bundle atomicity and
+  output safeguards, and all CLI boundaries.
 - A focused whale-grid command validates the selected NOAA/SWFSC source and the
   exact versioned water-grid input, reprojects source polygons with explicit x/y
   order, detects material source-interior overlap, and transfers modeled density
@@ -551,10 +553,11 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   areas, and geometry, includes every cell including zeros, refuses raw or
   non-derived output, input/output overlap, arbitrary overwrite, and partial
   publication, and records source artifact checksums, candidate parameters,
-  exclusions, counts, conservation, software versions, and validation steps.
-  Synthetic tests verify the production boundary. No real multi-date delivery
-  or real candidate vessel-grid run was executed, so no parameter was accepted
-  and no period-wide vessel input was produced.
+  exclusions, counts, conservation, sanitized bounded-execution settings,
+  software versions, and validation steps. Synthetic tests verify the candidate
+  processing boundary. No real multi-date delivery or real candidate vessel-
+  grid run was executed, so no parameter was accepted and no period-wide vessel
+  input was produced.
 - The 2026-08-28 real read-only smoke run recorded the existing bounded
   2024-07-15 cleaner bundle and retrieval manifest without modifying either. It
   reported exactly one compatible date, 152 missing dates, `not_ready` period

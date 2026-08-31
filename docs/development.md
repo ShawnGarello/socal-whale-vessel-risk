@@ -21,8 +21,8 @@
 > producing a production vessel grid. A separate boundary assembles explicitly
 > supplied one-date cleaner bundles into a versioned multi-day period-input
 > manifest and scans its verified partitions through a bounded DuckDB relation,
-> without selecting a plausibility threshold. A separate production-capable
-> candidate boundary now requires explicit gap, implied-speed, readiness, edge,
+> without selecting a plausibility threshold. A separate candidate vessel-grid
+> boundary now requires explicit gap, implied-speed, readiness, edge,
 > and support parameters, streams whole-period pairs, and writes deterministic
 > per-cell vessel-kilometres with quality and lineage metadata beneath ignored
 > `data/derived/`. Network retrieval, analytical-period AIS acquisition,
@@ -506,7 +506,7 @@ arbitrary overwrite, and partial publication. The complete contract, fields,
 quality semantics, and limitations are in the [analysis
 README](../analysis/README.md#candidate-multi-day-vessel-grid-aggregation).
 
-This is a production-capable candidate-processing foundation, not an accepted
+This is a candidate vessel-grid processing foundation, not an accepted
 final vessel input. No real multi-date delivery or candidate vessel-grid run has
 been executed. Period-wide sensitivity, accepted thresholds, alternative edge
 support, transfer and observational completeness, and the final analytical
@@ -903,7 +903,7 @@ In practice:
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 295 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 297 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -935,8 +935,10 @@ candidate whole-period cross-midnight pairing, explicit gap and implied-speed
 exclusions, exact multi-cell vessel-kilometre allocation, candidate-grid
 distance conservation, zero-length/outside-support/boundary-ambiguity treatment,
 union-recomputed distinct-vessel output, deterministic GeoParquet and quality
-serialization, candidate-bundle atomicity and output safeguards, and all CLI
-boundaries.
+serialization independent of volatile manifest provenance, parity with the
+evidence path for shared nonambiguous logic, sanitized bounded-execution
+settings in lineage, candidate-bundle atomicity and output safeguards, and all
+CLI boundaries.
 Tests create temporary CSVs and geometry or use data in memory; the ignored M2
 artifacts are not test prerequisites. Third-party libraries are not themselves
 unit-tested.
