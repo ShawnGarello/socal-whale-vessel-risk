@@ -20,6 +20,10 @@ from whale_vessel_analysis.multiday_ais_relation import (
     RelationResources,
     open_period_relation,
 )
+from whale_vessel_analysis.vessel_activity_evidence import (
+    build_evidence_report,
+    load_cleaned_bundle,
+)
 from whale_vessel_analysis.vessel_grid import (
     ALLOW_INCOMPLETE_PERIOD,
     EDGE_TREATMENT,
@@ -340,6 +344,73 @@ def test_boundary_ambiguity_is_excluded_and_distinct_union_is_recomputed(
         _close_relation(handle)
 
 
+def test_candidate_and_evidence_paths_match_for_shared_nonambiguous_logic(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Protect the semantics shared by the diagnostic and candidate boundaries."""
+    interim, _derived, _raw = _roots(tmp_path, monkeypatch)
+    rows = [
+        ("111111111", _at("2024-07-01", 0, 0), 34.0, -118.01, "cargo"),
+        ("111111111", _at("2024-07-01", 0, 2), 34.0, -117.99, "cargo"),
+        ("222222222", _at("2024-07-01", 0, 0), 34.0, -118.01, "passenger"),
+        ("222222222", _at("2024-07-01", 0, 10), 34.0, -117.99, "passenger"),
+        ("333333333", _at("2024-07-01", 0, 0), 34.0, -118.01, "tanker"),
+        ("333333333", _at("2024-07-01", 0, 0, 30), 34.0, -117.99, "tanker"),
+    ]
+    bundle = build_cleaned_bundle(tmp_path / "bundle", rows)
+    manifest, reference = _manifest_and_reference(tmp_path, interim, [bundle])
+    grid = _two_cell_grid()
+    parameters = _parameters(gap=300, speed=40)
+    dataset, handle = _aggregate(manifest, reference, grid, interim, parameters)
+    try:
+        evidence = build_evidence_report(
+            load_cleaned_bundle(bundle),
+            candidate_maximum_gap_seconds=(300,),
+            candidate_implied_speed_ceiling_knots=(40,),
+            target_grid=grid,
+        )
+        sensitivity = evidence["candidate_rule_sensitivity"]
+        scenario = sensitivity["candidate_scenarios"][0]
+        allocation_wrapper = evidence["optional_grid_allocation"][
+            "candidate_scenarios"
+        ][0]
+        allocation = allocation_wrapper["allocation"]
+        candidate_counts = dataset.quality["counts"]["candidate_segments"]
+        candidate_exclusions = dataset.quality["counts"]["primary_exclusions"]
+
+        assert candidate_counts["retained"] == scenario["retained_segment_count"]
+        assert candidate_counts["excluded"] == 2
+        assert (
+            candidate_exclusions["maximum_gap"]
+            == scenario["primary_exclusion_counts"]["gap"]
+        )
+        assert (
+            candidate_exclusions["implied_speed"]
+            == scenario["primary_exclusion_counts"]["implied_speed"]
+        )
+
+        for evidence_cell, candidate_cell, target_cell in zip(
+            allocation["per_cell"], dataset.cells, grid.cells, strict=True
+        ):
+            assert evidence_cell["cell_id"] == target_cell.cell_id
+            for group in (*vessel_grid.VESSEL_GROUPS, vessel_grid.ALL_COMMERCIAL):
+                assert candidate_cell.vessel_km[group] == pytest.approx(
+                    evidence_cell["vessel_kilometres"][group], abs=1e-12
+                )
+
+        candidate_commercial_m = dataset.quality["distance_conservation"]["by_group"][
+            "all_commercial"
+        ]["allocated_to_cells_m"]
+        evidence_commercial_km = allocation["by_group"]["all_commercial"][
+            "in_support_length_km"
+        ]
+        assert candidate_commercial_m / 1_000 == pytest.approx(
+            evidence_commercial_km, abs=1e-12
+        )
+    finally:
+        _close_relation(handle)
+
+
 def test_deterministic_serialization_overwrite_and_output_guards(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -373,6 +444,19 @@ def test_deterministic_serialization_overwrite_and_output_guards(
         metadata = json.loads(table.schema.metadata[b"whale_vessel_analysis"])
         assert metadata["contract"] == vessel_grid.VESSEL_GRID_CONTRACT
         assert metadata["grid_id"] == dataset.grid_id
+        assert "manifest_sha256" not in metadata["input"]
+        lineage = json.loads(first.lineage_path.read_text(encoding="utf-8"))
+        settings = lineage["execution_settings"]
+        assert settings["arrow_batch_size_rows"] == 2
+        assert settings["duckdb"]["requested_memory_limit"] == "256MB"
+        assert settings["duckdb"]["requested_threads"] == 1
+        assert settings["spill_directory"] == {
+            "configured": True,
+            "run_isolated": True,
+            "location_class": "ignored data/interim",
+            "local_path_recorded": False,
+        }
+        assert str(interim) not in json.dumps(settings)
         with pytest.raises(VesselGridError, match="explicit overwrite"):
             write_vessel_grid(
                 dataset, derived / "first", started_at=FIXED_TIME, relation=relation
@@ -409,6 +493,111 @@ def test_deterministic_serialization_overwrite_and_output_guards(
             )
     finally:
         context.__exit__(None, None, None)
+
+
+def test_manifest_path_timestamp_and_retry_history_do_not_change_output_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, derived, _raw = _roots(tmp_path, monkeypatch)
+    rows = [
+        ("123456789", _at("2024-07-01", 0, 0), 34.0, -118.01, "cargo"),
+        ("123456789", _at("2024-07-01", 0, 1), 34.0, -117.99, "cargo"),
+    ]
+    bundle_a = build_cleaned_bundle(
+        tmp_path / "worktree-a" / "bundle",
+        rows,
+        run_id="ais-equivalent-input",
+        started_at="2026-08-30T00:00:00Z",
+        completed_at="2026-08-30T00:00:01Z",
+    )
+    bundle_b = build_cleaned_bundle(
+        tmp_path / "worktree-b" / "bundle",
+        rows,
+        run_id="ais-equivalent-input",
+        started_at="2026-08-31T00:00:00Z",
+        completed_at="2026-08-31T00:00:01Z",
+    )
+    manifest_path_a = interim / "worktree-a-manifest.json"
+    manifest_path_b = interim / "worktree-b-manifest.json"
+    update_a = record_cleaned_days(
+        manifest_path_a, [bundle_a], clock=lambda: FIXED_TIME
+    )
+    record_cleaned_days(
+        manifest_path_b,
+        [bundle_b],
+        clock=lambda: datetime(2026, 8, 31, 12, tzinfo=UTC),
+    )
+    update_b = record_cleaned_days(
+        manifest_path_b,
+        [bundle_b],
+        clock=lambda: datetime(2026, 9, 1, 12, tzinfo=UTC),
+    )
+    assert update_a.period_input_id == update_b.period_input_id
+    assert vessel_grid.sha256_file(manifest_path_a) != vessel_grid.sha256_file(
+        manifest_path_b
+    )
+    reference_a = PeriodInputReference(
+        manifest_path=manifest_path_a,
+        manifest_sha256=vessel_grid.sha256_file(manifest_path_a),
+        period_input_id=update_a.period_input_id,
+        period_input_readiness=update_a.manifest["period_input_readiness"],
+        observational_completeness=update_a.manifest["observational_completeness"],
+    )
+    reference_b = PeriodInputReference(
+        manifest_path=manifest_path_b,
+        manifest_sha256=vessel_grid.sha256_file(manifest_path_b),
+        period_input_id=update_b.period_input_id,
+        period_input_readiness=update_b.manifest["period_input_readiness"],
+        observational_completeness=update_b.manifest["observational_completeness"],
+    )
+    grid = _two_cell_grid(path=tmp_path / "grid.parquet")
+
+    dataset_a, handle_a = _aggregate(
+        dict(update_a.manifest), reference_a, grid, interim, _parameters(speed=1_000)
+    )
+    context_a, relation_a = handle_a
+    try:
+        result_a = write_vessel_grid(
+            dataset_a,
+            derived / "manifest-a",
+            started_at=FIXED_TIME,
+            relation=relation_a,
+        )
+    finally:
+        context_a.__exit__(None, None, None)
+
+    dataset_b, handle_b = _aggregate(
+        dict(update_b.manifest), reference_b, grid, interim, _parameters(speed=1_000)
+    )
+    context_b, relation_b = handle_b
+    try:
+        result_b = write_vessel_grid(
+            dataset_b,
+            derived / "manifest-b",
+            started_at=FIXED_TIME,
+            relation=relation_b,
+        )
+    finally:
+        context_b.__exit__(None, None, None)
+
+    assert dataset_a.grid_id == dataset_b.grid_id
+    assert result_a.grid_path.read_bytes() == result_b.grid_path.read_bytes()
+    assert result_a.quality_path.read_bytes() == result_b.quality_path.read_bytes()
+    lineage_a = json.loads(result_a.lineage_path.read_text(encoding="utf-8"))
+    lineage_b = json.loads(result_b.lineage_path.read_text(encoding="utf-8"))
+    manifest_input_a = next(
+        item
+        for item in lineage_a["run"]["inputs"]
+        if item["artifact_id"] == "multi-day-cleaned-ais-manifest"
+    )
+    manifest_input_b = next(
+        item
+        for item in lineage_b["run"]["inputs"]
+        if item["artifact_id"] == "multi-day-cleaned-ais-manifest"
+    )
+    assert manifest_input_a["sha256"] == reference_a.manifest_sha256
+    assert manifest_input_b["sha256"] == reference_b.manifest_sha256
+    assert manifest_input_a["sha256"] != manifest_input_b["sha256"]
 
 
 def test_invalid_parameters_relation_batch_and_input_output_overlap_are_refused(

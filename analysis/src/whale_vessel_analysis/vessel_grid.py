@@ -155,7 +155,7 @@ class VesselGridParameters:
 
 @dataclass(frozen=True, slots=True)
 class PeriodInputReference:
-    """Stable and local lineage for the period manifest consumed by one run."""
+    """Stable analytical identity and local lineage for one period manifest."""
 
     manifest_path: Path
     manifest_sha256: str
@@ -165,7 +165,6 @@ class PeriodInputReference:
 
     def stable_dict(self) -> dict[str, object]:
         return {
-            "manifest_sha256": self.manifest_sha256,
             "period_input_id": self.period_input_id,
             "period_input_readiness": dict(self.period_input_readiness),
             "observational_completeness": dict(self.observational_completeness),
@@ -195,6 +194,7 @@ class VesselGridDataset:
     configuration_sha256: str
     partitions: tuple[Mapping[str, object], ...]
     partition_paths: tuple[Path, ...]
+    batch_size: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -878,6 +878,7 @@ def aggregate_vessel_grid(
         partition_paths=tuple(
             partition.cleaned_path for partition in relation.partitions
         ),
+        batch_size=batch_size,
     )
 
 
@@ -1036,6 +1037,7 @@ def _software_versions() -> dict[str, str]:
 def _lineage_document(
     *,
     dataset: VesselGridDataset,
+    relation: PeriodRelation,
     grid_path: Path,
     grid_sha256: str,
     quality_path: Path,
@@ -1066,6 +1068,7 @@ def _lineage_document(
     counts = cast(Mapping[str, object], dataset.quality["counts"])
     candidate = cast(Mapping[str, object], counts["candidate_segments"])
     conservation = cast(Mapping[str, object], dataset.quality["distance_conservation"])
+    effective_settings = relation.effective_settings()
     run = RunMetadata(
         run_id=dataset.grid_id,
         started_at=started_at,
@@ -1118,6 +1121,25 @@ def _lineage_document(
             "Proposed"
         ),
         "parameters": dataset.parameters.to_dict(),
+        "execution_settings": {
+            "arrow_batch_size_rows": dataset.batch_size,
+            "duckdb": {
+                "requested_memory_limit": relation.resources.memory_limit,
+                "effective_memory_limit": effective_settings["memory_limit"],
+                "requested_threads": relation.resources.threads,
+                "effective_threads": effective_settings["threads"],
+            },
+            "spill_directory": {
+                "configured": True,
+                "run_isolated": True,
+                "location_class": "ignored data/interim",
+                "local_path_recorded": False,
+            },
+            "identity_note": (
+                "operational settings and local spill paths do not participate in "
+                "candidate analytical identity or deterministic output metadata"
+            ),
+        },
         "software_versions": _software_versions(),
         "run": run.to_dict(),
         "visual_inspection_status": "not_completed",
@@ -1272,6 +1294,7 @@ def write_vessel_grid(
         completed_at = datetime.now(UTC)
         lineage = _lineage_document(
             dataset=dataset,
+            relation=relation,
             grid_path=target / VESSEL_GRID_FILENAME,
             grid_sha256=grid_sha256,
             quality_path=target / QUALITY_REPORT_FILENAME,
