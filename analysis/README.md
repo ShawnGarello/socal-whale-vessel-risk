@@ -796,6 +796,21 @@ quality-report bytes are deterministic for unchanged verified inputs,
 configuration, parameters, and code. Real execution timestamps occur only in
 run metadata and do not affect the content-derived candidate grid ID.
 
+Deterministic identity and output metadata use the path- and clock-independent
+`period_input_id`, stable readiness and observational-completeness states, and
+the recorded cleaned-partition identities. The exact period-manifest SHA-256 is
+execution provenance: it is retained in `run-metadata.json` but excluded from
+the candidate ID, GeoParquet metadata, and deterministic quality report. Thus
+an identical retry or equivalent regeneration in another worktree does not
+change the analytical output identity merely because manifest paths,
+timestamps, or attempt history changed.
+
+`run-metadata.json` also records the requested and effective DuckDB memory
+limit and thread count, the Arrow batch size, and that an isolated spill
+directory was configured beneath ignored `data/interim/`. The local spill path
+is omitted. These operational settings support execution diagnosis but do not
+participate in deterministic analytical identity.
+
 The writer refuses `data/raw/`, any destination outside `data/derived/`, the
 derived root itself, input/output overlap, an existing destination without
 `--overwrite`, and overwrite of anything except a complete bundle carrying its
@@ -808,11 +823,21 @@ implied-speed exclusions, distance conservation, zero-length and outside-
 support handling, boundary ambiguity, group/additive vessel-kilometres,
 union-recomputed distinct counts, deterministic Parquet and JSON bytes, invalid
 parameters and inputs, atomic failure, overwrite, raw-output refusal, and the
-CLI's lack of hidden methodological defaults. No real multi-date delivery or
-real candidate vessel-grid run has been executed. Period-wide stability,
-accepted thresholds, alternative edge support, observational completeness,
-and a final vessel-activity input therefore remain unresolved; ADR 0018 remains
-Proposed.
+CLI's lack of hidden methodological defaults. Regression coverage also proves
+that volatile manifest provenance cannot change deterministic candidate output,
+and that the evidence and candidate paths agree on retained populations,
+gap/implied-speed exclusions, per-cell vessel-kilometres, and commercial totals
+for a shared nonambiguous synthetic population.
+
+That parity claim is deliberately limited. The evidence path materializes one
+cleaner bundle and additionally reports geodesic comparisons and evidence-only
+vessel-hours; the candidate path streams the bounded multi-day relation,
+classifies ambiguous intersections without publishing them to cells, and writes
+the versioned candidate bundle. Those intentional boundary-specific behaviors
+are not asserted to be identical. No real multi-date delivery or real candidate
+vessel-grid run has been executed. Period-wide stability, accepted thresholds,
+alternative edge support, observational completeness, and a final vessel-
+activity input therefore remain unresolved; ADR 0018 remains Proposed.
 
 ## Projected water-grid command
 
