@@ -25,8 +25,12 @@
 Three independent questions remain open and gate different work:
 
 1. **Analytical and statistical domain.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md)
-   remains Proposed because offshore AIS coverage is unestablished. This gates
-   the exposure surface and inside-versus-outside statistics.
+   remains Proposed. Authoritative USCG evidence supports the existing
+   50-nautical-mile receiver union as a general system-performance-qualified
+   proposal, but author acceptance is still required and period-specific 2024
+   station operations and NOAA public-feed completeness remain unknown. This
+   prohibits the exposure and reporting contracts and gates the exposure
+   surface and inside-versus-outside statistics.
 2. **VSR geometry redistribution.** The BWBS/CMSF geometry is publicly shared
    with attribution but has no confirmed redistribution grant. This gates
    project-hosted publication of a copy, not analysis against the local source
@@ -532,7 +536,7 @@ No implementation directory is scaffolded before its milestone needs it.
 
 | Decision | Deferred until | Selection basis |
 |---|---|---|
-| Analytical and statistical domain | ADR 0002 receives enough independent AIS-coverage evidence | Map/context extent, EPSG:3310, and the 5 km grid are settled; the reporting domain is not. |
+| Analytical and statistical domain | Author reviews the scope-reduced receiver proposal in ADR 0002, or period-specific evidence changes it | Authoritative USCG evidence supports the existing 50-nautical-mile receiver union as a general system-performance-qualified proposal. Author acceptance is still required; 2024 station operations and NOAA public-feed completeness remain unknown. |
 | Exposure formula, normalization, and weighting | Both grid-aligned inputs and the analytical domain are ready | Input units/distributions, scientific support, and sensitivity. |
 | High-exposure threshold | Exposure surface exists | Real value distribution and sensitivity analysis. |
 | Final public layer representation and host | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, anonymous browser performance, required interactions, legal constraints, usage limits, and supported service types. No format or provider is preselected. |
@@ -541,7 +545,13 @@ No implementation directory is scaffolded before its milestone needs it.
 | Non-Esri public delivery route, if needed | Both Esri routes are unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |
 | Static application host | Deployment milestone | HTTPS, stable origin, static-export limits, build-time environment values, and clean-browser verification. |
 | Formal visual-verification record or command | M3/M8 reproducibility work | Must record output checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage. |
-| Reporting-domain-dependent contracts | ADR 0002 is accepted | Exposure, inside/outside statistics, exposure-layer, and application-results shapes may change with the domain. |
+| Reporting-domain-dependent contracts | ADR 0002 is accepted | Exposure, inside/outside statistics, exposure-layer, and application-results shapes may change with the domain and remain prohibited while it is Proposed. |
+
+[ADR 0002](decisions/0002-southern-california-study-area-extent.md) therefore
+remains **Proposed**, and M2 remains **In progress** in the
+[roadmap](roadmap.md). General receiver-performance evidence has narrowed the
+open decision; it has not supplied period-specific 2024 operational
+completeness or authorized reporting-domain-dependent contracts.
 
 Resolved choices remain recorded in their ADRs: EPSG:3310
 ([0003](decisions/0003-projected-coordinate-system.md)), the 5 km grid and
