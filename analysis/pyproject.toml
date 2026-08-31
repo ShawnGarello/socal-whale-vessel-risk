@@ -51,7 +51,6 @@ packages = ["src/whale_vessel_analysis"]
 python_version = "3.13"
 strict = true
 files = ["src/whale_vessel_analysis"]
-exclude = ["^tests/"]
 
 [[tool.mypy.overrides]]
 module = ["pyarrow", "pyarrow.*", "pyogrio", "pyogrio.*", "shapely", "shapely.*"]
