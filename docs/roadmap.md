@@ -697,13 +697,13 @@ Built on the `feat/web-foundation` branch. The application is in
   automatic, dynamic data attribution enabled; it does not hide or replace the
   SDK attribution.
 - Formatting (Prettier), linting (ESLint), type checking (`tsc --noEmit`), and
-  tests (Vitest, 21 passing) configured and run.
+  tests (Vitest, 23 passing) configured and run.
 - Clean-checkout verification is implemented and exercised through
   `npm run verify:clean`: it installs dependencies from the committed lockfile,
   generates Next.js route types, runs formatting, linting, type checking, and
   tests in order, then produces the local static export. This verifies the
-  local build path only; it does not verify a deployment or successful keyed
-  basemap rendering.
+  local build path only; the separate browser check below verifies local keyed
+  service access, and neither check verifies a deployment.
 - Credential handling: `web/.env.example` carries variable names only, all other
   `.env*` files are ignored, and no credential is tracked.
 - Build output (`web/out/`, `web/.next/`) and `node_modules/` are ignored and
@@ -716,6 +716,25 @@ Built on the `feat/web-foundation` branch. The application is in
   state exactly one attribution treatment was visually unobscured and within
   the viewport, and neither the document nor body had horizontal overflow. The
   timeout path was not observed in this run.
+- A real keyed production/static export was served from the authorized
+  `http://localhost:3000` origin and checked on 2026-08-31 in headless Google
+  Chrome 151.0.7922.174 at exact 390 x 844, 820 x 1180, and 1440 x 900
+  CSS-pixel viewports. The `arcgis/oceans` basemap rendered and reached a ready,
+  non-updating view with zero reported map load errors at every size. Pointer
+  drag and wheel interaction changed the center and zoom at every size. The
+  application fallback remained present throughout pre-ready samples and was
+  removed only at readiness; after readiness the SDK's dynamic Esri and data-
+  provider attribution was the single visible attribution treatment, remained
+  unobscured and inside the viewport after pan and zoom, and the application
+  fallback was absent. Loading/status content remained readable, the map
+  remained usable, neither the document nor body overflowed horizontally, no
+  `Token Required` response or ArcGIS identity prompt appeared, and all
+  observed ArcGIS responses succeeded. The final sanitized console contained
+  only the SDK's Calcite version information. A local missing-favicon 404 and a
+  narrow-viewport composited-map paint escape found during the check were fixed
+  with a declared SVG favicon and an explicit map-frame paint-containment
+  boundary, then rechecked. No credential value or credential-bearing request
+  URL was retained.
 - Decisions recorded as [ADR 0007](decisions/0007-use-npm-for-the-web-application.md),
   [0008](decisions/0008-deliver-the-application-as-a-static-export.md),
   [0009](decisions/0009-mount-arcgis-through-client-only-map-components.md), and
@@ -726,12 +745,6 @@ Built on the `feat/web-foundation` branch. The application is in
 - **The static-shell deployment.** This can proceed independently of an ArcGIS
   account. The application has never been deployed anywhere, and there is no
   public URL.
-- **A successful basemap render.** This requires a valid, scoped API key. The
-  shell is verified only to the point of failing correctly: with no API key it
-  reports the problem in the interface. That the map renders, pans, and zooms
-  with a valid key, including the ready-map attribution handoff, has **not**
-  been observed.
-
 - The account-type capability checks. Nothing has been established about
   Location Platform data-service support, public access, storage, bandwidth,
   monthly free-tier headroom, or billing status. ArcGIS Online organization,
@@ -751,7 +764,7 @@ The ordered steps for all of the above are in
 |---|---|
 | Builds locally | **Verified.** `npm run build` succeeds; the export was served and loaded. |
 | Builds in the deployment environment | **Unverified.** No deployment environment exists yet. |
-| Map renders, pans, and zooms | **Unverified.** Requires an API key. The failure path is verified; the success path is not. |
+| Map renders, pans, and zooms | **Verified locally.** The keyed static export rendered `arcgis/oceans`, panned, zoomed, and completed the ready-map attribution handoff in Chrome at all three required viewports. The deployed-origin path remains unverified. |
 | No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored. |
 | Deployment reachable and reflecting main | **Unverified.** No deployment exists; main has not been deployed or verified. |
 | Account-type capability checks complete and recorded | **Unverified.** Location Platform and ArcGIS Online checks have not started; they require the author's account. |
@@ -759,8 +772,8 @@ The ordered steps for all of the above are in
 | Unavailable capabilities recorded as constraints for M5 | **Not applicable yet.** Nothing has been checked, so nothing has been found unavailable. |
 
 M4 is not complete and must not be marked complete until the deployed
-application, successful API-key-backed map rendering, and the real account-type
-capability checks are verified. An Esri-hosted publish-and-serve test is also
+application and the real account-type capability checks are verified. An
+Esri-hosted publish-and-serve test is also
 required when either account type safely supports it without paid usage. Any
 unavailable capabilities must be recorded as publication constraints for M5;
 selection and end-to-end testing of a non-Esri route happen in later milestones
@@ -793,7 +806,9 @@ A disconnected or network-restricted deployment would need assets copied locally
 and `assetsPath` configured.
 
 **A browser-delivered API key is required for the basemap.** Without one, the
-basemap styles service returns 401 "Token Required". ArcGIS Location Platform
+basemap styles service returns 401 "Token Required". With the local key supplied
+through ignored configuration, the authorized localhost origin successfully
+rendered `arcgis/oceans` in Chrome on 2026-08-31. ArcGIS Location Platform
 accounts have API-key management privileges by default; ArcGIS Online accounts
 have different user-type and privilege requirements. Neither a configured key
 nor a successful basemap request proves project-layer hosting. The deployed map
@@ -833,7 +848,7 @@ this repository's own. Disabled with `agentRules: false`.
 - Location Platform storage/bandwidth usage and ArcGIS Online credit/storage
   consumption could constrain iteration. The project does not enable
   pay-as-you-go or authorize spending. **Still open.**
-- ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Partly resolved:** a browser-delivered, origin-restricted API key is required for the basemap, Location Platform accounts have API-key privileges by default, and the requirements for scoping a browser key are recorded in [development.md](development.md). The real account and successful service access remain unverified.
+- ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Partly resolved:** a browser-delivered, origin-restricted API key is required for the basemap, Location Platform accounts have API-key privileges by default, the requirements for scoping a browser key are recorded in [development.md](development.md), and local service access succeeded from the authorized localhost origin. The real account capabilities and deployed-origin service access remain unverified.
 - Bundle size and initial load time of the SDK need an early look rather than a late one. **Resolved for size** — see the findings above. Load time still needs measuring on a real deployment.
 - The hosting platform is still unchosen. Its requirements are now written down in [development.md](development.md), so the choice is constrained rather than open-ended.
 
