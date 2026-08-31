@@ -129,9 +129,23 @@ time**. They are public, and they are baked into the deployed files, so changing
 one requires a rebuild, not just a restart.
 
 Without a key the application still loads and reports the problem in the
-interface rather than failing silently: it names the unset variable and shows the
-service's own response. That behaviour is verified. A **successful** basemap
+interface rather than failing silently: it names the unset variable and shows
+the service's own response. A persistent application-level `Powered by Esri`
+fallback remains visible while the SDK loads and when map initialization fails.
+If the map becomes ready, the fallback is removed and the ArcGIS SDK retains
+responsibility for its automatic, dynamic data attribution; the application
+does not disable or hide it. A **successful** basemap
 render has **not** been verified — see [roadmap.md](roadmap.md) M4.
+
+On 2026-08-30 a keyless production/static export was exercised in headless
+Chrome at exact 390 x 844, 820 x 1180, and 1440 x 900 CSS-pixel viewports.
+Initial SDK loading, map initialization with the missing-key configuration
+warning, and the resulting `arcgisViewReadyError` initialization-error state
+were observed at every size. Exactly one attribution treatment remained
+visually unobscured and within each viewport throughout the sampled
+transitions, with no document or body horizontal overflow. The timeout path,
+successful keyed rendering and its ready-map attribution handoff, and any
+deployment remain unverified.
 
 ### Analysis (Python) — retrieval, input processing, and evidence foundations
 
@@ -901,7 +915,14 @@ In practice:
   tool/version, inspected views/checks, result, and relevant observations.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
-**Application (TypeScript).** `npm test` in `web/` runs Vitest once; `npm run test:watch` watches. The suite covers the configuration logic in `web/lib/` — how environment values resolve, and how the map component's reported load failures become text for the interface. Rendering, the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by building it and looking at it in a browser. Vitest was chosen in [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
+**Application (TypeScript).** `npm test` in `web/` runs Vitest once;
+`npm run test:watch` watches. The suite covers configuration logic in
+`web/lib/`, how the map component's reported load failures become interface
+text, and the source-level application boundary that keeps fallback attribution
+present until a ready SDK map assumes attribution responsibility. Rendering,
+the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
+building it and looking at it in a browser. Vitest was chosen in
+[ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
 **Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 297 tests
 over project logic with values known by construction: accepted and rejected

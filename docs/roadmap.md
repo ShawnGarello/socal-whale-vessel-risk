@@ -691,8 +691,13 @@ Built on the `feat/web-foundation` branch. The application is in
   California Bight, a zoom control, a loading state, an initialization-error
   state, and SDK teardown on unmount. No project layers and no analytical
   content.
+- A persistent application-level `Powered by Esri` fallback remains visible
+  while the SDK loads and whenever initialization does not reach a ready map.
+  On a ready map the application removes that fallback and leaves the SDK's
+  automatic, dynamic data attribution enabled; it does not hide or replace the
+  SDK attribution.
 - Formatting (Prettier), linting (ESLint), type checking (`tsc --noEmit`), and
-  tests (Vitest, 18 passing) configured and run.
+  tests (Vitest, 21 passing) configured and run.
 - Clean-checkout verification is implemented and exercised through
   `npm run verify:clean`: it installs dependencies from the committed lockfile,
   generates Next.js route types, runs formatting, linting, type checking, and
@@ -703,8 +708,14 @@ Built on the `feat/web-foundation` branch. The application is in
   `.env*` files are ignored, and no credential is tracked.
 - Build output (`web/out/`, `web/.next/`) and `node_modules/` are ignored and
   are not committed.
-- Responsive layout checked in Chrome at 390, 820, and 1440 CSS pixels wide: the
-  shell fills the viewport with no horizontal overflow at any of them.
+- A real keyless production/static export was checked in headless Chrome on
+  2026-08-30 at exact 390 x 844, 820 x 1180, and 1440 x 900 CSS-pixel
+  viewports. Initial SDK loading, map initialization with the missing-key
+  configuration warning, and the resulting `arcgisViewReadyError`
+  initialization-error state were observed at every size. In every sampled
+  state exactly one attribution treatment was visually unobscured and within
+  the viewport, and neither the document nor body had horizontal overflow. The
+  timeout path was not observed in this run.
 - Decisions recorded as [ADR 0007](decisions/0007-use-npm-for-the-web-application.md),
   [0008](decisions/0008-deliver-the-application-as-a-static-export.md),
   [0009](decisions/0009-mount-arcgis-through-client-only-map-components.md), and
@@ -718,7 +729,8 @@ Built on the `feat/web-foundation` branch. The application is in
 - **A successful basemap render.** This requires a valid, scoped API key. The
   shell is verified only to the point of failing correctly: with no API key it
   reports the problem in the interface. That the map renders, pans, and zooms
-  with a valid key has **not** been observed.
+  with a valid key, including the ready-map attribution handoff, has **not**
+  been observed.
 
 - The account-type capability checks. Nothing has been established about
   Location Platform data-service support, public access, storage, bandwidth,
