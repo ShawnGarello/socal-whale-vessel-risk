@@ -4,14 +4,14 @@
 
 ## Outcome
 
-The evidence materially narrows the decision but does not support accepting one analytical domain.
+The evidence now supports one existing receiver-distance scenario as a general NAIS system-performance domain, but author review is still required before it becomes the Version 1 analytical domain.
 
-- NOAA's current AIS FAQ says public NAIS coverage is generally unavailable beyond "40 to 50 miles" from the coast, but it does not identify statute or nautical miles and does not say that all water inside the stated distance was observed.
-- Older official NAIS material describes the planned offshore extent as about 50 nautical miles, while the current source deliberately remains unitless. The calculation therefore retains the ambiguity rather than silently resolving it.
+- NOAA's current AIS FAQ says public NAIS coverage is generally unavailable beyond "40 to 50 miles" from the coast, but that sentence itself does not identify statute or nautical miles, define "coast," or promise that every transmission inside the distance was received.
+- USCG NAVCEN's current waterway-analysis instruction supplies an authoritative NAIS interpretation separately: reception coverage to at least 50 nautical miles from each NAIS reception antenna site, described as a 50-mile performance standard. This supports the existing `receivers_50_nautical_miles` scenario, not a coastline-buffer scenario.
 - NOAA's 2024 AIS Base Stations source places nine NAIS stations in the expanded Southern California processing filter, including Catalina, San Nicolas, and San Clemente Islands. Its metadata says completeness is untested and provides no antenna height, operational interval, outage history, terrain, or reception footprint.
-- A coastline buffer is reproducible but not receiver geometry. A receiver buffer is physically closer to the collection system but requires an unsupported reception radius and assumes the published station inventory was complete and operating during the 2024 analytical period.
+- The performance standard is not an empirical guarantee of uninterrupted capture. Neither NOAA nor USCG publishes a 2024 Southern California station-operation or outage record in the official material found, and NOAA says the feed it receives typically does not identify the cause or duration of sensor interruptions.
 
-Consequently, none of the eight masks below is called an observed or reliable-coverage domain. They are sensitivity scenarios only. ADR 0002 remains Proposed.
+Consequently, none of the eight masks below is called an observed-coverage surface. Seven remain sensitivity scenarios. The 50-nautical-mile receiver mask is now the evidence-supported proposal for a **system-performance-qualified** domain, subject to explicit author acceptance of the 2024 operational uncertainty. ADR 0002 remains Proposed.
 
 ## Authoritative inputs
 
@@ -47,7 +47,7 @@ NOAA states that this source derives NAIS and LOMA station identity and location
 - Expanded-filter NAIS sites: Cambria, Catalina Island, Honda Ridge, Laguna Peak, Point Loma, Post Ranch, San Clemente Island, San Nicolas Island, and San Onofre Peak
 - Transformation: EPSG:4269 to EPSG:3310 with fixed x/y order
 
-The current [NOAA AIS FAQ](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf) points users to this dataset for station locations. The [USCG explanation of AIS range](https://www.navcen.uscg.gov/how-ais-works) says range depends principally on antenna height and gives a nominal 20 nautical miles at sea; it does not define a NAIS receiver footprint. Station points therefore support a geometry sensitivity test, not an empirical coverage surface.
+The current [NOAA AIS FAQ](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf) points users to this dataset for station locations. The [USCG explanation of AIS range](https://www.navcen.uscg.gov/how-ais-works) says general AIS range depends principally on antenna height and gives a nominal 20 nautical miles at sea. More specifically, [NAVCEN Work Instruction 2022-01](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/nsra/NAVCEN%20Work%20Instruction%202022-01%20v2.pdf) states that NAIS supplies reception coverage to at least 50 nautical miles from each reception antenna site and calls that a performance standard. Together, the station points and the USCG standard support a system-performance geometry, not an empirical 2024 coverage surface.
 
 ## Reproducible calculation
 
@@ -110,16 +110,16 @@ The UI should show one headline population only: the accepted qualified domain. 
 
 ### Receiver/base-station geometry
 
-Useful as sensitivity evidence, not sufficient as the Version 1 boundary. The source is authoritative for published station locations and matches the analytical year, but its completeness is untested. A circular radius ignores antenna height, terrain and island shadowing, transmitter height and power, station outages, and anomalous propagation. No source field converts a point to a defensible 2024 reception polygon.
+The 50-nautical-mile receiver union is now the only scenario with an authoritative NAIS distance and boundary basis. It includes 64,716.660 km² of water and represents 85.62% of the VSR area in the accepted grid. The general USCG performance standard supports treating it as a system-performance-qualified geometry, but not as an empirical 2024 reception polygon. Station completeness and operating intervals remain untested, and circular buffers cannot represent actual antenna height, terrain and island shadowing, transmitter height and power, outages, or anomalous propagation.
 
-## Smallest evidence still required
+## Smallest step still required
 
-Acceptance requires one of the following from NOAA OCM or USCG:
+For the receiver scenario, the unit, boundary basis, and general inside-boundary treatment no longer require publisher clarification: the authoritative USCG interpretation is 50 nautical miles from each NAIS reception antenna site, with the inside described as reception coverage under a performance standard. The remaining choice is one of the following:
 
-1. a statement that a specific distance and unit from a named coast representation is the intended conservative analytical limit, together with whether water inside that limit may be treated as coverage-qualified despite station outages; or
-2. a 2024 Southern California receiver-coverage or station-operational product defining reception geometry or supplying station completeness, antenna height/range, and operating intervals sufficiently to construct it.
+1. the author explicitly approves the existing 50-nautical-mile receiver union as a scope reduction to a system-performance-qualified domain, while retaining unknown 2024 station operations and feed interruptions as observational-completeness limitations; or
+2. NOAA OCM or USCG supplies 2024 Southern California receiver-operation or outage information sufficient to replace that uncertainty with a period-specific treatment.
 
-Absent either, the project cannot choose one merely because it is the most conservative. A deadline is not coverage evidence.
+No analytical parameter changed: the supported interpretation exactly matches an existing scenario. The evidence report and mask therefore do not need regeneration. Until the author approves the scope reduction or obtains period-specific clarification, ADR 0002 remains Proposed and no exposure or inside/outside results contract may be created.
 
 ## Reporting consequences
 

@@ -130,7 +130,7 @@ the source is named at the point of use.
 
 ## Analytical-domain supporting inputs
 
-These sources support the open AIS-observability decision. They are not biological, vessel-activity, or management inputs, and neither is a measured coverage surface. Full calculations and candidate measurements are in [analytical-domain-evidence.md](analytical-domain-evidence.md).
+These sources support the open AIS-observability decision. They are not biological, vessel-activity, or management inputs, and none is a measured 2024 coverage surface. Full calculations and candidate measurements are in [analytical-domain-evidence.md](analytical-domain-evidence.md).
 
 ### NOAA NGS Continually Updated Shoreline Product, West
 
@@ -142,7 +142,13 @@ Metadata is [InPort item 60812](https://www.fisheries.noaa.gov/inport/item/60812
 
 **Verification status: verified from official metadata and the downloaded archive.** The 2024-08-01 source contains 290 valid EPSG:4269 points: 136 `NAIS` and 154 `LOMA`. NOAA says station identity and location were extracted from the 2024 USCG Light List Volumes I and V and corrected during loading. Reported horizontal accuracy is 10 m at 95% confidence; conceptual consistency is verified; attribute accuracy and completeness are explicitly untested. The expanded Southern California evidence filter contains nine NAIS stations.
 
-Metadata is [InPort item 73206](https://www.fisheries.noaa.gov/inport/item/73206); the exact distribution and provenance are recorded above. Data use is constrained to coastal and ocean planning. The source does not provide antenna height, uptime, outage history, terrain shadowing, or a reception radius. The current AIS FAQ points to this dataset for station locations, but a circular buffer around the points remains a geometry scenario rather than an observed-coverage product.
+Metadata is [InPort item 73206](https://www.fisheries.noaa.gov/inport/item/73206); the exact distribution and provenance are recorded above. Data use is constrained to coastal and ocean planning. The source does not provide antenna height, uptime, outage history, terrain shadowing, or a reception radius. The current AIS FAQ points to this dataset for station locations. USCG's general NAIS performance documentation supplies a radius interpretation separately, but the points still do not constitute an observed 2024 coverage product.
+
+### USCG NAIS reception-performance documentation
+
+**Verification status: verified from official USCG NAVCEN material on 2026-08-31.** [NAVCEN Work Instruction 2022-01, *Waterway Analysis Tactics, Techniques and Procedures*](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/nsra/NAVCEN%20Work%20Instruction%202022-01%20v2.pdf), issued September 2022 and changed on 2023-09-22, states on page 7 that NAIS provides coastal AIS signal-reception coverage to at least 50 nautical miles from each reception antenna site. It calls that distance a 50-mile performance standard and says tower height, local topography, and shipboard antennas can extend reception beyond it. This is an authoritative unit, boundary basis, and inside-boundary performance interpretation for NAIS. It supports the existing 50-nautical-mile receiver-buffer scenario as a system-performance geometry; it does not make that scenario a record of messages actually received.
+
+The [2024 USCG Light List, Volume VI, Pacific Coast and Pacific Islands](https://www.navcen.uscg.gov/sites/default/files/pdf/lightLists/LightList_V6_2024.pdf) lists the Southern California NAIS stations and coordinates in its front matter and describes the national network as approximately 200 VHF receiver sites. It does not state station commissioning dates, operating intervals, outages, antenna properties, or coverage footprints. The [NOAA OCM AIS FAQ, May 2026](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf) says the data received from USCG typically do not identify the cause or duration of NAIS sensor interruptions; it characterizes most gaps generally as hours to a couple of days affecting a small number of stations, not as a 2024 Southern California operating record. No public official source found in the 2026-08-31 closure attempt supplied that record.
 
 ---
 
