@@ -134,8 +134,8 @@ the service's own response. A persistent application-level `Powered by Esri`
 fallback remains visible while the SDK loads and when map initialization fails.
 If the map becomes ready, the fallback is removed and the ArcGIS SDK retains
 responsibility for its automatic, dynamic data attribution; the application
-does not disable or hide it. A **successful** basemap
-render has **not** been verified — see [roadmap.md](roadmap.md) M4.
+does not disable or hide it. The successful local keyed path is verified below;
+deployment-origin service access remains unverified.
 
 On 2026-08-30 a keyless production/static export was exercised in headless
 Chrome at exact 390 x 844, 820 x 1180, and 1440 x 900 CSS-pixel viewports.
@@ -145,7 +145,37 @@ were observed at every size. Exactly one attribution treatment remained
 visually unobscured and within each viewport throughout the sampled
 transitions, with no document or body horizontal overflow. The timeout path,
 successful keyed rendering and its ready-map attribution handoff, and any
-deployment remain unverified.
+deployment were unverified in that run.
+
+On 2026-08-31 the keyed production/static export was served from the authorized
+`http://localhost:3000` origin and exercised in headless Google Chrome
+151.0.7922.174 at exact 390 x 844, 820 x 1180, and 1440 x 900 CSS-pixel
+viewports. At every size the `arcgis/oceans` basemap reached a ready,
+non-updating view with no reported load error; pointer drag changed its center
+and wheel input changed its zoom. The application `Powered by Esri` fallback
+remained present for every sampled pre-ready state and was absent only after
+readiness, when the SDK's automatic Esri and data-provider attribution became
+the single visible attribution treatment. The SDK attribution stayed
+unobscured and inside the viewport after pan and zoom. Loading/status content
+was readable, the map remained usable, and neither the document nor body had
+horizontal overflow at any tested size. No `Token Required` response, ArcGIS
+username/password prompt, HTTP failure, request failure, console error, or map
+load error occurred; the sanitized console contained only the Calcite version
+information. Network inspection retained endpoint categories and status only,
+never credential-bearing query strings or complete credential-bearing URLs.
+
+That run found and fixed two application-shell defects before the final pass:
+the missing default favicon produced a local 404, and Chrome's composited map
+surface could paint above its map region after navigation at 390 x 844. The
+application now declares a shipped SVG favicon, and the map frame establishes a
+paint-containment boundary. The final browser pass returned the favicon
+successfully and showed the header, map, controls, and attribution within their
+intended regions after pan and zoom at all three viewports.
+
+This proves only local basemap access from the configured localhost origin. It
+does not prove deployed-origin access, the account type, hosted-layer
+capabilities, public sharing, storage, bandwidth, credits, free-tier headroom,
+or billing state. No account setting or hosted item was created or changed.
 
 ### Analysis (Python) — retrieval, input processing, and evidence foundations
 

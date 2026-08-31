@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "SoCal whale–vessel spatial overlap",
   description:
     "Exploratory GIS application for the Southern California blue-whale habitat and commercial vessel activity overlap analysis.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

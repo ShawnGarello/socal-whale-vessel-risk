@@ -2,6 +2,9 @@
   position: relative;
   height: 100%;
   width: 100%;
+  /* Keep the SDK's composited map surface and controls inside the map region
+     after touch or pointer navigation at narrow viewports. */
+  contain: paint;
   /* The map element sizes to its container; a container without a resolved
      height collapses to zero and renders nothing. */
   min-height: 0;

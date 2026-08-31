@@ -14,6 +14,18 @@ const mapFrameSource = readFileSync(
   new URL("../components/ArcgisMapFrame.tsx", import.meta.url),
   "utf8",
 );
+const mapFrameStyles = readFileSync(
+  new URL("../components/ArcgisMapFrame.module.css", import.meta.url),
+  "utf8",
+);
+const layoutSource = readFileSync(
+  new URL("../app/layout.tsx", import.meta.url),
+  "utf8",
+);
+const faviconSource = readFileSync(
+  new URL("../public/favicon.svg", import.meta.url),
+  "utf8",
+);
 
 describe("static application boundaries", () => {
   it("keeps the production build as a directory-friendly static export", () => {
@@ -27,6 +39,11 @@ describe("static application boundaries", () => {
   it("does not expose a Node production-server command", () => {
     expect(packageJson.scripts).not.toHaveProperty("start");
     expect(packageJson.scripts.build).toBe("next build");
+  });
+
+  it("declares a shipped favicon instead of triggering a missing default request", () => {
+    expect(layoutSource).toContain('icon: "/favicon.svg"');
+    expect(faviconSource).toMatch(/^<svg[^>]+viewBox="0 0 32 32"/);
   });
 });
 
@@ -69,5 +86,9 @@ describe("Esri attribution boundary", () => {
 
   it("leaves the SDK automatic attribution enabled for ready maps", () => {
     expect(mapFrameSource).not.toMatch(/\bhideAttribution\s*=|hide-attribution\s*=/);
+  });
+
+  it("clips the interactive SDK surface to the map frame", () => {
+    expect(mapFrameStyles).toMatch(/\.frame\s*\{[\s\S]*?contain:\s*paint;/);
   });
 });
