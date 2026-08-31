@@ -58,7 +58,14 @@ const TIMEOUT_MESSAGE =
 
 type Status = "initializing" | "ready" | "error";
 
-export default function ArcgisMapFrame() {
+interface ArcgisMapFrameProps {
+  /** Whether the SDK has a ready view that can display its own attribution. */
+  onSdkAttributionChange: (available: boolean) => void;
+}
+
+export default function ArcgisMapFrame({
+  onSdkAttributionChange,
+}: ArcgisMapFrameProps) {
   const [status, setStatus] = useState<Status>("initializing");
   const [failures, setFailures] = useState<readonly string[]>([]);
   const mapRef = useRef<ArcgisMap | null>(null);
@@ -70,8 +77,9 @@ export default function ArcgisMapFrame() {
     // basemap request is the common case. Report that instead of showing an
     // empty map that looks like it worked.
     setFailures(describeLoadErrors(element.loadErrorSources ?? []));
+    onSdkAttributionChange(true);
     setStatus("ready");
-  }, []);
+  }, [onSdkAttributionChange]);
 
   const handleReadyError = useCallback(() => {
     const element = mapRef.current;
@@ -81,8 +89,9 @@ export default function ArcgisMapFrame() {
         ? described
         : ["The map view reported an initialization error with no further detail."],
     );
+    onSdkAttributionChange(false);
     setStatus("error");
-  }, []);
+  }, [onSdkAttributionChange]);
 
   useEffect(() => {
     if (status !== "initializing") return;
@@ -90,10 +99,11 @@ export default function ArcgisMapFrame() {
       const element = mapRef.current;
       const described = describeLoadErrors(element?.loadErrorSources ?? []);
       setFailures(described.length > 0 ? described : [TIMEOUT_MESSAGE]);
+      onSdkAttributionChange(false);
       setStatus("error");
     }, INITIALIZATION_TIMEOUT_MS);
     return () => window.clearTimeout(timer);
-  }, [status]);
+  }, [onSdkAttributionChange, status]);
 
   const problems = [...config.warnings, ...failures];
 
