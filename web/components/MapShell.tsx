@@ -1,6 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useCallback, useState } from "react";
+import EsriAttribution from "./EsriAttribution";
 import styles from "./MapShell.module.css";
 
 /**
@@ -25,5 +27,15 @@ const ArcgisMapFrame = dynamic(() => import("./ArcgisMapFrame"), {
 });
 
 export default function MapShell() {
-  return <ArcgisMapFrame />;
+  const [sdkAttributionAvailable, setSdkAttributionAvailable] = useState(false);
+  const handleSdkAttributionChange = useCallback((available: boolean) => {
+    setSdkAttributionAvailable(available);
+  }, []);
+
+  return (
+    <div className={styles.frame}>
+      <ArcgisMapFrame onSdkAttributionChange={handleSdkAttributionChange} />
+      {!sdkAttributionAvailable && <EsriAttribution />}
+    </div>
+  );
 }

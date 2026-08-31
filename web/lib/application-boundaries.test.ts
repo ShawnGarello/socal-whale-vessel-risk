@@ -1,6 +1,19 @@
+import { readFileSync } from "node:fs";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import EsriAttribution from "../components/EsriAttribution";
 import nextConfig from "../next.config";
 import packageJson from "../package.json";
+
+const mapShellSource = readFileSync(
+  new URL("../components/MapShell.tsx", import.meta.url),
+  "utf8",
+);
+const mapFrameSource = readFileSync(
+  new URL("../components/ArcgisMapFrame.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("static application boundaries", () => {
   it("keeps the production build as a directory-friendly static export", () => {
@@ -36,5 +49,25 @@ describe("clean-checkout verification", () => {
       "npm test",
       "npm run build",
     ]);
+  });
+});
+
+describe("Esri attribution boundary", () => {
+  it("renders the required application-level attribution as accessible text", () => {
+    const markup = renderToStaticMarkup(createElement(EsriAttribution));
+
+    expect(markup).toContain(">Powered by Esri</p>");
+  });
+
+  it("keeps fallback attribution until the SDK reports its attribution available", () => {
+    expect(mapShellSource).toContain(
+      "{!sdkAttributionAvailable && <EsriAttribution />}",
+    );
+    expect(mapFrameSource).toContain("onSdkAttributionChange(true);");
+    expect(mapFrameSource.match(/onSdkAttributionChange\(false\);/g)).toHaveLength(2);
+  });
+
+  it("leaves the SDK automatic attribution enabled for ready maps", () => {
+    expect(mapFrameSource).not.toMatch(/\bhideAttribution\s*=|hide-attribution\s*=/);
   });
 });
