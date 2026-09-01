@@ -1044,7 +1044,7 @@ the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 329 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 333 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,

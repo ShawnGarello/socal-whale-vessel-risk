@@ -302,39 +302,49 @@ bounded two-date pilot below and do not establish larger-scale execution.
 
 ### Verified two-day canonical-content pilot
 
-On 2026-09-01 the Version 2 path processed immutable author-supplied direct CSV
-deliveries under a fresh ignored root with a `1GB` DuckDB memory limit and an
-isolated spill parent. The old one-day delivery was run first for 2024-07-15.
-It contained 582,419 rows and produced a 76,184,762-byte canonical daily CSV
+On 2026-09-01 the corrected Version 2 processing version `2.0.1` path processed
+immutable author-supplied direct CSV deliveries under a fresh ignored root with
+a `1GB` DuckDB memory limit and an isolated spill parent. This fresh rerun
+supersedes the earlier pilot identities and measurements produced before blank
+fields were normalized. The old one-day delivery was run first for 2024-07-15.
+It contained 582,419 rows and produced a 79,299,592-byte canonical daily CSV
 with SHA-256
-`52a758cfd0188812cfce6cd919a0c3cb1450641eed494bd58a45517512ebcec5`
-and content ID `accessais-day-content-e13cf3687ac775cf4c0cc984`.
+`bf5a46c6196cf8a51ebfd62907f085a093afa64e2d4474c71ab7f441e68cf5cd`
+and content ID `accessais-day-content-ae090a6e387fe79ec2f64c6e`.
 
 The separate two-day intake then processed 1,135,408 rows for 2024-07-15
 through 2024-07-16 over WGS 84 longitude -122 to -117 and latitude 32 to 35.
 Its 582,419-row 15 July partition produced the same canonical bytes and content
 ID despite different source order, so the established 113,799-row cleaner
 bundle was skipped and reused. The 552,989-row 16 July partition produced a
-72,065,025-byte canonical CSV with SHA-256
-`2143636121467858a4d7e0e523affd6ee53b82ccd0939ed210d54753314761b9`
-and content ID `accessais-day-content-b90bc36bc7191c6fec8aeed6`; cleaning retained
+75,095,691-byte canonical CSV with SHA-256
+`3727a12f607dfd4194159b34a291e59374660b95b3e59a45b3d349bb4bfaf49f`
+and content ID `accessais-day-content-065631b951a94d6c58165859`; cleaning retained
 104,506 rows with Parquet SHA-256
 `cb37b96a9f3e56838ca492a33dffc57a174fc92c1d385d3f3a1e848d2f7fbc5c`.
-The period then had two compatible dates, 151 missing dates, and `not_ready`
-state. A repeated identical two-day run reused both dates without regeneration.
+The one-day/two-day delivery IDs were
+`accessais-period-aaadf6ed784700e1c7a2ee4d` and
+`accessais-period-e00d27730a3b5541a37a9073`; their cleaner run IDs were
+`ais-9fc49e14601edea30064df97` and `ais-e1ea93fe9ab4b4d068364a0c`.
+The unchanged cleaned Parquet SHA-256 for 15 July remained
+`efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`.
+The period ID became `multiday-ais-ddf23ba501bc834dbe5a2656`, with two
+compatible dates, 151 missing dates, and `not_ready` state. A repeated identical
+two-day run reused both dates without regeneration.
 Direct invocation confirmed exit code `3`, the documented incomplete-period
 outcome. Transfer and observational completeness remained `unverified`.
 
 Measurement used a PowerShell stopwatch plus a 10 ms recursive
 `Win32_Process` process-tree sampler, summing each live process's working set.
 Disk use was the recursive sum of file sizes beneath the fresh pilot root; raw
-inputs were excluded. The one-day run took 44.899792 seconds, peaked at
-1,352,359,936 bytes process-tree RSS, peaked at 135,681,982 bytes pilot-root
-disk, and ended at 78,031,343 bytes. The first two-day run took 76.7939144
-seconds, peaked at 1,106,075,648 bytes RSS, added at most 264,041,198 bytes of
-pilot-root disk, and ended 149,780,256 bytes above its baseline. The identical
-retry took 39.7256726 seconds, peaked at 116,977,664 bytes RSS, and added 8,982
-bytes of attempt-history output. A sampled peak can be missed, and wrapper
+inputs were excluded. The one-day run took 12.1394198 seconds, peaked at
+1,593,458,688 bytes process-tree RSS, peaked at 138,796,812 bytes pilot-root
+disk, and ended at 81,137,722 bytes. The first two-day run took 19.2814239
+seconds, peaked at 1,514,594,304 bytes RSS, added at most 270,186,694 bytes of
+pilot-root disk, and ended 155,917,250 bytes above its baseline. The identical
+retry took 10.1271792 seconds, peaked at 102,436,864 bytes RSS, and added 436
+bytes of attempt-history output. OS file caches were not cleared. A sampled
+peak can be missed, and wrapper
 overhead is included. None of these measurements is extrapolated to a month or
 five months. The pilot authorizes no additional order, does not establish
 complete reception, and does not accept ADR 0017 or ADR 0018.
