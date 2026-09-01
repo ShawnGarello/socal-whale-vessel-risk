@@ -132,7 +132,7 @@ class AnalysisGrid:
 
 @dataclass(frozen=True, slots=True)
 class SpatialConfig:
-    """Spatial configuration that keeps context and reporting domains distinct."""
+    """Frozen schema-1 spatial inputs for upstream processing artifacts."""
 
     map_extent: GeographicExtent
     grid: AnalysisGrid
@@ -147,12 +147,14 @@ class SpatialConfig:
         )
         if extent_bounds != MAP_EXTENT_BOUNDS:
             raise ConfigurationError(
-                "map extent must match the context extent in proposed ADR 0002: "
+                "map extent must match the frozen processing context extent: "
                 f"{MAP_EXTENT_BOUNDS}, received {extent_bounds}"
             )
         if self.analytical_domain_status != "unresolved":
             raise ConfigurationError(
-                "analytical domain must remain 'unresolved' until ADR 0002 is accepted"
+                "schema-1 analytical_domain_status is a frozen legacy sentinel and "
+                "must remain 'unresolved'; load the reporting-domain contract for "
+                "the accepted downstream definition"
             )
 
     def to_dict(self) -> dict[str, object]:
@@ -308,7 +310,8 @@ def config_from_mapping(document: Mapping[str, object]) -> ProcessingConfig:
     analytical_status = _string(spatial_table, "analytical_domain_status", "spatial")
     if analytical_status != "unresolved":
         raise ConfigurationError(
-            "spatial.analytical_domain_status must be 'unresolved'"
+            "spatial.analytical_domain_status is a frozen schema-1 legacy sentinel "
+            "and must be 'unresolved'"
         )
     return ProcessingConfig(
         schema_version=_integer(document, "schema_version", "root"),

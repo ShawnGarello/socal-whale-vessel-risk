@@ -36,7 +36,7 @@ Both candidates performed the same operation:
    `VesselType`, and `Length`;
 2. parse `BaseDateTime` as the documented UTC timestamp and parse the numeric
    fields;
-3. filter to the map extent from proposed ADR 0002 — longitude −122.0 to −117.0
+3. filter to the map extent from then-proposed ADR 0002 — longitude −122.0 to −117.0
    and latitude 32.0 to 35.0 — while excluding invalid timestamps;
 4. treat the documented `SOG` value 102.3 as unavailable; and
 5. group by vessel-type code, returning row count, distinct MMSI, valid-speed

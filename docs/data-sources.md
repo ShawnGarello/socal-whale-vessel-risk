@@ -138,7 +138,7 @@ the source is named at the point of use.
 
 ## Analytical-domain supporting inputs
 
-These sources support the open AIS-observability decision. They are not biological, vessel-activity, or management inputs, and none is a measured 2024 coverage surface. Full calculations and candidate measurements are in [analytical-domain-evidence.md](analytical-domain-evidence.md).
+These sources support the accepted, scope-reduced AIS-observability decision. They are not biological, vessel-activity, or management inputs, and none is a measured 2024 coverage surface. Full calculations and candidate measurements are in [analytical-domain-evidence.md](analytical-domain-evidence.md).
 
 ### NOAA NGS Continually Updated Shoreline Product, West
 
@@ -158,7 +158,7 @@ Metadata is [InPort item 73206](https://www.fisheries.noaa.gov/inport/item/73206
 
 The [2024 USCG Light List, Volume VI, Pacific Coast and Pacific Islands](https://www.navcen.uscg.gov/sites/default/files/pdf/lightLists/LightList_V6_2024.pdf) lists the Southern California NAIS stations and coordinates in its front matter and describes the national network as approximately 200 VHF receiver sites. It does not state station commissioning dates, operating intervals, outages, antenna properties, or coverage footprints. The [NOAA OCM AIS FAQ, May 2026](https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf) says the data received from USCG typically do not identify the cause or duration of NAIS sensor interruptions; it characterizes most gaps generally as hours to a couple of days affecting a small number of stations, not as a 2024 Southern California operating record. No public official source found in the 2026-08-31 closure attempt supplied that record.
 
-The closure attempt also read the USCG NAVCEN [*How AIS Works*](https://www.navcen.uscg.gov/how-ais-works) page, [*Pacific Seacoast Level of Service Study*](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/pacific/Pacific_Seacoast_Final.pdf) and [24-nautical-mile enclosure](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/pacific/Encl_3_Pacific_SeaCoast_D11_D13_NAIS_coverage_maps_sites_with_24_NM_range.PNG), and [*Vessel Information Verification Service Coverage*](https://www.navcen.uscg.gov/sites/default/files/pdf/AIS/VIVS_Coverage.pdf) as **live cited references accessed 2026-08-31**. They are not retained local artifacts and are outside the checksum manifest. They supply contextual limitations and rejected comparison geometry, not the authoritative premise for the proposed 50-nautical-mile receiver domain. Their exact relevance and non-findings are recorded in [ADR 0002](decisions/0002-southern-california-study-area-extent.md).
+The closure attempt also read the USCG NAVCEN [*How AIS Works*](https://www.navcen.uscg.gov/how-ais-works) page, [*Pacific Seacoast Level of Service Study*](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/pacific/Pacific_Seacoast_Final.pdf) and [24-nautical-mile enclosure](https://www.navcen.uscg.gov/sites/default/files/pdf/waterways/pacific/Encl_3_Pacific_SeaCoast_D11_D13_NAIS_coverage_maps_sites_with_24_NM_range.PNG), and [*Vessel Information Verification Service Coverage*](https://www.navcen.uscg.gov/sites/default/files/pdf/AIS/VIVS_Coverage.pdf) as **live cited references accessed 2026-08-31**. They are not retained local artifacts and are outside the checksum manifest. They supply contextual limitations and rejected comparison geometry, not the authoritative premise for the accepted 50-nautical-mile receiver domain. Their exact relevance and non-findings are recorded in [ADR 0002](decisions/0002-southern-california-study-area-extent.md).
 
 ---
 
@@ -441,7 +441,7 @@ Only **985 of 57,764 Southern California rows — 1.71% — lie west of −120.5
 
 **This does not establish the cause, and must not be reported as though it does.** A low record count offshore is equally consistent with sparse reception, with genuinely low vessel traffic, or with both at once, and a five-window snapshot cannot separate them. What can be said is that the observed falloff is **consistent with NOAA's published coverage limitation**, and that the limitation alone is sufficient reason not to treat offshore record density as a measure of offshore vessel activity.
 
-**Consequence:** low record density in the western part of the study area cannot be interpreted as low vessel activity. This is the evidence gap that reopened the analytical-domain decision — see [ADR 0002](decisions/0002-southern-california-study-area-extent.md), now **Proposed** rather than accepted.
+**Consequence:** low record density in the western part of the study area cannot be interpreted as low vessel activity. [ADR 0002](decisions/0002-southern-california-study-area-extent.md) therefore accepts a scope-reduced, system-performance-qualified receiver domain rather than treating the full map extent as observed.
 
 For orientation only: across the five retained windows, 93.3% of Southern California rows and 87.2% of commercial rows fell inside the 2026 VSR zone. **A snapshot, not an analytical result** — recorded as evidence that the vessel data and the zone geometry line up sensibly in space, nothing more.
 
@@ -607,7 +607,7 @@ NOAA's own terms are the standard 17 U.S.C. § 403 public-domain statement.
 
 ### Remaining unresolved
 
-- **Whether the offshore part of the study area can be analysed at all**, which depends on distinguishing coverage from behaviour. This is the open question that keeps [ADR 0002](decisions/0002-southern-california-study-area-extent.md) at Proposed. It **cannot** be answered from these broadcast points, at any sample size, because a vessel no receiver heard leaves no trace in them.
+- **Empirical 2024 observation remains unestablished.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts the `receivers_50_nautical_miles` scope reduction as a system-performance-qualified domain, not empirical coverage. Receiver uptime, station completeness, feed interruptions, antenna and terrain effects, and observational completeness remain unknown or unverified. Broadcast points cannot resolve those limitations at any sample size because a vessel no receiver heard leaves no trace in them.
 - **Whether the Proposed AccessAIS route can be accepted.** The bounded direct
   CSV passed format and cleaner compatibility, but independent transfer
   completeness and measured monthly/full-period scaling remain unresolved; see

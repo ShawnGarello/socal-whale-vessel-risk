@@ -1,17 +1,17 @@
 # Analytical-domain evidence
 
-**Scope:** reproducible evidence for proposed [ADR 0002](decisions/0002-southern-california-study-area-extent.md). This is not a production domain contract and does not produce exposure or inside/outside exposure statistics.
+**Scope:** reproducible supporting evidence for accepted [ADR 0002](decisions/0002-southern-california-study-area-extent.md). This is not a production domain contract and does not produce exposure or inside/outside exposure statistics.
 
 ## Outcome
 
-The evidence now supports one existing receiver-distance scenario as a general NAIS system-performance domain, but author review is still required before it becomes the Version 1 analytical domain.
+The author accepted the one receiver-distance scenario supported by the evidence as the Version 1 analytical and statistical domain.
 
 - NOAA's current AIS FAQ says public NAIS coverage is generally unavailable beyond "40 to 50 miles" from the coast, but that sentence itself does not identify statute or nautical miles, define "coast," or promise that every transmission inside the distance was received.
 - USCG NAVCEN's current waterway-analysis instruction supplies an authoritative NAIS interpretation separately: reception coverage to at least 50 nautical miles from each NAIS reception antenna site, described as a 50-mile performance standard. This supports the existing `receivers_50_nautical_miles` scenario, not a coastline-buffer scenario.
 - NOAA's 2024 AIS Base Stations source places nine NAIS stations in the expanded Southern California processing filter, including Catalina, San Nicolas, and San Clemente Islands. Its metadata says completeness is untested and provides no antenna height, operational interval, outage history, terrain, or reception footprint.
 - The performance standard is not an empirical guarantee of uninterrupted capture. Neither NOAA nor USCG publishes a 2024 Southern California station-operation or outage record in the official material found, and NOAA says the feed it receives typically does not identify the cause or duration of sensor interruptions.
 
-Consequently, none of the eight masks below is called an observed-coverage surface. Seven remain sensitivity scenarios. The 50-nautical-mile receiver mask is now the evidence-supported proposal for a **system-performance-qualified** domain, subject to explicit author acceptance of the 2024 operational uncertainty. ADR 0002 remains Proposed.
+Consequently, none of the eight masks below is called an observed-coverage surface. Seven remain sensitivity scenarios. The `receivers_50_nautical_miles` mask is the accepted, scope-reduced **system-performance-qualified AIS receiver domain**, not empirical 2024 coverage. Its 50 nautical miles are exactly 92,600 metres measured from the relevant NAIS reception stations, not from the coast. Unknown 2024 receiver uptime, station completeness, feed interruptions, antenna and terrain effects, and observational completeness remain explicit limitations.
 
 ## Authoritative inputs
 
@@ -112,19 +112,18 @@ The UI should show one headline population only: the accepted qualified domain. 
 
 The 50-nautical-mile receiver union is now the only scenario with an authoritative NAIS distance and boundary basis. It includes 64,716.660 km² of water and represents 85.62% of the VSR area in the accepted grid. The general USCG performance standard supports treating it as a system-performance-qualified geometry, but not as an empirical 2024 reception polygon. Station completeness and operating intervals remain untested, and circular buffers cannot represent actual antenna height, terrain and island shadowing, transmitter height and power, outages, or anomalous propagation.
 
-## Smallest step still required
+## Acceptance outcome
 
-For the receiver scenario, the unit, boundary basis, and general inside-boundary treatment no longer require publisher clarification: the authoritative USCG interpretation is 50 nautical miles from each NAIS reception antenna site, with the inside described as reception coverage under a performance standard. The remaining choice is one of the following:
+For the receiver scenario, the unit, boundary basis, and general inside-boundary treatment no longer require publisher clarification: the authoritative USCG interpretation is 50 nautical miles from each NAIS reception antenna site, with the inside described as reception coverage under a performance standard.
 
-1. the author explicitly approves the existing 50-nautical-mile receiver union as a scope reduction to a system-performance-qualified domain, while retaining unknown 2024 station operations and feed interruptions as observational-completeness limitations; or
-2. NOAA OCM or USCG supplies 2024 Southern California receiver-operation or outage information sufficient to replace that uncertainty with a period-specific treatment.
+The author accepted the existing `receivers_50_nautical_miles` union as that explicit scope reduction. Geometry outside it is excluded from headline statistics and is not classified as low traffic. Acceptance does not upgrade the evidence: publisher clarification about 2024 Southern California receiver operations, outages, station completeness, feed continuity, antenna or terrain effects, or NOAA public-file completeness would refine the limitations but is not represented as already obtained.
 
-No analytical parameter changed: the supported interpretation exactly matches an existing scenario. The evidence report and mask therefore do not need regeneration. Until the author approves the scope reduction or obtains period-specific clarification, ADR 0002 remains Proposed and no exposure or inside/outside results contract may be created.
+No analytical parameter changed: the accepted interpretation exactly matches an existing scenario. The ignored evidence report and mask therefore were not regenerated. This acceptance does not itself create an exposure formula, exposure surface, inside/outside statistics, application-results contract, UI integration, publication, or deployment.
 
 ## Reporting consequences
 
 - Map/context extent remains longitude −122 to −117 and latitude 32 to 35. It is not the statistical domain.
-- Every future statistic describes only the Southern California portion of the statewide VSR zone within the accepted qualified domain.
+- Every future statistic describes only the Southern California portion of the statewide VSR zone within the accepted `receivers_50_nautical_miles` domain.
 - The map truncates the continuing statewide VSR zone at 35°N; this must be stated beside the result.
 - VSR redistribution rights are a separate publication question and do not determine this decision.
 - No cell outside defensible AIS observability is interpreted as observed low traffic. Such cells are excluded from headline statistics and explicitly masked or qualified in the map and accessible text.

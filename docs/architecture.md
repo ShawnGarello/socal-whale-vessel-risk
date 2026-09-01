@@ -22,20 +22,15 @@
 > a final public layer representation, and deployment also remain unfinished.
 > See the [roadmap](roadmap.md) for milestone status.
 
-Three independent questions remain open and gate different work:
+Two independent questions remain open and gate different work. The analytical
+and statistical domain is accepted separately in
+[ADR 0002](decisions/0002-southern-california-study-area-extent.md):
 
-1. **Analytical and statistical domain.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md)
-   remains Proposed. Authoritative USCG evidence supports the existing
-   50-nautical-mile receiver union as a general system-performance-qualified
-   proposal, but author acceptance is still required and period-specific 2024
-   station operations and NOAA public-feed completeness remain unknown. This
-   prohibits the exposure and reporting contracts and gates the exposure
-   surface and inside-versus-outside statistics.
-2. **VSR geometry redistribution.** The BWBS/CMSF geometry is publicly shared
+1. **VSR geometry redistribution.** The BWBS/CMSF geometry is publicly shared
    with attribution but has no confirmed redistribution grant. This gates
    project-hosted publication of a copy, not analysis against the local source
    or reference to the publisher's service.
-3. **Publication route.** Official documentation confirms the Location Platform
+2. **Publication route.** Official documentation confirms the Location Platform
    product supports feature, vector-tile, and map-tile services and public
    anonymous sharing under metered monthly free tiers. The author's actual
    account product identity, controls, usage, remaining headroom, and billing
@@ -159,6 +154,17 @@ produced byte-identical outputs in two clean real-data runs; the exact derived
 output was
 also visually verified in QGIS 4.2.1.
 
+The upstream `ProcessingConfig` contract is frozen at schema 1 and retains its
+established digest because it identifies inputs to AIS cleaning, projected
+water-grid generation, whale-grid transfer, and map-extent vessel aggregation.
+Its legacy analytical-domain-status scalar is a compatibility sentinel, not the
+current decision authority. The accepted downstream analytical/reporting domain
+is instead a separate schema-1 contract. That contract assigns distinct stable
+roles to the map/context extent, modeled-whale-support water geometry, and
+`receivers_50_nautical_miles` system-performance-qualified AIS domain. It is
+not an input to upstream artifact identity. Applying that domain to exposure
+and headline statistics remains future M6 work.
+
 A further implemented boundary assembles explicitly supplied one-date cleaner
 bundles into a versioned multi-day period-input manifest. It keeps expected
 date, retrieval-manifest state, independently verified retained-byte and archive
@@ -186,7 +192,7 @@ Python owns or is planned to own:
 - deterministic grid construction and water-mask intersection;
 - whale-value transfer and vessel aggregation onto the analysis grid;
 - the relative-exposure calculation and fractional inside/outside VSR
-  statistics after the analytical domain is accepted;
+  statistics within the accepted analytical domain;
 - synthetic tests whose answers are known by construction;
 - versioned configuration, run metadata, provenance links, and output lineage;
 - deterministic export preparation at the publication boundary.
@@ -555,8 +561,7 @@ No implementation directory is scaffolded before its milestone needs it.
 
 | Decision | Deferred until | Selection basis |
 |---|---|---|
-| Analytical and statistical domain | Author reviews the scope-reduced receiver proposal in ADR 0002, or period-specific evidence changes it | Authoritative USCG evidence supports the existing 50-nautical-mile receiver union as a general system-performance-qualified proposal. Author acceptance is still required; 2024 station operations and NOAA public-feed completeness remain unknown. |
-| Exposure formula, normalization, and weighting | Both grid-aligned inputs and the analytical domain are ready | Input units/distributions, scientific support, and sensitivity. |
+| Exposure formula, normalization, and weighting | Both final grid-aligned inputs are ready | Input units/distributions, scientific support, and sensitivity within the accepted `receivers_50_nautical_miles` domain. |
 | High-exposure threshold | Exposure surface exists | Real value distribution and sensitivity analysis. |
 | Final public layer representation and host | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, anonymous browser performance, required interactions, legal constraints, usage limits, and supported service types. No format or provider is preselected. |
 | ArcGIS Location Platform publication route | Author completes the authenticated portion of the Location Platform capability check | Official documentation confirms a limited single-user organization, feature/vector-tile/map-tile support, and public anonymous sharing with current monthly free tiers. The real account's product identity, controls, usage, headroom, and billing status remain unverified. No pay-as-you-go activation or spending is authorized. |
@@ -564,15 +569,18 @@ No implementation directory is scaffolded before its milestone needs it.
 | Non-Esri public delivery route, if needed | Both Esri routes are unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |
 | Static application host | Deployment milestone | HTTPS, stable origin, static-export limits, build-time environment values, and clean-browser verification. |
 | Formal visual-verification record or command | M3/M8 reproducibility work | Must record output checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage. |
-| Reporting-domain-dependent contracts | ADR 0002 is accepted | Exposure, inside/outside statistics, exposure-layer, and application-results shapes may change with the domain and remain prohibited while it is Proposed. |
+[ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts
+`receivers_50_nautical_miles` as the scope-reduced,
+system-performance-qualified AIS analytical domain: 50 nautical miles, exactly
+92,600 metres, from the relevant NAIS reception stations, not from the coast.
+It is not empirical 2024 coverage. Outside-domain cells are excluded from
+headline statistics and are not classified as low traffic. Receiver uptime,
+station completeness, feed interruptions, antenna and terrain effects, and
+observational completeness remain unknown or unverified. M2 remains **In
+progress** only because VSR redistribution is unresolved.
 
-[ADR 0002](decisions/0002-southern-california-study-area-extent.md) therefore
-remains **Proposed**, and M2 remains **In progress** in the
-[roadmap](roadmap.md). General receiver-performance evidence has narrowed the
-open decision; it has not supplied period-specific 2024 operational
-completeness or authorized reporting-domain-dependent contracts.
-
-Resolved choices remain recorded in their ADRs: EPSG:3310
+Resolved choices remain recorded in their ADRs: the map/context extent and
+qualified analytical domain ([0002](decisions/0002-southern-california-study-area-extent.md)), EPSG:3310
 ([0003](decisions/0003-projected-coordinate-system.md)), the 5 km grid and
 fractional boundary accounting ([0004](decisions/0004-analysis-grid-resolution.md)),
 the 2024 analytical period ([0005](decisions/0005-analytical-period.md)), separate

@@ -675,8 +675,9 @@ def process_ais_csv(
                 "parquet": parameters["parquet"],
             },
             "scope_note": (
-                "Rows are scoped to the accepted map/context extent. ADR 0002 "
-                "remains Proposed, so this output is not a reporting-domain result."
+                "Rows are scoped to the accepted map/context extent, not clipped "
+                "to the separately configured accepted analytical domain. This "
+                "output is not a reporting-domain result."
             ),
         }
         _write_json(quality_temporary, quality_payload)

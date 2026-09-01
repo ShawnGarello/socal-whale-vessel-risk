@@ -1,14 +1,15 @@
 # 0002 — Southern California study area extent
 
-**Status:** Proposed
-**Date:** 2026-08-25, reopened 2026-08-26, evidence corrected 2026-08-29, authoritative closure attempted 2026-08-31
+**Status:** Accepted
+**Date:** 2026-08-25, reopened 2026-08-26, evidence corrected 2026-08-29, accepted 2026-08-31
 
 > This record was briefly marked Accepted. An audit found that the evidence
 > behind it did not support accepting a single extent for both mapping and
 > statistics, and it was returned to Proposed rather than patched. The map
-> extent below is settled enough to build against. **The analytical domain is
-> not, and no headline inside-versus-outside statistic may be published until
-> it is.**
+> extent below remained usable while the analytical domain was reconsidered.
+> The author has now accepted the evidence-supported, scope-reduced receiver
+> domain below. Acceptance does not establish empirical 2024 reception or
+> observational completeness.
 
 ## Context
 
@@ -45,7 +46,7 @@ Only NOAA OCM/MarineCadastre, USCG NAVCEN, and official federal metadata and tec
 
 **Exact questions still unanswered.** No public official source found identifies when each of the nine Southern California sites was operational during July 1–November 30, 2024, what outages occurred, or whether every message received by NAIS reached NOAA's public daily files. The current NOAA FAQ instead says outage cause and duration typically are not supplied with the USCG feed.
 
-**Proposed author decision.** Consider the existing `receivers_50_nautical_miles` mask as the analytical and statistical domain, explicitly described as a scope-reduced, system-performance-qualified domain rather than observed coverage. This would retain unknown 2024 receiver and feed interruptions as observational-completeness limitations and would continue to exclude all cells beyond the mask from headline statistics. ADR 0002 remains Proposed pending author review. If the author does not approve that scope reduction, the remaining route is publisher clarification about 2024 station operations and feed completeness; no arbitrary fallback domain is authorized.
+**Accepted author decision.** The existing `receivers_50_nautical_miles` mask is the Version 1 analytical and statistical domain. It is a scope-reduced, system-performance-qualified AIS receiver domain, not observed coverage. Unknown 2024 receiver uptime, station completeness, feed interruptions, antenna and terrain effects, and observational completeness remain limitations. All geometry outside the mask is excluded from headline statistics and is not classified as low traffic.
 
 Questions suitable for a publisher clarification request, but not sent by this project, are:
 
@@ -78,9 +79,9 @@ So roughly two-fifths of the proposed analytical water, holding a third of the i
 
 ## Decision
 
-**Three different things were previously bundled into one extent. They are separated here, and only the first is settled.**
+**Three different spatial roles were previously bundled into one extent. They are separate and all three now have explicit semantics.**
 
-### 1. Map and context extent — proposed, and safe to build against
+### 1. Map and context extent
 
 **Longitude −122.0 to −117.0, latitude 32.0 to 35.0** (WGS 84) — candidate B.
 
@@ -88,38 +89,38 @@ This is what the application shows: the basemap window, the layer extents, and t
 
 Nothing statistical rests on this. The application-foundation milestone may build its map against it.
 
-### 2. Analytical and statistical domain — **not decided**
+### 2. Modeled-whale-support water geometry
 
-The region over which relative exposure is computed and over which any inside-versus-outside figure is reported. **This is open.** Three candidates are set out under *Alternatives*, together with the evidence each needs.
+The union of the land-clipped NOAA/SWFSC 2020b `Blue_whale_summer_fall` polygons inside the map/context extent supplies the Version 1 modeled-whale-support water geometry, as accepted in [ADR 0014](0014-select-the-grid-water-mask.md). It determines where the grid has biological-model support. It is not a coastline, an AIS reception claim, or the analytical and statistical domain.
 
-Until one is accepted:
+### 3. System-performance-qualified AIS analytical and statistical domain
 
-- **No headline inside-versus-outside statistic may be published.**
-- No exposure surface may be presented as covering the full map extent.
-- Nothing in the application may imply that low offshore vessel activity has been observed.
+The stable domain identity is **`receivers_50_nautical_miles`**: the union of buffers extending **50 nautical miles, exactly 92,600 metres, from the relevant NAIS reception stations**, intersected fractionally with the modeled-whale-support water geometry inside the map/context extent. The distance is measured from the reception stations, **not from the coast**.
 
-### 3. AIS coverage-quality treatment — required under every candidate
+This is a scope-reduced, **system-performance-qualified AIS receiver domain**. It is **not empirical 2024 coverage** and does not establish that every AIS transmission inside it was received or published. The following remain explicitly unknown or unverified:
 
-Whichever analytical domain is accepted, the vessel input needs an explicit, documented statement of where it is considered observable, carried through to the map. That is a requirement, not an option, because the publisher has stated a coverage limit and the project cannot present a uniform-looking traffic surface across a non-uniform one.
+- 2024 receiver uptime and operating intervals;
+- station completeness;
+- receiver and public-feed interruptions;
+- antenna-height, terrain, island-shadowing, and related reception effects; and
+- observational completeness of the NOAA public AIS files.
 
-The form it takes — a hard clip, a mask rendered as a distinct "outside reliable coverage" category, or a per-cell coverage-confidence attribute — depends on which analytical domain is chosen and is settled with it.
+Headline statistics use only the exact qualified geometry. Boundary cells are intersected fractionally; centroid, majority, and whole-cell classification remain prohibited. Cells wholly outside the domain are excluded from headline statistics, **not classified as low traffic**. The map may retain the broader extent for whale, VSR, and regional context only if the outside-domain treatment remains explicit in the map and accessible text.
 
-The new evidence supports a future **coverage-qualified mask**, not a second unqualified full-map statistic. Once an exact boundary is accepted, headline results exclude all area beyond it. The application may retain the full map for whale, VSR, and regional context, but outside cells must be explicitly shown as outside defensible AIS observability and never as observed low traffic. Partial cells retain exact qualified geometry and area fractions.
-
-**Smallest remaining step for acceptance:** author approval of the evidence-supported 50-nautical-mile receiver mask as an explicit, system-performance-qualified scope reduction, with unknown 2024 operations retained as a limitation; or publisher clarification supplying period-specific receiver operations and public-feed completeness. The evidence does not support a coastline mask or an arbitrary smaller fallback.
+No exposure formula, exposure surface, inside/outside statistics, application-results contract, UI integration, publication, or deployment is implemented by this decision. Those remain later milestone work.
 
 ## Consequences
 
-- **M2 cannot be complete while this is open.** The roadmap records it as one of the outstanding items, and it is the one that gates the analysis rather than the publication.
-- **M3 is not blocked.** Retrieval, cleaning, vessel-class filtering, reprojection, gridding, and the whale-model transfer are all independent of where the reporting boundary ends up, and can proceed over the full map extent. Only the exposure statistics wait.
-- Processing over the full map extent and restricting at the reporting step is the right order: it keeps the domain decision reversible, so accepting a domain later is a change to one reporting step rather than a reprocessing run. **It does not produce the evidence needed to settle the domain** — see "Why same-source comparison cannot settle this" below.
+- **M2 remains In progress because VSR geometry redistribution is unresolved.** Domain acceptance satisfies the separate analytical-domain criterion; it does not settle publication rights.
+- M3 retrieval, cleaning, vessel-class filtering, reprojection, gridding, whale-model transfer, and vessel aggregation continue over the full map/context extent. The accepted domain is applied later at the reporting boundary so outside-domain cells cannot become low-traffic observations.
+- Reporting-domain-dependent contracts may now be designed against this accepted identity and semantics when their milestones need them. This record does not implement those contracts or the exposure method.
 - The analysis reports on the **Southern California portion of the 2026 VSR zone, not the whole zone**, under any candidate. Every statistic must say so.
 - The map extent **truncates the zone at 35.0°N**, where the zone continues north. Exposure near that edge is an artefact of the extent and results must not be read across it.
 - Using the whale model's coverage as the water mask means the analysis domain and the biological input share a footprint, so no cell can carry vessel activity without a whale value. The mask edge remains biological-model support rather than a coastline. NOAA NGS CUSP now supplies the separate authoritative shoreline needed to calculate distance-from-coast candidates reproducibly; it does not establish that AIS observation is complete inside any candidate.
 
 ## Alternatives considered
 
-These are the candidate analytical domains, not candidate map extents. The map extent is settled above.
+These were the candidate analytical domains, not candidate map extents. The receiver-based coverage-qualified mask in alternative 2 is accepted above; the others remain rejected or deferred.
 
 ### 1. Conservative nearshore AIS-observable domain
 

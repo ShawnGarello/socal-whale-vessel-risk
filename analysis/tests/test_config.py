@@ -95,7 +95,7 @@ def test_rejects_noncanonical_iso_period_date() -> None:
         (
             "analytical_domain_status",
             "accepted",
-            "analytical_domain_status must be 'unresolved'",
+            "frozen schema-1 legacy sentinel",
         ),
     ],
 )
