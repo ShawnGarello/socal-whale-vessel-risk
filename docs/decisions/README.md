@@ -9,7 +9,7 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | # | Decision | Status |
 |---|---|---|
 | [0001](0001-accept-initial-architecture.md) | Accept the initial project architecture | Accepted |
-| [0002](0002-southern-california-study-area-extent.md) | Southern California study area extent | **Proposed** — map extent settled, analytical domain open |
+| [0002](0002-southern-california-study-area-extent.md) | Accept the qualified Southern California analytical domain | Accepted |
 | [0003](0003-projected-coordinate-system.md) | Use California Albers (EPSG:3310) as the analysis projection | Accepted |
 | [0004](0004-analysis-grid-resolution.md) | Use a 5 km analysis grid with fractional VSR-boundary accounting | Accepted |
 | [0005](0005-analytical-period.md) | Use 1 July to 30 November 2024 as the Version 1 analytical period | Accepted |

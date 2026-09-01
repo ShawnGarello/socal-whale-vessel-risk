@@ -49,9 +49,10 @@ Do not scaffold implementation directories ahead of the milestone that needs the
 Real datasets **have** now been inspected and their properties recorded in [docs/data-sources.md](docs/data-sources.md), which lifts the blanket ban on writing schemas. What may and may not be written now differs by what the thing depends on:
 
 - **May be written when M3 needs them:** source, processing, analysis-grid, whale-input and vessel-input schemas and contracts. These describe data that has been inspected, and they do not depend on where results are eventually reported.
-- **Still not to be written:** the **exposure formula**, and any contract whose shape depends on the reporting domain — the inside-versus-outside statistics contract, the exposure layer contract, and the results file the application reads. Those wait on [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md), which is still Proposed.
+- **Now settled:** [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) accepts the scope-reduced `receivers_50_nautical_miles` analytical domain. Reporting-domain-dependent contracts may be designed when their milestones need them, but none is implemented yet.
+- **Still not to be written ahead of its milestone:** the **exposure formula**, inside-versus-outside statistics contract, exposure layer contract, and application-results file. Domain acceptance removes one prerequisite; it does not supply the exposure method, final vessel input, results, or UI integration.
 
-The test is simple: if settling the analytical domain could change the contract, it waits.
+The stable spatial roles must remain distinct: map/context extent, modeled-whale-support water geometry, and the system-performance-qualified AIS analytical domain. The accepted domain is 50 nautical miles (92,600 metres) from the relevant NAIS reception stations, not from the coast and not empirical 2024 coverage. Outside cells are excluded from headline statistics, not classified as low traffic.
 
 ## Version 1 scope
 
