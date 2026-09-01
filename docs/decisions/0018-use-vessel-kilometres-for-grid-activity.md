@@ -556,7 +556,10 @@ quality-report bytes. Time-bearing lineage metadata changed as intended.
 
 The exact four GeoParquet outputs were inspected in QGIS 4.2.1 on 2026-09-01 at
 the full domain, shipping-lane concentrations, support edges, zero/nonzero
-cells, and contextual VSR boundary. Grid geometry and corridor patterns aligned;
+cells, and contextual VSR boundary. Corrected renders placed the blue accepted-
+domain and orange VSR outlines above the candidate grids; exact RGB checks and
+manual review confirmed both outlines were visible in every image. Grid
+geometry and corridor patterns aligned;
 no projection shift, geometry gap, unexplained clipping, or anomalous band was
 found. The longer-gap additions were more visible than the speed-ceiling
 differences. This visual inspection establishes no analytical completeness or
