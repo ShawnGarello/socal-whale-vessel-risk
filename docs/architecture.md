@@ -30,12 +30,15 @@ and statistical domain is accepted separately in
    with attribution but has no confirmed redistribution grant. This gates
    project-hosted publication of a copy, not analysis against the local source
    or reference to the publisher's service.
-2. **Publication route.** ArcGIS Location Platform data-service support,
-   storage, bandwidth, free-tier headroom, and billing status are unverified.
-   ArcGIS Online organization access, publishing/public-sharing privileges,
-   hosted feature/tile/imagery support, credits, and storage are also
-   unverified. Account-type-specific checks constrain the publication route;
-   they do not determine whether Version 1 can be completed.
+2. **Publication route.** Official documentation confirms the Location Platform
+   product supports feature, vector-tile, and map-tile services and public
+   anonymous sharing under metered monthly free tiers. The author's actual
+   account product identity, controls, usage, remaining headroom, and billing
+   state are unverified because no authenticated session was available. ArcGIS
+   Online organization access is not applicable to the reported Location
+   Platform branch unless that product check fails. Account-specific evidence
+   still constrains the publication route; it does not determine whether
+   Version 1 can be completed.
 
 Changes to this accepted architecture are recorded under
 [decisions/](decisions/README.md), not made silently.
@@ -160,7 +163,7 @@ is instead a separate schema-1 contract. That contract assigns distinct stable
 roles to the map/context extent, modeled-whale-support water geometry, and
 `receivers_50_nautical_miles` system-performance-qualified AIS domain. It is
 not an input to upstream artifact identity. Applying that domain to exposure
-and headline statistics remains future M3 work.
+and headline statistics remains future M6 work.
 
 A further implemented boundary assembles explicitly supplied one-date cleaner
 bundles into a versioned multi-day period-input manifest. It keeps expected
@@ -286,14 +289,26 @@ capability set, and the documented Location Platform data-service list does not
 include hosted imagery or scene services. See Esri's
 [portal and data services FAQ](https://developers.arcgis.com/documentation/portal-and-data-services/faq/).
 
-Location Platform storage and data-service bandwidth use a monthly free tier
-with optional pay-as-you-go billing. Before it can be selected, the author must
-verify the real account's supported service types, public access, current
-storage and bandwidth use, free-tier limits and remaining headroom, and billing
-status. This project does **not** authorize enabling pay-as-you-go, adding a
-payment method, or incurring a charge. If a safe test cannot remain within an
-already available free tier, it is not run and the route remains unverified or
-is recorded as unsuitable.
+Location Platform storage and data-service bandwidth use monthly free tiers
+with optional pay-as-you-go billing. Current official documentation was checked
+on 2026-08-31 and also confirms `Everyone` sharing gives anonymous access; a
+separate ArcGIS Online organization is not required for that Location Platform
+path. See Esri's [sharing and security guide](https://developers.arcgis.com/documentation/portal-and-data-services/data-services/feature-services/sharing-and-security/),
+[billing guide](https://location.arcgis.com/help/billing/), and
+[current pricing](https://location.arcgis.com/pricing/). The documented free
+tiers relevant to public project data are 250 MB each
+for feature storage and tiles/files/attachments storage, 125 MB each for
+feature-query and feature-edit bandwidth, 25 GB each for vector-tile and
+map-tile bandwidth, and 25,000 generated tiles. Basemaps have separate monthly
+allowances of 2,000,000 tiles or 1,000 sessions. These are product-wide limits,
+not verified balances for the author's account.
+
+Before this route can be selected, the author must verify the real account's
+product identity, supported creation and sharing controls, current storage and
+bandwidth use, remaining headroom, and billing status. This project does **not**
+authorize enabling pay-as-you-go, adding a payment method, or incurring a
+charge. If a safe test cannot remain within an already available free tier, it
+is not run and the route remains unverified or is recorded as unsuitable.
 
 ### Browser API-key services
 
@@ -549,7 +564,7 @@ No implementation directory is scaffolded before its milestone needs it.
 | Exposure formula, normalization, and weighting | Both final grid-aligned inputs are ready | Input units/distributions, scientific support, and sensitivity within the accepted `receivers_50_nautical_miles` domain. |
 | High-exposure threshold | Exposure surface exists | Real value distribution and sensitivity analysis. |
 | Final public layer representation and host | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, anonymous browser performance, required interactions, legal constraints, usage limits, and supported service types. No format or provider is preselected. |
-| ArcGIS Location Platform publication route | Author completes the Location Platform capability check | Limited single-user organization; feature/vector-tile/map-tile support; public access; storage, bandwidth, monthly free-tier headroom, and billing status. No pay-as-you-go activation or spending is authorized. |
+| ArcGIS Location Platform publication route | Author completes the authenticated portion of the Location Platform capability check | Official documentation confirms a limited single-user organization, feature/vector-tile/map-tile support, and public anonymous sharing with current monthly free tiers. The real account's product identity, controls, usage, headroom, and billing status remain unverified. No pay-as-you-go activation or spending is authorized. |
 | ArcGIS Online publication route | Author completes the ArcGIS Online capability check | Organization privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |
 | Non-Esri public delivery route, if needed | Both Esri routes are unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |
 | Static application host | Deployment milestone | HTTPS, stable origin, static-export limits, build-time environment values, and clean-browser verification. |
