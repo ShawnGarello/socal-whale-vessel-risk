@@ -46,6 +46,7 @@ packages = ["src/whale_vessel_analysis"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/whale_vessel_analysis/default_config.toml" = "whale_vessel_analysis/default_config.toml"
+"src/whale_vessel_analysis/default_reporting_domain.toml" = "whale_vessel_analysis/default_reporting_domain.toml"
 
 [tool.mypy]
 python_version = "3.13"

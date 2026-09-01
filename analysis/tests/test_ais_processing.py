@@ -131,7 +131,7 @@ def test_cleaning_filters_and_normalizations_are_counted(tmp_path: Path) -> None
             ),
         },
     }
-    assert report["configuration"]["analytical_domain_status"] == "accepted"
+    assert report["configuration"]["analytical_domain_status"] == "unresolved"
     assert report["counts"]["removals"] == {
         "conflicting_mmsi_timestamp_rows": 2,
         "exact_duplicate_rows": 1,

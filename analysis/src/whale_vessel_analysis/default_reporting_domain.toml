@@ -1,0 +1,31 @@
+schema_version = 1
+
+[spatial_roles.map_context]
+id = "southern_california_map_context_v1"
+purpose = "map_and_context"
+
+[spatial_roles.modeled_whale_support]
+id = "noaa_swfsc_blue_whale_summer_fall_2020b_support_v1"
+purpose = "modeled_whale_support_water_geometry"
+basis = "union_of_selected_model_polygons"
+
+[analytical_domain]
+id = "receivers_50_nautical_miles"
+status = "accepted"
+scope = "scope_reduced"
+qualification = "system_performance_qualified"
+distance_nautical_miles = 50
+distance_m = 92600
+measured_from = "relevant_nais_reception_stations"
+geometry_basis = "union_of_station_buffers_intersected_with_modeled_whale_support"
+boundary_cell_treatment = "exact_fractional_geometry"
+distance_from_coast = false
+empirical_2024_coverage = false
+outside_cell_treatment = "exclude_from_headline_statistics_not_low_traffic"
+
+[analytical_domain.limitations]
+receiver_uptime_2024 = "unknown"
+station_completeness = "unknown"
+feed_interruptions = "unknown"
+antenna_and_terrain_effects = "not_empirically_modeled"
+observational_completeness = "unverified"

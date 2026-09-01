@@ -151,6 +151,17 @@ produced byte-identical outputs in two clean real-data runs; the exact derived
 output was
 also visually verified in QGIS 4.2.1.
 
+The upstream `ProcessingConfig` contract is frozen at schema 1 and retains its
+established digest because it identifies inputs to AIS cleaning, projected
+water-grid generation, whale-grid transfer, and map-extent vessel aggregation.
+Its legacy analytical-domain-status scalar is a compatibility sentinel, not the
+current decision authority. The accepted downstream analytical/reporting domain
+is instead a separate schema-1 contract. That contract assigns distinct stable
+roles to the map/context extent, modeled-whale-support water geometry, and
+`receivers_50_nautical_miles` system-performance-qualified AIS domain. It is
+not an input to upstream artifact identity. Applying that domain to exposure
+and headline statistics remains future M3 work.
+
 A further implemented boundary assembles explicitly supplied one-date cleaner
 bundles into a versioned multi-day period-input manifest. It keeps expected
 date, retrieval-manifest state, independently verified retained-byte and archive
