@@ -53,7 +53,7 @@ from whale_vessel_analysis.multiday_ais import (
 ACCESSAIS_PERIOD_DELIVERY_V1_CONTRACT: Final = "accessais_period_delivery_v1"
 ACCESSAIS_PERIOD_DELIVERY_CONTRACT: Final = "accessais_period_delivery_v2"
 ACCESSAIS_PERIOD_DELIVERY_SCHEMA_VERSION: Final = 2
-ACCESSAIS_PERIOD_DELIVERY_PROCESSING_VERSION: Final = "2.0.0"
+ACCESSAIS_PERIOD_DELIVERY_PROCESSING_VERSION: Final = "2.0.1"
 DELIVERY_MANIFEST_FILENAME: Final = "delivery-manifest.json"
 DAILY_DIRECTORY_NAME: Final = "daily"
 MAX_OPEN_DAILY_FILES: Final = 8
@@ -309,6 +309,28 @@ def _paths_overlap(first: Path, second: Path) -> bool:
     )
 
 
+def _validated_canonicalization_resources(
+    resources: CanonicalizationResources | None,
+    intake_directory: Path,
+    *other_managed_destinations: tuple[str, Path],
+) -> CanonicalizationResources:
+    """Resolve resources and reject spill overlap before creating any output."""
+    candidate = resources or CanonicalizationResources(
+        "512MB", intake_directory.parent / ".accessais-canonical-duckdb"
+    )
+    validated = candidate.validate()
+    managed_destinations = (
+        ("intake directory", intake_directory),
+        *other_managed_destinations,
+    )
+    for label, destination in managed_destinations:
+        if _paths_overlap(validated.temporary_directory, destination):
+            raise AccessAISPeriodIntakeError(
+                f"canonicalization temporary directory and {label} must be disjoint"
+            )
+    return validated
+
+
 def _validate_orchestration_destinations(
     intake_directory: Path, cleaned_root: Path, period_manifest_path: Path
 ) -> tuple[Path, Path, Path]:
@@ -492,7 +514,13 @@ def _canonicalize_daily_files(
     columns = ", ".join(
         f"{_sql_string(name)}: 'VARCHAR'" for name in AIS_PUBLISHED_HEADER
     )
-    order = ", ".join(_quoted_identifier(name) for name in AIS_PUBLISHED_HEADER)
+    normalized_columns = ", ".join(
+        f"COALESCE({_quoted_identifier(name)}, '') AS {_quoted_identifier(name)}"
+        for name in AIS_PUBLISHED_HEADER
+    )
+    order = ", ".join(
+        f"COALESCE({_quoted_identifier(name)}, '')" for name in AIS_PUBLISHED_HEADER
+    )
     try:
         with duckdb.connect() as connection:
             connection.execute(
@@ -509,7 +537,8 @@ def _canonicalize_daily_files(
                 data_output = temporary / f".{utc_date}.canonical-data.csv"
                 connection.execute(
                     "CREATE OR REPLACE TEMP TABLE canonical_rows AS "
-                    f"SELECT * FROM read_csv({_sql_string(str(staged))}, "
+                    f"SELECT {normalized_columns} FROM "
+                    f"read_csv({_sql_string(str(staged))}, "
                     f"header = true, auto_detect = false, columns = {{{columns}}}, "
                     "strict_mode = true)"
                 )
@@ -1228,13 +1257,7 @@ def prepare_accessais_delivery(
     """Partition one immutable AccessAIS CSV/ZIP into atomic one-date slices."""
     source_path = source_path.resolve()
     output_directory = validate_intake_directory(output_directory, "intake directory")
-    resources = (
-        CanonicalizationResources(
-            "512MB", output_directory.parent / ".accessais-canonical-duckdb"
-        )
-        if resources is None
-        else resources
-    ).validate()
+    resources = _validated_canonicalization_resources(resources, output_directory)
     source_byte_size, source_sha256, source_mtime_ns = fingerprint_regular_file(
         source_path
     )
@@ -1395,6 +1418,12 @@ def orchestrate_accessais_delivery(
         _validate_orchestration_destinations(
             intake_directory, cleaned_root, period_manifest_path
         )
+    )
+    resources = _validated_canonicalization_resources(
+        resources,
+        intake_directory,
+        ("cleaned bundle root", cleaned_root),
+        ("period manifest", period_manifest_path),
     )
     preparation = prepare_accessais_delivery(
         source_path,

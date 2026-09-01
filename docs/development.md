@@ -310,7 +310,10 @@ for every source row, publishes canonical one-date CSV inputs atomically
 under ignored `data/interim/`, and records malformed timestamps and
 out-of-request dates without silently dropping them. DuckDB sorts parsed rows
 by all 17 fields with duplicate multiplicity preserved, under a required memory
-limit and isolated ignored spill directory. Repeated `run` invocations
+limit and isolated ignored spill directory. Blank parsed fields are normalized
+to empty strings before SQL sorting and export. The spill parent must be
+disjoint from the intake, cleaned, and period-manifest destinations; overlap is
+rejected before output creation. Repeated `run` invocations
 use unique delivery intake directories and the same cleaned root and period
 manifest. Each invokes the existing one-date cleaner sequentially and records
 each compatible bundle immediately, so retry or identical overlap skips only a

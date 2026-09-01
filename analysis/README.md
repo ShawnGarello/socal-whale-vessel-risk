@@ -220,7 +220,10 @@ Partitioning is a standard-library streaming scan. It holds one parsed
 does not load the delivery into Python, Pandas, Polars, or PyArrow.
 Noncontiguous and unsorted date rows are supported. DuckDB then sorts each
 date's parsed rows lexicographically by all 17 fields under the explicit memory
-limit and isolated spill directory. Duplicate multiplicity is preserved.
+limit and isolated spill directory. Parsed blank fields are normalized from
+DuckDB `NULL` back to empty strings before both sorting and export, so SQL
+ordering matches manifest validation and every field remains quoted. Duplicate
+multiplicity is preserved.
 Every canonical daily CSV has the exact unquoted published header, UTF-8
 encoding, LF record endings, and stable all-field quoting. Its content identity
 and artifact SHA-256 are independent of source row order and delivery identity.
@@ -239,6 +242,10 @@ Version 1 manifests remain explicitly recognizable and read-only valid through
 `status`. A Version 2 prepare/run refuses an established
 `accessais_period_delivery_v1` intake directory and requires a fresh directory;
 the two contracts are never silently mixed.
+
+The spill parent must be disjoint from the intake directory and, for `run`, the
+cleaned root and period-manifest destination. Unsafe equality, ancestor, or
+descendant relationships are rejected before any destination is created.
 
 `run` cleans slices sequentially and records each successful cleaner bundle
 immediately through the existing period-manifest validator. On resume, a date
@@ -267,8 +274,8 @@ unique intake directory, while reusing the same cleaned root and period
 manifest:
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-a.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-a-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-b.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-b-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-a.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-a-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-b.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-b-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
 ```
 
 The intake and cleaned roots remain disjoint. Reusing the cleaned root lets an
