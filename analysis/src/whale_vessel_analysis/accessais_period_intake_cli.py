@@ -13,6 +13,7 @@ from typing import cast
 from whale_vessel_analysis.accessais_period_intake import (
     AccessAISPeriodConflictError,
     AccessAISPeriodIntakeError,
+    CanonicalizationResources,
     RequestedPeriod,
     load_delivery_manifest,
     orchestrate_accessais_delivery,
@@ -49,6 +50,17 @@ def _add_delivery_arguments(parser: argparse.ArgumentParser) -> None:
         type=int,
         help="optional independently retained source Content-Length",
     )
+    parser.add_argument(
+        "--memory-limit",
+        required=True,
+        help="explicit DuckDB canonical-sort memory limit with unit, for example 1GB",
+    )
+    parser.add_argument(
+        "--temp-directory",
+        type=Path,
+        required=True,
+        help="parent for isolated DuckDB spill directories under ignored data/interim",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -57,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="whale-vessel-accessais-period-intake",
         description=(
             "Prepare one author-supplied multi-date AccessAIS CSV/ZIP into "
-            "deterministic one-date slices and optionally run the existing cleaner "
+            "canonical one-date inputs and optionally run the existing cleaner "
             "sequentially into the existing period manifest. No network action is "
             "performed."
         ),
@@ -97,6 +109,12 @@ def _requested(args: argparse.Namespace) -> RequestedPeriod:
     )
 
 
+def _resources(args: argparse.Namespace) -> CanonicalizationResources:
+    return CanonicalizationResources(
+        cast(str, args.memory_limit), cast(Path, args.temp_directory)
+    )
+
+
 def _emit(payload: object) -> None:
     print(json.dumps(payload, indent=2, sort_keys=True))
 
@@ -113,6 +131,7 @@ def _run(args: argparse.Namespace) -> int:
             cast(Path, args.input),
             cast(Path, args.intake_dir),
             _requested(args),
+            _resources(args),
             source_content_length=cast(int | None, args.source_content_length),
         )
         _emit(preparation_result.to_dict())
@@ -123,6 +142,9 @@ def _run(args: argparse.Namespace) -> int:
         _emit(
             {
                 "intake_directory": str(directory),
+                "contract": manifest["contract"],
+                "schema_version": manifest["schema_version"],
+                "processing_version": manifest["processing_version"],
                 "delivery_id": manifest["delivery_id"],
                 "preparation_status": manifest["preparation_status"],
                 "row_accounting": manifest["row_accounting"],
@@ -147,6 +169,7 @@ def _run(args: argparse.Namespace) -> int:
             cast(Path, args.period_manifest),
             _requested(args),
             config,
+            _resources(args),
             source_content_length=cast(int | None, args.source_content_length),
         )
         payload = orchestration_result.to_dict()

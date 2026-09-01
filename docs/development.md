@@ -306,9 +306,11 @@ ADR 0017 remains Proposed.
 The local intake accepts one explicit direct CSV or safe ZIP at a time plus its
 inclusive requested dates. It performs no order submission, scraping, email
 automation, cookie storage, or URL retention. `prepare` streams and accounts
-for every source row, publishes deterministic one-date CSV slices atomically
+for every source row, publishes canonical one-date CSV inputs atomically
 under ignored `data/interim/`, and records malformed timestamps and
-out-of-request dates without silently dropping them. Repeated `run` invocations
+out-of-request dates without silently dropping them. DuckDB sorts parsed rows
+by all 17 fields with duplicate multiplicity preserved, under a required memory
+limit and isolated ignored spill directory. Repeated `run` invocations
 use unique delivery intake directories and the same cleaned root and period
 manifest. Each invokes the existing one-date cleaner sequentially and records
 each compatible bundle immediately, so retry or identical overlap skips only a
@@ -319,8 +321,8 @@ already-owned intake directory or a conflict recorded from an explicitly
 supplied, independently produced incompatible cleaner bundle.
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> [--source-content-length <independently-retained-byte-count>]
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
 python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli status --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id>
 ```
 
@@ -1038,7 +1040,7 @@ the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 323 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 329 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,

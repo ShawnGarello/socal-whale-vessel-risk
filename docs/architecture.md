@@ -138,9 +138,12 @@ the exact source header, and expected-date membership, and can bridge safe
 interim extraction to the existing cleaner without changing observational
 completeness. The period-intake boundary performs no network or AccessAIS order
 automation. It streams one supplied direct CSV or safe ZIP, accounts for every
-row, atomically publishes exact-date daily slices, validates their canonical
-manifest paths, and keeps transfer completeness, observational completeness,
-and 153-date period readiness separate. Its managed intake, cleaner-output, and
+row, then uses bounded DuckDB sorting to publish canonical exact-date daily
+inputs whose parsed-row multiset identity is independent of source order.
+Duplicate multiplicity is preserved. It validates canonical manifest paths and
+keeps immutable delivery identity, daily content identity, transfer
+completeness, observational completeness, and 153-date period readiness
+separate. Its managed intake, cleaner-output, and
 period-manifest paths cannot overlap: the two directory roots are disjoint, and
 the manifest cannot be inside either. The grid process accepts an explicit
 polygon mask, clips it to the projected map/context boundary, intersects the
@@ -437,6 +440,11 @@ project layers, and matching precomputed results.
   and analytical-period acquisition are not established. An entire national
   season is never staged locally; the detailed retrieval guard belongs to
   [data/README.md](../data/README.md).
+- AccessAIS daily cleaner compatibility uses the Version 2 canonical parsed-row
+  multiset identity and artifact checksum, not source delivery order. Whole-
+  delivery byte size and SHA-256 remain separate provenance. Version 1 intake
+  manifests remain read-only valid and cannot be silently reused as Version 2
+  output directories.
 - The multi-day cleaned-input relation scans daily Parquet partitions through
   DuckDB under an explicit memory limit and an explicit ignored spill directory,
   and streams ordered results rather than materializing the period in Python.
