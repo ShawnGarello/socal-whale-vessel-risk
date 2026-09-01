@@ -521,10 +521,54 @@ working-set measurement, memory regressed by about 66 MiB (27%); different
 approximate sampling methods make that directional rather than exact. No
 one-day measurement is extrapolated linearly to 153 days.
 
-Source-transfer completeness and observational completeness remain unverified.
-One day does not validate the analytical period. The four real candidate
-combinations were exercised, but that evidence is not sufficient to settle
-this Proposed decision.
+### Real two-day candidate-grid execution
+
+On 2026-09-01, the focused multi-day boundary was exercised against the exact
+author-supplied 2024-07-15 through 2024-07-16 AccessAIS delivery and exact water
+grid. Fresh intake reproduced period ID
+`multiday-ais-ddf23ba501bc834dbe5a2656` and the existing daily cleaner identities
+and Parquet checksums. All 1,135,408 delivery rows were assigned, with zero
+malformed/unassignable or out-of-request rows. The resulting 218,305 cleaned
+observations formed 218,089 whole-period structural pairs, including 160
+cross-date/cross-midnight candidates that daily-partitioned pairing would have
+lost.
+
+All runs explicitly used `allow-incomplete-candidate`,
+`censor-at-cleaned-extent`, `exact-water-geometry-exclude-and-report`, a 2 GB
+DuckDB limit, an isolated ignored spill directory, the verified grid checksum,
+and no length filter:
+
+| Maximum gap (s) | Speed ceiling (kn) | Retained / excluded segments | Gap / speed exclusions | Allocated vessel-km, passenger / cargo / tanker / all | Outside-support vessel-km | Positive-distance cells |
+|---:|---:|---:|---:|---:|---:|---:|
+| 300 | 30 | 211,622 / 6,467 | 5,457 / 1,010 | 7,891.472 / 10,576.066 / 6,656.298 / 25,123.836 | 2,450.085 | 1,659 |
+| 300 | 50 | 211,803 / 6,286 | 5,457 / 829 | 8,048.168 / 10,615.410 / 6,662.404 / 25,325.982 | 2,466.442 | 1,660 |
+| 1,800 | 30 | 216,694 / 1,395 | 352 / 1,043 | 8,132.621 / 11,052.656 / 6,871.961 / 26,057.238 | 2,524.340 | 1,679 |
+| 1,800 | 50 | 216,877 / 1,212 | 352 / 860 | 8,289.317 / 11,126.251 / 6,878.068 / 26,293.635 | 2,540.696 | 1,680 |
+
+Raising the speed ceiling changed 137 or 140 cells and added one
+positive-distance cell within each gap case. Raising the gap changed 305 cells
+and added 20 positive-distance cells within each speed case. All reports passed
+their own validation and distance-conservation checks. Invalid intersection
+geometry and positive-length boundary ambiguity were zero; each run retained
+one ambiguous cleaned point. All four candidate executions were repeated, and
+each reproduced its exact candidate ID, GeoParquet bytes, and deterministic
+quality-report bytes. Time-bearing lineage metadata changed as intended.
+
+The exact four GeoParquet outputs were inspected in QGIS 4.2.1 on 2026-09-01 at
+the full domain, shipping-lane concentrations, support edges, zero/nonzero
+cells, and contextual VSR boundary. Grid geometry and corridor patterns aligned;
+no projection shift, geometry gap, unexplained clipping, or anomalous band was
+found. The longer-gap additions were more visible than the speed-ceiling
+differences. This visual inspection establishes no analytical completeness or
+policy conclusion.
+
+This execution covers only 15--16 July 2024. The requested 1 July through 30
+November period remains `not_ready` with 151 missing dates. Source-transfer
+completeness and observational completeness remain `unverified`; monthly and
+full-period safety remain unverified; no production maximum-gap or implied-
+speed rule was selected; and no final vessel-activity input or exposure
+analysis was produced. The two-day matrix is candidate sensitivity evidence and
+is not sufficient to settle this Proposed decision.
 
 ## Remaining decision evidence
 
@@ -543,9 +587,10 @@ geometry cost. Before this decision can be accepted, later evidence must:
    exclusion rates, sensitivity, vessel-group distributions, and reported-SOG
    availability across the accepted period before producing a vessel grid.
 
-One bounded day establishes that the implemented subset is executable. It does
-not complete the measure comparison, select a rule, establish stability across
-153 days, or validate a production analytical input.
+The bounded one-day harness and two-day candidate-grid executions establish
+that the implemented subset is executable. They do not complete the measure
+comparison, select a rule, establish stability across 153 days, or validate a
+production analytical input.
 
 All four combinations deserve period-wide testing: the two gap values bracket
 a locally inferred short-gap treatment and NOAA's tool default, while the two
@@ -561,10 +606,11 @@ testing conclusion, not acceptance of any threshold.
 - Point-count heatmaps cannot become the Version 1 vessel input. Point counts
   remain valuable QA for missing or anomalous dates.
 - A deterministic, conservation-tested segment-to-grid evidence process is
-  verified with synthetic inputs and exercised on one real bounded day while
-  the numeric thresholds remain unresolved. It emits per-cell evidence only
-  inside its ignored diagnostic report and cannot produce a production result
-  using hidden defaults.
+  verified with synthetic inputs, exercised by the one-day evidence harness,
+  and exercised by the multi-day candidate boundary on two real bounded dates
+  while the numeric thresholds remain unresolved. Its candidate bundles stay
+  under ignored derived storage and cannot become a production result using
+  hidden defaults.
 - The current cleaned files are sufficient for interior candidate segments but
   not for uncensored entry/exit portions. The future implementation must expose
   that limitation or revise the pre-segmentation boundary.

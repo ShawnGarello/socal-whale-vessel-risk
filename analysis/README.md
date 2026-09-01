@@ -890,11 +890,140 @@ cleaner bundle and additionally reports geodesic comparisons and evidence-only
 vessel-hours; the candidate path streams the bounded multi-day relation,
 classifies ambiguous intersections without publishing them to cells, and writes
 the versioned candidate bundle. Those intentional boundary-specific behaviors
-are not asserted to be identical. The real two-day delivery stopped at the
-intake/cleaner boundary; no real candidate vessel-grid run has been executed.
-Period-wide stability, accepted thresholds,
-alternative edge support, observational completeness, and a final vessel-
-activity input therefore remain unresolved; ADR 0018 remains Proposed.
+are not asserted to be identical.
+
+### Verified two-day candidate exercise
+
+On 2026-09-01, a fresh ignored root was used to reproduce the author-supplied
+2024-07-15 through 2024-07-16 AccessAIS delivery and run the four candidate
+combinations in [ADR 0018](../docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md).
+This is two-day candidate vessel-activity evidence, not an analytical-period or
+production input. The source CSV was 115,791,285 bytes with SHA-256
+`a6c673f37ccd01d30067c400452275b13f8c5299200777384a513bc46d6842a0`.
+The exact 437,466-byte water grid had SHA-256
+`7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
+Both inputs were used read-only.
+
+The fresh intake command used the full accepted requested period and explicit
+bounded DuckDB resources:
+
+```text
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <2024-07-15-through-2024-07-16.csv> --intake-dir ..\data\interim\m3-two-day-vessel-candidate-evidence\period\delivery-two-day --requested-start 2024-07-01 --requested-end 2024-11-30 --memory-limit 1GB --temp-directory ..\data\interim\m3-two-day-vessel-candidate-evidence\period\duckdb-spill --cleaned-root ..\data\interim\m3-two-day-vessel-candidate-evidence\period\cleaned --period-manifest ..\data\interim\m3-two-day-vessel-candidate-evidence\period\period-manifest.json
+```
+
+All 1,135,408 rows were assigned: 582,419 to 15 July and 552,989 to 16
+July. Malformed/unassignable and out-of-request row counts were both zero. The
+regenerated identities matched the existing canonical evidence:
+
+| Date | Cleaner run ID | Cleaned observations | Cleaned-Parquet SHA-256 |
+|---|---|---:|---|
+| 2024-07-15 | `ais-9fc49e14601edea30064df97` | 113,799 | `efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6` |
+| 2024-07-16 | `ais-e1ea93fe9ab4b4d068364a0c` | 104,506 | `cb37b96a9f3e56838ca492a33dffc57a174fc92c1d385d3f3a1e848d2f7fbc5c` |
+
+The period ID was `multiday-ais-ddf23ba501bc834dbe5a2656`. It contained only
+15 and 16 July, retained all other 151 accepted dates as missing, and remained
+`not_ready`. Transfer completeness and observational completeness both remained
+`unverified`. The first end-to-end intake took 23.5578823 seconds with an
+approximate sampled process-tree RSS peak of 1,385,132,032 bytes. Recursive disk
+use under the fresh root rose from zero to a sampled peak of 270,186,568 bytes
+and ended at 157,756,801 bytes. An identical retry took 11.453405 seconds,
+sampled 107,479,040 bytes peak RSS, skipped both compatible dates, returned the
+same period ID and `not_ready` state, and added only 2,399 bytes of retry
+lineage. The profiler sampled the process tree and recursive output size while
+the commands ran; WMI sampling overhead makes the peak RSS values approximate.
+
+The bounded scan command was:
+
+```text
+python -m uv run python -m whale_vessel_analysis.multiday_ais_cli scan --manifest ..\data\interim\m3-two-day-vessel-candidate-evidence\period\period-manifest.json --memory-limit 2GB --temp-directory ..\data\interim\m3-two-day-vessel-candidate-evidence\scan-spill --threads 4 --batch-size 50000
+```
+
+It read 218,305 cleaned observations from the two verified partitions, found
+216 distinct MMSIs and 376 distinct MMSI-date combinations, and reported
+218,089 whole-period consecutive pairs. Artificially partitioning pairing by
+UTC date would lose 160 pairs for 160 MMSIs; these are the cross-date and
+cross-midnight candidates retained by the whole-period boundary. Timestamp
+bounds do not establish continuous coverage.
+
+Each matrix run used this explicit command shape, a distinct ignored output and
+spill directory, and no vessel-length filter:
+
+```text
+python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --manifest ..\data\interim\m3-two-day-vessel-candidate-evidence\period\period-manifest.json --grid-input <water-grid.parquet> --expected-grid-sha256 7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031 --output-dir ..\data\derived\m3-two-day-vessel-candidate-evidence\<candidate-run> --maximum-gap-seconds <300|1800> --implied-speed-ceiling-knots <30|50> --period-readiness-treatment allow-incomplete-candidate --edge-treatment censor-at-cleaned-extent --support-treatment exact-water-geometry-exclude-and-report --memory-limit 2GB --temp-directory ..\data\interim\m3-two-day-vessel-candidate-evidence\<candidate-spill> --threads 4 --batch-size 50000
+```
+
+| Gap (s) / speed (kn) | Candidate ID | GeoParquet SHA-256 | Quality-report SHA-256 |
+|---|---|---|---|
+| 300 / 30 | `candidate-vessel-grid-38a2981d2ffe9800a19c9128` | `93e7b3ce9266e9440ce353918b836851a9049c8c956f587e206d761dd79daef4` | `0f9c5d612396fef6a3eac90a4f7684eb50697497a96ae8c25d99918de8054008` |
+| 300 / 50 | `candidate-vessel-grid-fb0e0545c33c15e0b813e540` | `2995b498b611344afc248ff42e4574d8de740e74eb76477aea6df69159fe5dea` | `ad4d075e8b4c8d58b913d2491ade3156ce0ac001c51fbffc29095f9c0ee8e8ca` |
+| 1,800 / 30 | `candidate-vessel-grid-728edacffd6828d4eaca073c` | `f9be10e3b66d2f6f5fea561165ea554492e0c74ef827b2cfba39cc88f0451226` | `6005b7fe6040742cc286589eab75d686569a57c9de4e4c6dbaf3d357e03f22bb` |
+| 1,800 / 50 | `candidate-vessel-grid-2995c7fe4a19811136b13864` | `9173ae5f41e64597bfa9e51309f03bb07f1906d41aef99c83ede778c1d98f209` | `f8bfdc0d6f737f4802816a857e662997b2d85afa10bc76bf2801c5d5bee68be8` |
+
+All runs had 218,305 input observations and 218,089 structural segments. The
+candidate-specific populations and allocated distance were:
+
+| Gap / speed | Retained | Gap excluded | Speed excluded | Zero length | Cross-midnight retained | Vessel-km passenger / cargo / tanker / commercial | Outside support (km) | Distance-touched cells |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 300 / 30 | 211,622 | 5,457 | 1,010 | 17,968 | 130 | 7,891.472333 / 10,576.065554 / 6,656.297745 / 25,123.835632 | 2,450.085067 | 1,659 |
+| 300 / 50 | 211,803 | 5,457 | 829 | 17,968 | 130 | 8,048.168251 / 10,615.409865 / 6,662.404240 / 25,325.982357 | 2,466.441784 | 1,660 |
+| 1,800 / 30 | 216,694 | 352 | 1,043 | 18,566 | 150 | 8,132.620627 / 11,052.655987 / 6,871.961152 / 26,057.237766 | 2,524.339706 | 1,679 |
+| 1,800 / 50 | 216,877 | 352 | 860 | 18,566 | 150 | 8,289.316545 / 11,126.251145 / 6,878.067647 / 26,293.635337 | 2,540.696423 | 1,680 |
+
+All four reports passed their own validation and distance-conservation checks
+at the recorded `1e-6` metre absolute and `1e-12` relative tolerances. Invalid
+intersection geometry and positive-length boundary-ambiguity counts were zero;
+one cleaned point was a multiple-cell boundary ambiguity in every run. Maximum
+per-segment distance differences were zero or `2e-12` metres, and aggregate
+differences were between `-4.02331e-7` and `-4.39584e-7` metres. The independent
+point context was candidate-invariant: 1,652 cells were touched by points.
+
+Raising the speed ceiling from 30 to 50 knots changed 137 cells at the
+300-second gap and 140 at the 1,800-second gap, adding one positive-distance
+cell in each comparison. Raising the gap from 300 to 1,800 seconds changed 305
+cells and added 20 positive-distance cells at either speed ceiling. These are
+sensitivity observations for two dates, not evidence that either value is a
+production rule.
+
+The 15 July cleaner retained 113,799 observations, while 16 July retained
+104,506, 9,293 fewer. The second date nevertheless had more distinct MMSIs in
+each group: passenger 72 versus 67, cargo 75 versus 67, and tanker 50 versus 45.
+These are observed differences between the two cleaned partitions; they do not
+establish continuous coverage or explain the difference.
+
+All four candidates were repeated to distinct output directories. Each repeat
+reproduced the exact candidate ID, GeoParquet bytes/checksum, and deterministic
+quality-report bytes/checksum. Time-bearing `run-metadata.json` checksums
+differed, as intended. The shared synthetic parity tests passed as the contract
+comparison. The real evidence harness and multi-day candidate outputs cover
+different populations, so no additional real-output byte-parity claim is made.
+
+Profiled candidate runs took 28.0991472 to 32.2055495 seconds. Approximate
+sampled process-tree RSS peaks ranged from 271,245,312 to 289,746,944 bytes.
+Each completed bundle occupied 565,696 to 566,404 bytes, and no persistent spill
+files remained. These bounded observations include profiler overhead and are
+not monthly or full-period scaling evidence.
+
+The exact four first-pass GeoParquet files were opened directly in QGIS
+4.2.1-Belém do Pará on 2026-09-01. Each loaded as 4,516 EPSG:3310 MultiPolygon
+features with zero null, empty, or invalid geometries. Full-domain,
+Southern-California shipping-lane, northern support-edge, southern support-edge,
+and contextual 2026 VSR-boundary views were inspected. The broad coastal and
+shipping-corridor concentrations, zero/nonzero cells, grid alignment, support
+clipping, and isolated route cells were plausible and consistent across the
+matrix; no projection shift, geometry gap, unexplained clipping, or anomalous
+band was found. Positive/zero cell counts in table order were 1,659/2,857,
+1,660/2,856, 1,679/2,837, and 1,680/2,836. The longer gap produced the clearest
+visible additions; speed-ceiling differences were subtle. The ignored rendered
+views and QGIS project evidence were not committed. The VSR boundary was context
+only and was not used in candidate construction or exposure analysis.
+
+Only 15--16 July 2024 were processed. The full 2024-07-01 through 2024-11-30
+analytical period is still missing 151 dates. Independent transfer completeness,
+observational completeness, monthly and full-period safety, alternative edge
+support, accepted thresholds, and a final vessel-activity input remain
+unverified. No production maximum-gap or implied-speed threshold was selected,
+no absent traffic outside the qualified receiver domain was interpreted as
+zero, and no exposure analysis was performed. ADR 0018 remains Proposed.
 
 ## Projected water-grid command
 
