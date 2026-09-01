@@ -552,14 +552,15 @@ immutable input was inspected in place and was not copied into this worktree.
 
 Exact 17-field `EXCEPT ALL` comparisons in both directions found no difference
 between the old one-day delivery and the new delivery's 582,419-row 15 July
-partition. Their source-order daily bytes differed. Version 2 canonicalization
-produced the same 76,184,762-byte daily artifact, SHA-256
-`52a758cfd0188812cfce6cd919a0c3cb1450641eed494bd58a45517512ebcec5`,
-and daily content ID `accessais-day-content-e13cf3687ac775cf4c0cc984` for both.
-The new 16 July partition produced a 72,065,025-byte canonical artifact with
+partition. Their source-order daily bytes differed. The corrected Version 2
+processing version `2.0.1` fresh rerun produced the same 79,299,592-byte daily
+artifact, SHA-256
+`bf5a46c6196cf8a51ebfd62907f085a093afa64e2d4474c71ab7f441e68cf5cd`,
+and daily content ID `accessais-day-content-ae090a6e387fe79ec2f64c6e` for both.
+The new 16 July partition produced a 75,095,691-byte canonical artifact with
 SHA-256
-`2143636121467858a4d7e0e523affd6ee53b82ccd0939ed210d54753314761b9`
-and content ID `accessais-day-content-b90bc36bc7191c6fec8aeed6`.
+`3727a12f607dfd4194159b34a291e59374660b95b3e59a45b3d349bb4bfaf49f`
+and content ID `accessais-day-content-065631b951a94d6c58165859`.
 
 The bounded pilot ran the one-day delivery first and then the two-day delivery
 through separate intake directories sharing one Version 2 cleaned root and
@@ -567,7 +568,10 @@ period manifest. It reused 15 July, cleaned and recorded 16 July, and ended
 with two compatible dates, 151 missing dates, and `not_ready` state. An
 identical two-day retry reused both dates without regeneration. Transfer and
 observational completeness remained `unverified` throughout. This is bounded
-two-day compatibility evidence, not monthly/full-period scaling evidence.
+two-day compatibility evidence, not monthly/full-period scaling evidence. The
+fresh period input ID is `multiday-ais-ddf23ba501bc834dbe5a2656`; cleaned
+Parquet checksums remained unchanged despite the corrected canonical CSV
+identities.
 
 The raw validator truthfully returned `passed: false`: 825 rows had invalid or
 missing MMSIs and 2,233 had missing vessel types. This is expected pre-cleaning

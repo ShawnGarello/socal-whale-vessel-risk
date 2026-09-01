@@ -367,14 +367,15 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   different intake directory against the same cleaned root and period manifest
   on 2026-09-01. The two deliveries' 582,419-row 15 July multisets were equal
   under exact 17-field `EXCEPT ALL` comparison despite different source order.
-  Both produced canonical daily SHA-256
-  `52a758cfd0188812cfce6cd919a0c3cb1450641eed494bd58a45517512ebcec5`,
+  The corrected processing version `2.0.1` fresh rerun produced canonical daily
+  SHA-256
+  `bf5a46c6196cf8a51ebfd62907f085a093afa64e2d4474c71ab7f441e68cf5cd`,
   so 15 July was reused; 16 July's 552,989 rows were cleaned and recorded. The
   period ended with two compatible dates, 151 missing, and `not_ready` state.
   An identical retry reused both dates. Transfer and observational completeness
   remained `unverified`. Measured one-day/first-two-day/retry wall times were
-  44.899792/76.7939144/39.7256726 seconds, with sampled process-tree RSS peaks
-  of 1,352,359,936/1,106,075,648/116,977,664 bytes. These bounded results are
+  12.1394198/19.2814239/10.1271792 seconds, with sampled process-tree RSS peaks
+  of 1,593,458,688/1,514,594,304/102,436,864 bytes. These bounded results are
   not extrapolated to monthly or full-period execution.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
@@ -396,7 +397,7 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 329 passing tests using temporary
+- The combined self-contained suite has 333 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale

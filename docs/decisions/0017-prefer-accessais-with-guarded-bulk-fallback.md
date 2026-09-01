@@ -234,25 +234,30 @@ requested dates or bounds, timestamp bounds from `2024-07-15T00:00:00Z` through
 confirmed that the old and new 15 July rows were the same multiset despite
 their different source order.
 
-Canonicalization made those two 15 July partitions byte-identical at
-76,184,762 bytes with SHA-256
-`52a758cfd0188812cfce6cd919a0c3cb1450641eed494bd58a45517512ebcec5`
-and daily content ID `accessais-day-content-e13cf3687ac775cf4c0cc984`.
+The corrected processing version `2.0.1` fresh rerun normalized blank fields
+before sorting/export and made those two 15 July partitions byte-identical at
+79,299,592 bytes with SHA-256
+`bf5a46c6196cf8a51ebfd62907f085a093afa64e2d4474c71ab7f441e68cf5cd`
+and daily content ID `accessais-day-content-ae090a6e387fe79ec2f64c6e`.
 The second run therefore reused the established 15 July cleaner and cleaned
-16 July. The period ended with two compatible dates, 151 missing dates,
-`not_ready` state, and both completeness states still `unverified`. An
-identical two-day retry reused both dates. Exit code `3` was confirmed as the
-documented incomplete-period outcome.
+16 July; that date's 75,095,691-byte canonical artifact has SHA-256
+`3727a12f607dfd4194159b34a291e59374660b95b3e59a45b3d349bb4bfaf49f`
+and content ID `accessais-day-content-065631b951a94d6c58165859`. The period ID
+`multiday-ais-ddf23ba501bc834dbe5a2656` ended with two compatible dates, 151
+missing dates, `not_ready` state, and both completeness states still
+`unverified`. An identical two-day retry reused both dates. Exit code `3` was
+confirmed as the documented incomplete-period outcome.
 
 The one-day, first two-day, and identical-retry runs respectively took
-44.899792, 76.7939144, and 39.7256726 seconds. Their sampled process-tree RSS
-peaks were 1,352,359,936, 1,106,075,648, and 116,977,664 bytes. Measurement used
+12.1394198, 19.2814239, and 10.1271792 seconds. Their sampled process-tree RSS
+peaks were 1,593,458,688, 1,514,594,304, and 102,436,864 bytes. Measurement used
 a PowerShell stopwatch and 10 ms recursive `Win32_Process` sampling, summing
 live process working sets. Recursive pilot-root file-size sums measured
-135,681,982 bytes peak/78,031,343 bytes final for the one-day run; a
-264,041,198-byte peak increment/149,780,256-byte final increment for the first
-two-day run; and an 8,982-byte increment for the retry. Raw files were excluded.
-Sampling can miss a peak. No result is extrapolated to a month or five months.
+138,796,812 bytes peak/81,137,722 bytes final for the one-day run; a
+270,186,694-byte peak increment/155,917,250-byte final increment for the first
+two-day run; and a 436-byte increment for the retry. Raw files were excluded;
+OS file caches were not cleared. Sampling can miss a peak. No result is
+extrapolated to a month or five months.
 
 ### Inferred
 
