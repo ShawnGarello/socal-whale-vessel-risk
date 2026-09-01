@@ -170,7 +170,10 @@ date, and requires source-row conservation before atomically publishing
 staged date partitions under ignored `data/interim/`. DuckDB then sorts parsed
 rows by all 17 fields under an explicit memory limit and isolated ignored spill
 directory, preserves duplicate multiplicity, and emits canonical UTF-8/LF CSV
-with stable quoting. The daily content identity and artifact SHA-256 are
+with stable quoting. Parsed blanks are normalized from DuckDB `NULL` to empty
+strings before sorting and export, and unsafe overlap between the spill parent
+and any managed run destination is refused before creating output. The daily
+content identity and artifact SHA-256 are
 independent of source order while the immutable whole-delivery byte identity
 remains separate. Identical retries are
 reused; a different delivery or requested range records a conflict without

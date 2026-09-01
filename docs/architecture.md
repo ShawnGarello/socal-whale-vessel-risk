@@ -445,7 +445,9 @@ project layers, and matching precomputed results.
   multiset identity and artifact checksum, not source delivery order. Whole-
   delivery byte size and SHA-256 remain separate provenance. Version 1 intake
   manifests remain read-only valid and cannot be silently reused as Version 2
-  output directories.
+  output directories. Blank parsed fields are normalized to empty strings before
+  sorting/export, and spill parents must be disjoint from every managed intake,
+  cleaner, and period-manifest destination before output creation.
 - The multi-day cleaned-input relation scans daily Parquet partitions through
   DuckDB under an explicit memory limit and an explicit ignored spill directory,
   and streams ordered results rather than materializing the period in Python.
