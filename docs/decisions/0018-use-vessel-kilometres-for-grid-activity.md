@@ -422,8 +422,8 @@ the overlay in EPSG:3310.
 | Minimum vessel length | **Unresolved in the upstream population.** | A defensible relationship to the program population or a documented type-only scope plus sensitivity. No length is treated as 300 GT. |
 | Reporting-rate correction | **Not applied.** | Vessel-km does not require message counts to be proportional to activity. Any future correction would require an explicit receiver/reporting model and a new decision. |
 | Minimum movement/SOG | **Not selected.** | Zero distance naturally contributes zero; no speed filter is needed for the primary measure. Positional-jitter treatment would require separate evidence. |
-| Offshore coverage boundary | **Unresolved in ADR 0002.** | Independent coverage evidence. Vessel aggregation over the map extent does not settle observability or authorize statistics there. |
-| Exposure weighting and high-exposure threshold | **Out of scope and unwritten.** | Wait for the grid-aligned inputs and accepted reporting domain in later milestones. |
+| Offshore coverage boundary | **Accepted in ADR 0002 as `receivers_50_nautical_miles`.** | The system-performance-qualified receiver domain is not empirical 2024 coverage; vessel aggregation over the map extent does not upgrade its observational completeness. |
+| Exposure weighting and high-exposure threshold | **Out of scope and unwritten.** | Wait for the final grid-aligned inputs and later M6 method decision. |
 
 ## Evidence harness implementation status
 
@@ -568,10 +568,10 @@ testing conclusion, not acceptance of any threshold.
 - The current cleaned files are sufficient for interior candidate segments but
   not for uncensored entry/exit portions. The future implementation must expose
   that limitation or revise the pre-segmentation boundary.
-- ADR 0002 does not block construction of a vessel grid over the map extent. It
-  still blocks treating the full extent as uniformly observable, combining it
-  into a reportable exposure surface, or publishing inside-versus-outside
-  statistics.
+- ADR 0002 accepts the reporting domain but does not change construction of a
+  vessel grid over the map extent. The full extent still must not be treated as
+  uniformly observable: outside-domain cells are excluded from future headline
+  statistics, not classified as low traffic.
 - The future output has physical traffic units and retained group detail. It is
   still a proxy for observed commercial movement, not collision probability,
   predicted strikes or a policy recommendation.

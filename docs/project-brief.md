@@ -56,7 +56,7 @@ publication, and deployment remain unfinished.
 
 **Analytical inputs**
 
-1. A defined Southern California study area with an explicit extent, projected coordinate system, and analysis grid.
+1. A defined Southern California study area with an explicit map/context extent, projected coordinate system, analysis grid, modeled-whale-support water geometry, and a distinct AIS analytical domain. Version 1 uses the accepted `receivers_50_nautical_miles` scope reduction: a system-performance-qualified receiver domain, not empirical 2024 coverage.
 2. An authoritative VSR zone boundary, traceable to the program's own published geometry or coordinates, with its season definition recorded alongside it.
 3. A modeled blue-whale density or distribution layer from an authoritative source, clipped to the study area, with the meaning and units of its values documented.
 4. Processed commercial AIS vessel activity for the study area, filtered to the relevant vessel classes and aggregated into a traffic measure on the analysis grid.
@@ -94,7 +94,7 @@ These are excluded from Version 1. Several are legitimate later work; see "Beyon
 
 Version 1 should produce, at minimum:
 
-- A relative exposure surface over the study area, on a stated grid, with stated units and a stated value range.
+- A relative exposure surface over the accepted qualified analytical domain, on a stated grid, with stated units and a stated value range. The broader map remains context and outside-domain cells are not classified as low traffic.
 - The share of total relative exposure inside the VSR zone versus outside it.
 - The share of high-exposure area inside versus outside the VSR zone, with the "high" threshold defined and its sensitivity acknowledged.
 - Identification of where the largest concentrations of exposure outside the zone occur.
