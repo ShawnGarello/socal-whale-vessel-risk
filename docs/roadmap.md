@@ -181,11 +181,15 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   exact inspected AIS header and sentinels, the selected 2020b blue-whale layer
   and its value relationships, the VSR source geometry, and versioned
   provenance/lineage and run-metadata contracts.
-- Configuration schema v2 separately identifies the map/context extent, the
+- The schema-1 upstream processing configuration and its established digest
+  remain frozen for AIS cleaning, projected water-grid generation, whale-grid
+  transfer, and map-extent vessel aggregation. A separate schema-1 downstream
+  reporting-domain contract identifies the map/context extent, the
   modeled-whale-support water geometry, and the accepted
   `receivers_50_nautical_miles` system-performance-qualified AIS analytical
-  domain. It preserves the unknown operational and observational limitations.
-  There is no exposure formula, exposure/statistics contract, or
+  domain. It preserves the exact fractional boundary rule and the unknown
+  operational and observational limitations without invalidating existing M3
+  artifacts. There is no exposure formula, exposure/statistics contract, or
   application-results contract.
 - Read-only CLI commands validate configuration and supplied AIS CSV, whale
   File Geodatabase, and VSR GeoJSON paths. They produce JSON diagnostics and no
@@ -372,7 +376,7 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 318 passing tests using temporary
+- The combined self-contained suite has 323 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale

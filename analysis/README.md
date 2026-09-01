@@ -74,29 +74,30 @@ schema, configuration, or value check failed. Source data is expected to need
 later cleaning, so a non-zero raw-AIS result is an audit finding rather than a
 request to edit the source.
 
-The packaged schema-v2 configuration records the accepted 1 July–30 November
-2024 analytical period, EPSG:3310, and the accepted 5,000 m grid. It gives
-separate stable identities and semantics to the map/context extent, the
-modeled-whale-support water geometry, and the accepted
-`receivers_50_nautical_miles` system-performance-qualified AIS analytical
-domain. The domain is 50 nautical miles (92,600 metres) from the relevant NAIS
-reception stations, not from the coast and not empirical 2024 coverage. It
-retains unknown receiver uptime, station completeness, feed interruptions,
-antenna and terrain effects, and unverified observational completeness. Cells
-outside the domain are excluded from future headline statistics, not classified
-as low traffic. This foundation still contains no exposure,
-inside-versus-outside statistics, exposure-layer, or application-results
-contract.
+The packaged [`default_config.toml`](src/whale_vessel_analysis/default_config.toml)
+is the frozen schema-1 upstream processing contract used by AIS cleaning,
+projected water-grid generation, whale-grid transfer, and map-extent vessel
+aggregation. Its deterministic SHA-256 remains
+`df60aa03796ca979eff5bdca4c620fbac809a797d40d320ea649276d6c889c06`,
+so the previously verified schema-1 water grid and dependent artifacts remain
+valid. Its legacy `spatial.analytical_domain_status = "unresolved"` value is a
+frozen compatibility sentinel, not the authority for the reporting-domain
+decision and not a claim that ADR 0002 remains unresolved.
 
-Configuration schema v2 deliberately replaces schema v1; a v1 document is
-rejected rather than reinterpreted. The scalar
-`spatial.analytical_domain_status` setting was removed. Schema v2 adds stable
-`id` and `purpose` fields to `spatial.map_extent`, introduces
-`spatial.modeled_whale_support`, and introduces the structured
-`spatial.analytical_domain` table with its accepted identity, qualification,
-distance basis, outside-cell treatment, and limitations. The deterministic
-default-configuration SHA-256 is
-`897f538854370c8f8ae2ff4f0e20ccad591f4ab8987152040d260567fd7d4caf`.
+The separate, packaged schema-1
+[`default_reporting_domain.toml`](src/whale_vessel_analysis/default_reporting_domain.toml)
+is the authoritative downstream reporting/analytical-domain contract. It
+separately identifies the map/context extent, modeled-whale-support water
+geometry, and accepted `receivers_50_nautical_miles` scope-reduced,
+system-performance-qualified AIS analytical domain. The domain is 50 nautical
+miles (92,600 metres) from the relevant NAIS reception stations, not from the
+coast and not empirical 2024 coverage. It requires exact fractional boundary
+geometry; outside cells are excluded from future headline statistics, not
+classified as low traffic. Unknown receiver uptime, station completeness, feed
+interruptions, antenna and terrain effects, and unverified observational
+completeness remain explicit. Loading this contract cannot alter the upstream
+processing configuration or its digest. No exposure, inside-versus-outside
+statistics, exposure-layer, or application-results contract is implemented.
 
 ## Verify one author-supplied AIS delivery
 

@@ -415,6 +415,24 @@ def test_target_grid_checksum_and_contract_are_validated(tmp_path: Path) -> None
         load_target_grid(path, config, expected_sha256="0" * 64)
 
 
+def test_existing_schema_v1_grid_metadata_remains_accepted(tmp_path: Path) -> None:
+    config = load_default_config()
+    path = _valid_grid_path(tmp_path)
+    table = pq.read_table(path)
+    metadata = table.schema.metadata
+
+    assert metadata is not None
+    contract = json.loads(metadata[b"whale_vessel_analysis"])
+    assert contract["configuration"] == {
+        "version": 1,
+        "sha256": ("df60aa03796ca979eff5bdca4c620fbac809a797d40d320ea649276d6c889c06"),
+    }
+    assert load_target_grid(path, config).metadata["configuration"] == {
+        "version": 1,
+        "sha256": config.digest(),
+    }
+
+
 def test_invalid_target_grid_contract_is_rejected(tmp_path: Path) -> None:
     config = load_default_config()
     valid_path = _valid_grid_path(tmp_path)

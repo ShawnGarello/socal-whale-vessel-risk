@@ -658,7 +658,7 @@ def process_ais_csv(
                 "version": config.schema_version,
                 "sha256": config.digest(),
                 "analytical_period": config.analytical_period.to_dict(),
-                "analytical_domain_status": config.spatial.analytical_domain.status,
+                "analytical_domain_status": (config.spatial.analytical_domain_status),
             },
             "temporal_coverage": temporal_coverage.to_dict(),
             "processing_parameters": parameters,
@@ -676,8 +676,8 @@ def process_ais_csv(
             },
             "scope_note": (
                 "Rows are scoped to the accepted map/context extent, not clipped "
-                "to the accepted analytical domain. This output is not a "
-                "reporting-domain result."
+                "to the separately configured accepted analytical domain. This "
+                "output is not a reporting-domain result."
             ),
         }
         _write_json(quality_temporary, quality_payload)
