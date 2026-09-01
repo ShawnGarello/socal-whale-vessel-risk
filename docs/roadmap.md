@@ -583,8 +583,11 @@ exercised with bounded two-day real data**
   and distinct-output repeats reproduced exact candidate IDs, GeoParquet bytes,
   and deterministic quality-report bytes. The exact four outputs were visually
   inspected in QGIS 4.2.1 across the full domain, shipping-lane concentrations,
-  support edges, zero/nonzero cells, and contextual VSR boundary without a
-  projection, geometry, or clipping anomaly. This is bounded two-day candidate
+  support edges, zero/nonzero cells, and contextual VSR boundary. Corrected
+  renders placed the blue accepted-domain and orange VSR outlines above every
+  candidate grid; exact RGB checks and manual review confirmed both were
+  visible. No projection, geometry, or clipping anomaly was found. This is
+  bounded two-day candidate
   evidence: no parameter was accepted and no period-wide vessel input was
   produced.
 - The 2026-08-28 real read-only smoke run recorded the existing bounded

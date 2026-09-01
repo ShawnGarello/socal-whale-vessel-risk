@@ -150,8 +150,8 @@ the manifest cannot be inside either. The grid process accepts an explicit
 polygon mask, clips it to the projected map/context boundary, intersects the
 exact configured grid, and writes actual per-cell water geometry and area as
 GeoParquet plus generation lineage.
-It does not retrieve the analytical-period AIS data over the network, aggregate
-vessels, calculate relative exposure, or derive statistics. A separate
+These foundation paths do not retrieve the analytical-period AIS data over the
+network, calculate relative exposure, or derive statistics. A separate
 deterministic, tested whale-grid command transfers modeled density by
 abundance-conserving area-weighted intersection, writes generation lineage, and
 produced byte-identical outputs in two clean real-data runs; the exact derived
@@ -188,6 +188,17 @@ deterministic global ordering as Arrow record batches instead of concatenating
 the period in Python, and preserves same-vessel continuity across midnight. It
 selects no plausibility threshold, constructs no segment, and emits no
 vessel-activity grid.
+
+A separate candidate vessel-grid boundary is implemented and synthetically
+tested. It requires explicit maximum-gap, implied-speed, readiness, edge, and
+support treatments; streams whole-period consecutive pairs from the verified
+relation; allocates retained EPSG:3310 segment distance to the exact water grid;
+and writes deterministic candidate GeoParquet and quality-report artifacts plus
+time-bearing lineage. The documented four-parameter matrix was exercised and
+repeated on the real 15--16 July input. This bounded execution does not select
+accepted thresholds, establish period-wide completeness or scaling safety, or
+produce the final production vessel-activity input. Final period-wide vessel
+aggregation therefore remains unfinished.
 
 Python owns or is planned to own:
 

@@ -1003,19 +1003,26 @@ Each completed bundle occupied 565,696 to 566,404 bytes, and no persistent spill
 files remained. These bounded observations include profiler overhead and are
 not monthly or full-period scaling evidence.
 
-The exact four first-pass GeoParquet files were opened directly in QGIS
+The exact four candidate GeoParquet files were opened directly in QGIS
 4.2.1-Belém do Pará on 2026-09-01. Each loaded as 4,516 EPSG:3310 MultiPolygon
 features with zero null, empty, or invalid geometries. Full-domain,
 Southern-California shipping-lane, northern support-edge, southern support-edge,
-and contextual 2026 VSR-boundary views were inspected. The broad coastal and
-shipping-corridor concentrations, zero/nonzero cells, grid alignment, support
+and contextual 2026 VSR-boundary views were inspected after correcting the
+render order and context rule styling so the blue accepted-domain and orange
+VSR outlines appeared above the opaque candidate grid. Every corrected image
+contained both configured exact RGB colors: 23,306--29,307 blue pixels and
+4,650--8,400 orange pixels. Manual review confirmed both outlines were visibly
+present. The broad coastal and shipping-corridor concentrations, zero/nonzero
+cells, grid alignment, support
 clipping, and isolated route cells were plausible and consistent across the
 matrix; no projection shift, geometry gap, unexplained clipping, or anomalous
 band was found. Positive/zero cell counts in table order were 1,659/2,857,
 1,660/2,856, 1,679/2,837, and 1,680/2,836. The longer gap produced the clearest
-visible additions; speed-ceiling differences were subtle. The ignored rendered
-views and QGIS project evidence were not committed. The VSR boundary was context
-only and was not used in candidate construction or exposure analysis.
+visible additions; speed-ceiling differences were subtle. The corrected ignored
+render report has SHA-256
+`8b4f079da39e3aecff018eb3c2a625259005a015028ce9a8275e6e06c41a2da0`.
+The rendered views and render report were not committed. The VSR boundary was
+context only and was not used in candidate construction or exposure analysis.
 
 Only 15--16 July 2024 were processed. The full 2024-07-01 through 2024-11-30
 analytical period is still missing 151 dates. Independent transfer completeness,
