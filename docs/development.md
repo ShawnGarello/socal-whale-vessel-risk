@@ -774,8 +774,9 @@ Esri documents Location Platform as a limited single-user organization that can
 create feature, vector-tile, and map-tile services. Storage and bandwidth use a
 monthly free tier with optional pay-as-you-go billing. ArcGIS Online has a
 different organization, privilege, credit, and storage model. See Esri's
-[portal and data services FAQ](https://developers.arcgis.com/documentation/portal-and-data-services/faq/)
-and [API-key authentication documentation](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/).
+[portal and data services FAQ](https://developers.arcgis.com/documentation/portal-and-data-services/faq/),
+[current Location Platform pricing](https://location.arcgis.com/pricing/), and
+[API-key authentication documentation](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/).
 
 Everything involving an account is an **authenticated, author-run action**. An
 agent does not sign in, publish, change sharing, alter organization settings,
@@ -790,6 +791,89 @@ service URL may be committed when the application requires it; that public
 identifier is configuration and provenance, not a credential. Carry unavailable
 or unsuitable capabilities into M5 as evidence for the publication-format and
 route decision.
+
+### Read-only capability inventory, 2026-08-31
+
+The author reports creating an ArcGIS Location Platform account and a restricted
+browser API key. The successful local keyed basemap check independently proves
+that the supplied browser credential could access the intended basemap from its
+authorized localhost origin; it does not prove which account issued it. No
+authenticated account session was available for this inventory, and the key was
+not present or inspected. Account identity, billing state, usage, privileges,
+and content therefore remain unverified rather than being inferred from the
+author report or from product documentation.
+
+**Verified only from current official Esri documentation**
+
+Sources are Esri's [portal and data-services FAQ](https://developers.arcgis.com/documentation/portal-and-data-services/faq/),
+[sharing and security guide](https://developers.arcgis.com/documentation/portal-and-data-services/data-services/feature-services/sharing-and-security/),
+[Location Platform billing guide](https://location.arcgis.com/help/billing/),
+[current pricing page](https://location.arcgis.com/pricing/), and
+[Location Platform API-key credential guide](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/api-key-credentials/location-platform/).
+
+| Capability | Documented Location Platform behavior checked 2026-08-31 |
+|---|---|
+| Account and portal | A Location Platform subscription supplies a limited single-user organization and portal. It is not an ArcGIS Online organization subscription. |
+| Hosted service types | The limited organization supports creating hosted feature, vector-tile, and map-tile services. Hosted image and scene service creation is not supported. |
+| Public access | A hosted layer can be shared with `Everyone`; Esri states that anyone, including anonymous users, can then view the item and access its data service. Public Location Platform sharing therefore does not require a separate ArcGIS Online organization. The account owner remains responsible for resulting usage. |
+| Billing model | Location Platform uses monthly free tiers and optional pay-as-you-go, not ArcGIS Online credits. Esri states that pay-as-you-go is off by default for new accounts, but this account's actual setting is unverified. With pay-as-you-go off, service access stops when an applicable free tier is exhausted; storage overage can also prevent publishing. |
+| Browser API keys | Location Platform accounts have API-key-management privileges by default. Credentials can define service privileges, access to selected items, referrer restrictions, and expiration dates, and can issue up to two keys. Keys are valid for at most one year. Referrer restrictions are a misuse-reduction control, not a secret boundary; browser keys remain public. Changing privileges or item access requires regeneration, and a referrer change requires manual regeneration. |
+
+Current published monthly allowances relevant to this project are:
+
+| Meter | Free tier | Unit after the free tier |
+|---|---:|---:|
+| Basemap tiles | 2,000,000 tiles | $0.15 per 1,000 tiles |
+| Basemap sessions | 1,000 sessions | $4.00 per 1,000 sessions |
+| Feature storage | 250 MB | $0.0044 per additional MB |
+| Tiles, files, and attachments storage | 250 MB | $0.00012 per additional MB |
+| Feature-query bandwidth | 125 MB | $0.0008 per additional MB |
+| Feature-edit bandwidth | 125 MB | $0.0008 per additional MB |
+| Vector-tile bandwidth | 25 GB | $0.43 per additional GB |
+| Map-tile bandwidth | 25 GB | $0.43 per additional GB |
+| Map and vector tiles generated during publishing | 25,000 tiles | $0.12 per 1,000 tiles |
+
+These are product-wide allowances, not verified balances on the author's
+account. Esri says free tiers refresh at the start of the account's billing
+cycle and can change as services are updated; recheck the pricing page before a
+test or publication. Feature-service reads are metered by returned bandwidth,
+not by a documented request-count allowance. Basemap usage is separately
+metered by returned tiles or created sessions.
+
+**Unverified account properties and author checklist**
+
+Do not record an email address, user name, organization URL, subscription ID,
+credential identifier, key value, or payment details. In one private signed-in
+session:
+
+1. Open the Location Platform dashboard and confirm it identifies the product
+   as ArcGIS Location Platform. Record only `Location Platform confirmed` or
+   `not confirmed`.
+2. On the dashboard or Billing page, record only whether pay-as-you-go is `off`
+   or `on`. Do not add a payment method or change the setting.
+3. Record current aggregate usage and remaining headroom for feature storage;
+   tiles/files/attachments storage; feature-query bandwidth; feature-edit
+   bandwidth; vector-tile bandwidth; map-tile bandwidth; and tiles generated.
+   Do not record usage-resource or subscription identifiers.
+4. Open **My portal** and confirm, without starting an import, whether the
+   account presents creation/publishing paths for feature, vector-tile, and
+   map-tile services and whether public `Everyone` sharing is available.
+5. Report only the outcomes above. Do not open the existing credential, inspect
+   its privileges/referrers, reveal either key, generate a replacement, or
+   change its settings.
+
+Until those five checks are returned, billing, actual service-creation access,
+public-sharing availability, current storage/bandwidth usage, and no-cost
+headroom are `unverified`. Credits and ArcGIS Online organization privileges are
+`unavailable/not applicable` to the reported Location Platform branch, not
+missing prerequisites for its documented public sharing.
+
+A later throwaway hosted-feature test appears permissible under the documented
+product model because feature hosting and public sharing have free tiers. It is
+not yet authorized by the evidence: first confirm pay-as-you-go is off, the
+creation and `Everyone` controls are present, and current feature storage and
+feature-query bandwidth leave ample headroom. The test remains prohibited on
+this branch.
 
 ### 1. Identify the account type
 
