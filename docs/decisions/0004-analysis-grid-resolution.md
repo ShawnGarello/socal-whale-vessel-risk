@@ -1,7 +1,7 @@
 # 0004 — Use a 5 km analysis grid with fractional VSR-boundary accounting
 
 **Status:** Accepted
-**Date:** 2026-08-25, revised 2026-08-26
+**Date:** 2026-08-25, revised 2026-08-26 and 2026-08-31
 
 > Revised after an audit. The 5 km grid is unchanged. What changed is the
 > method for handling cells that straddle the VSR boundary: the original record
@@ -21,7 +21,8 @@
 
 The whale model is the coarsest input and sets the ceiling on how much spatial detail the combined result can honestly claim.
 
-Cell counts over the 107,293 km² of water in the proposed map extent ([ADR 0002](0002-southern-california-study-area-extent.md)):
+Pre-implementation cell-count estimates over an assumed 107,293 km² of water
+in the map extent ([ADR 0002](0002-southern-california-study-area-extent.md)):
 
 | Cell size | Water cells |
 |---|---|
@@ -30,6 +31,12 @@ Cell counts over the 107,293 km² of water in the proposed map extent ([ADR 0002
 | 2.5 km | ≈ 17,167 |
 | 2 km | ≈ 26,823 |
 | 1 km | ≈ 107,293 |
+
+These figures were planning estimates based on area divided by nominal cell
+area, not counts produced by intersecting the selected mask with the exact
+grid. The implemented 5 km water grid retains 4,516 cells and
+107,728.695924 km² of modeled-whale-support water; [ADR
+0014](0014-select-the-grid-water-mask.md) records that verified result.
 
 **The audit's finding.** The first version of this record justified 5 km largely on the grounds that it reduced the damage done by assigning a whole boundary cell to one side of the zone. That reasoning accepted a bad method and then tuned a parameter to limit the harm. Whole-cell or centroid assignment makes the inside/outside split depend on where the grid happens to start and how big the cells happen to be — properties of the analyst's choices, not of the data. Halving the cell size reduces that sensitivity; it does not remove it, and it leaves the headline number carrying an arbitrary component that no sensitivity check can fully characterise.
 
@@ -41,7 +48,12 @@ The VSR polygon is exact. There is no reason to discretise it.
 
 The analysis grid is **5 km × 5 km cells in EPSG:3310** ([ADR 0003](0003-projected-coordinate-system.md)), aligned to whole 5,000 m multiples of the projected coordinate system.
 
-The grid covers x −190,000 to 285,000 and y −670,000 to −330,000 — 95 columns by 68 rows, 6,460 cells, of which roughly 4,292 contain water. Snapping the origin to round 5,000 m multiples means the grid is reproducible from the cell size alone and stays aligned if the extent is adjusted.
+The grid covers x −190,000 to 285,000 and y −670,000 to −330,000 — 95 columns
+by 68 rows and 6,460 nominal cells. Before implementation, roughly 4,292 water
+cells were estimated from total water area divided by nominal cell area. The
+implemented selected mask retains 4,516 cells. Snapping the origin to round
+5,000 m multiples means the grid is reproducible from the cell size alone and
+stays aligned if the extent is adjusted.
 
 ### Boundary accounting — fractional, not categorical
 
@@ -95,11 +107,22 @@ Case 3 is the one that matters most: it is a cell nearly half inside the zone th
 
 - **The headline inside/outside split stops depending on grid origin.** Shifting the grid by half a cell changes which cells straddle the boundary but not the total area on each side, so the reported figure moves only through the uniformity assumption rather than through reassignment.
 - The 5 km versus 10 km **sensitivity check stays in the analysis milestone**, but its meaning changes. It no longer measures edge-assignment noise; it measures how much the uniform-within-cell assumption is worth. It is **not** a substitute for fractional accounting, and reporting a sensitivity range would not excuse a categorical method.
-- Intersecting every cell with two polygons is more work than a point-in-polygon test on 4,292 centroids. At this scale that is irrelevant; the VSR polygon has 37,239 exterior vertices, so the implementation should prepare or index it rather than intersect naively.
+- Intersecting every cell with two polygons is more work than a point-in-polygon
+  test on the pre-implementation estimate of ≈4,292 centroids. The implemented
+  water grid contains 4,516 cells; at this scale the difference is irrelevant.
+  The VSR polygon has 37,239 exterior vertices, so the implementation should
+  prepare or index it rather than intersect naively.
 - **5 km is finer than the whale model, and that does not create whale information.** Each analysis cell takes an area-weighted share of the abundance of the ~10 km source cells it falls within, so four analysis cells inside one source cell carry near-identical whale values. The grid resolves the boundary and the water mask, not the biology, and the application must not present it as though the whale model resolves 5 km detail.
-- 4,292 water cells is a comfortable hosted-layer size — small enough to publish without generalisation, which keeps the published layer and the analysed layer identical.
+- The implemented 4,516 water cells remain a comfortable hosted-layer size —
+  small enough to publish without generalisation, which can keep the published
+  layer and the analysed layer identical.
 - The vessel input is aggregated **down** to 5 km from point positions, discarding detail AIS genuinely has. That is the correct direction: the combined layer cannot be more precise than its coarsest input.
-- **The water mask becomes load-bearing.** Case 2 exists because an error there silently changes every fraction. Whatever supplies the mask has to be stated and inspected, and it interacts with the unresolved analytical-domain question in [ADR 0002](0002-southern-california-study-area-extent.md), since a coverage restriction would be applied in the same step.
+- **The water mask becomes load-bearing.** Case 2 exists because an error there
+  silently changes every fraction. Whatever supplies the mask has to be stated
+  and inspected. [ADR 0002](0002-southern-california-study-area-extent.md) now
+  accepts the separate `receivers_50_nautical_miles` analytical domain; its
+  exact fractional reporting mask is applied downstream to the water geometry,
+  not folded into upstream water-grid generation.
 
 ## Alternatives considered
 
