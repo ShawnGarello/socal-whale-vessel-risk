@@ -658,7 +658,7 @@ def process_ais_csv(
                 "version": config.schema_version,
                 "sha256": config.digest(),
                 "analytical_period": config.analytical_period.to_dict(),
-                "analytical_domain_status": (config.spatial.analytical_domain_status),
+                "analytical_domain_status": config.spatial.analytical_domain.status,
             },
             "temporal_coverage": temporal_coverage.to_dict(),
             "processing_parameters": parameters,
@@ -675,8 +675,9 @@ def process_ais_csv(
                 "parquet": parameters["parquet"],
             },
             "scope_note": (
-                "Rows are scoped to the accepted map/context extent. ADR 0002 "
-                "remains Proposed, so this output is not a reporting-domain result."
+                "Rows are scoped to the accepted map/context extent, not clipped "
+                "to the accepted analytical domain. This output is not a "
+                "reporting-domain result."
             ),
         }
         _write_json(quality_temporary, quality_payload)

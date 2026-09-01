@@ -175,6 +175,18 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   and equivalent operation; both returned 13,800 filtered rows in 35 groups.
   The five-run evidence and its half-hour-sample limits are in
   [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md).
+- Versioned contracts now cover configurable source locators, the accepted ADR
+  0002 map/context extent and analytical-domain semantics, the accepted 1 July–
+  30 November 2024 analytical period, EPSG:3310, the accepted 5 km grid, the
+  exact inspected AIS header and sentinels, the selected 2020b blue-whale layer
+  and its value relationships, the VSR source geometry, and versioned
+  provenance/lineage and run-metadata contracts.
+- Configuration schema v2 separately identifies the map/context extent, the
+  modeled-whale-support water geometry, and the accepted
+  `receivers_50_nautical_miles` system-performance-qualified AIS analytical
+  domain. It preserves the unknown operational and observational limitations.
+  There is no exposure formula, exposure/statistics contract, or
+  application-results contract.
 - Read-only CLI commands validate configuration and supplied AIS CSV, whale
   File Geodatabase, and VSR GeoJSON paths. They produce JSON diagnostics and no
   analytical output.
@@ -360,7 +372,7 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 297 passing tests using temporary
+- The combined self-contained suite has 318 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale

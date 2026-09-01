@@ -13,7 +13,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Final, Literal, cast
 
-CONFIG_SCHEMA_VERSION: Final = 1
+CONFIG_SCHEMA_VERSION: Final = 2
 ANALYTICAL_PERIOD_START: Final = date(2024, 7, 1)
 ANALYTICAL_PERIOD_END: Final = date(2024, 11, 30)
 MAP_EXTENT_CRS: Final = "EPSG:4326"
@@ -21,6 +21,11 @@ PROJECTED_CRS: Final = "EPSG:3310"
 GRID_CELL_SIZE_M: Final = 5_000
 GRID_BOUNDS_M: Final = (-190_000, -670_000, 285_000, -330_000)
 MAP_EXTENT_BOUNDS: Final = (-122.0, 32.0, -117.0, 35.0)
+MAP_EXTENT_ID: Final = "southern_california_map_context_v1"
+MODELED_WHALE_SUPPORT_ID: Final = "noaa_swfsc_blue_whale_summer_fall_2020b_support_v1"
+ANALYTICAL_DOMAIN_ID: Final = "receivers_50_nautical_miles"
+ANALYTICAL_DOMAIN_DISTANCE_NAUTICAL_MILES: Final = 50
+ANALYTICAL_DOMAIN_DISTANCE_M: Final = 92_600
 
 
 class ConfigurationError(ValueError):
@@ -55,6 +60,8 @@ class AnalyticalPeriod:
 class GeographicExtent:
     """A WGS 84 map/context extent, separate from the analytical domain."""
 
+    extent_id: Literal["southern_california_map_context_v1"]
+    purpose: Literal["map_and_context"]
     crs: str
     lon_min: float
     lat_min: float
@@ -62,6 +69,10 @@ class GeographicExtent:
     lat_max: float
 
     def __post_init__(self) -> None:
+        if self.extent_id != MAP_EXTENT_ID:
+            raise ConfigurationError(f"map extent id must be {MAP_EXTENT_ID}")
+        if self.purpose != "map_and_context":
+            raise ConfigurationError("map extent purpose must be 'map_and_context'")
         coordinates = (self.lon_min, self.lat_min, self.lon_max, self.lat_max)
         if not all(math.isfinite(value) for value in coordinates):
             raise ConfigurationError("map extent coordinates must be finite")
@@ -74,11 +85,164 @@ class GeographicExtent:
 
     def to_dict(self) -> dict[str, str | float]:
         return {
+            "id": self.extent_id,
+            "purpose": self.purpose,
             "crs": self.crs,
             "lon_min": self.lon_min,
             "lat_min": self.lat_min,
             "lon_max": self.lon_max,
             "lat_max": self.lat_max,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ModeledWhaleSupport:
+    """The biological-support water geometry accepted in ADR 0014."""
+
+    support_id: Literal["noaa_swfsc_blue_whale_summer_fall_2020b_support_v1"]
+    purpose: Literal["modeled_whale_support_water_geometry"]
+    basis: Literal["union_of_selected_model_polygons"]
+
+    def __post_init__(self) -> None:
+        if self.support_id != MODELED_WHALE_SUPPORT_ID:
+            raise ConfigurationError(
+                f"modeled whale support id must be {MODELED_WHALE_SUPPORT_ID}"
+            )
+        if self.purpose != "modeled_whale_support_water_geometry":
+            raise ConfigurationError(
+                "modeled whale support purpose must be "
+                "'modeled_whale_support_water_geometry'"
+            )
+        if self.basis != "union_of_selected_model_polygons":
+            raise ConfigurationError(
+                "modeled whale support basis must be 'union_of_selected_model_polygons'"
+            )
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "id": self.support_id,
+            "purpose": self.purpose,
+            "basis": self.basis,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class AnalyticalDomainLimitations:
+    """Unknowns that acceptance does not convert into observed completeness."""
+
+    receiver_uptime_2024: Literal["unknown"]
+    station_completeness: Literal["unknown"]
+    feed_interruptions: Literal["unknown"]
+    antenna_and_terrain_effects: Literal["not_empirically_modeled"]
+    observational_completeness: Literal["unverified"]
+
+    def __post_init__(self) -> None:
+        expected = {
+            "receiver_uptime_2024": "unknown",
+            "station_completeness": "unknown",
+            "feed_interruptions": "unknown",
+            "antenna_and_terrain_effects": "not_empirically_modeled",
+            "observational_completeness": "unverified",
+        }
+        if self.to_dict() != expected:
+            raise ConfigurationError(
+                "analytical domain limitations must preserve the accepted unknowns"
+            )
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "receiver_uptime_2024": self.receiver_uptime_2024,
+            "station_completeness": self.station_completeness,
+            "feed_interruptions": self.feed_interruptions,
+            "antenna_and_terrain_effects": self.antenna_and_terrain_effects,
+            "observational_completeness": self.observational_completeness,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class AnalyticalDomain:
+    """The scope-reduced AIS reporting domain accepted in ADR 0002."""
+
+    domain_id: Literal["receivers_50_nautical_miles"]
+    status: Literal["accepted"]
+    qualification: Literal["system_performance_qualified"]
+    distance_nautical_miles: int
+    distance_m: int
+    measured_from: Literal["relevant_nais_reception_stations"]
+    geometry_basis: Literal[
+        "union_of_station_buffers_intersected_with_modeled_whale_support"
+    ]
+    boundary_cell_treatment: Literal["exact_fractional_geometry"]
+    distance_from_coast: Literal[False]
+    empirical_2024_coverage: Literal[False]
+    outside_cell_treatment: Literal["exclude_from_headline_statistics_not_low_traffic"]
+    limitations: AnalyticalDomainLimitations
+
+    def __post_init__(self) -> None:
+        if self.domain_id != ANALYTICAL_DOMAIN_ID:
+            raise ConfigurationError(
+                f"analytical domain id must be {ANALYTICAL_DOMAIN_ID}"
+            )
+        if self.status != "accepted":
+            raise ConfigurationError("analytical domain status must be 'accepted'")
+        if self.qualification != "system_performance_qualified":
+            raise ConfigurationError(
+                "analytical domain qualification must be 'system_performance_qualified'"
+            )
+        if self.distance_nautical_miles != ANALYTICAL_DOMAIN_DISTANCE_NAUTICAL_MILES:
+            raise ConfigurationError(
+                "analytical domain distance must be 50 nautical miles"
+            )
+        if self.distance_m != ANALYTICAL_DOMAIN_DISTANCE_M:
+            raise ConfigurationError("analytical domain distance must be 92600 metres")
+        if self.measured_from != "relevant_nais_reception_stations":
+            raise ConfigurationError(
+                "analytical domain distance must be measured from the relevant "
+                "NAIS reception stations"
+            )
+        if (
+            self.geometry_basis
+            != "union_of_station_buffers_intersected_with_modeled_whale_support"
+        ):
+            raise ConfigurationError(
+                "analytical domain geometry must intersect the receiver-buffer "
+                "union with modeled whale support"
+            )
+        if self.boundary_cell_treatment != "exact_fractional_geometry":
+            raise ConfigurationError(
+                "analytical domain boundary cells must retain exact fractional geometry"
+            )
+        if self.distance_from_coast is not False:
+            raise ConfigurationError(
+                "analytical domain distance must not be measured from the coast"
+            )
+        if self.empirical_2024_coverage is not False:
+            raise ConfigurationError(
+                "analytical domain must not claim empirical 2024 coverage"
+            )
+        if (
+            self.outside_cell_treatment
+            != "exclude_from_headline_statistics_not_low_traffic"
+        ):
+            raise ConfigurationError(
+                "outside cells must be excluded from headline statistics and must "
+                "not be classified as low traffic"
+            )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.domain_id,
+            "status": self.status,
+            "qualification": self.qualification,
+            "distance_nautical_miles": self.distance_nautical_miles,
+            "distance_m": self.distance_m,
+            "measured_from": self.measured_from,
+            "geometry_basis": self.geometry_basis,
+            "boundary_cell_treatment": self.boundary_cell_treatment,
+            "distance_from_coast": self.distance_from_coast,
+            "empirical_2024_coverage": self.empirical_2024_coverage,
+            "outside_cell_treatment": self.outside_cell_treatment,
+            "limitations": self.limitations.to_dict(),
         }
 
 
@@ -135,8 +299,9 @@ class SpatialConfig:
     """Spatial configuration that keeps context and reporting domains distinct."""
 
     map_extent: GeographicExtent
+    modeled_whale_support: ModeledWhaleSupport
+    analytical_domain: AnalyticalDomain
     grid: AnalysisGrid
-    analytical_domain_status: Literal["unresolved"]
 
     def __post_init__(self) -> None:
         extent_bounds = (
@@ -147,19 +312,16 @@ class SpatialConfig:
         )
         if extent_bounds != MAP_EXTENT_BOUNDS:
             raise ConfigurationError(
-                "map extent must match the context extent in proposed ADR 0002: "
+                "map extent must match the context extent accepted in ADR 0002: "
                 f"{MAP_EXTENT_BOUNDS}, received {extent_bounds}"
-            )
-        if self.analytical_domain_status != "unresolved":
-            raise ConfigurationError(
-                "analytical domain must remain 'unresolved' until ADR 0002 is accepted"
             )
 
     def to_dict(self) -> dict[str, object]:
         return {
             "map_extent": self.map_extent.to_dict(),
+            "modeled_whale_support": self.modeled_whale_support.to_dict(),
+            "analytical_domain": self.analytical_domain.to_dict(),
             "grid": self.grid.to_dict(),
-            "analytical_domain_status": self.analytical_domain_status,
         }
 
 
@@ -232,6 +394,13 @@ def _integer(table: Mapping[str, object], key: str, table_name: str) -> int:
     return value
 
 
+def _boolean(table: Mapping[str, object], key: str, table_name: str) -> bool:
+    value = _required(table, key, table_name)
+    if not isinstance(value, bool):
+        raise ConfigurationError(f"{table_name}.{key} must be a boolean")
+    return value
+
+
 def _number(table: Mapping[str, object], key: str, table_name: str) -> float:
     value = _required(table, key, table_name)
     if not isinstance(value, int | float) or isinstance(value, bool):
@@ -277,8 +446,9 @@ def config_from_mapping(document: Mapping[str, object]) -> ProcessingConfig:
             "grid_y_min_m",
             "grid_x_max_m",
             "grid_y_max_m",
-            "analytical_domain_status",
             "map_extent",
+            "modeled_whale_support",
+            "analytical_domain",
         },
         "spatial",
     )
@@ -287,15 +457,180 @@ def config_from_mapping(document: Mapping[str, object]) -> ProcessingConfig:
     )
     _reject_unknown(
         extent_table,
-        {"crs", "lon_min", "lat_min", "lon_max", "lat_max"},
+        {"id", "purpose", "crs", "lon_min", "lat_min", "lon_max", "lat_max"},
         "spatial.map_extent",
     )
     map_extent = GeographicExtent(
+        extent_id=cast(
+            Literal["southern_california_map_context_v1"],
+            _string(extent_table, "id", "spatial.map_extent"),
+        ),
+        purpose=cast(
+            Literal["map_and_context"],
+            _string(extent_table, "purpose", "spatial.map_extent"),
+        ),
         crs=_string(extent_table, "crs", "spatial.map_extent"),
         lon_min=_number(extent_table, "lon_min", "spatial.map_extent"),
         lat_min=_number(extent_table, "lat_min", "spatial.map_extent"),
         lon_max=_number(extent_table, "lon_max", "spatial.map_extent"),
         lat_max=_number(extent_table, "lat_max", "spatial.map_extent"),
+    )
+    support_table = _mapping(
+        _required(spatial_table, "modeled_whale_support", "spatial"),
+        "spatial.modeled_whale_support",
+    )
+    _reject_unknown(
+        support_table,
+        {"id", "purpose", "basis"},
+        "spatial.modeled_whale_support",
+    )
+    modeled_whale_support = ModeledWhaleSupport(
+        support_id=cast(
+            Literal["noaa_swfsc_blue_whale_summer_fall_2020b_support_v1"],
+            _string(support_table, "id", "spatial.modeled_whale_support"),
+        ),
+        purpose=cast(
+            Literal["modeled_whale_support_water_geometry"],
+            _string(support_table, "purpose", "spatial.modeled_whale_support"),
+        ),
+        basis=cast(
+            Literal["union_of_selected_model_polygons"],
+            _string(support_table, "basis", "spatial.modeled_whale_support"),
+        ),
+    )
+    domain_table = _mapping(
+        _required(spatial_table, "analytical_domain", "spatial"),
+        "spatial.analytical_domain",
+    )
+    _reject_unknown(
+        domain_table,
+        {
+            "id",
+            "status",
+            "qualification",
+            "distance_nautical_miles",
+            "distance_m",
+            "measured_from",
+            "geometry_basis",
+            "boundary_cell_treatment",
+            "distance_from_coast",
+            "empirical_2024_coverage",
+            "outside_cell_treatment",
+            "limitations",
+        },
+        "spatial.analytical_domain",
+    )
+    limitations_table = _mapping(
+        _required(domain_table, "limitations", "spatial.analytical_domain"),
+        "spatial.analytical_domain.limitations",
+    )
+    _reject_unknown(
+        limitations_table,
+        {
+            "receiver_uptime_2024",
+            "station_completeness",
+            "feed_interruptions",
+            "antenna_and_terrain_effects",
+            "observational_completeness",
+        },
+        "spatial.analytical_domain.limitations",
+    )
+    limitations = AnalyticalDomainLimitations(
+        receiver_uptime_2024=cast(
+            Literal["unknown"],
+            _string(
+                limitations_table,
+                "receiver_uptime_2024",
+                "spatial.analytical_domain.limitations",
+            ),
+        ),
+        station_completeness=cast(
+            Literal["unknown"],
+            _string(
+                limitations_table,
+                "station_completeness",
+                "spatial.analytical_domain.limitations",
+            ),
+        ),
+        feed_interruptions=cast(
+            Literal["unknown"],
+            _string(
+                limitations_table,
+                "feed_interruptions",
+                "spatial.analytical_domain.limitations",
+            ),
+        ),
+        antenna_and_terrain_effects=cast(
+            Literal["not_empirically_modeled"],
+            _string(
+                limitations_table,
+                "antenna_and_terrain_effects",
+                "spatial.analytical_domain.limitations",
+            ),
+        ),
+        observational_completeness=cast(
+            Literal["unverified"],
+            _string(
+                limitations_table,
+                "observational_completeness",
+                "spatial.analytical_domain.limitations",
+            ),
+        ),
+    )
+    analytical_domain = AnalyticalDomain(
+        domain_id=cast(
+            Literal["receivers_50_nautical_miles"],
+            _string(domain_table, "id", "spatial.analytical_domain"),
+        ),
+        status=cast(
+            Literal["accepted"],
+            _string(domain_table, "status", "spatial.analytical_domain"),
+        ),
+        qualification=cast(
+            Literal["system_performance_qualified"],
+            _string(domain_table, "qualification", "spatial.analytical_domain"),
+        ),
+        distance_nautical_miles=_integer(
+            domain_table, "distance_nautical_miles", "spatial.analytical_domain"
+        ),
+        distance_m=_integer(domain_table, "distance_m", "spatial.analytical_domain"),
+        measured_from=cast(
+            Literal["relevant_nais_reception_stations"],
+            _string(domain_table, "measured_from", "spatial.analytical_domain"),
+        ),
+        geometry_basis=cast(
+            Literal["union_of_station_buffers_intersected_with_modeled_whale_support"],
+            _string(domain_table, "geometry_basis", "spatial.analytical_domain"),
+        ),
+        boundary_cell_treatment=cast(
+            Literal["exact_fractional_geometry"],
+            _string(
+                domain_table,
+                "boundary_cell_treatment",
+                "spatial.analytical_domain",
+            ),
+        ),
+        distance_from_coast=cast(
+            Literal[False],
+            _boolean(domain_table, "distance_from_coast", "spatial.analytical_domain"),
+        ),
+        empirical_2024_coverage=cast(
+            Literal[False],
+            _boolean(
+                domain_table,
+                "empirical_2024_coverage",
+                "spatial.analytical_domain",
+            ),
+        ),
+        outside_cell_treatment=cast(
+            Literal["exclude_from_headline_statistics_not_low_traffic"],
+            _string(
+                domain_table,
+                "outside_cell_treatment",
+                "spatial.analytical_domain",
+            ),
+        ),
+        limitations=limitations,
     )
     grid = AnalysisGrid(
         projected_crs=_string(spatial_table, "projected_crs", "spatial"),
@@ -305,18 +640,14 @@ def config_from_mapping(document: Mapping[str, object]) -> ProcessingConfig:
         x_max_m=_integer(spatial_table, "grid_x_max_m", "spatial"),
         y_max_m=_integer(spatial_table, "grid_y_max_m", "spatial"),
     )
-    analytical_status = _string(spatial_table, "analytical_domain_status", "spatial")
-    if analytical_status != "unresolved":
-        raise ConfigurationError(
-            "spatial.analytical_domain_status must be 'unresolved'"
-        )
     return ProcessingConfig(
         schema_version=_integer(document, "schema_version", "root"),
         analytical_period=analytical_period,
         spatial=SpatialConfig(
             map_extent=map_extent,
+            modeled_whale_support=modeled_whale_support,
+            analytical_domain=analytical_domain,
             grid=grid,
-            analytical_domain_status="unresolved",
         ),
     )
 

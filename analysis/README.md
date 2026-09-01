@@ -74,12 +74,29 @@ schema, configuration, or value check failed. Source data is expected to need
 later cleaning, so a non-zero raw-AIS result is an audit finding rather than a
 request to edit the source.
 
-The packaged configuration records the accepted 1 July–30 November 2024
-analytical period, the proposed ADR 0002 map/context extent, EPSG:3310, and the
-accepted 5,000 m grid. It deliberately represents the analytical domain only as
-`unresolved`; this foundation contains no exposure,
+The packaged schema-v2 configuration records the accepted 1 July–30 November
+2024 analytical period, EPSG:3310, and the accepted 5,000 m grid. It gives
+separate stable identities and semantics to the map/context extent, the
+modeled-whale-support water geometry, and the accepted
+`receivers_50_nautical_miles` system-performance-qualified AIS analytical
+domain. The domain is 50 nautical miles (92,600 metres) from the relevant NAIS
+reception stations, not from the coast and not empirical 2024 coverage. It
+retains unknown receiver uptime, station completeness, feed interruptions,
+antenna and terrain effects, and unverified observational completeness. Cells
+outside the domain are excluded from future headline statistics, not classified
+as low traffic. This foundation still contains no exposure,
 inside-versus-outside statistics, exposure-layer, or application-results
 contract.
+
+Configuration schema v2 deliberately replaces schema v1; a v1 document is
+rejected rather than reinterpreted. The scalar
+`spatial.analytical_domain_status` setting was removed. Schema v2 adds stable
+`id` and `purpose` fields to `spatial.map_extent`, introduces
+`spatial.modeled_whale_support`, and introduces the structured
+`spatial.analytical_domain` table with its accepted identity, qualification,
+distance basis, outside-cell treatment, and limitations. The deterministic
+default-configuration SHA-256 is
+`897f538854370c8f8ae2ff4f0e20ccad591f4ab8987152040d260567fd7d4caf`.
 
 ## Verify one author-supplied AIS delivery
 
