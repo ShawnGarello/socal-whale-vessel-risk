@@ -64,6 +64,10 @@ def _delivery_args(source: Path, intake: Path) -> list[str]:
         "2024-07-01",
         "--requested-end",
         "2024-07-03",
+        "--memory-limit",
+        "64MB",
+        "--temp-directory",
+        str(intake.parent / "duckdb-temp"),
     ]
 
 
@@ -104,6 +108,8 @@ def test_prepare_status_and_run_cli_paths(
     assert main(["status", "--intake-dir", str(intake)]) == 0
     status = json.loads(capsys.readouterr().out)
     assert status["delivery_id"] == prepared["delivery_id"]
+    assert status["contract"] == "accessais_period_delivery_v2"
+    assert status["schema_version"] == 2
     assert status["observational_completeness"]["status"] == "unverified"
 
     assert (
@@ -169,6 +175,10 @@ def test_shared_cleaned_root_refuses_conflicting_overlap_without_replacement(
             "2024-07-01",
             "--requested-end",
             "2024-07-01",
+            "--memory-limit",
+            "64MB",
+            "--temp-directory",
+            str(interim / "duckdb-temp"),
             "--cleaned-root",
             str(cleaned_root),
             "--period-manifest",
@@ -220,6 +230,10 @@ def test_run_records_independently_produced_cleaner_conflict_with_exit_four(
             "2024-07-01",
             "--requested-end",
             "2024-07-01",
+            "--memory-limit",
+            "64MB",
+            "--temp-directory",
+            str(interim / "duckdb-temp"),
             "--cleaned-root",
             str(interim / "cleaned" / name),
             "--period-manifest",

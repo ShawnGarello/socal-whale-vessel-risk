@@ -154,7 +154,7 @@ processing has not been shown safe.
 
 ### Observed through the bounded period-intake foundation
 
-The implemented `accessais_period_delivery_v1` boundary now accepts one
+The implemented `accessais_period_delivery_v2` boundary now accepts one
 explicit author-supplied multi-date AccessAIS direct CSV or safe ZIP and exact
 requested start/end dates. It reuses the existing byte-content detection,
 archive member-safety, unambiguous-CSV, CRC, and exact-header boundary. It does
@@ -167,9 +167,19 @@ partitioned by parsed UTC date even when source dates are noncontiguous or out
 of row order. The delivery manifest separately counts malformed/unassignable
 timestamps and valid out-of-request rows, records rows by every observed valid
 date, and requires source-row conservation before atomically publishing
-deterministic daily slices under ignored `data/interim/`. Identical retries are
+staged date partitions under ignored `data/interim/`. DuckDB then sorts parsed
+rows by all 17 fields under an explicit memory limit and isolated ignored spill
+directory, preserves duplicate multiplicity, and emits canonical UTF-8/LF CSV
+with stable quoting. The daily content identity and artifact SHA-256 are
+independent of source order while the immutable whole-delivery byte identity
+remains separate. Identical retries are
 reused; a different delivery or requested range records a conflict without
 replacing established identity or slices.
+
+Version 1 delivery manifests remain explicitly recognizable and read-only
+valid. Version 2 preparation refuses an existing Version 1 intake directory;
+the changed meaning is not silently assigned to
+`accessais_period_delivery_v1`.
 
 The ordered `run` path invokes the existing one-date cleaner sequentially and
 records each successful bundle immediately through

@@ -240,7 +240,7 @@ memory controls, or another measured design resolves it.
 
 ### Author-supplied multi-date AccessAIS intake
 
-The implemented `accessais_period_delivery_v1` boundary accepts one explicit
+The implemented `accessais_period_delivery_v2` boundary accepts one explicit
 author-supplied direct CSV or safe ZIP and exact requested start/end dates. It
 does not submit an AccessAIS order, automate email, persist an email address or
 cookie, or retain an expiring/tokenized URL. The supplied delivery remains
@@ -265,8 +265,16 @@ slice dates and reported present requested dates, and per-date equality between
 each slice and `rows_by_utc_date`; matching totals alone do not pass. Input dates
 need not be contiguous in source row order.
 
-Daily slices use the exact published header, contain one valid UTC date, live
-under ignored `data/interim/`, and carry stable path-independent identities.
+Daily cleaner inputs use the exact published header, contain one valid UTC
+date, live under ignored `data/interim/`, and carry stable path-independent
+identities. After streaming partitioning, DuckDB sorts parsed rows by all 17
+fields under a required explicit memory limit and isolated spill directory.
+Duplicate multiplicity is preserved, and UTF-8, LF record endings, and stable
+CSV quoting normalize source ordering, quoting, and record endings. The
+canonical daily-content identity and artifact SHA-256 are separate from the
+immutable whole-delivery byte size, SHA-256, and delivery ID. Version 1 intake
+manifests remain read-only valid, while Version 2 refuses to publish into a
+Version 1 intake directory.
 The intake bundle is published by atomic directory rename. An identical retry
 revalidates and reuses it. Different source bytes or requested dates are
 recorded as a conflict attempt without replacing established identity or

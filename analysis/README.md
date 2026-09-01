@@ -177,17 +177,19 @@ supplied file remains read-only and may be either direct CSV or ZIP when the
 existing content-detection, safe-member, unambiguous-CSV, and ZIP CRC rules
 pass.
 
-Prepare deterministic one-date interim CSVs without cleaning them:
+Prepare deterministic one-date interim CSVs without cleaning them. Both
+resource arguments are required: DuckDB sorts under the explicit memory limit
+and uses a unique spill directory below the supplied ignored interim parent.
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill [--source-content-length <independently-retained-byte-count>]
 ```
 
 Run the ordered resumable path through the existing one-date cleaner and
 `multiday_cleaned_ais_input_v1` manifest:
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
 ```
 
 Validate an established intake bundle and report its current status:
@@ -201,7 +203,7 @@ period is ready, `2` for a refused input/destination/contract, `3` for a
 successful run whose period remains not ready, and `4` after a delivery or
 cleaner-identity conflict is recorded without replacement.
 
-The versioned `accessais_period_delivery_v1` manifest records source size and
+The versioned `accessais_period_delivery_v2` manifest records source size and
 SHA-256; content type detected from bytes; archive/member/CRC evidence; the
 exact published header; requested start/end dates; every observed valid UTC
 date and its row count; missing requested dates; valid out-of-request rows; and
@@ -213,19 +215,30 @@ non-boolean integer row counts, requires slice dates to equal the reported
 present requested dates, and binds each slice row count to the same date in
 `rows_by_utc_date`; conserving only the overall total is insufficient.
 
-Partitioning is a standard-library streaming scan. It holds one 17-field row at
-a time and keeps at most eight daily writers open; it does not load the
-delivery into Python, Pandas, Polars, or PyArrow. Source order is retained
-within each date, so noncontiguous and unsorted date rows are supported. Every
-daily CSV carries the exact header, contains only one valid UTC date, and has a
-path-independent artifact identity plus byte size and SHA-256 linked to the
-delivery identity. The complete intake directory is first built at a unique
+Partitioning is a standard-library streaming scan. It holds one parsed
+17-field row at a time and keeps at most eight date-staging writers open; it
+does not load the delivery into Python, Pandas, Polars, or PyArrow.
+Noncontiguous and unsorted date rows are supported. DuckDB then sorts each
+date's parsed rows lexicographically by all 17 fields under the explicit memory
+limit and isolated spill directory. Duplicate multiplicity is preserved.
+Every canonical daily CSV has the exact unquoted published header, UTF-8
+encoding, LF record endings, and stable all-field quoting. Its content identity
+and artifact SHA-256 are independent of source row order and delivery identity.
+The manifest separately preserves the immutable whole-delivery byte size,
+SHA-256, and delivery ID, and its generated-artifact lineage maps that source
+identity to the canonical daily identities. The complete intake directory is
+first built at a unique
 temporary path and published by directory rename. Existing arbitrary output is
 refused; an identical retry revalidates and reuses the bundle; different bytes
 or requested dates append a conflict attempt without replacing established
 slices or identity. Manifest validation requires every slice path to be exactly
 `daily/<UTC-date>.csv`; absolute paths, parent traversal, backslashes, alternate
 spellings, and paths escaping the intake directory are refused.
+
+Version 1 manifests remain explicitly recognizable and read-only valid through
+`status`. A Version 2 prepare/run refuses an established
+`accessais_period_delivery_v1` intake directory and requires a fresh directory;
+the two contracts are never silently mixed.
 
 `run` cleans slices sequentially and records each successful cleaner bundle
 immediately through the existing period-manifest validator. On resume, a date

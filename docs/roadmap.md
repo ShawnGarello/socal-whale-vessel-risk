@@ -231,12 +231,18 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   unverified because no HTTP length or object validator was retained;
   observational completeness and the full analytical-period retrieval also
   remain unverified.
-- A separate `accessais_period_delivery_v1` boundary now accepts one explicit
+- A versioned `accessais_period_delivery_v2` boundary now accepts one explicit
   author-supplied multi-date AccessAIS direct CSV or safe ZIP. It reuses the
   content-based and archive-safety checks, streams without materializing the
   delivery in Python, accounts for every valid, malformed/unassignable, and
-  out-of-request timestamp row, and atomically publishes deterministic
-  exact-date cleaner inputs. Manifest validation binds every slice to exactly
+  out-of-request timestamp row, and atomically publishes canonical exact-date
+  cleaner inputs. DuckDB sorts the parsed 17-field rows by every field under an
+  explicit memory limit and isolated ignored spill directory, while preserving
+  duplicate multiplicity. Stable UTF-8/LF CSV serialization makes daily content
+  identity independent of source order, quoting, and record endings. Immutable
+  whole-delivery identity remains separate. Version 1 manifests remain
+  recognizable and read-only valid, and Version 2 refuses an established
+  Version 1 intake directory. Manifest validation binds every slice to exactly
   `daily/<UTC-date>.csv`; alternate spellings, traversal, and paths escaping the
   intake are refused. Row counts must be non-boolean integers, slice dates must
   equal the reported present requested dates, and each slice count must equal
@@ -376,7 +382,7 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 323 passing tests using temporary
+- The combined self-contained suite has 329 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
