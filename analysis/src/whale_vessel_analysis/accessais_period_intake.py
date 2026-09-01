@@ -21,6 +21,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import IO, Final, Literal, TextIO, cast
 
+import duckdb
+
 from whale_vessel_analysis.ais import (
     AIS_PUBLISHED_HEADER,
     AISSchemaError,
@@ -48,12 +50,14 @@ from whale_vessel_analysis.multiday_ais import (
     validate_manifest_destination,
 )
 
-ACCESSAIS_PERIOD_DELIVERY_CONTRACT: Final = "accessais_period_delivery_v1"
-ACCESSAIS_PERIOD_DELIVERY_SCHEMA_VERSION: Final = 1
-ACCESSAIS_PERIOD_DELIVERY_PROCESSING_VERSION: Final = "1.0.0"
+ACCESSAIS_PERIOD_DELIVERY_V1_CONTRACT: Final = "accessais_period_delivery_v1"
+ACCESSAIS_PERIOD_DELIVERY_CONTRACT: Final = "accessais_period_delivery_v2"
+ACCESSAIS_PERIOD_DELIVERY_SCHEMA_VERSION: Final = 2
+ACCESSAIS_PERIOD_DELIVERY_PROCESSING_VERSION: Final = "2.0.1"
 DELIVERY_MANIFEST_FILENAME: Final = "delivery-manifest.json"
 DAILY_DIRECTORY_NAME: Final = "daily"
 MAX_OPEN_DAILY_FILES: Final = 8
+STAGING_DIRECTORY_NAME: Final = "staging"
 _TIMESTAMP_FORMAT: Final = "%Y-%m-%dT%H:%M:%S"
 _PROJECT_ROOT: Final = Path(__file__).resolve().parents[3]
 _PROJECT_RAW_ROOT: Final = (_PROJECT_ROOT / "data" / "raw").resolve()
@@ -107,6 +111,30 @@ class RequestedPeriod:
 
 
 @dataclass(frozen=True, slots=True)
+class CanonicalizationResources:
+    """Explicit bounded DuckDB resources for canonical daily sorting."""
+
+    memory_limit: str
+    temporary_directory: Path
+
+    def validate(self) -> CanonicalizationResources:
+        import re
+
+        if (
+            re.fullmatch(r"[1-9][0-9]*(?:\.[0-9]+)?(?:KB|MB|GB|TB)", self.memory_limit)
+            is None
+        ):
+            raise AccessAISPeriodIntakeError(
+                "canonicalization memory limit must be a positive size with a "
+                "KB, MB, GB, or TB unit"
+            )
+        temporary = validate_intake_directory(
+            self.temporary_directory, "canonicalization temporary directory"
+        )
+        return CanonicalizationResources(self.memory_limit, temporary)
+
+
+@dataclass(frozen=True, slots=True)
 class DailySlice:
     """Stable identity and lineage for one generated one-date CSV."""
 
@@ -122,9 +150,14 @@ class DailySlice:
             "utc_date": self.utc_date,
             "relative_path": self.relative_path,
             "row_count": self.row_count,
-            "byte_size": self.byte_size,
-            "sha256": self.sha256,
-            "artifact_id": self.artifact_id,
+            "canonical_content_identity": self.artifact_id,
+            "canonical_artifact": {
+                "byte_size": self.byte_size,
+                "sha256": self.sha256,
+                "encoding": "UTF-8",
+                "record_line_ending": "LF",
+                "serialization": "all parsed fields CSV-quoted with RFC 4180 escaping",
+            },
             "header": list(AIS_PUBLISHED_HEADER),
             "observed_valid_utc_date_count": 1,
         }
@@ -216,7 +249,18 @@ def _delivery_id(source_sha256: str, requested: RequestedPeriod) -> str:
     return "accessais-period-" + digest[:24]
 
 
-def _slice_id(delivery_id: str, utc_date: str, sha256: str, row_count: int) -> str:
+def _v1_delivery_id(source_sha256: str, requested: RequestedPeriod) -> str:
+    material = {
+        "contract": ACCESSAIS_PERIOD_DELIVERY_V1_CONTRACT,
+        "processing_version": "1.0.0",
+        "source_sha256": source_sha256,
+        "requested_period": requested.to_dict(),
+    }
+    digest = hashlib.sha256(canonical_json(material).encode("utf-8")).hexdigest()
+    return "accessais-period-" + digest[:24]
+
+
+def _v1_slice_id(delivery_id: str, utc_date: str, sha256: str, row_count: int) -> str:
     material = {
         "delivery_id": delivery_id,
         "utc_date": utc_date,
@@ -225,6 +269,17 @@ def _slice_id(delivery_id: str, utc_date: str, sha256: str, row_count: int) -> s
     }
     digest = hashlib.sha256(canonical_json(material).encode("utf-8")).hexdigest()
     return "accessais-day-" + digest[:24]
+
+
+def _slice_id(utc_date: str, sha256: str, row_count: int) -> str:
+    material = {
+        "contract": "accessais_canonical_daily_content_v1",
+        "utc_date": utc_date,
+        "canonical_artifact_sha256": sha256,
+        "row_count": row_count,
+    }
+    digest = hashlib.sha256(canonical_json(material).encode("utf-8")).hexdigest()
+    return "accessais-day-content-" + digest[:24]
 
 
 def _is_under_data_raw(path: Path) -> bool:
@@ -252,6 +307,28 @@ def _paths_overlap(first: Path, second: Path) -> bool:
     return (
         first == second or first.is_relative_to(second) or second.is_relative_to(first)
     )
+
+
+def _validated_canonicalization_resources(
+    resources: CanonicalizationResources | None,
+    intake_directory: Path,
+    *other_managed_destinations: tuple[str, Path],
+) -> CanonicalizationResources:
+    """Resolve resources and reject spill overlap before creating any output."""
+    candidate = resources or CanonicalizationResources(
+        "512MB", intake_directory.parent / ".accessais-canonical-duckdb"
+    )
+    validated = candidate.validate()
+    managed_destinations = (
+        ("intake directory", intake_directory),
+        *other_managed_destinations,
+    )
+    for label, destination in managed_destinations:
+        if _paths_overlap(validated.temporary_directory, destination):
+            raise AccessAISPeriodIntakeError(
+                f"canonicalization temporary directory and {label} must be disjoint"
+            )
+    return validated
 
 
 def _validate_orchestration_destinations(
@@ -389,7 +466,6 @@ def _partition_csv_stream(
 def _daily_slices(
     temporary: Path,
     counts: PartitionCounts,
-    delivery_id: str,
 ) -> list[DailySlice]:
     slices: list[DailySlice] = []
     daily_directory = temporary / DAILY_DIRECTORY_NAME
@@ -405,10 +481,98 @@ def _daily_slices(
                 row_count=row_count,
                 byte_size=path.stat().st_size,
                 sha256=sha256,
-                artifact_id=_slice_id(delivery_id, utc_date, sha256, row_count),
+                artifact_id=_slice_id(utc_date, sha256, row_count),
             )
         )
     return slices
+
+
+def _sql_string(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
+def _quoted_identifier(value: str) -> str:
+    return '"' + value.replace('"', '""') + '"'
+
+
+def _canonicalize_daily_files(
+    temporary: Path,
+    counts: PartitionCounts,
+    resources: CanonicalizationResources,
+) -> dict[str, object]:
+    """Sort parsed fields out of core and serialize stable canonical daily CSVs."""
+    validated = resources.validate()
+    validated.temporary_directory.mkdir(parents=True, exist_ok=True)
+    spill_directory = Path(
+        tempfile.mkdtemp(
+            prefix=".accessais-canonical-spill-",
+            dir=validated.temporary_directory,
+        )
+    )
+    staging_directory = temporary / STAGING_DIRECTORY_NAME
+    daily_directory = temporary / DAILY_DIRECTORY_NAME
+    columns = ", ".join(
+        f"{_sql_string(name)}: 'VARCHAR'" for name in AIS_PUBLISHED_HEADER
+    )
+    normalized_columns = ", ".join(
+        f"COALESCE({_quoted_identifier(name)}, '') AS {_quoted_identifier(name)}"
+        for name in AIS_PUBLISHED_HEADER
+    )
+    order = ", ".join(
+        f"COALESCE({_quoted_identifier(name)}, '')" for name in AIS_PUBLISHED_HEADER
+    )
+    try:
+        with duckdb.connect() as connection:
+            connection.execute(
+                f"SET memory_limit = {_sql_string(validated.memory_limit)}"
+            )
+            connection.execute(
+                f"SET temp_directory = {_sql_string(str(spill_directory))}"
+            )
+            connection.execute("SET threads = 1")
+            for utc_date in sorted(counts.rows_by_date):
+                staged = staging_directory / f"{utc_date}.csv"
+                if not staged.is_file():
+                    continue
+                data_output = temporary / f".{utc_date}.canonical-data.csv"
+                connection.execute(
+                    "CREATE OR REPLACE TEMP TABLE canonical_rows AS "
+                    f"SELECT {normalized_columns} FROM "
+                    f"read_csv({_sql_string(str(staged))}, "
+                    f"header = true, auto_detect = false, columns = {{{columns}}}, "
+                    "strict_mode = true)"
+                )
+                connection.execute(
+                    f"COPY (SELECT * FROM canonical_rows ORDER BY {order}) "
+                    f"TO {_sql_string(str(data_output))} "
+                    "(FORMAT CSV, HEADER false, FORCE_QUOTE *)"
+                )
+                destination = daily_directory / f"{utc_date}.csv"
+                with destination.open("wb") as output:
+                    output.write(
+                        (",".join(AIS_PUBLISHED_HEADER) + "\n").encode("utf-8")
+                    )
+                    with data_output.open("rb") as source:
+                        shutil.copyfileobj(source, output)
+                    output.flush()
+                    os.fsync(output.fileno())
+                data_output.unlink()
+    except duckdb.Error as exc:
+        raise AccessAISPeriodIntakeError(
+            f"could not canonicalize daily AccessAIS content with DuckDB: {exc}"
+        ) from exc
+    finally:
+        shutil.rmtree(spill_directory, ignore_errors=True)
+    shutil.rmtree(staging_directory)
+    return {
+        "engine": "DuckDB",
+        "memory_limit": validated.memory_limit,
+        "threads": 1,
+        "isolated_spill_directory": True,
+        "spill_directory_removed_after_run": not spill_directory.exists(),
+        "sort_fields": list(AIS_PUBLISHED_HEADER),
+        "duplicate_multiplicity": "preserved",
+    }
 
 
 def _transfer_state(
@@ -469,6 +633,7 @@ def _build_manifest(
     crc_valid: bool | None,
     counts: PartitionCounts,
     slices: Sequence[DailySlice],
+    canonicalization: Mapping[str, object],
     attempted_at: datetime,
 ) -> dict[str, object]:
     delivery_id = _delivery_id(source_sha256, requested)
@@ -542,11 +707,19 @@ def _build_manifest(
         },
         "daily_slices": [item.to_dict() for item in slices],
         "generated_artifact_lineage": {
-            "source_sha256": source_sha256,
+            "source_delivery_identity": {
+                "byte_size": source_byte_size,
+                "sha256": source_sha256,
+                "delivery_id": delivery_id,
+            },
             "processing_version": ACCESSAIS_PERIOD_DELIVERY_PROCESSING_VERSION,
             "partition_rule": "strict parsed UTC date within requested inclusive dates",
-            "row_order": "source order retained within each UTC-date slice",
+            "canonical_content_rule": (
+                "parsed 17-field rows sorted lexicographically by every field; "
+                "duplicate multiplicity preserved"
+            ),
             "header_rule": "exact published header written to every daily slice",
+            "canonicalization": dict(canonicalization),
         },
         "preparation_status": preparation_status,
         "independent_transfer_completeness": _transfer_state(
@@ -588,8 +761,11 @@ def _manifest_path(directory: Path) -> Path:
     return directory / DELIVERY_MANIFEST_FILENAME
 
 
-def _validate_slice_content(path: Path, utc_date: str, expected_rows: int) -> None:
+def _validate_slice_content(
+    path: Path, utc_date: str, expected_rows: int, *, canonical: bool
+) -> None:
     row_count = 0
+    previous_row: tuple[str, ...] | None = None
     timestamp_index = AIS_PUBLISHED_HEADER.index("BaseDateTime")
     try:
         with path.open("r", encoding="utf-8", newline="") as source:
@@ -598,6 +774,16 @@ def _validate_slice_content(path: Path, utc_date: str, expected_rows: int) -> No
             if header is None:
                 raise AccessAISPeriodIntakeError(f"daily slice {utc_date} is empty")
             validate_header(header)
+            if canonical:
+                expected_header = (",".join(AIS_PUBLISHED_HEADER) + "\n").encode(
+                    "utf-8"
+                )
+                with path.open("rb") as binary_source:
+                    if binary_source.read(len(expected_header)) != expected_header:
+                        raise AccessAISPeriodIntakeError(
+                            f"daily slice {utc_date} does not use the exact canonical "
+                            "UTF-8/LF header bytes"
+                        )
             for row_number, row in enumerate(reader, start=2):
                 row_count += 1
                 if len(row) != len(AIS_PUBLISHED_HEADER):
@@ -617,6 +803,12 @@ def _validate_slice_content(path: Path, utc_date: str, expected_rows: int) -> No
                     raise AccessAISPeriodIntakeError(
                         f"daily slice {utc_date} contains another valid UTC date"
                     )
+                row_key = tuple(row)
+                if canonical and previous_row is not None and row_key < previous_row:
+                    raise AccessAISPeriodIntakeError(
+                        f"daily slice {utc_date} is not sorted by all published fields"
+                    )
+                previous_row = row_key
     except (OSError, UnicodeDecodeError, csv.Error, AISSchemaError) as exc:
         raise AccessAISPeriodIntakeError(
             f"daily slice {utc_date} is not compatible exact-header UTF-8 CSV"
@@ -779,13 +971,20 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
         raise AccessAISPeriodIntakeError(
             "delivery manifest is not readable JSON"
         ) from exc
-    if not isinstance(payload, dict) or payload.get("contract") != (
-        ACCESSAIS_PERIOD_DELIVERY_CONTRACT
-    ):
+    if not isinstance(payload, dict) or payload.get("contract") not in {
+        ACCESSAIS_PERIOD_DELIVERY_V1_CONTRACT,
+        ACCESSAIS_PERIOD_DELIVERY_CONTRACT,
+    }:
         raise AccessAISPeriodIntakeError(
             "existing intake destination has an incompatible contract"
         )
-    if payload.get("schema_version") != ACCESSAIS_PERIOD_DELIVERY_SCHEMA_VERSION:
+    contract = cast(str, payload["contract"])
+    expected_schema = (
+        1
+        if contract == ACCESSAIS_PERIOD_DELIVERY_V1_CONTRACT
+        else ACCESSAIS_PERIOD_DELIVERY_SCHEMA_VERSION
+    )
+    if payload.get("schema_version") != expected_schema:
         raise AccessAISPeriodIntakeError("delivery manifest schema version is invalid")
     source = payload.get("source")
     request = payload.get("requested_period")
@@ -796,7 +995,11 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
             date.fromisoformat(cast(str, request["start_utc_date"])),
             date.fromisoformat(cast(str, request["end_utc_date"])),
         )
-        expected_id = _delivery_id(cast(str, source["sha256"]), requested)
+        expected_id = (
+            _v1_delivery_id(cast(str, source["sha256"]), requested)
+            if contract == ACCESSAIS_PERIOD_DELIVERY_V1_CONTRACT
+            else _delivery_id(cast(str, source["sha256"]), requested)
+        )
     except (KeyError, TypeError, ValueError) as exc:
         raise AccessAISPeriodIntakeError(
             "delivery identity fields are invalid"
@@ -807,6 +1010,39 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
         payload, requested
     )
     _validate_completeness_states(payload)
+    if contract == ACCESSAIS_PERIOD_DELIVERY_CONTRACT:
+        if payload.get("processing_version") != (
+            ACCESSAIS_PERIOD_DELIVERY_PROCESSING_VERSION
+        ):
+            raise AccessAISPeriodIntakeError(
+                "Version 2 delivery processing version is invalid"
+            )
+        lineage = payload.get("generated_artifact_lineage")
+        if not isinstance(lineage, dict):
+            raise AccessAISPeriodIntakeError(
+                "Version 2 generated-artifact lineage is invalid"
+            )
+        source_identity = lineage.get("source_delivery_identity")
+        canonicalization = lineage.get("canonicalization")
+        if not (
+            isinstance(source_identity, dict)
+            and source_identity
+            == {
+                "byte_size": source.get("byte_size"),
+                "sha256": source.get("sha256"),
+                "delivery_id": expected_id,
+            }
+            and isinstance(canonicalization, dict)
+            and canonicalization.get("engine") == "DuckDB"
+            and canonicalization.get("threads") == 1
+            and canonicalization.get("isolated_spill_directory") is True
+            and canonicalization.get("spill_directory_removed_after_run") is True
+            and canonicalization.get("sort_fields") == list(AIS_PUBLISHED_HEADER)
+            and canonicalization.get("duplicate_multiplicity") == "preserved"
+        ):
+            raise AccessAISPeriodIntakeError(
+                "Version 2 canonical lineage is inconsistent with its source"
+            )
     daily_directory = resolved / DAILY_DIRECTORY_NAME
     if not daily_directory.is_dir():
         raise AccessAISPeriodIntakeError("delivery daily slice directory is missing")
@@ -854,7 +1090,30 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
             raise AccessAISPeriodIntakeError(
                 f"daily slice {utc_date} escapes the intake directory"
             )
-        if not path.is_file() or sha256_file(path) != raw_slice.get("sha256"):
+        canonical_artifact = raw_slice.get("canonical_artifact")
+        if contract == ACCESSAIS_PERIOD_DELIVERY_V1_CONTRACT:
+            recorded_sha256 = raw_slice.get("sha256")
+            recorded_byte_size = raw_slice.get("byte_size")
+            recorded_artifact_id = raw_slice.get("artifact_id")
+        elif isinstance(canonical_artifact, dict):
+            recorded_sha256 = canonical_artifact.get("sha256")
+            recorded_byte_size = canonical_artifact.get("byte_size")
+            recorded_artifact_id = raw_slice.get("canonical_content_identity")
+            if canonical_artifact.get("encoding") != "UTF-8" or (
+                canonical_artifact.get("record_line_ending") != "LF"
+            ):
+                raise AccessAISPeriodIntakeError(
+                    f"daily slice {utc_date} canonical serialization is invalid"
+                )
+        else:
+            raise AccessAISPeriodIntakeError(
+                f"daily slice {utc_date} canonical_artifact is invalid"
+            )
+        if not isinstance(recorded_sha256, str):
+            raise AccessAISPeriodIntakeError(
+                f"daily slice {utc_date} artifact SHA-256 is invalid"
+            )
+        if not path.is_file() or sha256_file(path) != recorded_sha256:
             raise AccessAISPeriodIntakeError(
                 f"daily slice {utc_date} is missing or does not match its checksum"
             )
@@ -865,7 +1124,7 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
             raise AccessAISPeriodIntakeError(
                 f"daily slice {utc_date} row_count does not match rows_by_utc_date"
             )
-        byte_size_value = raw_slice.get("byte_size")
+        byte_size_value = recorded_byte_size
         if isinstance(byte_size_value, bool) or not isinstance(byte_size_value, int):
             raise AccessAISPeriodIntakeError(
                 f"daily slice {utc_date} byte_size must be a non-boolean integer"
@@ -875,14 +1134,21 @@ def load_delivery_manifest(directory: Path) -> dict[str, object]:
             raise AccessAISPeriodIntakeError(
                 f"daily slice {utc_date} byte size does not match its manifest"
             )
-        expected_artifact_id = _slice_id(
-            expected_id, utc_date, cast(str, raw_slice["sha256"]), row_count
+        expected_artifact_id = (
+            _v1_slice_id(expected_id, utc_date, recorded_sha256, row_count)
+            if contract == ACCESSAIS_PERIOD_DELIVERY_V1_CONTRACT
+            else _slice_id(utc_date, recorded_sha256, row_count)
         )
-        if raw_slice.get("artifact_id") != expected_artifact_id:
+        if recorded_artifact_id != expected_artifact_id:
             raise AccessAISPeriodIntakeError(
                 f"daily slice {utc_date} artifact_id does not match its identity"
             )
-        _validate_slice_content(path, utc_date, row_count)
+        _validate_slice_content(
+            path,
+            utc_date,
+            row_count,
+            canonical=contract == ACCESSAIS_PERIOD_DELIVERY_CONTRACT,
+        )
         assigned_slice_rows += row_count
     actual_names = {path.name for path in daily_directory.iterdir() if path.is_file()}
     if actual_names != expected_names:
@@ -936,6 +1202,12 @@ def _existing_attempt(
     attempted_at: datetime,
 ) -> PreparationResult:
     manifest = load_delivery_manifest(directory)
+    if manifest.get("contract") == ACCESSAIS_PERIOD_DELIVERY_V1_CONTRACT:
+        raise AccessAISPeriodIntakeError(
+            "existing intake directory uses read-only "
+            "accessais_period_delivery_v1; Version 2 output requires a fresh "
+            "intake directory"
+        )
     existing_id = cast(str, manifest["delivery_id"])
     candidate_id = _delivery_id(source_sha256, requested)
     attempts = cast(list[dict[str, object]], manifest["attempt_history"])
@@ -977,6 +1249,7 @@ def prepare_accessais_delivery(
     source_path: Path,
     output_directory: Path,
     requested: RequestedPeriod,
+    resources: CanonicalizationResources | None = None,
     *,
     source_content_length: int | None = None,
     clock: Callable[[], datetime] = _utc_now,
@@ -984,6 +1257,7 @@ def prepare_accessais_delivery(
     """Partition one immutable AccessAIS CSV/ZIP into atomic one-date slices."""
     source_path = source_path.resolve()
     output_directory = validate_intake_directory(output_directory, "intake directory")
+    resources = _validated_canonicalization_resources(resources, output_directory)
     source_byte_size, source_sha256, source_mtime_ns = fingerprint_regular_file(
         source_path
     )
@@ -1007,14 +1281,16 @@ def prepare_accessais_delivery(
             prefix=f".{output_directory.name}.temporary-", dir=output_directory.parent
         )
     )
+    staging_directory = temporary / STAGING_DIRECTORY_NAME
     daily_directory = temporary / DAILY_DIRECTORY_NAME
+    staging_directory.mkdir()
     daily_directory.mkdir()
     try:
         try:
             container, counts = inspect_ais_container(
                 source_path,
                 lambda stream: _partition_csv_stream(
-                    stream, requested, daily_directory
+                    stream, requested, staging_directory
                 ),
             )
         except AISRetrievalError as exc:
@@ -1028,8 +1304,8 @@ def prepare_accessais_delivery(
             raise AccessAISPeriodIntakeError(
                 "supplied delivery changed during read-only preparation"
             )
-        delivery_id = _delivery_id(source_sha256, requested)
-        slices = _daily_slices(temporary, counts, delivery_id)
+        canonicalization = _canonicalize_daily_files(temporary, counts, resources)
+        slices = _daily_slices(temporary, counts)
         if sum(item.row_count for item in slices) != counts.in_request_rows:
             raise AccessAISPeriodIntakeError(
                 "daily slice row counts do not conserve assigned delivery rows"
@@ -1046,6 +1322,7 @@ def prepare_accessais_delivery(
             crc_valid=container.crc_valid,
             counts=counts,
             slices=slices,
+            canonicalization=canonicalization,
             attempted_at=attempted_at,
         )
         _write_json(temporary / DELIVERY_MANIFEST_FILENAME, manifest)
@@ -1070,7 +1347,10 @@ def _daily_slice_records(
         (
             cast(str, item["utc_date"]),
             directory / DAILY_DIRECTORY_NAME / f"{cast(str, item['utc_date'])}.csv",
-            cast(str, item["sha256"]),
+            cast(
+                str,
+                cast(dict[str, object], item["canonical_artifact"])["sha256"],
+            ),
         )
         for item in sorted(slices, key=lambda item: cast(str, item["utc_date"]))
     )
@@ -1125,6 +1405,7 @@ def orchestrate_accessais_delivery(
     period_manifest_path: Path,
     requested: RequestedPeriod,
     config: ProcessingConfig,
+    resources: CanonicalizationResources | None = None,
     *,
     source_content_length: int | None = None,
     clock: Callable[[], datetime] = _utc_now,
@@ -1138,10 +1419,17 @@ def orchestrate_accessais_delivery(
             intake_directory, cleaned_root, period_manifest_path
         )
     )
+    resources = _validated_canonicalization_resources(
+        resources,
+        intake_directory,
+        ("cleaned bundle root", cleaned_root),
+        ("period manifest", period_manifest_path),
+    )
     preparation = prepare_accessais_delivery(
         source_path,
         intake_directory,
         requested,
+        resources,
         source_content_length=source_content_length,
         clock=clock,
     )

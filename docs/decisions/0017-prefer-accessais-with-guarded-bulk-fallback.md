@@ -154,7 +154,7 @@ processing has not been shown safe.
 
 ### Observed through the bounded period-intake foundation
 
-The implemented `accessais_period_delivery_v1` boundary now accepts one
+The implemented `accessais_period_delivery_v2` boundary now accepts one
 explicit author-supplied multi-date AccessAIS direct CSV or safe ZIP and exact
 requested start/end dates. It reuses the existing byte-content detection,
 archive member-safety, unambiguous-CSV, CRC, and exact-header boundary. It does
@@ -167,9 +167,22 @@ partitioned by parsed UTC date even when source dates are noncontiguous or out
 of row order. The delivery manifest separately counts malformed/unassignable
 timestamps and valid out-of-request rows, records rows by every observed valid
 date, and requires source-row conservation before atomically publishing
-deterministic daily slices under ignored `data/interim/`. Identical retries are
+staged date partitions under ignored `data/interim/`. DuckDB then sorts parsed
+rows by all 17 fields under an explicit memory limit and isolated ignored spill
+directory, preserves duplicate multiplicity, and emits canonical UTF-8/LF CSV
+with stable quoting. Parsed blanks are normalized from DuckDB `NULL` to empty
+strings before sorting and export, and unsafe overlap between the spill parent
+and any managed run destination is refused before creating output. The daily
+content identity and artifact SHA-256 are
+independent of source order while the immutable whole-delivery byte identity
+remains separate. Identical retries are
 reused; a different delivery or requested range records a conflict without
 replacing established identity or slices.
+
+Version 1 delivery manifests remain explicitly recognizable and read-only
+valid. Version 2 preparation refuses an existing Version 1 intake directory;
+the changed meaning is not silently assigned to
+`accessais_period_delivery_v1`.
 
 The ordered `run` path invokes the existing one-date cleaner sequentially and
 records each successful bundle immediately through
@@ -201,6 +214,51 @@ and can miss a peak. Its method differs from the earlier approximately 1.59 GiB
 cleaner observation, so they are not directly comparable. This one direct-CSV
 date supplies no monthly or multi-date scaling evidence.
 
+### Observed in the real overlapping two-day delivery
+
+On 2026-09-01 the Version 2 intake first processed the old one-day delivery and
+then the separate author-supplied direct CSV
+`AIS_178822822548476721_896-1788228225861.csv` for 2024-07-15 through
+2024-07-16 over the same WGS 84 longitude −122 to −117 and latitude 32 to 35.
+The new delivery measured 115,791,285 bytes with SHA-256
+`a6c673f37ccd01d30067c400452275b13f8c5299200777384a513bc46d6842a0`.
+The author reported retrieval on 2026-08-31; the exact UTC retrieval timestamp
+was not retained and is not inferred from filesystem modification time. No
+independent HTTP `Content-Length`, `ETag`, or ZIP CRC was retained.
+
+Read-only inspection counted 1,135,408 rows: 582,419 on 15 July and 552,989 on
+16 July. It found no malformed timestamp or coordinate, no row outside the
+requested dates or bounds, timestamp bounds from `2024-07-15T00:00:00Z` through
+`2024-07-16T23:59:59Z`, longitude −121.99995 to −117.00026, and latitude
+32.00002 to 34.9999. Exact 17-field `EXCEPT ALL` comparisons in both directions
+confirmed that the old and new 15 July rows were the same multiset despite
+their different source order.
+
+The corrected processing version `2.0.1` fresh rerun normalized blank fields
+before sorting/export and made those two 15 July partitions byte-identical at
+79,299,592 bytes with SHA-256
+`bf5a46c6196cf8a51ebfd62907f085a093afa64e2d4474c71ab7f441e68cf5cd`
+and daily content ID `accessais-day-content-ae090a6e387fe79ec2f64c6e`.
+The second run therefore reused the established 15 July cleaner and cleaned
+16 July; that date's 75,095,691-byte canonical artifact has SHA-256
+`3727a12f607dfd4194159b34a291e59374660b95b3e59a45b3d349bb4bfaf49f`
+and content ID `accessais-day-content-065631b951a94d6c58165859`. The period ID
+`multiday-ais-ddf23ba501bc834dbe5a2656` ended with two compatible dates, 151
+missing dates, `not_ready` state, and both completeness states still
+`unverified`. An identical two-day retry reused both dates. Exit code `3` was
+confirmed as the documented incomplete-period outcome.
+
+The one-day, first two-day, and identical-retry runs respectively took
+12.1394198, 19.2814239, and 10.1271792 seconds. Their sampled process-tree RSS
+peaks were 1,593,458,688, 1,514,594,304, and 102,436,864 bytes. Measurement used
+a PowerShell stopwatch and 10 ms recursive `Win32_Process` sampling, summing
+live process working sets. Recursive pilot-root file-size sums measured
+138,796,812 bytes peak/81,137,722 bytes final for the one-day run; a
+270,186,694-byte peak increment/155,917,250-byte final increment for the first
+two-day run; and a 436-byte increment for the retry. Raw files were excluded;
+OS file caches were not cleared. Sampling can miss a peak. No result is
+extrapolated to a month or five months.
+
 ### Inferred
 
 - Five sequential monthly AccessAIS orders are the smallest simple partition
@@ -218,10 +276,9 @@ date supplies no monthly or multi-date scaling evidence.
 - Safe monthly or full-period processing. The measured one-day peak memory
   requires optimization, bounded date-sized processing, spilling or memory
   controls, or another measured design before execution.
-- A real multi-date AccessAIS delivery. Synthetic tests exercise unsorted dates,
-  row conservation, malformed and out-of-request timestamps, missing dates,
-  ZIP safety, conflicts, interruption and resume, but they are not a monthly
-  smoke run or transfer measurement.
+- Monthly-scale AccessAIS processing. The real two-day delivery exercises
+  unsorted/reordered overlap, row conservation, canonical reuse, and resume,
+  but it is not a monthly smoke run or transfer-completeness measurement.
 - No complete bulk daily archive has been downloaded, opened through its ZIP
   central directory, or checked through its CRC. NOAA publishes no checksum in
   the bulk index, so a locally computed SHA-256 would identify retrieved bytes
@@ -450,8 +507,9 @@ filename, and a one-date manifest entry. It:
 Route acceptance additionally requires independently supported transfer
 completeness and a measured processing design that makes the proposed monthly
 or full-period execution safe. Neither condition is satisfied here: source HTTP
-metadata was not retained, and the one-day run peaked near 1.59 GiB RSS. No
-monthly or full-period retrieval begins from this partially passed gate.
+metadata was not retained, and neither the earlier one-day result nor the later
+two-day pilot establishes monthly safety. No monthly or full-period retrieval
+begins from this partially passed gate.
 
 ## Consequences
 

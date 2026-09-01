@@ -16,9 +16,10 @@
 > verify and manifest one supplied AIS artifact and use bounded streaming to
 > partition one author-supplied multi-date AccessAIS CSV or safe ZIP into
 > deterministic daily cleaner inputs with resumable sequential period-manifest
-> recording. The backward-compatible one-day path was exercised with a real
-> direct CSV; a real multi-date delivery, network retrieval, and analytical-
-> period acquisition remain unfinished. Vessel aggregation, exposure analysis,
+> recording. The boundary was exercised with overlapping real one-day and
+> two-day direct CSV deliveries; reordered equivalent 15 July content was
+> reused and 16 July was added. Network retrieval and analytical-period
+> acquisition remain unfinished. Vessel aggregation, exposure analysis,
 > a final public layer representation, and deployment also remain unfinished.
 > See the [roadmap](roadmap.md) for milestone status.
 
@@ -138,9 +139,12 @@ the exact source header, and expected-date membership, and can bridge safe
 interim extraction to the existing cleaner without changing observational
 completeness. The period-intake boundary performs no network or AccessAIS order
 automation. It streams one supplied direct CSV or safe ZIP, accounts for every
-row, atomically publishes exact-date daily slices, validates their canonical
-manifest paths, and keeps transfer completeness, observational completeness,
-and 153-date period readiness separate. Its managed intake, cleaner-output, and
+row, then uses bounded DuckDB sorting to publish canonical exact-date daily
+inputs whose parsed-row multiset identity is independent of source order.
+Duplicate multiplicity is preserved. It validates canonical manifest paths and
+keeps immutable delivery identity, daily content identity, transfer
+completeness, observational completeness, and 153-date period readiness
+separate. Its managed intake, cleaner-output, and
 period-manifest paths cannot overlap: the two directory roots are disjoint, and
 the manifest cannot be inside either. The grid process accepts an explicit
 polygon mask, clips it to the projected map/context boundary, intersects the
@@ -431,12 +435,19 @@ project layers, and matching precomputed results.
   decision record before large binaries are added.
 - The AIS retrieval route remains a Proposed M3 decision. The local supplied-
   artifact verification boundary, bounded multi-date delivery intake, resumable
-  daily-cleaner orchestration, and one real bounded one-day compatibility
-  exercise are implemented. No real multi-date delivery has been exercised;
-  network transfer, independent transfer completeness, safe monthly scaling,
+  daily-cleaner orchestration, and an overlapping real one-day/two-day
+  compatibility exercise are implemented. Network transfer, independent
+  transfer completeness, safe monthly scaling,
   and analytical-period acquisition are not established. An entire national
   season is never staged locally; the detailed retrieval guard belongs to
   [data/README.md](../data/README.md).
+- AccessAIS daily cleaner compatibility uses the Version 2 canonical parsed-row
+  multiset identity and artifact checksum, not source delivery order. Whole-
+  delivery byte size and SHA-256 remain separate provenance. Version 1 intake
+  manifests remain read-only valid and cannot be silently reused as Version 2
+  output directories. Blank parsed fields are normalized to empty strings before
+  sorting/export, and spill parents must be disjoint from every managed intake,
+  cleaner, and period-manifest destination before output creation.
 - The multi-day cleaned-input relation scans daily Parquet partitions through
   DuckDB under an explicit memory limit and an explicit ignored spill directory,
   and streams ordered results rather than materializing the period in Python.

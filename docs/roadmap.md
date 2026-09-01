@@ -231,12 +231,18 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   unverified because no HTTP length or object validator was retained;
   observational completeness and the full analytical-period retrieval also
   remain unverified.
-- A separate `accessais_period_delivery_v1` boundary now accepts one explicit
+- A versioned `accessais_period_delivery_v2` boundary now accepts one explicit
   author-supplied multi-date AccessAIS direct CSV or safe ZIP. It reuses the
   content-based and archive-safety checks, streams without materializing the
   delivery in Python, accounts for every valid, malformed/unassignable, and
-  out-of-request timestamp row, and atomically publishes deterministic
-  exact-date cleaner inputs. Manifest validation binds every slice to exactly
+  out-of-request timestamp row, and atomically publishes canonical exact-date
+  cleaner inputs. DuckDB sorts the parsed 17-field rows by every field under an
+  explicit memory limit and isolated ignored spill directory, while preserving
+  duplicate multiplicity. Stable UTF-8/LF CSV serialization makes daily content
+  identity independent of source order, quoting, and record endings. Immutable
+  whole-delivery identity remains separate. Version 1 manifests remain
+  recognizable and read-only valid, and Version 2 refuses an established
+  Version 1 intake directory. Manifest validation binds every slice to exactly
   `daily/<UTC-date>.csv`; alternate spellings, traversal, and paths escaping the
   intake are refused. Row counts must be non-boolean integers, slice dates must
   equal the reported present requested dates, and each slice count must equal
@@ -356,6 +362,21 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   unchanged. A second invocation reused the delivery and skipped the compatible
   date. No new runtime or memory measurement was made. This is one-day
   regression evidence, not real multi-date evidence.
+- The real Version 2 pilot ran the immutable one-day delivery first, then the
+  separate 1,135,408-row 2024-07-15 through 2024-07-16 direct CSV through a
+  different intake directory against the same cleaned root and period manifest
+  on 2026-09-01. The two deliveries' 582,419-row 15 July multisets were equal
+  under exact 17-field `EXCEPT ALL` comparison despite different source order.
+  The corrected processing version `2.0.1` fresh rerun produced canonical daily
+  SHA-256
+  `bf5a46c6196cf8a51ebfd62907f085a093afa64e2d4474c71ab7f441e68cf5cd`,
+  so 15 July was reused; 16 July's 552,989 rows were cleaned and recorded. The
+  period ended with two compatible dates, 151 missing, and `not_ready` state.
+  An identical retry reused both dates. Transfer and observational completeness
+  remained `unverified`. Measured one-day/first-two-day/retry wall times were
+  12.1394198/19.2814239/10.1271792 seconds, with sampled process-tree RSS peaks
+  of 1,593,458,688/1,514,594,304/102,436,864 bytes. These bounded results are
+  not extrapolated to monthly or full-period execution.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -376,7 +397,7 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 323 passing tests using temporary
+- The combined self-contained suite has 333 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
@@ -555,9 +576,9 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   publication, and records source artifact checksums, candidate parameters,
   exclusions, counts, conservation, sanitized bounded-execution settings,
   software versions, and validation steps. Synthetic tests verify the candidate
-  processing boundary. No real multi-date delivery or real candidate vessel-
-  grid run was executed, so no parameter was accepted and no period-wide vessel
-  input was produced.
+  processing boundary. A real two-day delivery was exercised only at the intake
+  boundary; no real candidate vessel-grid run was executed, so no parameter was
+  accepted and no period-wide vessel input was produced.
 - The 2026-08-28 real read-only smoke run recorded the existing bounded
   2024-07-15 cleaner bundle and retrieval manifest without modifying either. It
   reported exactly one compatible date, 152 missing dates, `not_ready` period
@@ -579,15 +600,16 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
 
 - Network AIS transfer, range-resume, and analytical-period retrieval. The local
   supplied-artifact validation, bounded multi-date delivery intake, resumable
-  daily-cleaner orchestration, and one real direct-CSV compatibility exercise
-  are complete, but no real multi-date delivery has been exercised. Independent
-  transfer completeness, monthly/full-period memory safety, a guarded daily
-  bulk download, and the 153-date retrieval remain unverified or unexercised.
+  daily-cleaner orchestration, and overlapping real one-day/two-day canonical
+  compatibility exercise are complete. Independent transfer completeness,
+  monthly/full-period memory safety, a guarded daily bulk download, and the
+  153-date retrieval remain unverified or unexercised.
 - The final vessel-activity input proposed in ADR 0018. Candidate period segment
   construction, explicit filtering, exact grid allocation, per-cell vessel-
   kilometres, union-recomputed distinct counts, quality metadata, and lineage
-  are implemented and synthetically verified. No real multi-date delivery or
-  candidate grid has been processed. No production threshold was selected;
+  are implemented and synthetically verified. The real two-day delivery stopped
+  at the intake/cleaner boundary; no candidate grid has been processed. No
+  production threshold was selected;
   accepted maximum-gap and implied-speed rules, alternative edge support,
   vessel-length population treatment, period-wide stability, observational
   completeness, and final speed summaries remain unresolved. The implemented

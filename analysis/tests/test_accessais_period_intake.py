@@ -14,6 +14,7 @@ from whale_vessel_analysis import accessais_period_intake, multiday_ais
 from whale_vessel_analysis.accessais_period_intake import (
     AccessAISPeriodConflictError,
     AccessAISPeriodIntakeError,
+    CanonicalizationResources,
     RequestedPeriod,
     load_delivery_manifest,
     orchestrate_accessais_delivery,
@@ -265,6 +266,167 @@ def test_daily_identity_and_bytes_do_not_depend_on_input_path(
         ).read_bytes()
 
 
+def test_same_row_multiset_in_different_orders_is_canonical_and_reusable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    rows = [
+        _row("2024-07-01T00:02:00", mmsi="100000003"),
+        _row("2024-07-01T00:00:00", mmsi="100000001"),
+        _row("2024-07-01T00:01:00", mmsi="100000002"),
+    ]
+    first_source = tmp_path / "first.csv"
+    second_source = tmp_path / "second.csv"
+    _write_csv(first_source, rows)
+    _write_csv(second_source, list(reversed(rows)))
+
+    first = prepare_accessais_delivery(first_source, interim / "first", REQUESTED)
+    second = prepare_accessais_delivery(second_source, interim / "second", REQUESTED)
+    first_slice = first.manifest["daily_slices"][0]
+    second_slice = second.manifest["daily_slices"][0]
+
+    assert first.delivery_id != second.delivery_id
+    assert (
+        first_slice["canonical_content_identity"]
+        == second_slice["canonical_content_identity"]
+    )
+    assert first_slice["canonical_artifact"] == second_slice["canonical_artifact"]
+    assert (first.output_directory / "daily" / "2024-07-01.csv").read_bytes() == (
+        second.output_directory / "daily" / "2024-07-01.csv"
+    ).read_bytes()
+
+    period_manifest = interim / "period.json"
+    cleaned_root = interim / "cleaned"
+    config = load_default_config()
+    orchestrate_accessais_delivery(
+        first_source,
+        interim / "run-first",
+        cleaned_root,
+        period_manifest,
+        REQUESTED,
+        config,
+    )
+    reused = orchestrate_accessais_delivery(
+        second_source,
+        interim / "run-second",
+        cleaned_root,
+        period_manifest,
+        REQUESTED,
+        config,
+    )
+    assert reused.skipped_successful_dates == ("2024-07-01",)
+
+
+def test_duplicate_multiplicity_and_csv_source_format_normalize_deterministically(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    duplicate = _row("2024-07-01T00:00:00", mmsi="100000001")
+    other = _row("2024-07-01T00:01:00", mmsi="100000002")
+    first = tmp_path / "first.csv"
+    _write_csv(first, [duplicate, other, duplicate])
+
+    second = tmp_path / "second.csv"
+    with second.open("w", encoding="utf-8", newline="") as output:
+        output.write(",".join(AIS_PUBLISHED_HEADER) + "\r\n")
+        for row in [other, duplicate, duplicate]:
+            output.write(
+                ",".join(f'"{value.replace(chr(34), chr(34) * 2)}"' for value in row)
+                + "\r\n"
+            )
+
+    prepared_a = prepare_accessais_delivery(first, interim / "a", REQUESTED)
+    prepared_b = prepare_accessais_delivery(second, interim / "b", REQUESTED)
+    bytes_a = (prepared_a.output_directory / "daily" / "2024-07-01.csv").read_bytes()
+    bytes_b = (prepared_b.output_directory / "daily" / "2024-07-01.csv").read_bytes()
+
+    assert bytes_a == bytes_b
+    assert b"\r\n" not in bytes_a
+    assert _daily_rows(prepared_a.output_directory, "2024-07-01").count(duplicate) == 2
+
+
+def test_blank_later_field_sorts_and_serializes_as_empty_string(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    populated = _row("2024-07-01T00:00:00", mmsi="100000001")
+    blank = populated.copy()
+    blank[AIS_PUBLISHED_HEADER.index("IMO")] = ""
+    source = tmp_path / "blank-first-source.csv"
+    reversed_source = tmp_path / "blank-reversed-source.csv"
+    _write_csv(source, [populated, blank, blank])
+    _write_csv(reversed_source, [blank, blank, populated])
+
+    first = prepare_accessais_delivery(source, interim / "first", REQUESTED)
+    loaded = load_delivery_manifest(first.output_directory)
+    retry = prepare_accessais_delivery(source, interim / "first", REQUESTED)
+    reversed_result = prepare_accessais_delivery(
+        reversed_source, interim / "reversed", REQUESTED
+    )
+
+    first_slice = loaded["daily_slices"][0]
+    reversed_slice = reversed_result.manifest["daily_slices"][0]
+    assert retry.outcome == "identical_retry"
+    assert (
+        first_slice["canonical_content_identity"]
+        == (reversed_slice["canonical_content_identity"])
+    )
+    first_bytes = (first.output_directory / "daily" / "2024-07-01.csv").read_bytes()
+    reversed_bytes = (
+        reversed_result.output_directory / "daily" / "2024-07-01.csv"
+    ).read_bytes()
+    assert first_bytes == reversed_bytes
+    assert _daily_rows(first.output_directory, "2024-07-01") == [
+        blank,
+        blank,
+        populated,
+    ]
+    data_lines = first_bytes.splitlines()[1:]
+    assert all(
+        line.startswith(b'"') and line.count(b'","') == 16 for line in data_lines
+    )
+    assert all(b',"",' in line for line in data_lines[:2])
+
+
+@pytest.mark.parametrize(
+    "changed_rows",
+    [
+        [_row("2024-07-01T00:00:00", mmsi="100000001")],
+        [
+            _row("2024-07-01T00:00:00", mmsi="100000001"),
+            _row("2024-07-01T00:01:00", mmsi="100000002"),
+            _row("2024-07-01T00:02:00", mmsi="100000003"),
+        ],
+        [
+            _row("2024-07-01T00:00:00", mmsi="100000001"),
+            _row("2024-07-01T00:01:00", mmsi="100000002"),
+            _row("2024-07-01T00:01:00", mmsi="100000002"),
+        ],
+    ],
+    ids=["removed-row", "added-row", "changed-duplicate-count"],
+)
+def test_changed_row_population_is_not_canonically_equivalent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    changed_rows: list[list[str]],
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    baseline_rows = [
+        _row("2024-07-01T00:00:00", mmsi="100000001"),
+        _row("2024-07-01T00:01:00", mmsi="100000002"),
+    ]
+    baseline = tmp_path / "baseline.csv"
+    changed = tmp_path / "changed.csv"
+    _write_csv(baseline, baseline_rows)
+    _write_csv(changed, changed_rows)
+    first = prepare_accessais_delivery(baseline, interim / "baseline", REQUESTED)
+    second = prepare_accessais_delivery(changed, interim / "changed", REQUESTED)
+    assert (
+        first.manifest["daily_slices"][0]["canonical_content_identity"]
+        != (second.manifest["daily_slices"][0]["canonical_content_identity"])
+    )
+
+
 def test_retry_reuses_and_conflict_preserves_established_slices(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -502,6 +664,65 @@ def test_atomic_publication_failure_cleans_temporary_directory(
 
     assert not output.exists()
     assert list(interim.glob(".intake.temporary-*")) == []
+
+
+def test_prepare_refuses_intake_as_spill_parent_without_residual_destination(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    intake = interim / "intake"
+    _write_csv(source, [_row("2024-07-01T00:00:00")])
+
+    with pytest.raises(
+        AccessAISPeriodIntakeError,
+        match=r"canonicalization temporary directory.*must be disjoint",
+    ):
+        prepare_accessais_delivery(
+            source,
+            intake,
+            REQUESTED,
+            CanonicalizationResources("64MB", intake),
+            clock=_clock,
+        )
+
+    assert not intake.exists()
+
+
+@pytest.mark.parametrize("spill_destination", ["cleaned", "manifest"])
+def test_spill_parent_must_be_disjoint_before_any_destination_is_created(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    spill_destination: str,
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    intake = interim / "intake"
+    cleaned = interim / "cleaned"
+    manifest = interim / "period.json"
+    _write_csv(source, [_row("2024-07-01T00:00:00")])
+    spill = {"intake": intake, "cleaned": cleaned, "manifest": manifest}[
+        spill_destination
+    ]
+
+    with pytest.raises(
+        AccessAISPeriodIntakeError,
+        match=r"canonicalization temporary directory.*must be disjoint",
+    ):
+        orchestrate_accessais_delivery(
+            source,
+            intake,
+            cleaned,
+            manifest,
+            REQUESTED,
+            load_default_config(),
+            CanonicalizationResources("64MB", spill),
+            clock=_clock,
+        )
+
+    assert not intake.exists()
+    assert not cleaned.exists()
+    assert not manifest.exists()
 
 
 def test_raw_output_and_arbitrary_existing_destination_are_refused(
@@ -948,3 +1169,41 @@ def test_manifest_cannot_be_tampered_into_a_false_completeness_claim(
 
     with pytest.raises(AccessAISPeriodIntakeError, match=message):
         load_delivery_manifest(output)
+
+
+def test_v1_manifest_remains_read_only_valid_and_cannot_be_reused_for_v2(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    intake = interim / "legacy-v1"
+    _write_csv(source, [_row("2024-07-01T00:00:00")])
+    prepare_accessais_delivery(source, intake, REQUESTED, clock=_clock)
+
+    manifest_path = intake / "delivery-manifest.json"
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload["contract"] = "accessais_period_delivery_v1"
+    payload["schema_version"] = 1
+    payload["processing_version"] = "1.0.0"
+    payload["delivery_id"] = accessais_period_intake._v1_delivery_id(
+        payload["source"]["sha256"], REQUESTED
+    )
+    for daily_slice in payload["daily_slices"]:
+        artifact = daily_slice.pop("canonical_artifact")
+        content_id = daily_slice.pop("canonical_content_identity")
+        assert content_id
+        daily_slice["byte_size"] = artifact["byte_size"]
+        daily_slice["sha256"] = artifact["sha256"]
+        daily_slice["artifact_id"] = accessais_period_intake._v1_slice_id(
+            payload["delivery_id"],
+            daily_slice["utc_date"],
+            artifact["sha256"],
+            daily_slice["row_count"],
+        )
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert load_delivery_manifest(intake)["contract"] == (
+        "accessais_period_delivery_v1"
+    )
+    with pytest.raises(AccessAISPeriodIntakeError, match=r"read-only.*Version 2"):
+        prepare_accessais_delivery(source, intake, REQUESTED, clock=_clock)

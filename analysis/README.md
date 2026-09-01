@@ -177,17 +177,19 @@ supplied file remains read-only and may be either direct CSV or ZIP when the
 existing content-detection, safe-member, unambiguous-CSV, and ZIP CRC rules
 pass.
 
-Prepare deterministic one-date interim CSVs without cleaning them:
+Prepare deterministic one-date interim CSVs without cleaning them. Both
+resource arguments are required: DuckDB sorts under the explicit memory limit
+and uses a unique spill directory below the supplied ignored interim parent.
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill [--source-content-length <independently-retained-byte-count>]
 ```
 
 Run the ordered resumable path through the existing one-date cleaner and
 `multiday_cleaned_ais_input_v1` manifest:
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
 ```
 
 Validate an established intake bundle and report its current status:
@@ -201,7 +203,7 @@ period is ready, `2` for a refused input/destination/contract, `3` for a
 successful run whose period remains not ready, and `4` after a delivery or
 cleaner-identity conflict is recorded without replacement.
 
-The versioned `accessais_period_delivery_v1` manifest records source size and
+The versioned `accessais_period_delivery_v2` manifest records source size and
 SHA-256; content type detected from bytes; archive/member/CRC evidence; the
 exact published header; requested start/end dates; every observed valid UTC
 date and its row count; missing requested dates; valid out-of-request rows; and
@@ -213,19 +215,37 @@ non-boolean integer row counts, requires slice dates to equal the reported
 present requested dates, and binds each slice row count to the same date in
 `rows_by_utc_date`; conserving only the overall total is insufficient.
 
-Partitioning is a standard-library streaming scan. It holds one 17-field row at
-a time and keeps at most eight daily writers open; it does not load the
-delivery into Python, Pandas, Polars, or PyArrow. Source order is retained
-within each date, so noncontiguous and unsorted date rows are supported. Every
-daily CSV carries the exact header, contains only one valid UTC date, and has a
-path-independent artifact identity plus byte size and SHA-256 linked to the
-delivery identity. The complete intake directory is first built at a unique
+Partitioning is a standard-library streaming scan. It holds one parsed
+17-field row at a time and keeps at most eight date-staging writers open; it
+does not load the delivery into Python, Pandas, Polars, or PyArrow.
+Noncontiguous and unsorted date rows are supported. DuckDB then sorts each
+date's parsed rows lexicographically by all 17 fields under the explicit memory
+limit and isolated spill directory. Parsed blank fields are normalized from
+DuckDB `NULL` back to empty strings before both sorting and export, so SQL
+ordering matches manifest validation and every field remains quoted. Duplicate
+multiplicity is preserved.
+Every canonical daily CSV has the exact unquoted published header, UTF-8
+encoding, LF record endings, and stable all-field quoting. Its content identity
+and artifact SHA-256 are independent of source row order and delivery identity.
+The manifest separately preserves the immutable whole-delivery byte size,
+SHA-256, and delivery ID, and its generated-artifact lineage maps that source
+identity to the canonical daily identities. The complete intake directory is
+first built at a unique
 temporary path and published by directory rename. Existing arbitrary output is
 refused; an identical retry revalidates and reuses the bundle; different bytes
 or requested dates append a conflict attempt without replacing established
 slices or identity. Manifest validation requires every slice path to be exactly
 `daily/<UTC-date>.csv`; absolute paths, parent traversal, backslashes, alternate
 spellings, and paths escaping the intake directory are refused.
+
+Version 1 manifests remain explicitly recognizable and read-only valid through
+`status`. A Version 2 prepare/run refuses an established
+`accessais_period_delivery_v1` intake directory and requires a fresh directory;
+the two contracts are never silently mixed.
+
+The spill parent must be disjoint from the intake directory and, for `run`, the
+cleaned root and period-manifest destination. Unsafe equality, ancestor, or
+descendant relationships are rejected before any destination is created.
 
 `run` cleans slices sequentially and records each successful cleaner bundle
 immediately through the existing period-manifest validator. On resume, a date
@@ -254,8 +274,8 @@ unique intake directory, while reusing the same cleaned root and period
 manifest:
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-a.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-a-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-b.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-b-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-a.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-a-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-b.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-b-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
 ```
 
 The intake and cleaned roots remain disjoint. Reusing the cleaned root lets an
@@ -277,39 +297,57 @@ conflicting later cleaner identity. Existing tests separately cover identical
 delivery retry, interruption and resume, immediate preservation of successful
 dates, exact delivery and per-date row accounting, path separation, all 153
 dates being required for readiness, and refusal to upgrade transfer or
-observational completeness. These are synthetic contract tests, not evidence
-that a real multi-date delivery or larger-scale execution has passed.
+observational completeness. These synthetic contract tests are broader than the
+bounded two-date pilot below and do not establish larger-scale execution.
 
-### Smallest useful author-run real multi-date pilot
+### Verified two-day canonical-content pilot
 
-Request exactly **2024-07-15 through 2024-07-16 UTC** over the existing explicit
-WGS 84 bounds **longitude -122 to -117 and latitude 32 to 35**. This two-date
-request is the smallest pilot that exercises a real multi-date delivery while
-overlapping the already verified 15 July date and adding one new date. Before
-submitting it, use the AccessAIS interface to confirm its current estimate is
-below the documented 2 GB request limit; record the estimate as an estimate,
-not as an expected delivered count or size. If it is not below the limit, do
-not submit it or silently change the requested dates or bounds; record the
-pilot as blocked.
+On 2026-09-01 the corrected Version 2 processing version `2.0.1` path processed
+immutable author-supplied direct CSV deliveries under a fresh ignored root with
+a `1GB` DuckDB memory limit and an isolated spill parent. This fresh rerun
+supersedes the earlier pilot identities and measurements produced before blank
+fields were normalized. The old one-day delivery was run first for 2024-07-15.
+It contained 582,419 rows and produced a 79,299,592-byte canonical daily CSV
+with SHA-256
+`bf5a46c6196cf8a51ebfd62907f085a093afa64e2d4474c71ab7f441e68cf5cd`
+and content ID `accessais-day-content-ae090a6e387fe79ec2f64c6e`.
 
-At retrieval time, retain the NOAA filename, requested dates and bounds, actual
-UTC retrieval timestamp, retained byte size, and SHA-256. Also retain an
-independent HTTP `Content-Length` when it is available, or preserve the delivered
-archive unchanged so ZIP structure and CRC can provide archive-integrity
-evidence. Do not retain an email address, cookie, token, or expiring delivery
-URL. Keep the delivery immutable under ignored local storage and run it with a
-new delivery-specific intake directory against the same cleaned root and period
-manifest used for the established 15 July input.
+The separate two-day intake then processed 1,135,408 rows for 2024-07-15
+through 2024-07-16 over WGS 84 longitude -122 to -117 and latitude 32 to 35.
+Its 582,419-row 15 July partition produced the same canonical bytes and content
+ID despite different source order, so the established 113,799-row cleaner
+bundle was skipped and reused. The 552,989-row 16 July partition produced a
+75,095,691-byte canonical CSV with SHA-256
+`3727a12f607dfd4194159b34a291e59374660b95b3e59a45b3d349bb4bfaf49f`
+and content ID `accessais-day-content-065631b951a94d6c58165859`; cleaning retained
+104,506 rows with Parquet SHA-256
+`cb37b96a9f3e56838ca492a33dffc57a174fc92c1d385d3f3a1e848d2f7fbc5c`.
+The one-day/two-day delivery IDs were
+`accessais-period-aaadf6ed784700e1c7a2ee4d` and
+`accessais-period-e00d27730a3b5541a37a9073`; their cleaner run IDs were
+`ais-9fc49e14601edea30064df97` and `ais-e1ea93fe9ab4b4d068364a0c`.
+The unchanged cleaned Parquet SHA-256 for 15 July remained
+`efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`.
+The period ID became `multiday-ais-ddf23ba501bc834dbe5a2656`, with two
+compatible dates, 151 missing dates, and `not_ready` state. A repeated identical
+two-day run reused both dates without regeneration.
+Direct invocation confirmed exit code `3`, the documented incomplete-period
+outcome. Transfer and observational completeness remained `unverified`.
 
-The pilot passes its bounded gate only if streaming row accounting reconciles,
-both daily slices validate, the 15 July established identity is reused, 16 July
-is recorded compatibly, prior dates remain intact, and all completeness states
-stay truthful. An exit code `3` is expected because 151 dates will still be
-missing. A conflicting overlapping slice in this shared-root pilot is refused
-with exit `2` before canonical-bundle replacement. Exit `4` indicates one of
-the separately recorded conflict cases above. The repository does not submit
-or automate this author-controlled pilot, and the pilot does not authorize five
-monthly orders, accept ADR 0017, or establish safe monthly/full-period scaling.
+Measurement used a PowerShell stopwatch plus a 10 ms recursive
+`Win32_Process` process-tree sampler, summing each live process's working set.
+Disk use was the recursive sum of file sizes beneath the fresh pilot root; raw
+inputs were excluded. The one-day run took 12.1394198 seconds, peaked at
+1,593,458,688 bytes process-tree RSS, peaked at 138,796,812 bytes pilot-root
+disk, and ended at 81,137,722 bytes. The first two-day run took 19.2814239
+seconds, peaked at 1,514,594,304 bytes RSS, added at most 270,186,694 bytes of
+pilot-root disk, and ended 155,917,250 bytes above its baseline. The identical
+retry took 10.1271792 seconds, peaked at 102,436,864 bytes RSS, and added 436
+bytes of attempt-history output. OS file caches were not cleared. A sampled
+peak can be missed, and wrapper
+overhead is included. None of these measurements is extrapolated to a month or
+five months. The pilot authorizes no additional order, does not establish
+complete reception, and does not accept ADR 0017 or ADR 0018.
 
 ### Verified one-day compatibility exercise
 
@@ -852,8 +890,9 @@ cleaner bundle and additionally reports geodesic comparisons and evidence-only
 vessel-hours; the candidate path streams the bounded multi-day relation,
 classifies ambiguous intersections without publishing them to cells, and writes
 the versioned candidate bundle. Those intentional boundary-specific behaviors
-are not asserted to be identical. No real multi-date delivery or real candidate
-vessel-grid run has been executed. Period-wide stability, accepted thresholds,
+are not asserted to be identical. The real two-day delivery stopped at the
+intake/cleaner boundary; no real candidate vessel-grid run has been executed.
+Period-wide stability, accepted thresholds,
 alternative edge support, observational completeness, and a final vessel-
 activity input therefore remain unresolved; ADR 0018 remains Proposed.
 
