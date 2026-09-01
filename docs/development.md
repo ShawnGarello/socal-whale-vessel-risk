@@ -306,9 +306,14 @@ ADR 0017 remains Proposed.
 The local intake accepts one explicit direct CSV or safe ZIP at a time plus its
 inclusive requested dates. It performs no order submission, scraping, email
 automation, cookie storage, or URL retention. `prepare` streams and accounts
-for every source row, publishes deterministic one-date CSV slices atomically
+for every source row, publishes canonical one-date CSV inputs atomically
 under ignored `data/interim/`, and records malformed timestamps and
-out-of-request dates without silently dropping them. Repeated `run` invocations
+out-of-request dates without silently dropping them. DuckDB sorts parsed rows
+by all 17 fields with duplicate multiplicity preserved, under a required memory
+limit and isolated ignored spill directory. Blank parsed fields are normalized
+to empty strings before SQL sorting and export. The spill parent must be
+disjoint from the intake, cleaned, and period-manifest destinations; overlap is
+rejected before output creation. Repeated `run` invocations
 use unique delivery intake directories and the same cleaned root and period
 manifest. Each invokes the existing one-date cleaner sequentially and records
 each compatible bundle immediately, so retry or identical overlap skips only a
@@ -319,22 +324,23 @@ already-owned intake directory or a conflict recorded from an explicitly
 supplied, independently produced incompatible cleaner bundle.
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> [--source-content-length <independently-retained-byte-count>]
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
 python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli status --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id>
 ```
 
 The delivery contract keeps independent byte-transfer completeness,
 observational completeness, and 153-date period readiness separate. None is
 upgraded by a plausible row count, timestamp range, filename, or presence of
-all requested dates. Contract details and the bounded one-day compatibility
-evidence are in the [analysis README](../analysis/README.md#prepare-one-author-supplied-multi-date-accessais-delivery).
-That section also gives the exact smallest useful author-run pilot: 2024-07-15
-through 2024-07-16 UTC, WGS 84 longitude -122 to -117 and latitude 32 to 35,
-only after the current AccessAIS estimate is confirmed below 2 GB. It lists the
-non-sensitive provenance and independent transfer/archive evidence to retain.
-The repository does not submit or automate that author-controlled pilot, and
-the pilot does not authorize five later monthly orders.
+all requested dates. Contract details and the bounded real evidence are in the
+[analysis README](../analysis/README.md#verified-two-day-canonical-content-pilot).
+The 2026-09-01 pilot ran the old one-day delivery first and then the separate
+two-day delivery from a different intake directory against the same Version 2
+cleaned root and period manifest. It reused reordered-equivalent 15 July,
+cleaned 16 July, and left 151 dates missing. A repeat reused both dates without
+regeneration. The reported wall time, sampled process-tree RSS, and recursive
+pilot-root disk measurements are bounded two-day evidence only; they do not
+authorize five later monthly orders or establish transfer completeness.
 
 **One-extract AIS processing**
 
@@ -551,10 +557,10 @@ quality semantics, and limitations are in the [analysis
 README](../analysis/README.md#candidate-multi-day-vessel-grid-aggregation).
 
 This is a candidate vessel-grid processing foundation, not an accepted
-final vessel input. No real multi-date delivery or candidate vessel-grid run has
-been executed. Period-wide sensitivity, accepted thresholds, alternative edge
-support, transfer and observational completeness, and the final analytical
-population remain unresolved; ADR 0018 stays Proposed.
+final vessel input. The real two-day delivery stopped at intake/cleaning; no
+candidate vessel-grid run has been executed. Period-wide sensitivity, accepted
+thresholds, alternative edge support, transfer and observational completeness,
+and the final analytical population remain unresolved; ADR 0018 stays Proposed.
 
 **Projected water-grid generation**
 
@@ -1038,7 +1044,7 @@ the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 323 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 333 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,

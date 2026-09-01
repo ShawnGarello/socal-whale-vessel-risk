@@ -240,7 +240,7 @@ memory controls, or another measured design resolves it.
 
 ### Author-supplied multi-date AccessAIS intake
 
-The implemented `accessais_period_delivery_v1` boundary accepts one explicit
+The implemented `accessais_period_delivery_v2` boundary accepts one explicit
 author-supplied direct CSV or safe ZIP and exact requested start/end dates. It
 does not submit an AccessAIS order, automate email, persist an email address or
 cookie, or retain an expiring/tokenized URL. The supplied delivery remains
@@ -265,8 +265,16 @@ slice dates and reported present requested dates, and per-date equality between
 each slice and `rows_by_utc_date`; matching totals alone do not pass. Input dates
 need not be contiguous in source row order.
 
-Daily slices use the exact published header, contain one valid UTC date, live
-under ignored `data/interim/`, and carry stable path-independent identities.
+Daily cleaner inputs use the exact published header, contain one valid UTC
+date, live under ignored `data/interim/`, and carry stable path-independent
+identities. After streaming partitioning, DuckDB sorts parsed rows by all 17
+fields under a required explicit memory limit and isolated spill directory.
+Duplicate multiplicity is preserved, and UTF-8, LF record endings, and stable
+CSV quoting normalize source ordering, quoting, and record endings. The
+canonical daily-content identity and artifact SHA-256 are separate from the
+immutable whole-delivery byte size, SHA-256, and delivery ID. Version 1 intake
+manifests remain read-only valid, while Version 2 refuses to publish into a
+Version 1 intake directory.
 The intake bundle is published by atomic directory rename. An identical retry
 revalidates and reuses it. Different source bytes or requested dates are
 recorded as a conflict attempt without replacing established identity or
@@ -306,22 +314,18 @@ recorded one compatible date with 152 missing dates. Transfer and observational
 completeness remained `unverified`. This is not a multi-date or monthly scaling
 exercise, and it does not authorize five monthly orders.
 
-Synthetic tests now verify accumulation from two disjoint deliveries,
-identical overlapping established identity, conflicting cleaner identity,
-preservation of prior successful dates, and the existing retry/resume,
-row-accounting, path-separation, readiness, and completeness boundaries. They
-do not replace a real multi-date exercise. The smallest useful author-run pilot
-is an explicit 2024-07-15 through 2024-07-16 UTC request over WGS 84 longitude
--122 to -117 and latitude 32 to 35. Before submission, its current AccessAIS
-estimate must remain below the documented 2 GB limit. At retrieval, record the
-NOAA filename, requested dates and bounds, actual UTC retrieval timestamp,
-retained byte size and SHA-256, plus independent `Content-Length` or unchanged
-ZIP/archive-integrity evidence when available. Retain no email address, cookie,
-token, or expiring URL. Run it from a new delivery-specific intake directory
-against the established shared cleaned root and period manifest. A successful
-two-date pilot still leaves 151 expected dates missing and authorizes neither
-five monthly orders nor a monthly/full-period scaling claim. The repository
-does not submit or automate this author-controlled pilot.
+Synthetic tests verify accumulation from two disjoint deliveries, canonical
+reuse across row order, conflicts after changed fields, rows, or duplicate
+multiplicity, prior-date preservation, retry/resume, row accounting, path
+separation, readiness, and completeness boundaries. On 2026-09-01 the real
+2024-07-15 delivery was followed by the real 2024-07-15 through 2024-07-16
+delivery under a fresh ignored Version 2 root. The reordered 582,419-row 15 July
+multiset reused the established canonical daily content; the 552,989-row 16
+July partition was cleaned and recorded. A repeat reused both dates. The
+period remained `not_ready` with 151 expected dates missing, and transfer and
+observational completeness stayed `unverified`. The delivery had no retained
+independent `Content-Length`, `ETag`, or ZIP CRC evidence. This bounded pilot
+authorizes neither five monthly orders nor a monthly/full-period scaling claim.
 
 ### Multi-day cleaned-input manifest and bounded scanning
 
