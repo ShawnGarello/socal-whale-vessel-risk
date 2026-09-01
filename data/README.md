@@ -314,22 +314,18 @@ recorded one compatible date with 152 missing dates. Transfer and observational
 completeness remained `unverified`. This is not a multi-date or monthly scaling
 exercise, and it does not authorize five monthly orders.
 
-Synthetic tests now verify accumulation from two disjoint deliveries,
-identical overlapping established identity, conflicting cleaner identity,
-preservation of prior successful dates, and the existing retry/resume,
-row-accounting, path-separation, readiness, and completeness boundaries. They
-do not replace a real multi-date exercise. The smallest useful author-run pilot
-is an explicit 2024-07-15 through 2024-07-16 UTC request over WGS 84 longitude
--122 to -117 and latitude 32 to 35. Before submission, its current AccessAIS
-estimate must remain below the documented 2 GB limit. At retrieval, record the
-NOAA filename, requested dates and bounds, actual UTC retrieval timestamp,
-retained byte size and SHA-256, plus independent `Content-Length` or unchanged
-ZIP/archive-integrity evidence when available. Retain no email address, cookie,
-token, or expiring URL. Run it from a new delivery-specific intake directory
-against the established shared cleaned root and period manifest. A successful
-two-date pilot still leaves 151 expected dates missing and authorizes neither
-five monthly orders nor a monthly/full-period scaling claim. The repository
-does not submit or automate this author-controlled pilot.
+Synthetic tests verify accumulation from two disjoint deliveries, canonical
+reuse across row order, conflicts after changed fields, rows, or duplicate
+multiplicity, prior-date preservation, retry/resume, row accounting, path
+separation, readiness, and completeness boundaries. On 2026-09-01 the real
+2024-07-15 delivery was followed by the real 2024-07-15 through 2024-07-16
+delivery under a fresh ignored Version 2 root. The reordered 582,419-row 15 July
+multiset reused the established canonical daily content; the 552,989-row 16
+July partition was cleaned and recorded. A repeat reused both dates. The
+period remained `not_ready` with 151 expected dates missing, and transfer and
+observational completeness stayed `unverified`. The delivery had no retained
+independent `Content-Length`, `ETag`, or ZIP CRC evidence. This bounded pilot
+authorizes neither five monthly orders nor a monthly/full-period scaling claim.
 
 ### Multi-day cleaned-input manifest and bounded scanning
 

@@ -16,9 +16,10 @@
 > verify and manifest one supplied AIS artifact and use bounded streaming to
 > partition one author-supplied multi-date AccessAIS CSV or safe ZIP into
 > deterministic daily cleaner inputs with resumable sequential period-manifest
-> recording. The backward-compatible one-day path was exercised with a real
-> direct CSV; a real multi-date delivery, network retrieval, and analytical-
-> period acquisition remain unfinished. Vessel aggregation, exposure analysis,
+> recording. The boundary was exercised with overlapping real one-day and
+> two-day direct CSV deliveries; reordered equivalent 15 July content was
+> reused and 16 July was added. Network retrieval and analytical-period
+> acquisition remain unfinished. Vessel aggregation, exposure analysis,
 > a final public layer representation, and deployment also remain unfinished.
 > See the [roadmap](roadmap.md) for milestone status.
 
@@ -434,9 +435,9 @@ project layers, and matching precomputed results.
   decision record before large binaries are added.
 - The AIS retrieval route remains a Proposed M3 decision. The local supplied-
   artifact verification boundary, bounded multi-date delivery intake, resumable
-  daily-cleaner orchestration, and one real bounded one-day compatibility
-  exercise are implemented. No real multi-date delivery has been exercised;
-  network transfer, independent transfer completeness, safe monthly scaling,
+  daily-cleaner orchestration, and an overlapping real one-day/two-day
+  compatibility exercise are implemented. Network transfer, independent
+  transfer completeness, safe monthly scaling,
   and analytical-period acquisition are not established. An entire national
   season is never staged locally; the detailed retrieval guard belongs to
   [data/README.md](../data/README.md).
