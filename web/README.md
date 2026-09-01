@@ -10,12 +10,17 @@ Local API-key-backed access to the `arcgis/oceans` basemap, pan/zoom, and the
 ready-map attribution handoff were verified in Chrome at the three required
 viewports on 2026-08-31. Deployed-origin access remains unverified, and this
 local basemap result does not establish account or project-layer hosting
-capabilities. Project layers will use the public representation selected after
-real output, performance, redistribution, and account-type evidence exists.
-Candidates are ArcGIS
-Location Platform limited feature/vector-tile/map-tile services, ArcGIS Online
-organization-hosted layers, and a non-Esri public fallback if neither is
-suitable. No route is implemented, and paid usage is not authorized.
+capabilities. Current official documentation confirms that Location Platform
+can create feature, vector-tile, and map-tile services and can share them for
+anonymous public access without a separate ArcGIS Online organization. The
+author's real account controls, billing state, usage, and free-tier headroom are
+still unverified because no authenticated session was available for the
+read-only inventory. Project layers will use the public representation selected
+after real output, performance, redistribution, and account evidence exists.
+Candidates remain Location Platform limited data services, ArcGIS Online
+organization-hosted layers if needed, and a non-Esri public fallback. No route
+is implemented, no hosted-feature test has been performed, and paid usage is not
+authorized.
 
 The application shows a durable `Powered by Esri` attribution while the SDK is
 loading and whenever the map cannot initialize. Once a map view is ready, the
