@@ -211,6 +211,46 @@ and can miss a peak. Its method differs from the earlier approximately 1.59 GiB
 cleaner observation, so they are not directly comparable. This one direct-CSV
 date supplies no monthly or multi-date scaling evidence.
 
+### Observed in the real overlapping two-day delivery
+
+On 2026-09-01 the Version 2 intake first processed the old one-day delivery and
+then the separate author-supplied direct CSV
+`AIS_178822822548476721_896-1788228225861.csv` for 2024-07-15 through
+2024-07-16 over the same WGS 84 longitude −122 to −117 and latitude 32 to 35.
+The new delivery measured 115,791,285 bytes with SHA-256
+`a6c673f37ccd01d30067c400452275b13f8c5299200777384a513bc46d6842a0`.
+The author reported retrieval on 2026-08-31; the exact UTC retrieval timestamp
+was not retained and is not inferred from filesystem modification time. No
+independent HTTP `Content-Length`, `ETag`, or ZIP CRC was retained.
+
+Read-only inspection counted 1,135,408 rows: 582,419 on 15 July and 552,989 on
+16 July. It found no malformed timestamp or coordinate, no row outside the
+requested dates or bounds, timestamp bounds from `2024-07-15T00:00:00Z` through
+`2024-07-16T23:59:59Z`, longitude −121.99995 to −117.00026, and latitude
+32.00002 to 34.9999. Exact 17-field `EXCEPT ALL` comparisons in both directions
+confirmed that the old and new 15 July rows were the same multiset despite
+their different source order.
+
+Canonicalization made those two 15 July partitions byte-identical at
+76,184,762 bytes with SHA-256
+`52a758cfd0188812cfce6cd919a0c3cb1450641eed494bd58a45517512ebcec5`
+and daily content ID `accessais-day-content-e13cf3687ac775cf4c0cc984`.
+The second run therefore reused the established 15 July cleaner and cleaned
+16 July. The period ended with two compatible dates, 151 missing dates,
+`not_ready` state, and both completeness states still `unverified`. An
+identical two-day retry reused both dates. Exit code `3` was confirmed as the
+documented incomplete-period outcome.
+
+The one-day, first two-day, and identical-retry runs respectively took
+44.899792, 76.7939144, and 39.7256726 seconds. Their sampled process-tree RSS
+peaks were 1,352,359,936, 1,106,075,648, and 116,977,664 bytes. Measurement used
+a PowerShell stopwatch and 10 ms recursive `Win32_Process` sampling, summing
+live process working sets. Recursive pilot-root file-size sums measured
+135,681,982 bytes peak/78,031,343 bytes final for the one-day run; a
+264,041,198-byte peak increment/149,780,256-byte final increment for the first
+two-day run; and an 8,982-byte increment for the retry. Raw files were excluded.
+Sampling can miss a peak. No result is extrapolated to a month or five months.
+
 ### Inferred
 
 - Five sequential monthly AccessAIS orders are the smallest simple partition
@@ -228,10 +268,9 @@ date supplies no monthly or multi-date scaling evidence.
 - Safe monthly or full-period processing. The measured one-day peak memory
   requires optimization, bounded date-sized processing, spilling or memory
   controls, or another measured design before execution.
-- A real multi-date AccessAIS delivery. Synthetic tests exercise unsorted dates,
-  row conservation, malformed and out-of-request timestamps, missing dates,
-  ZIP safety, conflicts, interruption and resume, but they are not a monthly
-  smoke run or transfer measurement.
+- Monthly-scale AccessAIS processing. The real two-day delivery exercises
+  unsorted/reordered overlap, row conservation, canonical reuse, and resume,
+  but it is not a monthly smoke run or transfer-completeness measurement.
 - No complete bulk daily archive has been downloaded, opened through its ZIP
   central directory, or checked through its CRC. NOAA publishes no checksum in
   the bulk index, so a locally computed SHA-256 would identify retrieved bytes
@@ -460,8 +499,9 @@ filename, and a one-date manifest entry. It:
 Route acceptance additionally requires independently supported transfer
 completeness and a measured processing design that makes the proposed monthly
 or full-period execution safe. Neither condition is satisfied here: source HTTP
-metadata was not retained, and the one-day run peaked near 1.59 GiB RSS. No
-monthly or full-period retrieval begins from this partially passed gate.
+metadata was not retained, and neither the earlier one-day result nor the later
+two-day pilot establishes monthly safety. No monthly or full-period retrieval
+begins from this partially passed gate.
 
 ## Consequences
 

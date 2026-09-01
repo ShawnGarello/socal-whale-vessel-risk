@@ -362,6 +362,20 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   unchanged. A second invocation reused the delivery and skipped the compatible
   date. No new runtime or memory measurement was made. This is one-day
   regression evidence, not real multi-date evidence.
+- The real Version 2 pilot ran the immutable one-day delivery first, then the
+  separate 1,135,408-row 2024-07-15 through 2024-07-16 direct CSV through a
+  different intake directory against the same cleaned root and period manifest
+  on 2026-09-01. The two deliveries' 582,419-row 15 July multisets were equal
+  under exact 17-field `EXCEPT ALL` comparison despite different source order.
+  Both produced canonical daily SHA-256
+  `52a758cfd0188812cfce6cd919a0c3cb1450641eed494bd58a45517512ebcec5`,
+  so 15 July was reused; 16 July's 552,989 rows were cleaned and recorded. The
+  period ended with two compatible dates, 151 missing, and `not_ready` state.
+  An identical retry reused both dates. Transfer and observational completeness
+  remained `unverified`. Measured one-day/first-two-day/retry wall times were
+  44.899792/76.7939144/39.7256726 seconds, with sampled process-tree RSS peaks
+  of 1,352,359,936/1,106,075,648/116,977,664 bytes. These bounded results are
+  not extrapolated to monthly or full-period execution.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -561,9 +575,9 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   publication, and records source artifact checksums, candidate parameters,
   exclusions, counts, conservation, sanitized bounded-execution settings,
   software versions, and validation steps. Synthetic tests verify the candidate
-  processing boundary. No real multi-date delivery or real candidate vessel-
-  grid run was executed, so no parameter was accepted and no period-wide vessel
-  input was produced.
+  processing boundary. A real two-day delivery was exercised only at the intake
+  boundary; no real candidate vessel-grid run was executed, so no parameter was
+  accepted and no period-wide vessel input was produced.
 - The 2026-08-28 real read-only smoke run recorded the existing bounded
   2024-07-15 cleaner bundle and retrieval manifest without modifying either. It
   reported exactly one compatible date, 152 missing dates, `not_ready` period
@@ -585,15 +599,16 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
 
 - Network AIS transfer, range-resume, and analytical-period retrieval. The local
   supplied-artifact validation, bounded multi-date delivery intake, resumable
-  daily-cleaner orchestration, and one real direct-CSV compatibility exercise
-  are complete, but no real multi-date delivery has been exercised. Independent
-  transfer completeness, monthly/full-period memory safety, a guarded daily
-  bulk download, and the 153-date retrieval remain unverified or unexercised.
+  daily-cleaner orchestration, and overlapping real one-day/two-day canonical
+  compatibility exercise are complete. Independent transfer completeness,
+  monthly/full-period memory safety, a guarded daily bulk download, and the
+  153-date retrieval remain unverified or unexercised.
 - The final vessel-activity input proposed in ADR 0018. Candidate period segment
   construction, explicit filtering, exact grid allocation, per-cell vessel-
   kilometres, union-recomputed distinct counts, quality metadata, and lineage
-  are implemented and synthetically verified. No real multi-date delivery or
-  candidate grid has been processed. No production threshold was selected;
+  are implemented and synthetically verified. The real two-day delivery stopped
+  at the intake/cleaner boundary; no candidate grid has been processed. No
+  production threshold was selected;
   accepted maximum-gap and implied-speed rules, alternative edge support,
   vessel-length population treatment, period-wide stability, observational
   completeness, and final speed summaries remain unresolved. The implemented

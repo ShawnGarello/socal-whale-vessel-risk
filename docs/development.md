@@ -329,14 +329,15 @@ python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli sta
 The delivery contract keeps independent byte-transfer completeness,
 observational completeness, and 153-date period readiness separate. None is
 upgraded by a plausible row count, timestamp range, filename, or presence of
-all requested dates. Contract details and the bounded one-day compatibility
-evidence are in the [analysis README](../analysis/README.md#prepare-one-author-supplied-multi-date-accessais-delivery).
-That section also gives the exact smallest useful author-run pilot: 2024-07-15
-through 2024-07-16 UTC, WGS 84 longitude -122 to -117 and latitude 32 to 35,
-only after the current AccessAIS estimate is confirmed below 2 GB. It lists the
-non-sensitive provenance and independent transfer/archive evidence to retain.
-The repository does not submit or automate that author-controlled pilot, and
-the pilot does not authorize five later monthly orders.
+all requested dates. Contract details and the bounded real evidence are in the
+[analysis README](../analysis/README.md#verified-two-day-canonical-content-pilot).
+The 2026-09-01 pilot ran the old one-day delivery first and then the separate
+two-day delivery from a different intake directory against the same Version 2
+cleaned root and period manifest. It reused reordered-equivalent 15 July,
+cleaned 16 July, and left 151 dates missing. A repeat reused both dates without
+regeneration. The reported wall time, sampled process-tree RSS, and recursive
+pilot-root disk measurements are bounded two-day evidence only; they do not
+authorize five later monthly orders or establish transfer completeness.
 
 **One-extract AIS processing**
 
@@ -553,10 +554,10 @@ quality semantics, and limitations are in the [analysis
 README](../analysis/README.md#candidate-multi-day-vessel-grid-aggregation).
 
 This is a candidate vessel-grid processing foundation, not an accepted
-final vessel input. No real multi-date delivery or candidate vessel-grid run has
-been executed. Period-wide sensitivity, accepted thresholds, alternative edge
-support, transfer and observational completeness, and the final analytical
-population remain unresolved; ADR 0018 stays Proposed.
+final vessel input. The real two-day delivery stopped at intake/cleaning; no
+candidate vessel-grid run has been executed. Period-wide sensitivity, accepted
+thresholds, alternative edge support, transfer and observational completeness,
+and the final analytical population remain unresolved; ADR 0018 stays Proposed.
 
 **Projected water-grid generation**
 
