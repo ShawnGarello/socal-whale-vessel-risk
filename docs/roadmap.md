@@ -740,16 +740,46 @@ Built on the `feat/web-foundation` branch. The application is in
   [0009](decisions/0009-mount-arcgis-through-client-only-map-components.md), and
   [0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
+**Documentation-only capability inventory completed; account verification not done**
+
+- Current official Esri documentation was checked on 2026-08-31. Location
+  Platform is documented as a limited single-user organization that can create
+  hosted feature, vector-tile, and map-tile services, but not hosted image or
+  scene services. `Everyone` sharing is documented to allow anonymous access,
+  without requiring a separate ArcGIS Online organization.
+- The current documented monthly free tiers relevant here are 2,000,000 basemap
+  tiles or 1,000 basemap sessions; 250 MB of feature storage; 250 MB of
+  tiles/files/attachments storage; 125 MB each of feature-query and feature-edit
+  bandwidth; 25 GB each of vector-tile and map-tile bandwidth; and 25,000 tiles
+  generated during publishing. Feature-service access is bandwidth-metered,
+  not covered by a documented request-count allowance. These are product-wide
+  allowances, not this account's verified balances.
+- Location Platform is documented to use free tiers plus optional pay-as-you-go,
+  not ArcGIS Online credits. Pay-as-you-go is documented as off by default for
+  new accounts, but the author's actual billing state is unverified.
+- The author reports creating a Location Platform account and a restricted
+  browser API key. The key was absent and was not inspected. No authenticated
+  account session was available, so the product identity, service-creation and
+  public-sharing controls, billing mode, usage, and free-tier headroom have not
+  been verified from the real account. The short private author checklist is in
+  [development.md](development.md#read-only-capability-inventory-2026-08-31).
+- On documentation alone, a later minimal public hosted-feature test appears
+  capable of remaining inside the free tiers. It is not yet permitted by the
+  evidence: actual pay-as-you-go status, controls, usage, and headroom must be
+  confirmed first. No item was created or published on this branch.
+
 **Not done**
 
 - **The static-shell deployment.** This can proceed independently of an ArcGIS
   account. The application has never been deployed anywhere, and there is no
   public URL.
-- The account-type capability checks. Nothing has been established about
-  Location Platform data-service support, public access, storage, bandwidth,
-  monthly free-tier headroom, or billing status. ArcGIS Online organization,
-  user type, role, publishing/public-sharing privileges, hosted service types,
-  credits, and storage are also unverified.
+- The authenticated account portion of the account-type capability check.
+  Location Platform product behavior and current published allowances are
+  documented, but the author's actual account type, service controls, public
+  sharing, storage/bandwidth usage, remaining headroom, and billing status are
+  unverified. ArcGIS Online organization privileges and credits are not
+  applicable to the reported Location Platform branch unless the product check
+  fails.
 - The conditional Esri-hosted test item and loading it from the application.
   This is attempted only if the applicable account branch establishes public
   hosted-feature support and enough no-cost capacity. The check requires the
@@ -767,9 +797,9 @@ The ordered steps for all of the above are in
 | Map renders, pans, and zooms | **Verified locally.** The keyed static export rendered `arcgis/oceans`, panned, zoomed, and completed the ready-map attribution handoff in Chrome at all three required viewports. The deployed-origin path remains unverified. |
 | No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored. |
 | Deployment reachable and reflecting main | **Unverified.** No deployment exists; main has not been deployed or verified. |
-| Account-type capability checks complete and recorded | **Unverified.** Location Platform and ArcGIS Online checks have not started; they require the author's account. |
-| Conditional Esri-hosted publish-and-serve test | **Unverified.** Attempt only if an applicable account branch verifies public hosted-feature support and enough no-cost capacity. |
-| Unavailable capabilities recorded as constraints for M5 | **Not applicable yet.** Nothing has been checked, so nothing has been found unavailable. |
+| Account-type capability checks complete and recorded | **Partial.** Current Location Platform documentation and allowances are recorded. The author reports a Location Platform account, but no authenticated session was available; actual product identity, billing, usage, controls, and headroom remain unverified. |
+| Conditional Esri-hosted publish-and-serve test | **Not attempted.** Documentation indicates a minimal public feature service can fit the free tiers, but the test waits for actual pay-as-you-go, control, usage, and headroom checks. |
+| Unavailable capabilities recorded as constraints for M5 | **Partial.** Location Platform hosted image and scene creation are documentation-only unavailable; ArcGIS Online credits/privileges are not applicable to the reported branch. Actual account constraints remain unverified. |
 
 M4 is not complete and must not be marked complete until the deployed
 application and the real account-type capability checks are verified. An
@@ -839,12 +869,13 @@ from this number. First development-server compile of the map route takes
 this repository's own. Disabled with `agentRules: false`.
 
 **Risks and open questions**
-- **Both Esri-hosted routes are unverified and constrain publication.** Location
-  Platform is limited to feature, vector-tile, and map-tile services and must be
-  checked for public access, storage, bandwidth, free-tier headroom, and billing
-  status. ArcGIS Online must be checked for organization privileges, service
-  types, public sharing, credits, and storage. If neither fits, a later decision
-  must select and verify a non-Esri public fallback. **Still entirely open.**
+- **The Location Platform product boundary is documented, but the real account
+  remains unverified and constrains publication.** Official documentation
+  supports feature, vector-tile, and map-tile services plus public anonymous
+  sharing and identifies the current free tiers. Actual service controls,
+  usage, headroom, and billing state still require the author's private check.
+  If that account does not fit, ArcGIS Online and then a non-Esri public route
+  remain candidates. **Partly resolved from documentation only.**
 - Location Platform storage/bandwidth usage and ArcGIS Online credit/storage
   consumption could constrain iteration. The project does not enable
   pay-as-you-go or authorize spending. **Still open.**
