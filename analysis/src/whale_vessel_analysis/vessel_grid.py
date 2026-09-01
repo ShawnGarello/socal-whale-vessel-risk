@@ -3,8 +3,8 @@
 This module promotes the segment/filter/allocation logic exercised by the
 vessel-activity evidence harness into a bounded multi-day processing boundary.
 Every methodological choice needed by this boundary is explicit. The output is
-a candidate vessel-activity input; it does not settle the reporting domain,
-accept ADR 0018, or calculate exposure or inside/outside statistics.
+a candidate vessel-activity input; it does not apply the accepted reporting
+domain, accept ADR 0018, or calculate exposure or inside/outside statistics.
 """
 
 from __future__ import annotations
@@ -834,7 +834,11 @@ def aggregate_vessel_grid(
         },
         **core_quality,
         "scope_and_limitations": {
-            "analytical_domain": "unresolved under ADR 0002",
+            "analytical_domain": (
+                "accepted as receivers_50_nautical_miles under ADR 0002; this "
+                "candidate vessel grid remains scoped to modeled-whale support "
+                "and does not apply the reporting-domain mask"
+            ),
             "outside_support": (
                 "outside the modeled-whale-support water geometry only; not land "
                 "and not an AIS observability classification"

@@ -12,9 +12,9 @@
  * initial view roughly over the Southern California Bight so the empty shell
  * opens somewhere relevant. The map and context extent is settled enough to
  * build against, and data discovery accepted EPSG:3310 and a 5 km analysis grid
- * (ADRs 0003 and 0004). The analytical and statistical domain remains open in
- * ADR 0002. These coordinates do not define it and must not be reused as an
- * analytical boundary.
+ * (ADRs 0003 and 0004). ADR 0002 separately accepts the system-performance-
+ * qualified AIS analytical domain. These coordinates do not define it and
+ * must not be reused as an analytical boundary.
  */
 export const INITIAL_VIEWPOINT = {
   /** Longitude, latitude. */
