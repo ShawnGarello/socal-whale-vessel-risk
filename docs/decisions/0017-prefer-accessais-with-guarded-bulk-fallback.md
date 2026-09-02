@@ -259,6 +259,55 @@ two-day run; and a 436-byte increment for the retry. Raw files were excluded;
 OS file caches were not cleared. Sampling can miss a peak. No result is
 extrapolated to a month or five months.
 
+### Observed in the AccessAIS scale-readiness investigation
+
+On 2026-09-02 the same immutable two-day CSV was exercised read-only with fresh
+ignored destinations and controlled stage isolation. The normal 100 ms sampler
+began after target-module imports (the subsecond fingerprint check used 10 ms)
+and separated the actual Python application from
+its approximately 4 MiB Windows virtual-environment launcher and from the
+profiler itself. It recorded application RSS, the operating system's peak-
+working-set counter, committed private bytes, descendants, process-tree sums,
+generated disk, and spill disk separately. Process-tree RSS remains an upper-
+bound diagnostic because shared pages can be counted more than once. OS caches
+were not cleared.
+
+Fingerprinting increased application RSS by 2.0 MiB; streaming partitioning by
+0.3 MiB; intake validation by 1.3 MiB; and period recording by 0.1 MiB. Two
+per-date canonical-sort repeats peaked at 403.680/404.523 MiB application RSS
+and verified DuckDB's effective `953.6 MiB`, one thread, and requested isolated
+temporary directory. By contrast, three isolated 15 July cleaner repeats under
+the former behavior peaked at 1,102.660--1,365.480 MiB application RSS and a
+stable 2,152.703--2,156.434 MiB private bytes. Runtime inspection confirmed
+that the cleaner had inherited DuckDB's `12.5 GiB`, 12-thread machine defaults.
+A 16 July repeat used 2,069.379 MiB private bytes for the approximately 5%
+smaller daily CSV, indicating an input-scaled component even though working-set
+trimming made its RSS peak higher. No cross-date accumulation was observed.
+
+The cleaner now receives and verifies the intake command's explicit resources.
+Three `512MB`, one-thread 15 July repeats recorded effective `488.2 MiB`, peaked
+at 550.410--551.098 MiB application RSS and 936.379--936.746 MiB private bytes,
+and reproduced the established run ID and cleaned checksum. Two corrected fresh
+end-to-end two-day repeats peaked at 556.922/558.699 MiB application RSS,
+949.652/952.223 MiB private bytes, and 678.594/666.000 MiB isolated spill. A
+15 July-only run peaked at 552.910 MiB RSS and 625.469 MiB spill. All spill
+parents ended empty. An identical two-day retry skipped both dates, peaked at
+65.918 MiB application RSS, and produced no spill. All prior delivery, daily-
+content, cleaner, cleaned-Parquet, and period identities remained unchanged.
+A third fresh two-day verification passed the implemented 2 GiB available-
+memory/8 GiB free-disk preflight and peaked at 558.859 MiB application RSS and
+618.188 MiB spill, which again returned to zero.
+
+This evidence supports per-date-bounded local processing for the observed dates
+and corrects the avoidable machine-default allocation. It does not establish
+seven-day, monthly, or full-period safety, and it is not linearly extrapolated.
+The next gate is one author-requested, continuous 2024-07-15 through 2024-07-21
+delivery over the same longitude -122 to -117 and latitude 32 to 35. The exact
+preflight, profiling, transfer-evidence, abort, and success rules are owned by
+the [analysis README](../../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
+That delivery has not been requested. Independent transfer completeness remains
+unresolved, so this ADR remains Proposed.
+
 ### Inferred
 
 - Five sequential monthly AccessAIS orders are the smallest simple partition
@@ -273,9 +322,9 @@ extrapolated to a month or five months.
 - Independent AccessAIS byte completeness, because HTTP length and stable
   object metadata were not retained with the exercised direct CSV; download and
   range-resume behavior also remain unverified.
-- Safe monthly or full-period processing. The measured one-day peak memory
-  requires optimization, bounded date-sized processing, spilling or memory
-  controls, or another measured design before execution.
+- Safe seven-day, monthly, or full-period processing. Explicit per-date cleaner
+  resources resolve the avoidable machine-default peak for the observed two-day
+  input, but the documented seven-day gate has not been exercised.
 - Monthly-scale AccessAIS processing. The real two-day delivery exercises
   unsorted/reordered overlap, row conservation, canonical reuse, and resume,
   but it is not a monthly smoke run or transfer-completeness measurement.
@@ -298,8 +347,9 @@ delivery proves incompatible with the required processing boundary.
 This decision remains **Proposed**. The real direct CSV passed the delivery-
 format, local-identity, header/date, and cleaner-compatibility portion of the
 gate. Independent transfer completeness was not retained, and the measured
-one-day memory result does not establish safe monthly or full-period execution.
-The acceptance criteria below therefore remain only partially satisfied.
+two-day resource correction does not establish safe seven-day, monthly, or
+full-period execution. The acceptance criteria below therefore remain only
+partially satisfied.
 
 AccessAIS order submission is an author-controlled action. It requires an email
 address, acceptance of NOAA's privacy statement, and an external order. The
@@ -436,9 +486,10 @@ input.
 This exercises the assembly boundary on one real date. It does not retrieve any
 further date, does not establish independent transfer completeness, does not
 establish observational completeness, and does not make the analytical period
-available. **This record stays Proposed.** Full-period acquisition still depends
-on independent transfer-completeness evidence and a measured processing design
-that makes monthly or full-period execution safe.
+available. **This record stays Proposed.** The later two-day investigation
+bounded the observed cleaner allocation but did not pass the documented
+seven-day gate. Full-period acquisition still depends on independent transfer-
+completeness evidence and measured seven-day and monthly scaling gates.
 
 ## Safe transfer, retry, and resume behavior
 

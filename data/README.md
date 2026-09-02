@@ -231,12 +231,43 @@ quality report still carries that `unverified` state. The manifest records this
 truthfully as `observational_completeness_preserved: true` and refuses a cleaner
 reference that reports an upgraded state.
 
-The real one-day cleaner exercise peaked at approximately 1.59 GiB RSS even
-though its generated temporary/output disk footprint was only approximately
-1.576 MiB, excluding the immutable raw CSV. This is a measured scaling concern,
-not a linear forecast. Monthly or full-period processing is not authorized or
-shown safe until optimization, bounded date-sized processing, spilling or
-memory controls, or another measured design resolves it.
+The real one-day cleaner exercise originally peaked at approximately 1.59 GiB
+RSS because it inherited DuckDB's machine-default memory and thread settings.
+The 2026-09-02 investigation added explicit verified per-date cleaner resources
+and reduced two fresh two-day peaks to 556.922/558.699 MiB application RSS under
+`512MB` and one thread. This is bounded evidence for those dates, not a linear
+forecast or proof of seven-day, monthly, or full-period safety.
+
+### Next author-controlled AccessAIS request
+
+Do not request a month next. The next real-data gate is exactly one continuous
+delivery for **2024-07-15 through 2024-07-21**, using WGS 84 longitude **-122 to
+-117** and latitude **32 to 35**. The 15--16 July overlap is intentional: local
+processing must reproduce the already established canonical daily identities.
+
+Before starting the download, open browser developer tools (or an equivalent
+response-header view) and preserve the network entry. Record the response
+status, `Content-Length`, `Content-Type`, and any `ETag` or `Last-Modified`
+value, then record the final NOAA filename, retrieval UTC timestamp, local byte
+size, and SHA-256. Do not retain in repository evidence or screenshots any
+email address, cookie, authorization/request header, query token, or signed
+download URL. A HAR file can contain those values and must not be committed.
+
+For a direct CSV, the retained `Content-Length` must equal the final local byte
+size and must be supplied to the local intake as `--source-content-length`. If
+the server supplies no independent length, stop: the file can still be
+identified locally, but the seven-day gate cannot establish transfer
+completeness and cannot authorize a monthly request. A delivered ZIP may use
+the existing complete-archive and passing-CRC evidence instead. Do not infer
+completeness from a successful browser message, filename, plausible size, row
+count, timestamp bounds, or presence of all seven dates.
+
+The exact resource preflight, profile commands, runtime abort conditions, and
+criteria for proceeding to one monthly request are owned by the
+[analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
+The seven-day file has not been requested or downloaded. ADR 0017 remains
+Proposed, and observational completeness remains `unverified` even if transfer
+completeness passes.
 
 ### Author-supplied multi-date AccessAIS intake
 
@@ -366,9 +397,9 @@ and an explicit temporary/spill directory that must also sit under ignored
 `data/interim/`. A uniquely named spill subdirectory is created per run and
 removed afterwards. Ordered results are streamed as bounded Arrow record
 batches; the period is never assembled in memory. This bounds the assembly step
-only — it does not make full-period retrieval or cleaning safe, and the
-approximately 1.59 GiB one-day cleaner peak recorded above remains the open
-scaling concern.
+only — it does not make full-period retrieval or cleaning safe. The avoidably
+high default cleaner allocation is now bounded for the inspected dates, but the
+seven-day and monthly gates remain open.
 
 **Why this is not simply forbidden.** An earlier version of this document banned
 downloading a national file and filtering locally, while the source register
