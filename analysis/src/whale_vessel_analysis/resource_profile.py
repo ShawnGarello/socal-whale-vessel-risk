@@ -21,6 +21,7 @@ import sys
 import tempfile
 import threading
 import time
+from contextlib import suppress
 from dataclasses import dataclass
 from importlib.metadata import version
 from pathlib import Path
@@ -272,14 +273,16 @@ def _terminate_and_reap(child: subprocess.Popen[str]) -> None:
         descendants = root.children(recursive=True)
     except psutil.NoSuchProcess:
         descendants = []
-        root = None
-    processes = [*reversed(descendants), *([] if root is None else [root])]
-    for process in processes:
+    for process in reversed(descendants):
         try:
             process.terminate()
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
-    _, alive = psutil.wait_procs(processes, timeout=3)
+    # Popen owns the direct child's wait status. Reaping it through psutil first
+    # can make Popen report a false zero exit code on POSIX.
+    with suppress(ProcessLookupError):
+        child.terminate()
+    _, alive = psutil.wait_procs(descendants, timeout=3)
     for process in alive:
         try:
             process.kill()
