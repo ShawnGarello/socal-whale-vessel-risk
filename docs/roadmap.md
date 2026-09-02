@@ -378,6 +378,35 @@ exercised with bounded two-day real data**
   12.1394198/19.2814239/10.1271792 seconds, with sampled process-tree RSS peaks
   of 1,593,458,688/1,514,594,304/102,436,864 bytes. These bounded results are
   not extrapolated to monthly or full-period execution.
+- A 2026-09-02 controlled stage investigation established that the earlier high
+  RSS came from the daily cleaner, which had inherited DuckDB's machine defaults
+  of `12.5 GiB` and 12 threads. Fingerprinting, streaming partitioning,
+  canonical sorting, intake validation, and manifest recording did not produce
+  the peak. The cleaner now receives and verifies the intake command's explicit
+  memory limit, isolated spill directory, and one-thread setting. Three isolated
+  `512MB` cleaner runs peaked at 550.410--551.098 MiB application RSS and
+  reproduced the established deterministic output. Two corrected fresh
+  two-day runs peaked at 556.922/558.699 MiB application RSS and
+  949.652/952.223 MiB private bytes; a date-restricted run peaked at 552.910 MiB
+  RSS, and a compatible retry at 65.918 MiB. Spill peaked at 625.469--678.594
+  MiB and returned to zero after every successful run. A third fresh two-day
+  run passed the implemented 2 GiB memory/8 GiB disk preflight, peaked at
+  558.859 MiB application RSS and 618.188 MiB spill, and reproduced the same
+  identities. This supports per-date
+  bounded execution for the observed input, not monthly safety. A direct-
+  process profiler now separates application, descendant, tree, baseline,
+  peak, private-byte, disk, and spill measurements and enforces optional
+  preflight headroom. It now also enforces explicit runtime minimum-memory,
+  minimum-disk, maximum-application-RSS, and maximum-spill choices; reports
+  live state and sampled extrema; reaps the target tree on abort, exception, or
+  interruption; and restricts normal evidence reports to ignored
+  `data/interim/`. The next real gate is one independently transfer-verified
+  2024-07-15 through 2024-07-21 delivery over longitude -122 to -117 and
+  latitude 32 to 35, under documented 2 GiB memory/8 GiB disk preflight and
+  explicit abort limits. It has not been requested or processed. Independent
+  transfer completeness, seven-day/monthly safety, and observational
+  completeness remain unresolved; ADR 0017 remains Proposed and M3 remains in
+  progress.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -398,7 +427,7 @@ exercised with bounded two-day real data**
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 333 passing tests using temporary
+- The combined self-contained suite has 361 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
@@ -438,7 +467,9 @@ exercised with bounded two-day real data**
   candidate GeoParquet and quality JSON, manifest-provenance-independent output
   identity, evidence/candidate parity for their shared nonambiguous logic,
   sanitized execution settings in lineage, candidate-bundle atomicity and
-  output safeguards, and all CLI boundaries.
+  output safeguards, DuckDB normalized-memory verification, deterministic
+  profiler threshold evaluation, mocked resource abort and process cleanup,
+  profiler output/path safeguards and version reporting, and all CLI boundaries.
 - A focused whale-grid command validates the selected NOAA/SWFSC source and the
   exact versioned water-grid input, reprojects source polygons with explicit x/y
   order, detects material source-interior overlap, and transfers modeled density
