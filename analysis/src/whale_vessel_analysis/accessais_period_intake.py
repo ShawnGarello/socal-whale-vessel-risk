@@ -28,7 +28,11 @@ from whale_vessel_analysis.ais import (
     AISSchemaError,
     validate_header,
 )
-from whale_vessel_analysis.ais_processing import AISProcessingResult, process_ais_csv
+from whale_vessel_analysis.ais_processing import (
+    AISProcessingResources,
+    AISProcessingResult,
+    process_ais_csv,
+)
 from whale_vessel_analysis.ais_retrieval import (
     AISRetrievalError,
     fingerprint_regular_file,
@@ -530,6 +534,21 @@ def _canonicalize_daily_files(
                 f"SET temp_directory = {_sql_string(str(spill_directory))}"
             )
             connection.execute("SET threads = 1")
+            effective_row = connection.execute(
+                "SELECT current_setting('memory_limit'), "
+                "current_setting('temp_directory'), current_setting('threads')"
+            ).fetchone()
+            if effective_row is None:
+                raise AccessAISPeriodIntakeError(
+                    "DuckDB canonicalization settings query returned no result"
+                )
+            effective_temp_matches = (
+                Path(str(effective_row[1])).resolve() == spill_directory.resolve()
+            )
+            if int(effective_row[2]) != 1 or not effective_temp_matches:
+                raise AccessAISPeriodIntakeError(
+                    "DuckDB did not apply the requested canonicalization resources"
+                )
             for utc_date in sorted(counts.rows_by_date):
                 staged = staging_directory / f"{utc_date}.csv"
                 if not staged.is_file():
@@ -567,7 +586,10 @@ def _canonicalize_daily_files(
     return {
         "engine": "DuckDB",
         "memory_limit": validated.memory_limit,
+        "effective_memory_limit": str(effective_row[0]),
         "threads": 1,
+        "effective_threads": int(effective_row[2]),
+        "effective_temp_directory_matches_isolated_spill": effective_temp_matches,
         "isolated_spill_directory": True,
         "spill_directory_removed_after_run": not spill_directory.exists(),
         "sort_fields": list(AIS_PUBLISHED_HEADER),
@@ -1409,9 +1431,8 @@ def orchestrate_accessais_delivery(
     *,
     source_content_length: int | None = None,
     clock: Callable[[], datetime] = _utc_now,
-    cleaner: Callable[[Path, Path, ProcessingConfig], AISProcessingResult] = (
-        process_ais_csv
-    ),
+    cleaner: Callable[[Path, Path, ProcessingConfig], AISProcessingResult]
+    | None = None,
 ) -> OrchestrationResult:
     """Prepare, sequentially clean, and immediately record each available date."""
     intake_directory, cleaned_root, period_manifest_path = (
@@ -1467,7 +1488,19 @@ def orchestrate_accessais_delivery(
                 conflicting_dates.append(utc_date)
             recorded_existing_dates.append(utc_date)
             continue
-        cleaner(slice_path, bundle, config)
+        if cleaner is None:
+            process_ais_csv(
+                slice_path,
+                bundle,
+                config,
+                resources=AISProcessingResources(
+                    resources.memory_limit,
+                    resources.temporary_directory,
+                    threads=1,
+                ),
+            )
+        else:
+            cleaner(slice_path, bundle, config)
         if _cleaner_input_sha256(bundle) != slice_sha:
             raise AccessAISPeriodIntakeError(
                 f"new cleaner bundle for {utc_date} does not record the "

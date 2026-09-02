@@ -16,6 +16,7 @@ from whale_vessel_analysis.ais_processing import (
     QUALITY_REPORT_FILENAME,
     RUN_METADATA_FILENAME,
     AISProcessingError,
+    AISProcessingResources,
     process_ais_csv,
 )
 from whale_vessel_analysis.cli import main
@@ -243,6 +244,97 @@ def test_output_and_metadata_are_deterministic_for_the_same_invocation(
     assert first_bytes == {name: (output / name).read_bytes() for name in _BUNDLE_NAMES}
 
 
+def test_explicit_duckdb_resources_are_applied_recorded_and_cleaned_up(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "day.csv"
+    _write_csv(source, [_row()])
+    output = tmp_path / "bundle"
+    spill_parent = tmp_path / "spill"
+
+    process_ais_csv(
+        source,
+        output,
+        load_default_config(),
+        resources=AISProcessingResources("64MB", spill_parent, threads=1),
+    )
+
+    metadata = json.loads((output / RUN_METADATA_FILENAME).read_text(encoding="utf-8"))
+    execution = metadata["execution_resources"]
+    assert execution["requested_memory_limit"] == "64MB"
+    assert execution["effective_memory_limit"] != "64MB"
+    assert execution["requested_threads"] == 1
+    assert execution["effective_threads"] == 1
+    assert execution["isolated_spill_directory"] is True
+    assert execution["effective_temp_directory_matches_isolated_spill"] is True
+    assert execution["local_spill_path_recorded"] is False
+    assert execution["spill_directory_removed_after_run"] is True
+    assert list(spill_parent.iterdir()) == []
+
+
+def test_resource_settings_do_not_change_cleaned_identity(tmp_path: Path) -> None:
+    source = tmp_path / "day.csv"
+    _write_csv(source, [_row()])
+
+    first = process_ais_csv(
+        source,
+        tmp_path / "first",
+        load_default_config(),
+        resources=AISProcessingResources("64MB", tmp_path / "spill-first", threads=1),
+    )
+    second = process_ais_csv(
+        source,
+        tmp_path / "second",
+        load_default_config(),
+        resources=AISProcessingResources("128MB", tmp_path / "spill-second", threads=2),
+    )
+
+    assert first.run_id == second.run_id
+    assert first.output_sha256 == second.output_sha256
+    assert first.cleaned_parquet.read_bytes() == second.cleaned_parquet.read_bytes()
+
+
+def test_failed_processing_removes_isolated_spill_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "day.csv"
+    _write_csv(source, [_row()])
+    spill_parent = tmp_path / "spill"
+
+    def fail_write(*args: object, **kwargs: object) -> None:
+        raise AISProcessingError("synthetic write failure")
+
+    monkeypatch.setattr(ais_processing, "_write_cleaned_parquet", fail_write)
+    with pytest.raises(AISProcessingError, match="synthetic write failure"):
+        process_ais_csv(
+            source,
+            tmp_path / "bundle",
+            load_default_config(),
+            resources=AISProcessingResources("64MB", spill_parent, threads=1),
+        )
+
+    assert list(spill_parent.iterdir()) == []
+    assert not (tmp_path / "bundle").exists()
+
+
+def test_spill_parent_must_be_disjoint_before_output_is_created(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "day.csv"
+    _write_csv(source, [_row()])
+    output = tmp_path / "bundle"
+
+    with pytest.raises(AISProcessingError, match="must be disjoint"):
+        process_ais_csv(
+            source,
+            output,
+            load_default_config(),
+            resources=AISProcessingResources("64MB", output, threads=1),
+        )
+
+    assert not output.exists()
+
+
 _BUNDLE_NAMES = (CLEANED_FILENAME, QUALITY_REPORT_FILENAME, RUN_METADATA_FILENAME)
 
 
@@ -427,6 +519,10 @@ def test_cli_process_ais_success_and_failure_boundaries(
                 str(output),
                 "--config",
                 str(config_path),
+                "--memory-limit",
+                "64MB",
+                "--temp-directory",
+                str(tmp_path / "duckdb-spill"),
             ]
         )
         == 0
@@ -447,6 +543,10 @@ def test_cli_process_ais_success_and_failure_boundaries(
                 str(invalid),
                 "--output-dir",
                 str(failed_output),
+                "--memory-limit",
+                "64MB",
+                "--temp-directory",
+                str(tmp_path / "failed-duckdb-spill"),
             ]
         )
         == 2
