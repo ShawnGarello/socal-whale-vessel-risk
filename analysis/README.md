@@ -182,14 +182,14 @@ resource arguments are required: DuckDB sorts under the explicit memory limit
 and uses a unique spill directory below the supplied ignored interim parent.
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 --memory-limit 512MB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill [--source-content-length <independently-retained-byte-count>]
 ```
 
 Run the ordered resumable path through the existing one-date cleaner and
 `multiday_cleaned_ais_input_v1` manifest:
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <author-supplied-delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\delivery --requested-start 2024-07-01 --requested-end 2024-07-31 --memory-limit 512MB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
 ```
 
 Validate an established intake bundle and report its current status:
@@ -259,6 +259,17 @@ and the period manifest cannot be inside either root. A newly created cleaner
 bundle is not recorded until its input SHA-256 matches the established daily
 slice.
 
+The same explicit resource request now applies to canonical sorting and to
+each sequential cleaner invocation. Both operations verify DuckDB's effective
+memory limit, isolated temporary directory, and one-thread setting with
+`current_setting()` after configuration. Each cleaner run records the requested
+and effective values without recording its local spill path, and removes its
+unique spill directory on success or handled failure. The memory limit governs
+DuckDB's buffer manager, not total operating-system RSS; DuckDB's official
+[memory guidance](https://duckdb.org/docs/stable/guides/performance/how_to_tune_workloads.html#memory-management)
+documents allocations outside that limit. Therefore an RSS reading greater than
+the effective limit is not, by itself, evidence that the setting failed.
+
 Requested-date presence is inventory evidence, not completeness evidence. The
 delivery manifest keeps independent transfer completeness separate and marks a
 direct CSV `unverified` unless an independently retained matching source
@@ -274,8 +285,8 @@ unique intake directory, while reusing the same cleaned root and period
 manifest:
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-a.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-a-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-b.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-b-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-a.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-a-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 512MB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery-b.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-b-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 512MB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>]
 ```
 
 The intake and cleaned roots remain disjoint. Reusing the cleaned root lets an
@@ -349,6 +360,126 @@ overhead is included. None of these measurements is extrapolated to a month or
 five months. The pilot authorizes no additional order, does not establish
 complete reception, and does not accept ADR 0017 or ADR 0018.
 
+### AccessAIS intake resource investigation and seven-day gate
+
+On 2026-09-02 a fresh read-only investigation used the immutable 115,791,285-
+byte two-day CSV above. Normal long-running work was sampled every 100 ms after
+a post-import barrier; the subsecond fingerprint check used 10 ms. The method
+identified the actual Python application separately from its Windows virtual-
+environment launcher, excluded the profiler, and reported application RSS,
+Windows private bytes, the operating system's peak-working-set counter, and
+process-tree RSS separately. The approximately 4 MiB launcher was the only
+descendant overhead. Process-tree RSS can double-count shared pages, so it is
+reported as a diagnostic rather than treated as application memory. OS caches
+were not cleared, and elapsed-time differences are not cold-cache comparisons.
+
+Stage isolation found the peak in the daily cleaner:
+
+| Isolated work | Application baseline/peak RSS | Peak private bytes | Observation |
+|---|---:|---:|---|
+| Source fingerprint | 57.3/59.3 MiB | 390.9 MiB | 2.0 MiB RSS increase. |
+| Streaming partition, 100 ms repeat | 57.5/57.8 MiB | 389.3 MiB | 0.3 MiB RSS increase; 23.796 s. A 10 ms sampler stretched the same work to 71.642 s without changing its near-baseline peak. |
+| Per-date canonical sort/export, two repeats | 57.2--57.4/403.7--404.5 MiB | 745.8--746.7 MiB | Effective `953.6 MiB`, one thread, and requested spill directory verified; 8.350--11.256 s. |
+| Existing default cleaner, 15 July, three repeats | 57.3--57.4/1,102.7--1,365.5 MiB | 2,152.7--2,156.4 MiB | DuckDB actually used its machine defaults: `12.5 GiB`, 12 threads, and its default temporary directory. |
+| Existing default cleaner, 16 July | 57.2/1,396.5 MiB | 2,069.4 MiB | The approximately 5% smaller daily CSV used approximately 4% fewer private bytes even though RSS was higher. |
+| Intake validation | 57.5/58.7 MiB | 390.2 MiB | 1.3 MiB RSS increase. |
+| One-date manifest record | 57.4/57.5 MiB | 389.2 MiB | 0.1 MiB RSS increase. |
+
+The old peak was therefore genuine cleaner allocation combined with noisy
+Windows working-set residency, not an accumulating process tree and not a
+failure of the bounded canonical sorter. The default cleaner's stable private-
+byte peak and the smaller second date show an input-scaled component. Sequential
+date cleaning, a low-memory compatible retry, and the absence of growth between
+one-date and two-date corrected peaks provide no evidence of unbounded cross-
+date accumulation. This does not establish the behavior of a larger individual
+date or authorize a linear extrapolation.
+
+Three 15 July cleaner repeats with `512MB` and one thread used an effective
+DuckDB limit of `488.2 MiB`. Their sampled application RSS peaks were
+550.410--551.098 MiB, increases over baseline were 492.848--493.723 MiB, and
+private-byte peaks were 936.379--936.746 MiB. All reproduced the established
+run ID and cleaned checksum. A `256MB` technical comparison also reproduced the
+output at 308.227 MiB peak RSS, but took 25.974 seconds and used more temporary
+disk; `512MB` was retained as the measured balance, not as a universal optimum.
+
+With that correction in the real end-to-end path, two fresh two-day runs peaked
+at 556.922 and 558.699 MiB application RSS (501.062 and 502.824 MiB over
+baseline), 560.902 and 562.668 MiB process-tree RSS, and 949.652 and 952.223 MiB
+private bytes. A date-restricted 15 July run peaked at 552.910 MiB RSS and
+938.289 MiB private bytes. The two-day run therefore remained approximately
+per-date bounded. Its separate spill parent peaked at 678.594/666.000 MiB in
+the repeats, versus 625.469 MiB for the one-date run, and ended at zero every
+time. Generated output roots peaked at 275.670/288.670 MiB and ended at
+150.444 MiB; the one-date root peaked at 207.993 MiB and ended at 77.380 MiB.
+All unique canonical and cleaner spill directories were removed. A compatible
+two-day retry skipped both dates, peaked at 65.918 MiB application RSS, created
+no spill bytes, and left all identities unchanged. Corrected end-to-end times
+were 28.014 and 42.669 seconds; the one-date run took 34.492 seconds and the
+retry 14.463 seconds. Cache state and profiling interference were uncontrolled,
+so those times describe these runs only.
+
+A third fresh two-day verification used the final profiler's gates. It recorded
+2,982,256,640 bytes available memory and 40,857,993,216 bytes free disk before
+starting, above the required 2/8 GiB thresholds. It took 45.110 seconds, peaked
+at 558.859 MiB application RSS (502.949 MiB over its 55.910 MiB baseline),
+562.828 MiB process-tree RSS, 952.691 MiB private bytes, 322.670 MiB generated-
+root disk, and 618.188 MiB isolated spill; final generated-root disk was
+150.444 MiB and final spill was zero. It reproduced the same identities.
+
+The corrected runs reproduced delivery ID
+`accessais-period-e00d27730a3b5541a37a9073`, period ID
+`multiday-ais-ddf23ba501bc834dbe5a2656`, both canonical daily identities and
+checksums, both cleaner run IDs, and cleaned checksums
+`efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`
+and `cb37b96a9f3e56838ca492a33dffc57a174fc92c1d385d3f3a1e848d2f7fbc5c`.
+No processing-version or deterministic-content identity changed.
+
+The next permitted real-data gate is exactly one continuous AccessAIS delivery
+for **2024-07-15 through 2024-07-21**, using the already accepted WGS 84 request
+bounds longitude **-122 to -117** and latitude **32 to 35**. The overlap with
+15--16 July must reproduce those established canonical identities. This is a
+seven-day scaling test, not evidence that a monthly delivery is safe.
+
+Before requesting it, the author must use browser developer tools or equivalent
+download evidence to retain response status, `Content-Length`, `Content-Type`,
+and any `ETag`/`Last-Modified` value without retaining or committing an email
+address, cookie, authorization header, or signed URL. After download, record the
+retrieval UTC timestamp, NOAA filename, local byte size, and SHA-256. A direct
+CSV needs a retained `Content-Length` equal to the local byte size; a ZIP may
+instead use the existing complete-archive/CRC boundary. If neither exists,
+independent transfer completeness remains unverified and the result cannot pass
+the gate to a monthly request.
+
+Run from `analysis/`, substituting a new ignored gate directory and the actual
+author-supplied path and retained byte count:
+
+```text
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-seven-day-gate\profile-first.json --label accessais-seven-day-first --disk-root ..\data\interim\m3-accessais-seven-day-gate\run --spill-root ..\data\interim\m3-accessais-seven-day-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --expected-exit-code 3 -- run --input <author-supplied-seven-day.csv-or-zip> --intake-dir ..\data\interim\m3-accessais-seven-day-gate\run\intake --requested-start 2024-07-15 --requested-end 2024-07-21 --source-content-length <retained-Content-Length> --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-seven-day-gate\spill --cleaned-root ..\data\interim\m3-accessais-seven-day-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-seven-day-gate\run\period.json
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-seven-day-gate\profile-retry.json --label accessais-seven-day-retry --disk-root ..\data\interim\m3-accessais-seven-day-gate\run --spill-root ..\data\interim\m3-accessais-seven-day-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --expected-exit-code 3 -- run --input <same-author-supplied-seven-day.csv-or-zip> --intake-dir ..\data\interim\m3-accessais-seven-day-gate\run\intake --requested-start 2024-07-15 --requested-end 2024-07-21 --source-content-length <same-retained-Content-Length> --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-seven-day-gate\spill --cleaned-root ..\data\interim\m3-accessais-seven-day-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-seven-day-gate\run\period.json
+```
+
+The profiler refuses to start below the deliberately conservative 2 GiB
+available-memory or 8 GiB free-disk gates. During execution, abort with Ctrl+C
+if available memory falls below 1 GiB, free disk below 4 GiB, application RSS
+reaches 1 GiB, or isolated spill use reaches 2 GiB. Also abort on a DuckDB out-
+of-memory/disk error, unexpected date, malformed/unassignable timestamp,
+unreconciled row accounting, canonical/checksum conflict, failure to record a
+successful date, or an unresponsive process. These thresholds are operational
+choices with headroom over the two-day observations, not predictions of seven-
+day requirements. After an abort, do not reuse its intake directory; verify
+that no published partial bundle exists and remove any abandoned ignored
+staging/spill directory only after inspecting its exact resolved path.
+
+Proceed to request one monthly extract only if the seven-day source has
+independent transfer-completeness evidence; all seven requested dates are
+present with reconciled row accounting and no exceptions; 15--16 July match the
+established canonical identities; every date cleans and records sequentially;
+effective `488.2 MiB`, one thread, and isolated spill use are recorded; both
+profiles stay below all abort thresholds; spill returns to zero; and the retry
+skips all seven dates with unchanged identities. Observational completeness
+still remains `unverified`. Even a pass authorizes only the next monthly
+scaling gate, not all five months or full-period safety.
+
 ### Verified one-day compatibility exercise
 
 On 2026-08-28 the new `run` path read the permitted 2024-07-15 AccessAIS CSV
@@ -403,11 +534,12 @@ observational-completeness field. The processing contract is
 `noaa_marine_cadastre_ais_extract_v2`, not a complete-day contract.
 
 ```text
-python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <new-output-directory>
+python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --memory-limit 512MB --temp-directory ..\data\interim\ais-cleaner-spill --output-dir <new-output-directory> [--threads 1]
 ```
 
-Omitting `--config` uses the packaged configuration. Supply an equivalent
-versioned TOML file with `--config <config.toml>`. The command refuses any
+The explicit memory limit and spill parent are required; the default thread
+count is one. Omitting `--config` uses the packaged configuration. Supply an
+equivalent versioned TOML file with `--config <config.toml>`. The command refuses any
 existing output directory by default. `--overwrite` is narrowly limited to a
 complete bundle previously marked with this command's contract; it will not
 replace an arbitrary directory.

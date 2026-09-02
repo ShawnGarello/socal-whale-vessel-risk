@@ -324,8 +324,8 @@ already-owned intake directory or a conflict recorded from an explicitly
 supplied, independently produced incompatible cleaner bundle.
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill [--source-content-length <independently-retained-byte-count>]
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 512MB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 512MB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
 python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli status --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id>
 ```
 
@@ -342,21 +342,50 @@ regeneration. The reported wall time, sampled process-tree RSS, and recursive
 pilot-root disk measurements are bounded two-day evidence only; they do not
 authorize five later monthly orders or establish transfer completeness.
 
+**Direct-process resource profiling**
+
+Use the development-only `resource_profile` module for real-data scaling
+evidence. It starts the named Python CLI in an isolated child, pauses after the
+target module imports, takes a median baseline, then samples the actual
+application and complete process tree at no more than 20 Hz. A 100 ms interval
+is the normal setting; the AccessAIS investigation showed that 10 ms Windows
+sampling can materially inflate runtime. The profiler process is excluded. On
+Windows it reports RSS, committed private bytes, and the OS peak-working-set
+counter separately. A process-tree sum remains diagnostic because shared pages
+can be counted more than once.
+
+```text
+python -m uv run python -m whale_vessel_analysis.resource_profile --module <package.cli_module> --output ..\data\interim\<fresh-evidence>\profile.json --label <non-sensitive-label> --disk-root ..\data\interim\<fresh-evidence>\run --spill-root ..\data\interim\<fresh-evidence>\spill [--minimum-free-memory-gib <GiB>] [--minimum-free-disk-gib <GiB>] [--expected-exit-code <code>] -- <target arguments>
+```
+
+The two preflight gates run before the target starts and the observed values
+are recorded. The JSON report deliberately omits target arguments and local
+paths; it stores only the target module, label, resource measurements, exit
+code, and byte counts/SHA-256 values for stdout and stderr. Target output is
+still forwarded to the console. Use a new ignored output path for every
+profile: existing evidence is never overwritten. Record cache handling
+truthfully; unless a separate safe cache-reset procedure was actually used,
+state that caches were not cleared and do not label repeats cold-cache runs.
+Run resource experiments sequentially so concurrent work does not invalidate
+the memory or disk measurements. The exact seven-day AccessAIS gate, stop
+conditions, and success criteria are in the
+[analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
+
 **One-extract AIS processing**
 
 The processing command requires both paths and never discovers a date,
 directory, or season on its own:
 
 ```text
-python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <new-output-directory>
-python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <new-output-directory> --config <config.toml>
+python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --memory-limit 512MB --temp-directory ..\data\interim\ais-cleaner-spill --output-dir <new-output-directory>
+python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --memory-limit 512MB --temp-directory ..\data\interim\ais-cleaner-spill --output-dir <new-output-directory> --config <config.toml>
 ```
 
 The output directory must not exist. To repeat the identical invocation into a
 bundle previously created by this command:
 
 ```text
-python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <existing-bundle> --overwrite
+python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --memory-limit 512MB --temp-directory ..\data\interim\ais-cleaner-spill --output-dir <existing-bundle> --overwrite
 ```
 
 `--overwrite` refuses arbitrary directories and replaces only a complete bundle
@@ -378,7 +407,7 @@ policy is [ADR 0013](decisions/0013-remove-conflicting-ais-key-records.md).
 The required local M2-sample smoke invocation is:
 
 ```text
-python -m uv run whale-vessel-analysis process-ais --input C:\Users\teche\socal-whale-vessel-risk-data-discovery\data\interim\m2-inspection\AIS_2024_07_15.head_sample.csv --output-dir ..\data\interim\ais-ingestion-smoke
+python -m uv run whale-vessel-analysis process-ais --input <m2-worktree>\data\interim\m2-inspection\AIS_2024_07_15.head_sample.csv --memory-limit 512MB --temp-directory ..\data\interim\ais-cleaner-spill --output-dir ..\data\interim\ais-ingestion-smoke
 ```
 
 That path is specific to the author's worktrees. Use `--overwrite` only to
