@@ -19,8 +19,9 @@
 > recording. The boundary was exercised with overlapping real one-day and
 > two-day direct CSV deliveries; reordered equivalent 15 July content was
 > reused and 16 July was added. Network retrieval and analytical-period
-> acquisition remain unfinished. Vessel aggregation, exposure analysis,
-> a final public layer representation, and deployment also remain unfinished.
+> acquisition remain unfinished. Final period-wide vessel aggregation,
+> exposure analysis, a final public layer representation, and deployment also
+> remain unfinished.
 > See the [roadmap](roadmap.md) for milestone status.
 
 Two independent questions remain open and gate different work. The analytical
