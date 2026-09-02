@@ -8,7 +8,11 @@ from pathlib import Path
 from typing import cast
 
 from whale_vessel_analysis.ais import AISValidationError, validate_ais_csv
-from whale_vessel_analysis.ais_processing import AISProcessingError, process_ais_csv
+from whale_vessel_analysis.ais_processing import (
+    AISProcessingError,
+    AISProcessingResources,
+    process_ais_csv,
+)
 from whale_vessel_analysis.config import (
     ConfigurationError,
     ProcessingConfig,
@@ -75,6 +79,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="one single-UTC-date AIS flat-CSV extract path",
     )
     process_ais_parser.add_argument(
+        "--memory-limit",
+        required=True,
+        help="explicit DuckDB memory limit with unit, for example 512MB",
+    )
+    process_ais_parser.add_argument(
+        "--temp-directory",
+        type=Path,
+        required=True,
+        help="parent for one isolated DuckDB spill directory per run",
+    )
+    process_ais_parser.add_argument(
+        "--threads",
+        type=int,
+        default=1,
+        help="explicit DuckDB thread count; defaults to 1",
+    )
+    process_ais_parser.add_argument(
         "--output-dir",
         type=Path,
         required=True,
@@ -124,6 +145,11 @@ def _run_command(args: argparse.Namespace) -> int:
             cast(Path, args.output_dir),
             config,
             overwrite=cast(bool, args.overwrite),
+            resources=AISProcessingResources(
+                cast(str, args.memory_limit),
+                cast(Path, args.temp_directory),
+                cast(int, args.threads),
+            ),
         )
         _emit_compact(processing_result.to_dict())
         return 0

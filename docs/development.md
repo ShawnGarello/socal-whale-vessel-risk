@@ -275,6 +275,12 @@ that the existing quality report still says completeness `unverified`, records
 `observational_completeness_preserved: true`, and rejects a reference that
 reports an upgraded state.
 
+That bridge requires `--memory-limit` and `--temp-directory` whenever
+`--clean-output-dir` is supplied; optional `--threads` defaults explicitly to
+one. Cleaner resource arguments are rejected for inspection-only invocations.
+The settings are passed through `AISProcessingResources` and preserved in the
+cleaner metadata.
+
 The real bounded 2024-07-15 AccessAIS direct CSV exercised the read-only
 inspection and cleaner bridge on 2026-08-28. Its 59,497,346 retained bytes have
 SHA-256
@@ -324,8 +330,8 @@ already-owned intake directory or a conflict recorded from an explicitly
 supplied, independently produced incompatible cleaner bundle.
 
 ```text
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill [--source-content-length <independently-retained-byte-count>]
-python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 1GB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli prepare --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 512MB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill [--source-content-length <independently-retained-byte-count>]
+python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli run --input <delivery.csv-or-zip> --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id> --requested-start <YYYY-MM-DD> --requested-end <YYYY-MM-DD> --memory-limit 512MB --temp-directory ..\data\interim\accessais-period-intake\duckdb-spill --cleaned-root ..\data\interim\accessais-period-intake\cleaned --period-manifest ..\data\interim\accessais-period-intake\period-manifest.json [--source-content-length <independently-retained-byte-count>] [--config <config.toml>]
 python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli status --intake-dir ..\data\interim\accessais-period-intake\deliveries\<delivery-id>
 ```
 
@@ -342,21 +348,61 @@ regeneration. The reported wall time, sampled process-tree RSS, and recursive
 pilot-root disk measurements are bounded two-day evidence only; they do not
 authorize five later monthly orders or establish transfer completeness.
 
+**Direct-process resource profiling**
+
+Use the development-only `resource_profile` module for real-data scaling
+evidence. It starts the named Python CLI in an isolated child, pauses after the
+target module imports, takes a median baseline, then samples the actual
+application and complete process tree at no more than 20 Hz. A 100 ms interval
+is the normal setting; the AccessAIS investigation showed that 10 ms Windows
+sampling can materially inflate runtime. The profiler process is excluded. On
+Windows it reports RSS, committed private bytes, and the OS peak-working-set
+counter separately. A process-tree sum remains diagnostic because shared pages
+can be counted more than once.
+
+```text
+python -m uv run python -m whale_vessel_analysis.resource_profile --module <package.cli_module> --output ..\data\interim\<fresh-evidence>\profile.json --label <non-sensitive-label> --disk-root ..\data\interim\<fresh-evidence>\run --spill-root ..\data\interim\<fresh-evidence>\spill [--minimum-free-memory-gib <GiB>] [--minimum-free-disk-gib <GiB>] [--runtime-minimum-available-memory-gib <GiB>] [--runtime-minimum-free-disk-gib <GiB>] [--runtime-maximum-application-rss-gib <GiB>] [--runtime-maximum-spill-gib <GiB>] [--expected-exit-code <code>] -- <target arguments>
+```
+
+The two preflight gates run before the target starts and the observed values
+are recorded. Optional runtime limits are separate operational choices. While
+the target runs, the profiler displays their live state, records minimum
+available memory and free disk plus maximum application RSS and spill bytes,
+and terminates and reaps the process tree on the first crossing. An orderly
+resource abort is named in the report, cannot be treated as target success, and
+returns profiler exit code `5`. Exceptions and keyboard interruption also reap
+the target tree. The JSON report deliberately omits target arguments and local
+paths; it stores the target module, label, resource measurements, exit code,
+Python/psutil/platform versions, and byte counts/SHA-256 values for stdout and
+stderr. Target output is still forwarded to the console.
+
+At the CLI boundary, the report must be a fresh path beneath ignored
+`data/interim/`; `data/raw/` and outside paths are refused. Obviously broad
+recursive disk/spill roots, including the drive, repository, data, or interim
+root, are refused. Use a new ignored output path for every profile: existing
+evidence and unrelated temporary files are never overwritten. Record cache
+handling truthfully; unless a separate safe cache-reset procedure was actually used,
+state that caches were not cleared and do not label repeats cold-cache runs.
+Run resource experiments sequentially so concurrent work does not invalidate
+the memory or disk measurements. The exact seven-day AccessAIS gate, stop
+conditions, and success criteria are in the
+[analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
+
 **One-extract AIS processing**
 
 The processing command requires both paths and never discovers a date,
 directory, or season on its own:
 
 ```text
-python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <new-output-directory>
-python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <new-output-directory> --config <config.toml>
+python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --memory-limit 512MB --temp-directory ..\data\interim\ais-cleaner-spill --output-dir <new-output-directory>
+python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --memory-limit 512MB --temp-directory ..\data\interim\ais-cleaner-spill --output-dir <new-output-directory> --config <config.toml>
 ```
 
 The output directory must not exist. To repeat the identical invocation into a
 bundle previously created by this command:
 
 ```text
-python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --output-dir <existing-bundle> --overwrite
+python -m uv run whale-vessel-analysis process-ais --input <one-ais.csv> --memory-limit 512MB --temp-directory ..\data\interim\ais-cleaner-spill --output-dir <existing-bundle> --overwrite
 ```
 
 `--overwrite` refuses arbitrary directories and replaces only a complete bundle
@@ -378,7 +424,7 @@ policy is [ADR 0013](decisions/0013-remove-conflicting-ais-key-records.md).
 The required local M2-sample smoke invocation is:
 
 ```text
-python -m uv run whale-vessel-analysis process-ais --input C:\Users\teche\socal-whale-vessel-risk-data-discovery\data\interim\m2-inspection\AIS_2024_07_15.head_sample.csv --output-dir ..\data\interim\ais-ingestion-smoke
+python -m uv run whale-vessel-analysis process-ais --input <m2-worktree>\data\interim\m2-inspection\AIS_2024_07_15.head_sample.csv --memory-limit 512MB --temp-directory ..\data\interim\ais-cleaner-spill --output-dir ..\data\interim\ais-ingestion-smoke
 ```
 
 That path is specific to the author's worktrees. Use `--overwrite` only to
@@ -1044,7 +1090,7 @@ the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 333 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 361 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -1080,8 +1126,10 @@ distance conservation, zero-length/outside-support/boundary-ambiguity treatment,
 union-recomputed distinct-vessel output, deterministic GeoParquet and quality
 serialization independent of volatile manifest provenance, parity with the
 evidence path for shared nonambiguous logic, sanitized bounded-execution
-settings in lineage, candidate-bundle atomicity and output safeguards, and all
-CLI boundaries.
+settings in lineage, candidate-bundle atomicity and output safeguards, DuckDB
+normalized-memory verification, deterministic resource-threshold evaluation,
+mocked runtime abort and process cleanup, profiler CLI/output safeguards and
+version reporting, and all CLI boundaries.
 Tests create temporary CSVs and geometry or use data in memory; the ignored M2
 artifacts are not test prerequisites. Third-party libraries are not themselves
 unit-tested.

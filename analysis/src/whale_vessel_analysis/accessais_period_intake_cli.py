@@ -53,7 +53,10 @@ def _add_delivery_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--memory-limit",
         required=True,
-        help="explicit DuckDB canonical-sort memory limit with unit, for example 1GB",
+        help=(
+            "explicit DuckDB memory limit for canonical sorting and sequential "
+            "daily cleaning, for example 512MB"
+        ),
     )
     parser.add_argument(
         "--temp-directory",

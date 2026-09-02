@@ -6,6 +6,8 @@ import hashlib
 import json
 import os
 import platform
+import re
+import shutil
 import tempfile
 from collections.abc import Callable
 from contextlib import suppress
@@ -19,6 +21,7 @@ import duckdb
 
 from whale_vessel_analysis.ais import AISValidationError, read_header
 from whale_vessel_analysis.config import ProcessingConfig
+from whale_vessel_analysis.duckdb_resources import memory_settings_match
 from whale_vessel_analysis.lineage import (
     ArtifactReference,
     ProcessingStep,
@@ -39,6 +42,7 @@ _BUNDLE_FILENAMES: Final = (
 _PROJECT_ROOT: Final = Path(__file__).resolve().parents[3]
 _PROJECT_RAW_ROOT: Final = (_PROJECT_ROOT / "data" / "raw").resolve()
 _LEGACY_OVERWRITE_CONTRACTS: Final = frozenset({"noaa_marine_cadastre_ais_day_v1"})
+_MEMORY_LIMIT_PATTERN: Final = re.compile(r"^[1-9][0-9]*(?:\.[0-9]+)?(?:KB|MB|GB|TB)$")
 
 _OUTPUT_SCHEMA: Final = (
     ("mmsi", "VARCHAR", True),
@@ -56,6 +60,30 @@ _OUTPUT_SCHEMA: Final = (
 
 class AISProcessingError(ValueError):
     """Raised when a supplied AIS extract cannot be processed safely."""
+
+
+@dataclass(frozen=True, slots=True)
+class AISProcessingResources:
+    """Explicit DuckDB resources for one-date AIS cleaning."""
+
+    memory_limit: str
+    temporary_directory: Path
+    threads: int = 1
+
+    def validate(self) -> AISProcessingResources:
+        if _MEMORY_LIMIT_PATTERN.fullmatch(self.memory_limit) is None:
+            raise AISProcessingError(
+                "AIS processing memory limit must be a positive size with a "
+                "KB, MB, GB, or TB unit"
+            )
+        if self.threads < 1:
+            raise AISProcessingError("AIS processing thread count must be at least one")
+        temporary = self.temporary_directory.resolve()
+        if temporary.exists() and not temporary.is_dir():
+            raise AISProcessingError(
+                f"AIS processing temporary directory is not a directory: {temporary}"
+            )
+        return AISProcessingResources(self.memory_limit, temporary, self.threads)
 
 
 @dataclass(frozen=True, slots=True)
@@ -507,6 +535,66 @@ def _runtime() -> dict[str, str]:
     }
 
 
+def _duckdb_settings(
+    connection: duckdb.DuckDBPyConnection,
+    requested: AISProcessingResources,
+    spill_directory: Path,
+) -> dict[str, object]:
+    row = connection.execute(
+        "SELECT current_setting('memory_limit'), "
+        "current_setting('temp_directory'), current_setting('threads')"
+    ).fetchone()
+    if row is None:
+        raise AISProcessingError("DuckDB resource settings query returned no result")
+    effective_temp = Path(str(row[1])).resolve()
+    return {
+        "requested_memory_limit": requested.memory_limit,
+        "effective_memory_limit": str(row[0]),
+        "requested_threads": requested.threads,
+        "effective_threads": int(row[2]),
+        "isolated_spill_directory": True,
+        "effective_temp_directory_matches_isolated_spill": (
+            effective_temp == spill_directory.resolve()
+        ),
+        "local_spill_path_recorded": False,
+    }
+
+
+def _configure_duckdb_resources(
+    connection: duckdb.DuckDBPyConnection,
+    resources: AISProcessingResources,
+    spill_directory: Path,
+) -> dict[str, object]:
+    connection.execute(f"SET memory_limit = '{resources.memory_limit}'")
+    escaped_spill = str(spill_directory).replace("'", "''")
+    connection.execute(f"SET temp_directory = '{escaped_spill}'")
+    connection.execute(f"SET threads = {resources.threads}")
+    settings = _duckdb_settings(connection, resources, spill_directory)
+    try:
+        memory_matches = memory_settings_match(
+            resources.memory_limit, str(settings["effective_memory_limit"])
+        )
+    except ValueError as exc:
+        raise AISProcessingError(
+            "DuckDB returned an unreadable effective AIS memory limit: "
+            f"{settings['effective_memory_limit']!r}"
+        ) from exc
+    if not memory_matches:
+        raise AISProcessingError(
+            "DuckDB did not apply the requested AIS processing memory limit: "
+            f"requested {resources.memory_limit!r}, effective "
+            f"{settings['effective_memory_limit']!r}"
+        )
+    if (
+        settings["effective_threads"] != resources.threads
+        or settings["effective_temp_directory_matches_isolated_spill"] is not True
+    ):
+        raise AISProcessingError(
+            "DuckDB did not apply the requested AIS processing resources"
+        )
+    return settings
+
+
 def _validate_output_target(output_directory: Path, overwrite: bool) -> None:
     resolved = output_directory.resolve()
     if resolved == _PROJECT_RAW_ROOT or resolved.is_relative_to(_PROJECT_RAW_ROOT):
@@ -540,6 +628,31 @@ def _validate_output_target(output_directory: Path, overwrite: bool) -> None:
     if metadata.get("contract") not in accepted_contracts:
         raise AISProcessingError(
             "existing output is not marked as this AIS processing contract"
+        )
+
+
+def _paths_overlap(first: Path, second: Path) -> bool:
+    return (
+        first == second or first.is_relative_to(second) or second.is_relative_to(first)
+    )
+
+
+def _validate_resource_paths(
+    resources: AISProcessingResources,
+    input_path: Path,
+    output_directory: Path,
+) -> None:
+    temporary = resources.temporary_directory
+    if temporary == _PROJECT_RAW_ROOT or temporary.is_relative_to(_PROJECT_RAW_ROOT):
+        raise AISProcessingError(
+            "AIS processing temporary directory cannot be inside data/raw"
+        )
+    if _paths_overlap(temporary, input_path) or _paths_overlap(
+        temporary, output_directory
+    ):
+        raise AISProcessingError(
+            "AIS processing temporary directory must be disjoint from the input "
+            "and output"
         )
 
 
@@ -590,6 +703,7 @@ def process_ais_csv(
     *,
     overwrite: bool = False,
     clock: Callable[[], datetime] = _utc_now,
+    resources: AISProcessingResources | None = None,
 ) -> AISProcessingResult:
     """Clean one single-UTC-date AIS extract into an atomic output bundle."""
     started_at = _clock_timestamp(clock, "start")
@@ -599,6 +713,9 @@ def process_ais_csv(
     if input_path.is_relative_to(output_directory):
         raise AISProcessingError("output directory cannot contain the supplied input")
     _validate_output_target(output_directory, overwrite)
+    validated_resources = None if resources is None else resources.validate()
+    if validated_resources is not None:
+        _validate_resource_paths(validated_resources, input_path, output_directory)
     output_directory.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(
         tempfile.mkdtemp(
@@ -611,10 +728,26 @@ def process_ais_csv(
     metadata_temporary = temporary / RUN_METADATA_FILENAME
     input_sha256 = _sha256(input_path)
     parameters = _processing_parameters(config)
+    spill_directory: Path | None = None
+    execution_resources: dict[str, object] | None = None
     try:
         try:
+            if validated_resources is not None:
+                validated_resources.temporary_directory.mkdir(
+                    parents=True, exist_ok=True
+                )
+                spill_directory = Path(
+                    tempfile.mkdtemp(
+                        prefix=".ais-cleaner-spill-",
+                        dir=validated_resources.temporary_directory,
+                    )
+                )
             with duckdb.connect(str(temporary / "work.duckdb")) as connection:
                 connection.execute("SET TimeZone = 'UTC'")
+                if validated_resources is not None and spill_directory is not None:
+                    execution_resources = _configure_duckdb_resources(
+                        connection, validated_resources, spill_directory
+                    )
                 stages, removals, normalizations, temporal_coverage = _collect_counts(
                     connection, config, input_path
                 )
@@ -625,6 +758,13 @@ def process_ais_csv(
             raise AISProcessingError(
                 f"could not process AIS CSV {input_path}: {exc}"
             ) from exc
+        finally:
+            if spill_directory is not None:
+                shutil.rmtree(spill_directory)
+                if execution_resources is not None:
+                    execution_resources[
+                        "spill_directory_removed_after_run"
+                    ] = not spill_directory.exists()
         work_database = temporary / "work.duckdb"
         if work_database.exists():
             work_database.unlink()
@@ -737,6 +877,8 @@ def process_ais_csv(
                 "excluded from the deterministic run identifier"
             ),
         }
+        if execution_resources is not None:
+            metadata_payload["execution_resources"] = execution_resources
         _write_json(metadata_temporary, metadata_payload)
         _publish_bundle(temporary, output_directory, overwrite)
     except (AISProcessingError, AISValidationError, OSError, ValueError):

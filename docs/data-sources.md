@@ -601,6 +601,20 @@ full-period processing has not been shown safe and requires optimization,
 bounded date-sized processing, spilling or memory controls, or another measured
 design before execution.
 
+A controlled 2026-09-02 follow-up isolated that peak to the cleaner's inherited
+DuckDB machine defaults (`12.5 GiB`, 12 threads), rather than fingerprinting,
+streaming partitioning, canonical sorting, validation, manifest recording, or
+wrapper overhead. The cleaner now receives the intake command's explicit
+resources. Three isolated `512MB`, one-thread 15 July repeats peaked at
+550.410--551.098 MiB application RSS and reproduced the established run ID and
+cleaned checksum. Two corrected fresh two-day runs peaked at 556.922/558.699
+MiB application RSS, while a date-restricted run peaked at 552.910 MiB and an
+identical retry at 65.918 MiB. Isolated spill peaked at 625.469--678.594 MiB and
+returned to zero. These observations support per-date-bounded execution for the
+two inspected dates; they do not establish seven-day, monthly, or full-period
+safety. The detailed measurement protocol and next gate are in the
+[analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
+
 The manifest preserves the required distinctions:
 
 | State | Result |
@@ -614,7 +628,7 @@ The manifest preserves the required distinctions:
 
 **Bulk metadata verification on 2026-08-27.** The official [2024 bulk index](https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/) listed all 366 daily filenames; comparison against the 153-date analytical calendar found zero missing names. HEAD requests for the first, a middle, and the last analytical date returned HTTP 200, byte lengths, validators and byte-range support. Together with the five M2 prefix transfers, this verifies listing and partial-transfer behavior. It does **not** verify a complete archive, ZIP CRC, daily semantics or observational completeness.
 
-**Still unverified.** Independent AccessAIS transfer completeness because no HTTP length or object validator was retained; download/range-resume behavior; monthly and full-period memory safety; complete bulk-file integrity; and any authoritative expected per-date record count. The real two-day pilot resolved the narrower reordered-overlap compatibility question only. NOAA documents collection interruptions, so a small or empty day requires review and cannot automatically be labelled incomplete or low traffic. Observed timestamp bounds do not resolve any of those questions or AIS receiver completeness.
+**Still unverified.** Independent AccessAIS transfer completeness because no HTTP length or object validator was retained; download/range-resume behavior; seven-day, monthly, and full-period processing safety; complete bulk-file integrity; and any authoritative expected per-date record count. The real two-day pilot resolved reordered-overlap compatibility and the later resource investigation bounded the observed per-date cleaner; neither is a seven-day or monthly execution. NOAA documents collection interruptions, so a small or empty day requires review and cannot automatically be labelled incomplete or low traffic. Observed timestamp bounds do not resolve any of those questions or AIS receiver completeness.
 
 The local handling and manifest policy is in [../data/README.md](../data/README.md). No monthly or full-period transfer is authorized from this evidence.
 
