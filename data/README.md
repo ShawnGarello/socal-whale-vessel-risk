@@ -201,6 +201,15 @@ The command is local-only:
 python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help
 ```
 
+Inspection-only use requires no cleaner resources. If
+`--clean-output-dir <data/interim/...>` is supplied, the bridge also requires
+`--memory-limit <size-with-unit>` and
+`--temp-directory <data/interim/...>`; optional `--threads <n>` defaults
+explicitly to one. Supplying only part of that cleaner resource combination,
+or supplying cleaner resources without `--clean-output-dir`, is refused. The
+bridge passes these values through `AISProcessingResources`; it has no hidden
+memory or spill-directory default.
+
 It detects CSV or ZIP by content. ZIP input must have safe member paths, one
 unambiguous CSV member, and valid CRCs. The selected CSV must have the exact NOAA
 header, at least one row and valid timestamp, and no valid timestamp outside the

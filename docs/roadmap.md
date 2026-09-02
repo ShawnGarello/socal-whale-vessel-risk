@@ -396,7 +396,11 @@ exercised with bounded two-day real data**
   bounded execution for the observed input, not monthly safety. A direct-
   process profiler now separates application, descendant, tree, baseline,
   peak, private-byte, disk, and spill measurements and enforces optional
-  preflight headroom. The next real gate is one independently transfer-verified
+  preflight headroom. It now also enforces explicit runtime minimum-memory,
+  minimum-disk, maximum-application-RSS, and maximum-spill choices; reports
+  live state and sampled extrema; reaps the target tree on abort, exception, or
+  interruption; and restricts normal evidence reports to ignored
+  `data/interim/`. The next real gate is one independently transfer-verified
   2024-07-15 through 2024-07-21 delivery over longitude -122 to -117 and
   latitude 32 to 35, under documented 2 GiB memory/8 GiB disk preflight and
   explicit abort limits. It has not been requested or processed. Independent
@@ -423,7 +427,7 @@ exercised with bounded two-day real data**
   the land-clipped NOAA 2020b whale-model polygons as the Version 1 grid mask:
   the model's biological support, not an authoritative shoreline and not a
   future AIS observability mask. The processing API remains mask-agnostic.
-- The combined self-contained suite has 333 passing tests using temporary
+- The combined self-contained suite has 361 passing tests using temporary
   synthetic CSVs, Parquet bundles, exact geometry, and in-memory records. It
   covers accepted/rejected configuration and period,
   source schemas, all documented AIS sentinels and malformed codes, whale
@@ -463,7 +467,9 @@ exercised with bounded two-day real data**
   candidate GeoParquet and quality JSON, manifest-provenance-independent output
   identity, evidence/candidate parity for their shared nonambiguous logic,
   sanitized execution settings in lineage, candidate-bundle atomicity and
-  output safeguards, and all CLI boundaries.
+  output safeguards, DuckDB normalized-memory verification, deterministic
+  profiler threshold evaluation, mocked resource abort and process cleanup,
+  profiler output/path safeguards and version reporting, and all CLI boundaries.
 - A focused whale-grid command validates the selected NOAA/SWFSC source and the
   exact versioned water-grid input, reprojects source polygons with explicit x/y
   order, detects material source-interior overlap, and transfers modeled density
