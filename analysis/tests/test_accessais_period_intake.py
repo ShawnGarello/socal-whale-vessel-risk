@@ -124,6 +124,11 @@ def test_unsorted_delivery_partitions_exact_dates_and_conserves_every_row(
     )
     manifest = result.manifest
 
+    canonicalization = manifest["generated_artifact_lineage"]["canonicalization"]
+    assert canonicalization["effective_memory_limit"]
+    assert canonicalization["effective_threads"] == 1
+    assert canonicalization["effective_temp_directory_matches_isolated_spill"] is True
+
     assert _daily_rows(result.output_directory, "2024-07-01") == [
         _row("2024-07-01T23:00:00", mmsi="100000001"),
         _row("2024-07-01T01:00:00", mmsi="100000002"),
@@ -776,6 +781,16 @@ def test_daily_slices_are_cleaner_compatible_and_populate_period_manifest(
     assert stored["independent_transfer_completeness"]["status"] == "unverified"
     assert stored["observational_completeness"]["status"] == "unverified"
     assert result.preparation.manifest["period_availability"]["status"] == "not_claimed"
+    metadata = json.loads(
+        (interim / "cleaned" / "2024-07-01" / "run-metadata.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    execution = metadata["execution_resources"]
+    assert execution["requested_memory_limit"] == "512MB"
+    assert execution["effective_threads"] == 1
+    assert execution["effective_temp_directory_matches_isolated_spill"] is True
+    assert execution["spill_directory_removed_after_run"] is True
 
 
 def test_disjoint_deliveries_accumulate_in_one_period_manifest(
