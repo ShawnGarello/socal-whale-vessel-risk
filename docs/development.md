@@ -275,6 +275,12 @@ that the existing quality report still says completeness `unverified`, records
 `observational_completeness_preserved: true`, and rejects a reference that
 reports an upgraded state.
 
+That bridge requires `--memory-limit` and `--temp-directory` whenever
+`--clean-output-dir` is supplied; optional `--threads` defaults explicitly to
+one. Cleaner resource arguments are rejected for inspection-only invocations.
+The settings are passed through `AISProcessingResources` and preserved in the
+cleaner metadata.
+
 The real bounded 2024-07-15 AccessAIS direct CSV exercised the read-only
 inspection and cleaner bridge on 2026-08-28. Its 59,497,346 retained bytes have
 SHA-256
@@ -355,16 +361,27 @@ counter separately. A process-tree sum remains diagnostic because shared pages
 can be counted more than once.
 
 ```text
-python -m uv run python -m whale_vessel_analysis.resource_profile --module <package.cli_module> --output ..\data\interim\<fresh-evidence>\profile.json --label <non-sensitive-label> --disk-root ..\data\interim\<fresh-evidence>\run --spill-root ..\data\interim\<fresh-evidence>\spill [--minimum-free-memory-gib <GiB>] [--minimum-free-disk-gib <GiB>] [--expected-exit-code <code>] -- <target arguments>
+python -m uv run python -m whale_vessel_analysis.resource_profile --module <package.cli_module> --output ..\data\interim\<fresh-evidence>\profile.json --label <non-sensitive-label> --disk-root ..\data\interim\<fresh-evidence>\run --spill-root ..\data\interim\<fresh-evidence>\spill [--minimum-free-memory-gib <GiB>] [--minimum-free-disk-gib <GiB>] [--runtime-minimum-available-memory-gib <GiB>] [--runtime-minimum-free-disk-gib <GiB>] [--runtime-maximum-application-rss-gib <GiB>] [--runtime-maximum-spill-gib <GiB>] [--expected-exit-code <code>] -- <target arguments>
 ```
 
 The two preflight gates run before the target starts and the observed values
-are recorded. The JSON report deliberately omits target arguments and local
-paths; it stores only the target module, label, resource measurements, exit
-code, and byte counts/SHA-256 values for stdout and stderr. Target output is
-still forwarded to the console. Use a new ignored output path for every
-profile: existing evidence is never overwritten. Record cache handling
-truthfully; unless a separate safe cache-reset procedure was actually used,
+are recorded. Optional runtime limits are separate operational choices. While
+the target runs, the profiler displays their live state, records minimum
+available memory and free disk plus maximum application RSS and spill bytes,
+and terminates and reaps the process tree on the first crossing. An orderly
+resource abort is named in the report, cannot be treated as target success, and
+returns profiler exit code `5`. Exceptions and keyboard interruption also reap
+the target tree. The JSON report deliberately omits target arguments and local
+paths; it stores the target module, label, resource measurements, exit code,
+Python/psutil/platform versions, and byte counts/SHA-256 values for stdout and
+stderr. Target output is still forwarded to the console.
+
+At the CLI boundary, the report must be a fresh path beneath ignored
+`data/interim/`; `data/raw/` and outside paths are refused. Obviously broad
+recursive disk/spill roots, including the drive, repository, data, or interim
+root, are refused. Use a new ignored output path for every profile: existing
+evidence and unrelated temporary files are never overwritten. Record cache
+handling truthfully; unless a separate safe cache-reset procedure was actually used,
 state that caches were not cleared and do not label repeats cold-cache runs.
 Run resource experiments sequentially so concurrent work does not invalidate
 the memory or disk measurements. The exact seven-day AccessAIS gate, stop
@@ -1073,7 +1090,7 @@ the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 333 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 361 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -1109,8 +1126,10 @@ distance conservation, zero-length/outside-support/boundary-ambiguity treatment,
 union-recomputed distinct-vessel output, deterministic GeoParquet and quality
 serialization independent of volatile manifest provenance, parity with the
 evidence path for shared nonambiguous logic, sanitized bounded-execution
-settings in lineage, candidate-bundle atomicity and output safeguards, and all
-CLI boundaries.
+settings in lineage, candidate-bundle atomicity and output safeguards, DuckDB
+normalized-memory verification, deterministic resource-threshold evaluation,
+mocked runtime abort and process cleanup, profiler CLI/output safeguards and
+version reporting, and all CLI boundaries.
 Tests create temporary CSVs and geometry or use data in memory; the ignored M2
 artifacts are not test prerequisites. Third-party libraries are not themselves
 unit-tested.

@@ -145,6 +145,21 @@ still `unverified`. Successful attachment records
 `observational_completeness_preserved: true`; a reference that reports any
 other completeness state is rejected without changing the manifest.
 
+The cleaner bridge has no hidden memory or spill default. When
+`--clean-output-dir` is present, `--memory-limit` and `--temp-directory` are
+also required; `--threads` is optional and its documented default is one.
+Cleaner resource arguments are rejected on inspection-only invocations. For
+example, append the following to the inspection command above:
+
+```text
+--clean-output-dir ../data/interim/ais-retrieval/cleaned --memory-limit 512MB --temp-directory ../data/interim/ais-retrieval/duckdb-spill [--threads 1]
+```
+
+The resulting cleaner metadata preserves the human-readable requested and
+DuckDB-normalized effective memory values, verifies their byte-equivalence
+within the effective display unit's rounding precision, and records the
+effective thread count and isolated spill-directory check.
+
 The real bounded 2024-07-15 AccessAIS delivery exercised this boundary on
 2026-08-28. NOAA delivered a direct CSV with the exact 17-column header:
 59,497,346 bytes, SHA-256
@@ -450,18 +465,29 @@ instead use the existing complete-archive/CRC boundary. If neither exists,
 independent transfer completeness remains unverified and the result cannot pass
 the gate to a monthly request.
 
+The profiler CLI publishes each report only to a fresh path beneath ignored
+`data/interim/`; it rejects `data/raw/`, outside report paths, and obviously
+broad recursive disk/spill roots such as the drive or repository root. Reports
+record Python, psutil, and detailed platform versions, plus the sampled minimum
+available memory and free disk and maximum application RSS and spill bytes.
+These CLI restrictions do not apply to the internal test boundary, which can
+use pytest temporary directories.
+
 Run from `analysis/`, substituting a new ignored gate directory and the actual
 author-supplied path and retained byte count:
 
 ```text
-python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-seven-day-gate\profile-first.json --label accessais-seven-day-first --disk-root ..\data\interim\m3-accessais-seven-day-gate\run --spill-root ..\data\interim\m3-accessais-seven-day-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --expected-exit-code 3 -- run --input <author-supplied-seven-day.csv-or-zip> --intake-dir ..\data\interim\m3-accessais-seven-day-gate\run\intake --requested-start 2024-07-15 --requested-end 2024-07-21 --source-content-length <retained-Content-Length> --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-seven-day-gate\spill --cleaned-root ..\data\interim\m3-accessais-seven-day-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-seven-day-gate\run\period.json
-python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-seven-day-gate\profile-retry.json --label accessais-seven-day-retry --disk-root ..\data\interim\m3-accessais-seven-day-gate\run --spill-root ..\data\interim\m3-accessais-seven-day-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --expected-exit-code 3 -- run --input <same-author-supplied-seven-day.csv-or-zip> --intake-dir ..\data\interim\m3-accessais-seven-day-gate\run\intake --requested-start 2024-07-15 --requested-end 2024-07-21 --source-content-length <same-retained-Content-Length> --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-seven-day-gate\spill --cleaned-root ..\data\interim\m3-accessais-seven-day-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-seven-day-gate\run\period.json
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-seven-day-gate\profile-first.json --label accessais-seven-day-first --disk-root ..\data\interim\m3-accessais-seven-day-gate\run --spill-root ..\data\interim\m3-accessais-seven-day-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --runtime-minimum-available-memory-gib 1 --runtime-minimum-free-disk-gib 4 --runtime-maximum-application-rss-gib 1 --runtime-maximum-spill-gib 2 --expected-exit-code 3 -- run --input <author-supplied-seven-day.csv-or-zip> --intake-dir ..\data\interim\m3-accessais-seven-day-gate\run\intake --requested-start 2024-07-15 --requested-end 2024-07-21 --source-content-length <retained-Content-Length> --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-seven-day-gate\spill --cleaned-root ..\data\interim\m3-accessais-seven-day-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-seven-day-gate\run\period.json
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-seven-day-gate\profile-retry.json --label accessais-seven-day-retry --disk-root ..\data\interim\m3-accessais-seven-day-gate\run --spill-root ..\data\interim\m3-accessais-seven-day-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --runtime-minimum-available-memory-gib 1 --runtime-minimum-free-disk-gib 4 --runtime-maximum-application-rss-gib 1 --runtime-maximum-spill-gib 2 --expected-exit-code 3 -- run --input <same-author-supplied-seven-day.csv-or-zip> --intake-dir ..\data\interim\m3-accessais-seven-day-gate\run\intake --requested-start 2024-07-15 --requested-end 2024-07-21 --source-content-length <same-retained-Content-Length> --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-seven-day-gate\spill --cleaned-root ..\data\interim\m3-accessais-seven-day-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-seven-day-gate\run\period.json
 ```
 
 The profiler refuses to start below the deliberately conservative 2 GiB
-available-memory or 8 GiB free-disk gates. During execution, abort with Ctrl+C
+available-memory or 8 GiB free-disk gates. During execution it displays live
+threshold state and automatically terminates and reaps the target process tree
 if available memory falls below 1 GiB, free disk below 4 GiB, application RSS
-reaches 1 GiB, or isolated spill use reaches 2 GiB. Also abort on a DuckDB out-
+reaches 1 GiB, or isolated spill use reaches 2 GiB. A resource abort writes a
+report when safely possible, names the terminating threshold, cannot be counted
+as target success, and returns profiler exit code `5`. Also stop on a DuckDB out-
 of-memory/disk error, unexpected date, malformed/unassignable timestamp,
 unreconciled row accounting, canonical/checksum conflict, failure to record a
 successful date, or an unresponsive process. These thresholds are operational

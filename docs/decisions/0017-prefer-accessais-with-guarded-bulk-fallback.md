@@ -574,7 +574,10 @@ begins from this partially passed gate.
   network transfer or resume. The bridge records
   `observational_completeness_preserved: true` only when the cleaner's
   `unverified` completeness field is unchanged and rejects an attempted
-  upgrade.
+  upgrade. When that optional bridge is used, explicit memory-limit and spill-
+  directory arguments are required and passed through to the cleaner; optional
+  thread count defaults explicitly to one. Inspection-only use requires none of
+  those cleaner resources.
 - The local period-intake command implements bounded multi-date partitioning and
   resumable sequential cleaner orchestration for one supplied delivery. It does
   not resolve delivery transfer completeness, prove monthly scaling, or make
