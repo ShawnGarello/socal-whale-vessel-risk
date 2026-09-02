@@ -164,7 +164,8 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 ### Progress
 
 **Foundation, first AIS processing slice, projected water grid, whale transfer,
-and candidate vessel-grid aggregation implemented and verified synthetically**
+and candidate vessel-grid aggregation implemented; candidate vessel-grid also
+exercised with bounded two-day real data**
 
 - A Python 3.13 src package exists under [`../analysis/`](../analysis/) with a
   committed `pyproject.toml` and `uv.lock`. uv sync/lock, Ruff format/lint,
@@ -576,9 +577,19 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
   publication, and records source artifact checksums, candidate parameters,
   exclusions, counts, conservation, sanitized bounded-execution settings,
   software versions, and validation steps. Synthetic tests verify the candidate
-  processing boundary. A real two-day delivery was exercised only at the intake
-  boundary; no real candidate vessel-grid run was executed, so no parameter was
-  accepted and no period-wide vessel input was produced.
+  processing boundary. On 2026-09-01 the real 15--16 July delivery was also
+  exercised through all four 300/1,800-second by 30/50-knot candidate
+  combinations. All four passed report validation and distance conservation,
+  and distinct-output repeats reproduced exact candidate IDs, GeoParquet bytes,
+  and deterministic quality-report bytes. The exact four outputs were visually
+  inspected in QGIS 4.2.1 across the full domain, shipping-lane concentrations,
+  support edges, zero/nonzero cells, and contextual VSR boundary. Corrected
+  renders placed the blue accepted-domain and orange VSR outlines above every
+  candidate grid; exact RGB checks and manual review confirmed both were
+  visible. No projection, geometry, or clipping anomaly was found. This is
+  bounded two-day candidate
+  evidence: no parameter was accepted and no period-wide vessel input was
+  produced.
 - The 2026-08-28 real read-only smoke run recorded the existing bounded
   2024-07-15 cleaner bundle and retrieval manifest without modifying either. It
   reported exactly one compatible date, 152 missing dates, `not_ready` period
@@ -607,13 +618,16 @@ and candidate vessel-grid aggregation implemented and verified synthetically**
 - The final vessel-activity input proposed in ADR 0018. Candidate period segment
   construction, explicit filtering, exact grid allocation, per-cell vessel-
   kilometres, union-recomputed distinct counts, quality metadata, and lineage
-  are implemented and synthetically verified. The real two-day delivery stopped
-  at the intake/cleaner boundary; no candidate grid has been processed. No
-  production threshold was selected;
+  are implemented, synthetically verified, and exercised across the four
+  documented parameter combinations on the real 15--16 July delivery. The
+  requested analytical period remains `not_ready` with 151 dates missing;
+  transfer and observational completeness remain `unverified`. No production
+  threshold was selected;
   accepted maximum-gap and implied-speed rules, alternative edge support,
   vessel-length population treatment, period-wide stability, observational
-  completeness, and final speed summaries remain unresolved. The implemented
-  output therefore remains a candidate result and ADR 0018 remains Proposed.
+  completeness, monthly/full-period safety, and final speed summaries remain
+  unresolved. The implemented output therefore remains a candidate result, no
+  exposure analysis has been performed, and ADR 0018 remains Proposed.
 - Normalization of whale or vessel values. Both grid-aligned candidate inputs
   preserve physical or source units; normalization remains part of the deferred
   exposure-method decision.
