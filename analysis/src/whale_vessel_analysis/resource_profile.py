@@ -12,13 +12,17 @@ import argparse
 import hashlib
 import json
 import os
+import platform
 import re
 import shutil
 import statistics
 import subprocess
 import sys
+import tempfile
 import threading
 import time
+from dataclasses import dataclass
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, TypedDict
 
@@ -28,6 +32,11 @@ _READY_LINE = "WHALERESOURCEPROFILE_READY"
 _GIB = 1024**3
 _LABEL_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")
 _MODULE_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*$")
+_PROJECT_ROOT = Path(__file__).resolve().parents[3]
+_PROJECT_DATA_ROOT = (_PROJECT_ROOT / "data").resolve()
+_PROJECT_RAW_ROOT = (_PROJECT_DATA_ROOT / "raw").resolve()
+_PROJECT_INTERIM_ROOT = (_PROJECT_DATA_ROOT / "interim").resolve()
+RESOURCE_ABORT_EXIT_CODE = 5
 _BOOTSTRAP = f"""
 import importlib
 import json
@@ -59,6 +68,37 @@ class _TreeSample(TypedDict):
     tree_rss: int
     tree_private: int | None
     descendant_count: int
+
+
+class RuntimeResourceReadings(TypedDict):
+    """Resource values evaluated together at one sample boundary."""
+
+    available_memory_bytes: int
+    free_disk_bytes: int
+    application_rss_bytes: int
+    spill_bytes: int | None
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeThresholds:
+    """Optional operational choices enforced while the target is running."""
+
+    minimum_available_memory_bytes: int | None = None
+    minimum_free_disk_bytes: int | None = None
+    maximum_application_rss_bytes: int | None = None
+    maximum_spill_bytes: int | None = None
+
+    def to_dict(self) -> dict[str, int | None]:
+        return {
+            "minimum_available_memory_bytes": self.minimum_available_memory_bytes,
+            "minimum_free_disk_bytes": self.minimum_free_disk_bytes,
+            "maximum_application_rss_bytes": self.maximum_application_rss_bytes,
+            "maximum_spill_bytes": self.maximum_spill_bytes,
+        }
+
+    @property
+    def enabled(self) -> bool:
+        return any(value is not None for value in self.to_dict().values())
 
 
 class ResourcePreflightError(ValueError):
@@ -181,7 +221,97 @@ def _preflight(
     }
 
 
-def _profile(
+def evaluate_runtime_thresholds(
+    readings: RuntimeResourceReadings, thresholds: RuntimeThresholds
+) -> str | None:
+    """Return the first crossed threshold in stable safety-first precedence."""
+    if (
+        thresholds.minimum_available_memory_bytes is not None
+        and readings["available_memory_bytes"]
+        < thresholds.minimum_available_memory_bytes
+    ):
+        return "minimum_available_memory"
+    if (
+        thresholds.minimum_free_disk_bytes is not None
+        and readings["free_disk_bytes"] < thresholds.minimum_free_disk_bytes
+    ):
+        return "minimum_free_disk"
+    if (
+        thresholds.maximum_application_rss_bytes is not None
+        and readings["application_rss_bytes"]
+        >= thresholds.maximum_application_rss_bytes
+    ):
+        return "maximum_application_rss"
+    if (
+        thresholds.maximum_spill_bytes is not None
+        and readings["spill_bytes"] is not None
+        and readings["spill_bytes"] >= thresholds.maximum_spill_bytes
+    ):
+        return "maximum_spill"
+    return None
+
+
+def _runtime_readings(
+    *, application_rss_bytes: int, disk_path: Path, spill_root: Path | None
+) -> RuntimeResourceReadings:
+    return {
+        "available_memory_bytes": int(psutil.virtual_memory().available),
+        "free_disk_bytes": int(shutil.disk_usage(_existing_ancestor(disk_path)).free),
+        "application_rss_bytes": application_rss_bytes,
+        "spill_bytes": _disk_bytes(spill_root),
+    }
+
+
+def _terminate_and_reap(child: subprocess.Popen[str]) -> None:
+    """Stop the direct target and every observable descendant, then reap it."""
+    if child.poll() is not None:
+        child.wait()
+        return
+    try:
+        root = psutil.Process(child.pid)
+        descendants = root.children(recursive=True)
+    except psutil.NoSuchProcess:
+        descendants = []
+        root = None
+    processes = [*reversed(descendants), *([] if root is None else [root])]
+    for process in processes:
+        try:
+            process.terminate()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    _, alive = psutil.wait_procs(processes, timeout=3)
+    for process in alive:
+        try:
+            process.kill()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    if alive:
+        psutil.wait_procs(alive, timeout=3)
+    try:
+        child.wait(timeout=3)
+    except subprocess.TimeoutExpired:
+        child.kill()
+        child.wait()
+
+
+def _publish_report(output_path: Path, report: dict[str, Any]) -> None:
+    """Publish one report atomically without clobbering any existing path."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{output_path.name}.", suffix=".tmp", dir=output_path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as output:
+            output.write(json.dumps(report, indent=2) + "\n")
+            output.flush()
+            os.fsync(output.fileno())
+        os.link(temporary, output_path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _profile_impl(
     *,
     module: str,
     module_arguments: list[str],
@@ -193,6 +323,8 @@ def _profile(
     baseline_samples: int = 20,
     minimum_free_memory_bytes: int = 0,
     minimum_free_disk_bytes: int = 0,
+    runtime_thresholds: RuntimeThresholds | None = None,
+    active_child: list[subprocess.Popen[str]],
 ) -> dict[str, Any]:
     if output_path.exists():
         raise FileExistsError(f"profile output already exists: {output_path}")
@@ -204,6 +336,11 @@ def _profile(
         raise ValueError("sample interval must be at least 0.05 seconds")
     if baseline_samples < 3:
         raise ValueError("baseline samples must be at least 3")
+    thresholds = runtime_thresholds or RuntimeThresholds()
+    if any(value is not None and value <= 0 for value in thresholds.to_dict().values()):
+        raise ValueError("enabled runtime thresholds must be greater than zero")
+    if thresholds.maximum_spill_bytes is not None and spill_root is None:
+        raise ValueError("a runtime spill threshold requires spill_root")
 
     preflight = _preflight(
         disk_path=disk_root if disk_root is not None else output_path.parent,
@@ -222,6 +359,7 @@ def _profile(
         text=True,
         encoding="utf-8",
     )
+    active_child.append(child)
     assert child.stdout is not None
     ready = child.stdout.readline().rstrip("\r\n")
     if ready != _READY_LINE:
@@ -324,6 +462,13 @@ def _profile(
     )
     disk_peak = disk_baseline
     spill_peak = spill_baseline
+    minimum_available_memory = preflight["available_memory_bytes"]
+    minimum_free_disk = preflight["free_disk_bytes"]
+    runtime_application_peak_rss = application_baseline_rss
+    runtime_spill_peak = spill_baseline
+    resource_abort_threshold: str | None = None
+    resource_abort_readings: RuntimeResourceReadings | None = None
+    last_status_display = 0.0
     profiler = psutil.Process()
     profiler_peak_rss = profiler.memory_info().rss
     operation_started = time.perf_counter()
@@ -377,12 +522,52 @@ def _profile(
             descendants_peak_private, sample["descendants_private"]
         )
         disk_peak = _maximum(disk_peak, _disk_bytes(disk_root))
-        spill_peak = _maximum(spill_peak, _disk_bytes(spill_root))
+        readings = _runtime_readings(
+            application_rss_bytes=sample["application"]["rss"],
+            disk_path=disk_root if disk_root is not None else output_path.parent,
+            spill_root=spill_root,
+        )
+        spill_peak = _maximum(spill_peak, readings["spill_bytes"])
+        minimum_available_memory = min(
+            minimum_available_memory, readings["available_memory_bytes"]
+        )
+        minimum_free_disk = min(minimum_free_disk, readings["free_disk_bytes"])
+        runtime_application_peak_rss = max(
+            runtime_application_peak_rss, readings["application_rss_bytes"]
+        )
+        runtime_spill_peak = _maximum(runtime_spill_peak, readings["spill_bytes"])
         profiler_peak_rss = max(profiler_peak_rss, profiler.memory_info().rss)
+        resource_abort_threshold = evaluate_runtime_thresholds(readings, thresholds)
+        now = time.perf_counter()
+        if thresholds.enabled and (
+            resource_abort_threshold is not None or now - last_status_display >= 1.0
+        ):
+            state = (
+                f"abort:{resource_abort_threshold}"
+                if resource_abort_threshold is not None
+                else "within-thresholds"
+            )
+            _write_console(
+                sys.stderr,
+                "resource guard "
+                f"state={state} available={readings['available_memory_bytes']} "
+                f"free_disk={readings['free_disk_bytes']} "
+                f"application_rss={readings['application_rss_bytes']} "
+                f"spill={readings['spill_bytes']}\r",
+            )
+            sys.stderr.flush()
+            last_status_display = now
+        if resource_abort_threshold is not None:
+            resource_abort_readings = readings
+            _terminate_and_reap(child)
+            break
         time.sleep(sample_interval_seconds)
 
     operation_elapsed = time.perf_counter() - operation_started
     child.wait()
+    if thresholds.enabled:
+        _write_console(sys.stderr, "\n")
+        sys.stderr.flush()
     stdout_thread.join()
     stderr_thread.join()
     stdout = "".join(stdout_chunks)
@@ -391,6 +576,17 @@ def _profile(
     spill_final = _disk_bytes(spill_root)
     disk_peak = _maximum(disk_peak, disk_final)
     spill_peak = _maximum(spill_peak, spill_final)
+    final_available_memory = int(psutil.virtual_memory().available)
+    final_free_disk = int(
+        shutil.disk_usage(
+            _existing_ancestor(
+                disk_root if disk_root is not None else output_path.parent
+            )
+        ).free
+    )
+    minimum_available_memory = min(minimum_available_memory, final_available_memory)
+    minimum_free_disk = min(minimum_free_disk, final_free_disk)
+    runtime_spill_peak = _maximum(runtime_spill_peak, spill_final)
     if stdout:
         _write_console(sys.stdout, stdout)
     if stderr:
@@ -401,6 +597,11 @@ def _profile(
         "label": label,
         "target_module": module,
         "exit_code": child.returncode,
+        "target_outcome": (
+            "resource_abort"
+            if resource_abort_threshold is not None
+            else "target_completed"
+        ),
         "preflight": preflight,
         "measurement": {
             "platform": sys.platform,
@@ -454,6 +655,32 @@ def _profile(
             "maximum_live_descendant_count": maximum_descendants,
             "profiler_peak_rss": profiler_peak_rss,
         },
+        "runtime_resources": {
+            "minimum_available_memory_bytes": minimum_available_memory,
+            "minimum_free_disk_bytes": minimum_free_disk,
+            "maximum_application_rss_bytes": runtime_application_peak_rss,
+            "maximum_spill_bytes": runtime_spill_peak,
+        },
+        "runtime_guard": {
+            "thresholds_are_operational_choices_not_forecasts": True,
+            "thresholds": thresholds.to_dict(),
+            "termination_threshold": resource_abort_threshold,
+            "termination_readings": resource_abort_readings,
+            "resource_abort_profiler_exit_code": RESOURCE_ABORT_EXIT_CODE,
+        },
+        "software_versions": {
+            "python": platform.python_version(),
+            "python_implementation": platform.python_implementation(),
+            "python_build": list(platform.python_build()),
+            "python_compiler": platform.python_compiler(),
+            "psutil": version("psutil"),
+            "platform": platform.platform(),
+            "system": platform.system(),
+            "release": platform.release(),
+            "version": platform.version(),
+            "machine": platform.machine(),
+            "processor": platform.processor(),
+        },
         "disk_bytes": {
             "baseline": disk_baseline,
             "peak_sampled": disk_peak,
@@ -481,11 +708,44 @@ def _profile(
             "stderr_sha256": hashlib.sha256(stderr.encode("utf-8")).hexdigest(),
         },
     }
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = output_path.with_name(f".{output_path.name}.tmp")
-    temporary.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    temporary.replace(output_path)
+    _publish_report(output_path, report)
     return report
+
+
+def _profile(
+    *,
+    module: str,
+    module_arguments: list[str],
+    output_path: Path,
+    label: str,
+    disk_root: Path | None,
+    spill_root: Path | None,
+    sample_interval_seconds: float = 0.1,
+    baseline_samples: int = 20,
+    minimum_free_memory_bytes: int = 0,
+    minimum_free_disk_bytes: int = 0,
+    runtime_thresholds: RuntimeThresholds | None = None,
+) -> dict[str, Any]:
+    """Profile one target and guarantee cleanup on every exit path."""
+    active_child: list[subprocess.Popen[str]] = []
+    try:
+        return _profile_impl(
+            module=module,
+            module_arguments=module_arguments,
+            output_path=output_path,
+            label=label,
+            disk_root=disk_root,
+            spill_root=spill_root,
+            sample_interval_seconds=sample_interval_seconds,
+            baseline_samples=baseline_samples,
+            minimum_free_memory_bytes=minimum_free_memory_bytes,
+            minimum_free_disk_bytes=minimum_free_disk_bytes,
+            runtime_thresholds=runtime_thresholds,
+            active_child=active_child,
+        )
+    finally:
+        for child in active_child:
+            _terminate_and_reap(child)
 
 
 def _module_name(value: str) -> str:
@@ -505,6 +765,42 @@ def _nonnegative_float(value: str) -> float:
     if parsed < 0:
         raise argparse.ArgumentTypeError("must be non-negative")
     return parsed
+
+
+def _positive_float(value: str) -> float:
+    parsed = float(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("must be greater than zero")
+    return parsed
+
+
+def _is_obviously_broad_root(path: Path) -> bool:
+    resolved = path.resolve()
+    return (
+        resolved.parent == resolved
+        or resolved in {_PROJECT_ROOT, _PROJECT_DATA_ROOT, _PROJECT_INTERIM_ROOT}
+        or _PROJECT_ROOT.is_relative_to(resolved)
+    )
+
+
+def _validate_cli_paths(
+    output_path: Path, disk_root: Path | None, spill_root: Path | None
+) -> None:
+    resolved_output = output_path.resolve()
+    if resolved_output == _PROJECT_RAW_ROOT or resolved_output.is_relative_to(
+        _PROJECT_RAW_ROOT
+    ):
+        raise ValueError("profile output cannot be written under data/raw")
+    if not resolved_output.is_relative_to(_PROJECT_INTERIM_ROOT):
+        raise ValueError("profile output must be beneath ignored data/interim")
+    for name, root in (("disk", disk_root), ("spill", spill_root)):
+        if root is None:
+            continue
+        resolved = root.resolve()
+        if resolved == _PROJECT_RAW_ROOT or resolved.is_relative_to(_PROJECT_RAW_ROOT):
+            raise ValueError(f"{name} root cannot be beneath data/raw")
+        if _is_obviously_broad_root(resolved):
+            raise ValueError(f"{name} root is too broad for recursive sampling")
 
 
 def _sample_interval_ms(value: str) -> int:
@@ -537,6 +833,26 @@ def _parser() -> argparse.ArgumentParser:
         "--minimum-free-memory-gib", type=_nonnegative_float, default=0.0
     )
     parser.add_argument("--minimum-free-disk-gib", type=_nonnegative_float, default=0.0)
+    parser.add_argument(
+        "--runtime-minimum-available-memory-gib",
+        type=_positive_float,
+        help="operational abort choice for minimum available system memory",
+    )
+    parser.add_argument(
+        "--runtime-minimum-free-disk-gib",
+        type=_positive_float,
+        help="operational abort choice for minimum free filesystem space",
+    )
+    parser.add_argument(
+        "--runtime-maximum-application-rss-gib",
+        type=_positive_float,
+        help="operational abort choice for sampled application RSS",
+    )
+    parser.add_argument(
+        "--runtime-maximum-spill-gib",
+        type=_positive_float,
+        help="operational abort choice for isolated spill size",
+    )
     parser.add_argument("--sample-interval-ms", type=_sample_interval_ms, default=100)
     parser.add_argument(
         "target_arguments",
@@ -547,7 +863,14 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = _parser().parse_args(argv)
+    parser = _parser()
+    args = parser.parse_args(argv)
+    try:
+        _validate_cli_paths(args.output, args.disk_root, args.spill_root)
+        if args.runtime_maximum_spill_gib is not None and args.spill_root is None:
+            raise ValueError("--runtime-maximum-spill-gib requires --spill-root")
+    except ValueError as exc:
+        parser.error(str(exc))
     target_arguments = list(args.target_arguments)
     if target_arguments[:1] == ["--"]:
         target_arguments.pop(0)
@@ -561,7 +884,31 @@ def main(argv: list[str] | None = None) -> int:
         sample_interval_seconds=args.sample_interval_ms / 1000,
         minimum_free_memory_bytes=round(args.minimum_free_memory_gib * _GIB),
         minimum_free_disk_bytes=round(args.minimum_free_disk_gib * _GIB),
+        runtime_thresholds=RuntimeThresholds(
+            minimum_available_memory_bytes=(
+                None
+                if args.runtime_minimum_available_memory_gib is None
+                else round(args.runtime_minimum_available_memory_gib * _GIB)
+            ),
+            minimum_free_disk_bytes=(
+                None
+                if args.runtime_minimum_free_disk_gib is None
+                else round(args.runtime_minimum_free_disk_gib * _GIB)
+            ),
+            maximum_application_rss_bytes=(
+                None
+                if args.runtime_maximum_application_rss_gib is None
+                else round(args.runtime_maximum_application_rss_gib * _GIB)
+            ),
+            maximum_spill_bytes=(
+                None
+                if args.runtime_maximum_spill_gib is None
+                else round(args.runtime_maximum_spill_gib * _GIB)
+            ),
+        ),
     )
+    if report["target_outcome"] == "resource_abort":
+        return RESOURCE_ABORT_EXIT_CODE
     target_exit_code = int(report["exit_code"])
     return 0 if target_exit_code in args.expected_exit_code else target_exit_code
 

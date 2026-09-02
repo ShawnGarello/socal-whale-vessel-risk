@@ -45,6 +45,7 @@ from whale_vessel_analysis.config import (
     ANALYTICAL_PERIOD_START,
     ProcessingConfig,
 )
+from whale_vessel_analysis.duckdb_resources import memory_settings_match
 from whale_vessel_analysis.multiday_ais import (
     MultiDayAISInputError,
     inspect_cleaned_day,
@@ -545,6 +546,21 @@ def _canonicalize_daily_files(
             effective_temp_matches = (
                 Path(str(effective_row[1])).resolve() == spill_directory.resolve()
             )
+            try:
+                effective_memory_matches = memory_settings_match(
+                    validated.memory_limit, str(effective_row[0])
+                )
+            except ValueError as exc:
+                raise AccessAISPeriodIntakeError(
+                    "DuckDB returned an unreadable effective canonicalization "
+                    f"memory limit: {effective_row[0]!r}"
+                ) from exc
+            if not effective_memory_matches:
+                raise AccessAISPeriodIntakeError(
+                    "DuckDB did not apply the requested canonicalization memory "
+                    f"limit: requested {validated.memory_limit!r}, effective "
+                    f"{effective_row[0]!r}"
+                )
             if int(effective_row[2]) != 1 or not effective_temp_matches:
                 raise AccessAISPeriodIntakeError(
                     "DuckDB did not apply the requested canonicalization resources"

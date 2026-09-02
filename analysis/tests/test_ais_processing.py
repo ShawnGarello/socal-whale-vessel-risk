@@ -272,6 +272,24 @@ def test_explicit_duckdb_resources_are_applied_recorded_and_cleaned_up(
     assert list(spill_parent.iterdir()) == []
 
 
+def test_cleaner_rejects_materially_different_effective_memory_setting(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "day.csv"
+    _write_csv(source, [_row()])
+    monkeypatch.setattr(ais_processing, "memory_settings_match", lambda *_: False)
+
+    with pytest.raises(AISProcessingError, match=r"did not apply.*memory limit"):
+        process_ais_csv(
+            source,
+            tmp_path / "bundle",
+            load_default_config(),
+            resources=AISProcessingResources("64MB", tmp_path / "spill"),
+        )
+
+    assert not (tmp_path / "bundle").exists()
+
+
 def test_resource_settings_do_not_change_cleaned_identity(tmp_path: Path) -> None:
     source = tmp_path / "day.csv"
     _write_csv(source, [_row()])

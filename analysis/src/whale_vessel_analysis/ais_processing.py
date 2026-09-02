@@ -21,6 +21,7 @@ import duckdb
 
 from whale_vessel_analysis.ais import AISValidationError, read_header
 from whale_vessel_analysis.config import ProcessingConfig
+from whale_vessel_analysis.duckdb_resources import memory_settings_match
 from whale_vessel_analysis.lineage import (
     ArtifactReference,
     ProcessingStep,
@@ -569,6 +570,21 @@ def _configure_duckdb_resources(
     connection.execute(f"SET temp_directory = '{escaped_spill}'")
     connection.execute(f"SET threads = {resources.threads}")
     settings = _duckdb_settings(connection, resources, spill_directory)
+    try:
+        memory_matches = memory_settings_match(
+            resources.memory_limit, str(settings["effective_memory_limit"])
+        )
+    except ValueError as exc:
+        raise AISProcessingError(
+            "DuckDB returned an unreadable effective AIS memory limit: "
+            f"{settings['effective_memory_limit']!r}"
+        ) from exc
+    if not memory_matches:
+        raise AISProcessingError(
+            "DuckDB did not apply the requested AIS processing memory limit: "
+            f"requested {resources.memory_limit!r}, effective "
+            f"{settings['effective_memory_limit']!r}"
+        )
     if (
         settings["effective_threads"] != resources.threads
         or settings["effective_temp_directory_matches_isolated_spill"] is not True

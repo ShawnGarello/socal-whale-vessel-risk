@@ -161,6 +161,24 @@ def test_unsorted_delivery_partitions_exact_dates_and_conserves_every_row(
     assert manifest["preparation_status"] == "prepared_with_exceptions"
 
 
+def test_canonicalizer_rejects_materially_different_effective_memory_setting(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _ = _roots(tmp_path, monkeypatch)
+    source = tmp_path / "delivery.csv"
+    _write_csv(source, [_row("2024-07-01T00:00:00")])
+    monkeypatch.setattr(
+        accessais_period_intake, "memory_settings_match", lambda *_: False
+    )
+
+    with pytest.raises(
+        AccessAISPeriodIntakeError, match=r"did not apply.*memory limit"
+    ):
+        prepare_accessais_delivery(source, interim / "intake", REQUESTED)
+
+    assert not (interim / "intake").exists()
+
+
 @pytest.mark.parametrize("container", ["csv", "zip"])
 def test_direct_csv_and_safe_zip_use_content_detection(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, container: str

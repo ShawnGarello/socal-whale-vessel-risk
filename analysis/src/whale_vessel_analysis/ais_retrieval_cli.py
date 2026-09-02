@@ -12,7 +12,10 @@ from pathlib import Path
 from typing import cast
 
 from whale_vessel_analysis.ais import validate_ais_csv
-from whale_vessel_analysis.ais_processing import process_ais_csv
+from whale_vessel_analysis.ais_processing import (
+    AISProcessingResources,
+    process_ais_csv,
+)
 from whale_vessel_analysis.ais_retrieval import (
     AISRetrievalError,
     RequestBounds,
@@ -106,6 +109,26 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="optional new data/interim cleaner output bundle",
     )
+    parser.add_argument(
+        "--memory-limit",
+        help=(
+            "required with --clean-output-dir; explicit DuckDB memory limit with "
+            "unit, for example 512MB"
+        ),
+    )
+    parser.add_argument(
+        "--temp-directory",
+        type=Path,
+        help=(
+            "required with --clean-output-dir; parent for one isolated DuckDB "
+            "spill directory"
+        ),
+    )
+    parser.add_argument(
+        "--threads",
+        type=int,
+        help="optional cleaner DuckDB thread count; defaults explicitly to 1",
+    )
     parser.add_argument("--config", type=Path)
     return parser
 
@@ -135,6 +158,17 @@ def _request(args: argparse.Namespace) -> RetrievalRequest:
 
 
 def _run(args: argparse.Namespace) -> tuple[int, dict[str, object]]:
+    clean_output = cast(Path | None, args.clean_output_dir)
+    memory_limit = cast(str | None, args.memory_limit)
+    temp_directory = cast(Path | None, args.temp_directory)
+    threads = cast(int | None, args.threads)
+    supplied_resources = (memory_limit, temp_directory, threads)
+    if clean_output is None and any(value is not None for value in supplied_resources):
+        raise AISRetrievalError("cleaner resource arguments require --clean-output-dir")
+    if clean_output is not None and (memory_limit is None or temp_directory is None):
+        raise AISRetrievalError(
+            "--clean-output-dir requires --memory-limit and --temp-directory"
+        )
     request = _request(args)
     input_path = cast(Path, args.input).resolve()
     manifest_path = cast(Path, args.manifest).resolve()
@@ -175,14 +209,24 @@ def _run(args: argparse.Namespace) -> tuple[int, dict[str, object]]:
             "--clean-output-dir for a ZIP also requires an explicit --csv-bundle-dir"
         )
     cleaning_payload: dict[str, object] | None = None
-    clean_output = cast(Path | None, args.clean_output_dir)
     if clean_output is not None:
+        assert memory_limit is not None
+        assert temp_directory is not None
         config_path = cast(Path | None, args.config)
         config = (
             load_default_config() if config_path is None else load_config(config_path)
         )
         source_validation = validate_ais_csv(csv_path, config.spatial.map_extent)
-        processing = process_ais_csv(csv_path, clean_output, config)
+        processing = process_ais_csv(
+            csv_path,
+            clean_output,
+            config,
+            resources=AISProcessingResources(
+                memory_limit,
+                temp_directory,
+                1 if threads is None else threads,
+            ),
+        )
         quality = json.loads(processing.quality_report.read_text(encoding="utf-8"))
         completeness = quality["temporal_coverage"]["completeness"]["status"]
         if completeness != "unverified":
