@@ -84,6 +84,8 @@ def test_retrieval_module_help_works() -> None:
     assert completed.returncode == 0
     assert "--expected-utc-date" in completed.stdout
     assert "--csv-bundle-dir" in completed.stdout
+    assert "--memory-limit" in completed.stdout
+    assert "--temp-directory" in completed.stdout
     assert completed.stderr == ""
 
 
@@ -131,16 +133,37 @@ def test_cli_exercises_cleaner_without_upgrading_completeness(
     artifact = tmp_path / "delivery.csv"
     manifest = tmp_path / "data" / "interim" / "manifest.json"
     cleaned = tmp_path / "data" / "interim" / "cleaned"
+    spill = tmp_path / "data" / "interim" / "spill"
     _write_csv(artifact)
-    args = [*_args(artifact, manifest), "--clean-output-dir", str(cleaned)]
+    args = [
+        *_args(artifact, manifest),
+        "--clean-output-dir",
+        str(cleaned),
+        "--memory-limit",
+        "64MB",
+        "--temp-directory",
+        str(spill),
+        "--threads",
+        "2",
+    ]
 
     assert main(args) == 0
     captured = capsys.readouterr()
     output = json.loads(captured.out)
     stored = json.loads(manifest.read_text(encoding="utf-8"))
     quality = json.loads((cleaned / "quality-report.json").read_text(encoding="utf-8"))
+    metadata = json.loads((cleaned / "run-metadata.json").read_text(encoding="utf-8"))
 
     assert output["cleaning"]["output_rows"] == 1
+    assert metadata["execution_resources"]["requested_memory_limit"] == "64MB"
+    assert metadata["execution_resources"]["requested_threads"] == 2
+    assert metadata["execution_resources"]["effective_threads"] == 2
+    assert (
+        metadata["execution_resources"][
+            "effective_temp_directory_matches_isolated_spill"
+        ]
+        is True
+    )
     assert quality["temporal_coverage"]["completeness"]["status"] == "unverified"
     compatibility = stored["entries"][0]["cleaning_compatibility"]
     assert compatibility["status"] == "exercised_compatible"
@@ -148,3 +171,27 @@ def test_cli_exercises_cleaner_without_upgrading_completeness(
     assert stored["entries"][0]["observational_completeness"]["status"] == (
         "unverified"
     )
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        ["--clean-output-dir", "cleaned"],
+        ["--clean-output-dir", "cleaned", "--memory-limit", "64MB"],
+        ["--memory-limit", "64MB", "--temp-directory", "spill"],
+        ["--threads", "2"],
+    ],
+)
+def test_cli_rejects_partial_or_unattached_cleaner_resources(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    extra: list[str],
+) -> None:
+    artifact = tmp_path / "delivery.csv"
+    manifest = tmp_path / "data" / "interim" / "manifest.json"
+    _write_csv(artifact)
+
+    assert main([*_args(artifact, manifest), *extra]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "resource" in captured.err or "requires --memory-limit" in captured.err
