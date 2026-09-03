@@ -42,6 +42,15 @@ The repository now contains two implemented foundations in addition to the docum
 - [web/](web/README.md) is the M4 Next.js/TypeScript application shell. Local API-key-backed oceans-basemap rendering, pan/zoom, attribution handoff, and the required responsive viewports are verified. Current official documentation confirms Location Platform's limited feature/vector-tile/map-tile support, anonymous public sharing, and published free tiers, but the author's actual account controls, billing state, usage, and headroom remain unverified. M4 remains **In progress** because deployment, the authenticated account check, and the conditional Esri-hosted publish-and-serve check are unfinished.
 - [analysis/](analysis/README.md) is the M3 Python processing package. It has a committed uv environment, DuckDB as the selected large-tabular engine, versioned spatial/source/lineage contracts, read-only input validators, a local one-artifact AIS retrieval-manifest boundary, and a bounded local Version 2 intake that partitions one author-supplied multi-date AccessAIS CSV or safe ZIP into canonical daily cleaner inputs. Parsed rows are sorted by all 17 fields under an explicit memory limit and isolated spill directory, duplicate multiplicity is preserved, and cleaner reuse is independent of source delivery order while whole-delivery byte provenance remains distinct. Version 1 intake manifests remain read-only valid. The package also has resumable sequential cleaner-to-period-manifest orchestration, CLI boundaries, deterministic one-extract AIS cleaning, deterministic construction of the EPSG:3310 grid and per-cell water geometry from an explicit mask, deterministic area-weighted whale-grid transfer, and a parameterized candidate vessel-grid aggregation boundary that is implemented and synthetically tested. The intake/orchestration path has been exercised successfully with the real one-day delivery followed by an overlapping two-day delivery: reordered 15 July content was reused canonically and 16 July was added. The candidate boundary has also been exercised across the documented 300/1,800-second by 30/50-knot matrix on that real 15--16 July input; distinct-output repeats reproduced the deterministic GeoParquet and quality-report bytes, and corrected QGIS 4.2.1 views visibly placed the accepted-domain and VSR outlines above all four candidate grids. Independent transfer completeness, observational completeness, accepted vessel rules, safe monthly/full-period scaling, final period-wide vessel aggregation, and a production vessel-activity input remain unverified or unfinished. The water grid and whale-grid transfer are tested and reproducible; two clean whale-transfer runs produced byte-identical output, and both exact derived artifacts were visually verified in QGIS 4.2.1 on 2026-08-27. M3 remains **In progress** because analytical-period AIS retrieval, a final vessel-activity input, speed summaries, exposure analysis, and later derived outputs are unfinished. Publication and deployment also remain unfinished.
 
+M2 is **Complete**. [ADR 0019](docs/decisions/0019-reference-the-publisher-hosted-vsr-service.md)
+resolves its final publication-posture criterion through a conservative no-copy
+route, not through a redistribution-permission claim. Python analysis retains
+the exact immutable ignored local VSR snapshot, while the public application
+will display `FID = 126` directly from the publisher's public Feature Service.
+The project must not commit or publish the snapshot or a copied, clipped,
+simplified, converted, or derived VSR geometry. Publication hosting for the
+project-derived whale, vessel, and exposure layers remains undecided.
+
 The initial architecture ([ADR 0001](docs/decisions/0001-accept-initial-architecture.md)) is refined by the accepted hybrid GIS toolchain ([ADR 0015](docs/decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md)): Python owns reproducible processing, QGIS owns local inspection and visual verification, and the public Next.js map retains direct Esri integration. ArcGIS Pro is optional and unnecessary for Version 1. The repository has a GitHub Actions CI workflow with stable `analysis` and `web` jobs for pull requests and pushes to `main`; both jobs have run successfully on pull requests and merged `main` commits. An active `main` ruleset requires pull requests, current successful `analysis` and `web` checks, and merge commits, and blocks deletion and force pushes with no bypass actor. CI does not deploy or publish anything. [tools/](tools/README.md) remains a data-discovery evidence utility, not the analysis package.
 
 Do not scaffold implementation directories ahead of the milestone that needs them.
@@ -94,12 +103,17 @@ Most of this repository describes work that does not exist. Never blur that line
 - Never commit credentials, API keys, tokens, or connection strings — including in examples, fixtures, notebooks, or screenshots. Check the diff before committing.
 - Keys that reach the browser are public: scoped and origin-restricted only, never with publishing rights.
 - Git LFS is not in use. Large binaries need a decision record before they are added.
-- Validated derived datasets cross the provider-neutral publication boundary to
+- Validated project-derived whale, vessel, and exposure datasets cross the provider-neutral publication boundary to
   the selected public delivery route. ArcGIS Location Platform limited data
   services and ArcGIS Online organization-hosted layers are separate
   conditional candidates; a non-Esri public representation must be selected
   later if neither fits. Do not enable pay-as-you-go or authorize spending.
   Derived data is not committed, except small results the application reads.
+- The VSR geometry does not cross that boundary. Its immutable local snapshot
+  remains ignored for analysis, and public display references the publisher's
+  service directly with required attribution, disclaimer, and release-time
+  anonymous/version verification. Public access is not treated as a
+  redistribution licence.
 
 ## Concurrent sessions
 

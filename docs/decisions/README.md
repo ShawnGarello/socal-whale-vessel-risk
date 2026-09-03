@@ -26,6 +26,7 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | [0016](0016-transfer-whale-density-by-area-weighted-abundance.md) | Transfer whale density by area-weighted abundance | Accepted |
 | [0017](0017-prefer-accessais-with-guarded-bulk-fallback.md) | Prefer AccessAIS extracts with a guarded daily-bulk fallback | Proposed |
 | [0018](0018-use-vessel-kilometres-for-grid-activity.md) | Use vessel-kilometres as the primary grid activity measure | Proposed |
+| [0019](0019-reference-the-publisher-hosted-vsr-service.md) | Reference the publisher-hosted VSR service | Accepted |
 
 ## Why these exist
 

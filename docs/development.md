@@ -813,6 +813,29 @@ browser with no existing session — a private window, or a different device —
 and confirm the map renders and the console is clean. Until that has been done,
 the deployment is unverified and must be described that way.
 
+### Release-time VSR service and version check
+
+Before final release, use an anonymous browser session or anonymous HTTP
+requests to verify all of the following without signing in or changing ArcGIS
+content:
+
+1. ArcGIS item `b400c7f418b04dc5a9d7ce5015adae32` still resolves publicly.
+2. The expected `WhaleAtlas_2026` Feature Service layer still resolves at
+   `https://services5.arcgis.com/4biRnCjZju47bNvA/arcgis/rest/services/WhaleAtlas_2026/FeatureServer/0`.
+3. A query for `FID = 126` still returns the expected California VSR feature.
+4. The current feature's attributes and geometry are compared with the exact
+   immutable analytical snapshot recorded in [data-sources.md](data-sources.md).
+5. Attribution in the application identifies Danielle Alvarez, CMSF, and BWBS,
+   and the publisher's non-navigational disclaimer remains available.
+
+Record the check date, anonymous outcome, current source identity, comparison
+method, and whether the geometry matches. Do not copy the current geometry into
+the repository or publish it through a project-controlled service. If the
+source differs, do not release wording that implies the displayed boundary
+produced the statistics: rerun or reconcile the analysis, or state the version
+mismatch clearly. This is a release gate, not an automatic synchronization or
+continuous-monitoring requirement.
+
 ## ArcGIS account-type capability checks and service access
 
 There are three publication candidates: ArcGIS Location Platform limited data
@@ -1053,7 +1076,13 @@ credits.
   the evidence-selected public delivery route. ArcGIS Location Platform limited
   data services and ArcGIS Online organization-hosted layers are separate Esri
   candidates; a non-Esri public representation must be selected and verified if
-  neither is suitable. No route is selected or implemented yet.
+  neither is suitable. No route is selected or implemented yet for the
+  project-derived whale, vessel, and exposure layers.
+- The VSR boundary is the exception: analysis uses the immutable ignored local
+  snapshot, while the application will display `FID = 126` directly from the
+  publisher's service. No project-hosted copy or derived VSR geometry may cross
+  the publication boundary; see
+  [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md).
 - Small results the application reads — such as a future summary-statistics
   file — may be committed once their contract is allowed, so the application
   and its numbers stay versioned together.
