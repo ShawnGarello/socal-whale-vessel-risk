@@ -411,6 +411,17 @@ exercised with bounded two-day real data**
   the stop rule prohibited the retry. Independent transfer completeness,
   seven-day/monthly safety, and observational completeness remain unresolved;
   ADR 0017 remains Proposed and M3 remains in progress.
+  The session later resumed after available memory recovered, without changing
+  a threshold. The first run reconciled 3,928,736 rows across exactly the seven
+  requested dates, sequentially cleaned and recorded every date, reproduced the
+  established 15--16 July identities, and peaked at 581.512 MiB application RSS
+  and 710.594 MiB spill before spill returned to zero. An identical retry
+  skipped all seven dates with unchanged identities, 70.367 MiB peak application
+  RSS, and zero spill. The seven-day processing/resource conditions therefore
+  passed, but independent transfer completeness remains `unverified`; this
+  prevents authorization of the monthly scaling request. Monthly and full-
+  period safety and observational completeness remain unresolved, ADR 0017
+  remains Proposed, and M3 remains in progress.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y

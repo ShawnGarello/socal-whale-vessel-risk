@@ -317,6 +317,25 @@ was refused before intake launch because available memory was below the required
 created. The stop rule prohibited a retry or weaker threshold. The seven-day
 processing gate therefore remains unexercised and this ADR remains Proposed.
 
+The same session later resumed after available memory recovered, without
+changing any threshold or prior evidence. The first-run preflight recorded
+4.015 GiB available memory and 32.030 GiB free disk. The run reconciled all
+3,928,736 source rows across exactly 15--21 July, with zero malformed or
+unassignable timestamps and zero out-of-request rows, then cleaned and recorded
+all seven dates sequentially. It reproduced the established 15--16 July
+canonical, cleaner, and cleaned-Parquet identities. Peak application RSS was
+581.512 MiB, peak private bytes 970.613 MiB, and peak isolated spill 710.594
+MiB; spill returned to zero.
+
+An unchanged retry passed preflight, skipped all seven dates with unchanged
+identities, peaked at 70.367 MiB application RSS, and created no spill. Both
+profiles remained within every abort threshold and their reports contained no
+absolute private path or sensitive request metadata. This passes the seven-day
+processing/resource conditions. It does not establish independent transfer
+completeness because no retained HTTP `Content-Length` or ZIP integrity evidence
+exists, so it does not authorize the monthly request. Observational completeness
+and monthly/full-period safety remain `unverified`; this ADR remains Proposed.
+
 ### Inferred
 
 - Five sequential monthly AccessAIS orders are the smallest simple partition
@@ -333,8 +352,9 @@ processing gate therefore remains unexercised and this ADR remains Proposed.
   range-resume behavior also remain unverified.
 - Safe seven-day, monthly, or full-period processing. Explicit per-date cleaner
   resources resolve the avoidable machine-default peak for the observed two-day
-  input, but the first seven-day attempt stopped at the required memory
-  preflight before processing began.
+  input. After the first seven-day attempt stopped at the required memory
+  preflight, a separately resumed run and retry passed the seven-day processing
+  and resource conditions. Monthly and full-period behavior remain untested.
 - Monthly-scale AccessAIS processing. The real two-day delivery exercises
   unsorted/reordered overlap, row conservation, canonical reuse, and resume,
   but it is not a monthly smoke run or transfer-completeness measurement.
