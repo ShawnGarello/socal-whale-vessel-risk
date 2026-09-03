@@ -154,9 +154,9 @@ and does not establish redistribution permission.
 ## AIS retrieval policy
 
 **[ADR 0017](../docs/decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md)
-proposes the final retrieval route; it is not yet accepted.** The preferred
-design is five sequential monthly AccessAIS extracts, with guarded daily bulk
-retrieval as the fallback. The author-controlled one-day compatibility,
+accepts AccessAIS as the preferred retrieval route.** The design is five
+sequential author-submitted monthly AccessAIS extracts, with guarded daily bulk
+retrieval as fallback only. The author-controlled one-day compatibility,
 overlapping two-day, seven-day, and exact July monthly operational gates passed.
 Independent transfer completeness and August--November/full-period processing
 safety remain unverified. What is settled here is the local handling constraint
@@ -165,7 +165,7 @@ every route has to satisfy.
 Two routes exist. Both are documented in
 [`../docs/data-sources.md`](../docs/data-sources.md).
 
-**Preferred, but still Proposed: AccessAIS.** NOAA's extract tool takes a
+**Preferred and Accepted: AccessAIS.** NOAA's extract tool takes a
 bounding box and a time period and returns only what was asked for, which is the
 right shape for this project. Its documented limits are a 2 GB cap per request,
 a five-year rolling window, new data every 90 days with a 145–165 day lag, and
@@ -180,9 +180,11 @@ exact header, exclusive UTC date, and cleaner compatibility; subsequent bounded
 deliveries established the overlapping two-day, seven-day, and exact July
 monthly operational evidence. No independent HTTP `Content-Length` or `ETag`
 was retained, so independent byte completeness remains `unverified`. The
-resulting timestamp bounds do not prove transfer or observational completeness,
-and ADR 0017 remains Proposed while transfer completeness and later-month/full-
-period processing remain unresolved. Order submission remains an author action;
+resulting timestamp bounds do not prove transfer or observational completeness.
+The audited July gate satisfied ADR 0017's acceptance condition and authorizes
+sequential August--November calendar-month extracts under the same controls;
+transfer completeness and later-month/full-period safety remain unresolved.
+Order submission remains an author action;
 repository code does not submit an order, record an email address, or persist an
 expiring tokenized URL.
 
@@ -276,10 +278,11 @@ untested.
 
 The seven-day operational gate and the exact **2024-07-01 through 2024-07-31**
 monthly gate over WGS 84 longitude **-122 to -117** and latitude **32 to 35**
-passed, and the July evidence passed independent audit. No next data request is
-authorized here. A separate explicit post-audit decision is required before any
-next bounded gate; August--November and full-period processing are not
-automatically authorized.
+passed, and the July evidence passed independent audit. ADR 0017 authorizes the
+author to request and process the August, September, October, and November
+calendar-month extracts sequentially under the existing controls. August is the
+next request. This authorization does not establish any unprocessed month as
+safe and does not permit one combined August--November or 153-day request.
 
 Before starting the download, open browser developer tools (or an equivalent
 response-header view) and preserve the network entry. Record the response
@@ -461,9 +464,10 @@ and an explicit temporary/spill directory that must also sit under ignored
 removed afterwards. Ordered results are streamed as bounded Arrow record
 batches; the period is never assembled in memory. This bounds the assembly step
 only — it does not make full-period retrieval or cleaning safe. The seven-day
-and exact July monthly operational gates passed under explicit cleaner controls,
-but August--November and full-period processing remain untested and require a
-separate explicit decision before any next data request.
+and exact July monthly operational gates passed under explicit cleaner controls.
+ADR 0017 authorizes sequential author-submitted August--November calendar-month
+extracts under those controls, but those months and full-period processing
+remain untested.
 
 **Why this is not simply forbidden.** An earlier version of this document banned
 downloading a national file and filtering locally, while the source register
