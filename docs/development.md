@@ -300,12 +300,13 @@ in 3.175186 and 3.094731 seconds. Peak RSS was 1,591.441 and 1,589.828
 MiB—roughly 1.59 GiB—while the first run's peak generated temporary/output
 footprint was approximately 1.576 MiB excluding the immutable raw CSV.
 
-That memory result is a scaling concern, not a linear forecast. Monthly or
-full-period processing has not been shown safe. Before such execution, use a
-measured design with optimization, bounded date-sized processing, DuckDB
-spilling or memory controls, or another demonstrated approach. The full evidence
-and removal accounting are in the [source register](data-sources.md#retrieval-route).
-ADR 0017 remains Proposed.
+At that stage, the memory result was a scaling concern, not a linear forecast;
+monthly and full-period processing had not been shown safe. It led to a measured
+design with bounded date-sized processing and explicit DuckDB memory, thread,
+and spill controls. The later seven-day and exact July monthly operational gates
+passed under those controls, while August--November and complete 153-day
+processing remain untested. The full evidence and removal accounting are in the
+[source register](data-sources.md#retrieval-route). ADR 0017 remains Proposed.
 
 **Author-supplied multi-date AccessAIS intake**
 
@@ -384,8 +385,8 @@ evidence and unrelated temporary files are never overwritten. Record cache
 handling truthfully; unless a separate safe cache-reset procedure was actually used,
 state that caches were not cleared and do not label repeats cold-cache runs.
 Run resource experiments sequentially so concurrent work does not invalidate
-the memory or disk measurements. The exact seven-day AccessAIS gate, stop
-conditions, and success criteria are in the
+the memory or disk measurements. The exact seven-day and July monthly AccessAIS
+gates, stop conditions, and success criteria are in the
 [analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
 
 **One-extract AIS processing**
