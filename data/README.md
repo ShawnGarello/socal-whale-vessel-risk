@@ -249,10 +249,11 @@ forecast or proof of seven-day, monthly, or full-period safety.
 
 ### Next author-controlled AccessAIS request
 
-Do not request a month next. The next real-data gate is exactly one continuous
-delivery for **2024-07-15 through 2024-07-21**, using WGS 84 longitude **-122 to
--117** and latitude **32 to 35**. The 15--16 July overlap is intentional: local
-processing must reproduce the already established canonical daily identities.
+The seven-day operational gate has passed. The next and only authorized request
+is one **2024-07-01 through 2024-07-31** monthly scale test using WGS 84
+longitude **-122 to -117** and latitude **32 to 35**. Do not request August
+through November or infer full-period safety before that July test is exercised
+and reviewed.
 
 Before starting the download, open browser developer tools (or an equivalent
 response-header view) and preserve the network entry. Record the response
@@ -262,21 +263,47 @@ size, and SHA-256. Do not retain in repository evidence or screenshots any
 email address, cookie, authorization/request header, query token, or signed
 download URL. A HAR file can contain those values and must not be committed.
 
-For a direct CSV, the retained `Content-Length` must equal the final local byte
-size and must be supplied to the local intake as `--source-content-length`. If
-the server supplies no independent length, stop: the file can still be
-identified locally, but the seven-day gate cannot establish transfer
-completeness and cannot authorize a monthly request. A delivered ZIP may use
-the existing complete-archive and passing-CRC evidence instead. Do not infer
-completeness from a successful browser message, filename, plausible size, row
-count, timestamp bounds, or presence of all seven dates.
+For a direct CSV, supply `--source-content-length` only when an independently
+retained HTTP value equals the final local byte size. A delivered ZIP may use
+the existing complete-archive and passing-CRC evidence instead. When neither
+exists, publisher-side independent byte completeness remains `unverified`.
+That state is preserved explicitly, but it no longer independently blocks the
+portfolio-MVP operational gate when two separate completed browser downloads
+are byte-identical and the documented processing evidence passes. Do not infer
+observational completeness from a successful browser message, filename,
+plausible size, row count, timestamp bounds, or presence of all requested dates.
 
 The exact resource preflight, profile commands, runtime abort conditions, and
 criteria for proceeding to one monthly request are owned by the
 [analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
-The seven-day file has not been requested or downloaded. ADR 0017 remains
-Proposed, and observational completeness remains `unverified` even if transfer
-completeness passes.
+The author has now supplied the seven-day direct CSV outside this worktree.
+Read-only inspection on 2026-09-02 recorded 399,148,173 local bytes and SHA-256
+`0cc4ede8dc16504641f91e4ba44c1ce128933958abec1f855dc91196ae58dbd2`.
+No independently retained HTTP `Content-Length` was supplied, so transfer
+completeness remains `unverified`; the local size was not substituted for that
+missing evidence. The first processing attempt then stopped at the documented
+2 GiB available-memory preflight before intake started. No retry ran and no
+generated gate artifact was created. ADR 0017 remains Proposed, the processing
+gate remains open, and observational completeness remains `unverified`.
+
+After machine memory recovered, the same session resumed without changing any
+threshold. The first run reconciled all 3,928,736 rows across exactly 15--21
+July, sequentially cleaned and recorded all seven dates, and stayed within every
+runtime limit. The identical retry skipped and reused all seven dates with
+unchanged identities and zero spill. This passes the documented seven-day
+processing/resource conditions.
+
+A subsequent independent browser download produced the same 399,148,173-byte
+file and SHA-256
+`0cc4ede8dc16504641f91e4ba44c1ce128933958abec1f855dc91196ae58dbd2`
+as the separately completed download used for processing. No HTTP
+`Content-Length` was retained, so publisher-side independent byte completeness
+remains `unverified`. For this portfolio MVP, repeat-transfer identity together
+with complete parsing of the delivered rows, exact seven-date coverage, full
+row reconciliation, deterministic overlap identities, bounded processing, and
+successful retry is sufficient to authorize only the July 1--31 scale test.
+This does not establish observational completeness or prove that NOAA's server-
+side extract contained every possible AIS record.
 
 ### Author-supplied multi-date AccessAIS intake
 
