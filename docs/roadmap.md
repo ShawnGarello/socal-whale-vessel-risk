@@ -432,6 +432,23 @@ exercised with bounded two-day real data**
   test. It does not authorize the other four months or establish full-period or
   observational completeness. ADR 0017 remains Proposed pending that monthly
   exercise, and M3 remains in progress.
+  The authorized July monthly test subsequently reconciled 17,998,955 rows
+  across exactly 31 dates, cleaned 3,384,056 commercial observations, reproduced
+  every 15--21 July canonical and cleaner identity from the seven-day evidence,
+  and recorded 31 compatible dates with 122 August--November dates missing. The
+  first run took 848.101 seconds and peaked at 587.934 MiB application RSS,
+  1,002.828 MiB private bytes, 591.973 MiB process-tree RSS, 744.344 MiB spill,
+  and 4.044 GiB generated-root size; minimum available memory/free disk were
+  1.652/16.146 GiB and spill returned to zero. The identical 179.454-second
+  retry skipped all 31 dates with unchanged deterministic identities, peaked at
+  71.379 MiB application RSS, and used zero spill. Both targets returned the
+  expected exit code `3` because 122 dates remain absent; both profiler runs
+  completed without a resource abort. No HTTP `Content-Length` was retained,
+  so publisher-side transfer completeness and observational completeness remain
+  `unverified`. This one successful month authorizes independent audit and a
+  later explicit decision about one next bounded gate, not August--November
+  processing or a claim of full-period safety. ADR 0017 remains Proposed and M3
+  remains in progress.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -668,10 +685,12 @@ exercised with bounded two-day real data**
 - Network AIS transfer, range-resume, and analytical-period retrieval. The local
   supplied-artifact validation, bounded multi-date delivery intake, resumable
   daily-cleaner orchestration, overlapping real one-day/two-day canonical
-  compatibility exercise, and seven-day operational scale gate are complete.
-  Publisher-side independent byte completeness remains `unverified`; the next
-  authorized July monthly scale test, later-month/full-period memory safety, a
-  guarded daily bulk download, and the 153-date retrieval remain unexercised.
+  compatibility exercise, seven-day operational gate, and July monthly
+  operational gate are complete. Publisher-side independent byte completeness
+  remains `unverified`; August--November/full-period memory safety, a guarded
+  daily bulk download, and the 153-date retrieval remain unexercised. The next
+  step is independent audit of the July evidence and an explicit decision about
+  one next bounded gate, not automatic authorization of the remaining months.
 - The final vessel-activity input proposed in ADR 0018. Candidate period segment
   construction, explicit filtering, exact grid allocation, per-cell vessel-
   kilometres, union-recomputed distinct counts, quality metadata, and lineage
