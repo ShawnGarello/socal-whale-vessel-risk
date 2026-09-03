@@ -101,4 +101,4 @@ Any modeled distribution is an estimate, not observed whale locations. AIS limit
 | [docs/project-vision-and-learning-plan.md](docs/project-vision-and-learning-plan.md) | Original project vision and GIS learning plan |
 | [AGENTS.md](AGENTS.md) | Instructions for coding agents |
 
-Built as a portfolio project. Target for Version 1: **September 5, 2026**.
+Built as a portfolio project. Target for Version 1: **September 10, 2026**.

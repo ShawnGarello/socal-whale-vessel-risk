@@ -45,7 +45,7 @@ Version 1 is a **meaningful analytical MVP**, not a map viewer. The distinction 
 
 Version 1 is complete when the research question above has a defensible, documented, reproducible answer that a visitor can explore in a browser.
 
-**Project-level target:** Version 1 complete by **September 5, 2026**. Individual milestones are ordered by dependency rather than by date; see [roadmap.md](roadmap.md).
+**Project-level target:** Version 1 complete by **September 10, 2026**. Individual milestones are ordered by dependency rather than by date; see [roadmap.md](roadmap.md).
 
 ## Version 1 functional scope
 
