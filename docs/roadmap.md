@@ -349,8 +349,9 @@ exercised with bounded two-day real data**
   `efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`
   across two measured repeats. The expected raw-validator failure exposed 825
   invalid/missing MMSIs and 2,233 missing vessel types; the cleaner accounted
-  for and removed them. Peak RSS of approximately 1.59 GiB is a scaling
-  concern: monthly and full-period execution is not shown safe or authorized.
+  for and removed them. At that stage, peak RSS of approximately 1.59 GiB was a
+  scaling concern: monthly and full-period execution had not been shown safe or
+  authorized.
 - The same real direct CSV was exercised through the bounded period-intake and
   orchestration path. Streaming intake assigned all 582,419 source rows to
   2024-07-15 with no malformed or out-of-request timestamps, emitted a byte-
@@ -398,8 +399,8 @@ exercised with bounded two-day real data**
   MiB and returned to zero after every successful run. A third fresh two-day
   run passed the implemented 2 GiB memory/8 GiB disk preflight, peaked at
   558.859 MiB application RSS and 618.188 MiB spill, and reproduced the same
-  identities. This supports per-date
-  bounded execution for the observed input, not monthly safety. A direct-
+  identities. At that stage, this supported per-date bounded execution for the
+  observed input but did not establish monthly safety. A direct-
   process profiler now separates application, descendant, tree, baseline,
   peak, private-byte, disk, and spill measurements and enforces optional
   preflight headroom. It now also enforces explicit runtime minimum-memory,
@@ -414,9 +415,9 @@ exercised with bounded two-day real data**
   but no independent HTTP `Content-Length` was retained. The first processing
   attempt was refused below the required 2 GiB available-memory preflight
   before intake launched; it produced no report or processing artifacts, and
-  the stop rule prohibited the retry. Independent transfer completeness,
-  seven-day/monthly safety, and observational completeness remain unresolved;
-  ADR 0017 remains Proposed and M3 remains in progress.
+  the stop rule prohibited the retry. At that point, independent transfer
+  completeness, seven-day/monthly safety, and observational completeness
+  remained unresolved; ADR 0017 remained Proposed and M3 remained in progress.
   The session later resumed after available memory recovered, without changing
   a threshold. The first run reconciled 3,928,736 rows across exactly the seven
   requested dates, sequentially cleaned and recorded every date, reproduced the
@@ -428,10 +429,28 @@ exercised with bounded two-day real data**
   399,148,173-byte source and SHA-256. No HTTP `Content-Length` was retained, so
   publisher-side independent byte completeness remains `unverified`. For this
   portfolio MVP, the repeat-transfer, parsing, date/row, identity, resource, and
-  retry evidence authorizes only the 2024-07-01 through 2024-07-31 monthly scale
-  test. It does not authorize the other four months or establish full-period or
-  observational completeness. ADR 0017 remains Proposed pending that monthly
-  exercise, and M3 remains in progress.
+  retry evidence authorized at that stage only the 2024-07-01 through 2024-07-31
+  monthly scale test. It did not authorize the other four months or establish
+  full-period or observational completeness. ADR 0017 remained Proposed pending
+  that monthly exercise, and M3 remained in progress.
+  The authorized July monthly test subsequently reconciled 17,998,955 rows
+  across exactly 31 dates, cleaned 3,384,056 commercial observations, reproduced
+  every 15--21 July canonical and cleaner identity from the seven-day evidence,
+  and recorded 31 compatible dates with 122 August--November dates missing. The
+  first run took 848.101 seconds and peaked at 587.934 MiB application RSS,
+  1,002.828 MiB private bytes, 591.973 MiB process-tree RSS, 744.344 MiB spill,
+  and 4.044 GiB generated-root size; minimum available memory/free disk were
+  1.652/16.146 GiB and spill returned to zero. The identical 179.454-second
+  retry skipped all 31 dates with unchanged deterministic identities, peaked at
+  71.379 MiB application RSS, and used zero spill. Both targets returned the
+  expected exit code `3` because 122 dates remain absent; both profiler runs
+  completed without a resource abort. No HTTP `Content-Length` was retained,
+  so publisher-side transfer completeness and observational completeness remain
+  `unverified`. The July evidence passed independent audit. A separate explicit
+  post-audit decision is required before any next bounded gate; this one
+  successful month does not automatically authorize August--November processing
+  or establish full-period safety. ADR 0017 remains Proposed and M3 remains in
+  progress.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -668,10 +687,13 @@ exercised with bounded two-day real data**
 - Network AIS transfer, range-resume, and analytical-period retrieval. The local
   supplied-artifact validation, bounded multi-date delivery intake, resumable
   daily-cleaner orchestration, overlapping real one-day/two-day canonical
-  compatibility exercise, and seven-day operational scale gate are complete.
-  Publisher-side independent byte completeness remains `unverified`; the next
-  authorized July monthly scale test, later-month/full-period memory safety, a
-  guarded daily bulk download, and the 153-date retrieval remain unexercised.
+  compatibility exercise, seven-day operational gate, and July monthly
+  operational gate are complete. Publisher-side independent byte completeness
+  remains `unverified`; August--November/full-period memory safety, a guarded
+  daily bulk download, and the 153-date retrieval remain unexercised. Independent
+  audit of the July evidence passed; a separate explicit post-audit decision is
+  required before any next bounded gate, with no automatic authorization of the
+  remaining months.
 - The final vessel-activity input proposed in ADR 0018. Candidate period segment
   construction, explicit filtering, exact grid allocation, per-cell vessel-
   kilometres, union-recomputed distinct counts, quality metadata, and lineage
