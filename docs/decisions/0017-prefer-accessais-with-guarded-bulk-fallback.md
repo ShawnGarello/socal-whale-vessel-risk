@@ -305,8 +305,17 @@ The next gate is one author-requested, continuous 2024-07-15 through 2024-07-21
 delivery over the same longitude -122 to -117 and latitude 32 to 35. The exact
 preflight, profiling, transfer-evidence, abort, and success rules are owned by
 the [analysis README](../../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
-That delivery has not been requested. Independent transfer completeness remains
-unresolved, so this ADR remains Proposed.
+
+On 2026-09-02 that direct CSV was supplied outside the worktree. Read-only local
+inspection recorded 399,148,173 bytes and SHA-256
+`0cc4ede8dc16504641f91e4ba44c1ce128933958abec1f855dc91196ae58dbd2`.
+No independently retained HTTP `Content-Length` accompanied it, so the local
+size was not treated as source metadata and transfer completeness remained
+`unverified`. The exact first-run command omitted `--source-content-length` and
+was refused before intake launch because available memory was below the required
+2 GiB preflight. No report, intake, cleaned bundle, manifest, or spill was
+created. The stop rule prohibited a retry or weaker threshold. The seven-day
+processing gate therefore remains unexercised and this ADR remains Proposed.
 
 ### Inferred
 
@@ -324,7 +333,8 @@ unresolved, so this ADR remains Proposed.
   range-resume behavior also remain unverified.
 - Safe seven-day, monthly, or full-period processing. Explicit per-date cleaner
   resources resolve the avoidable machine-default peak for the observed two-day
-  input, but the documented seven-day gate has not been exercised.
+  input, but the first seven-day attempt stopped at the required memory
+  preflight before processing began.
 - Monthly-scale AccessAIS processing. The real two-day delivery exercises
   unsorted/reordered overlap, row conservation, canonical reuse, and resume,
   but it is not a monthly smoke run or transfer-completeness measurement.

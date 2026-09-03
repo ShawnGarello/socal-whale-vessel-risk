@@ -274,9 +274,15 @@ count, timestamp bounds, or presence of all seven dates.
 The exact resource preflight, profile commands, runtime abort conditions, and
 criteria for proceeding to one monthly request are owned by the
 [analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
-The seven-day file has not been requested or downloaded. ADR 0017 remains
-Proposed, and observational completeness remains `unverified` even if transfer
-completeness passes.
+The author has now supplied the seven-day direct CSV outside this worktree.
+Read-only inspection on 2026-09-02 recorded 399,148,173 local bytes and SHA-256
+`0cc4ede8dc16504641f91e4ba44c1ce128933958abec1f855dc91196ae58dbd2`.
+No independently retained HTTP `Content-Length` was supplied, so transfer
+completeness remains `unverified`; the local size was not substituted for that
+missing evidence. The first processing attempt then stopped at the documented
+2 GiB available-memory preflight before intake started. No retry ran and no
+generated gate artifact was created. ADR 0017 remains Proposed, the processing
+gate remains open, and observational completeness remains `unverified`.
 
 ### Author-supplied multi-date AccessAIS intake
 

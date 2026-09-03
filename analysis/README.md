@@ -481,6 +481,27 @@ python -m uv run python -m whale_vessel_analysis.resource_profile --module whale
 python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-seven-day-gate\profile-retry.json --label accessais-seven-day-retry --disk-root ..\data\interim\m3-accessais-seven-day-gate\run --spill-root ..\data\interim\m3-accessais-seven-day-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --runtime-minimum-available-memory-gib 1 --runtime-minimum-free-disk-gib 4 --runtime-maximum-application-rss-gib 1 --runtime-maximum-spill-gib 2 --expected-exit-code 3 -- run --input <same-author-supplied-seven-day.csv-or-zip> --intake-dir ..\data\interim\m3-accessais-seven-day-gate\run\intake --requested-start 2024-07-15 --requested-end 2024-07-21 --source-content-length <same-retained-Content-Length> --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-seven-day-gate\spill --cleaned-root ..\data\interim\m3-accessais-seven-day-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-seven-day-gate\run\period.json
 ```
 
+On 2026-09-02 the author supplied the requested direct CSV. Read-only local
+inspection recorded 399,148,173 bytes and SHA-256
+`0cc4ede8dc16504641f91e4ba44c1ce128933958abec1f855dc91196ae58dbd2`.
+No separately retained HTTP `Content-Length` was supplied, so the first-run
+command correctly omitted `--source-content-length` and transfer completeness
+remained `unverified`.
+
+The documented first-run profile above was attempted with the source path
+substituted, `--source-content-length` omitted, and the documented dates,
+`512MB`, one effective thread, isolated ignored spill path, preflight gates,
+runtime abort limits, and expected target exit code. The profiler returned exit
+code `1` and refused to launch the intake because available memory was below the
+required 2 GiB preflight threshold. The preflight exception did not publish the
+instantaneous byte count or a JSON report. It created no gate directory, intake,
+cleaned bundle, manifest, or spill. Per the stop rule, the retry was not
+attempted and no threshold was weakened. Row/date reconciliation, daily
+cleaning, 15--16 July identity comparison, effective DuckDB settings, first-run
+runtime extrema, post-run spill cleanup, and seven-date retry reuse therefore
+have no new measurements. The processing portion of the seven-day gate remains
+unexercised and does not authorize a monthly request.
+
 The profiler refuses to start below the deliberately conservative 2 GiB
 available-memory or 8 GiB free-disk gates. During execution it displays live
 threshold state and automatically terminates and reaps the target process tree
