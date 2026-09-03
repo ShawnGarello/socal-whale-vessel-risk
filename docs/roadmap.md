@@ -418,10 +418,14 @@ exercised with bounded two-day real data**
   and 710.594 MiB spill before spill returned to zero. An identical retry
   skipped all seven dates with unchanged identities, 70.367 MiB peak application
   RSS, and zero spill. The seven-day processing/resource conditions therefore
-  passed, but independent transfer completeness remains `unverified`; this
-  prevents authorization of the monthly scaling request. Monthly and full-
-  period safety and observational completeness remain unresolved, ADR 0017
-  remains Proposed, and M3 remains in progress.
+  passed. A separate completed browser download then reproduced the exact
+  399,148,173-byte source and SHA-256. No HTTP `Content-Length` was retained, so
+  publisher-side independent byte completeness remains `unverified`. For this
+  portfolio MVP, the repeat-transfer, parsing, date/row, identity, resource, and
+  retry evidence authorizes only the 2024-07-01 through 2024-07-31 monthly scale
+  test. It does not authorize the other four months or establish full-period or
+  observational completeness. ADR 0017 remains Proposed pending that monthly
+  exercise, and M3 remains in progress.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -657,10 +661,11 @@ exercised with bounded two-day real data**
 
 - Network AIS transfer, range-resume, and analytical-period retrieval. The local
   supplied-artifact validation, bounded multi-date delivery intake, resumable
-  daily-cleaner orchestration, and overlapping real one-day/two-day canonical
-  compatibility exercise are complete. Independent transfer completeness,
-  monthly/full-period memory safety, a guarded daily bulk download, and the
-  153-date retrieval remain unverified or unexercised.
+  daily-cleaner orchestration, overlapping real one-day/two-day canonical
+  compatibility exercise, and seven-day operational scale gate are complete.
+  Publisher-side independent byte completeness remains `unverified`; the next
+  authorized July monthly scale test, later-month/full-period memory safety, a
+  guarded daily bulk download, and the 153-date retrieval remain unexercised.
 - The final vessel-activity input proposed in ADR 0018. Candidate period segment
   construction, explicit filtering, exact grid allocation, per-cell vessel-
   kilometres, union-recomputed distinct counts, quality metadata, and lineage

@@ -455,15 +455,16 @@ bounds longitude **-122 to -117** and latitude **32 to 35**. The overlap with
 15--16 July must reproduce those established canonical identities. This is a
 seven-day scaling test, not evidence that a monthly delivery is safe.
 
-Before requesting it, the author must use browser developer tools or equivalent
-download evidence to retain response status, `Content-Length`, `Content-Type`,
-and any `ETag`/`Last-Modified` value without retaining or committing an email
-address, cookie, authorization header, or signed URL. After download, record the
-retrieval UTC timestamp, NOAA filename, local byte size, and SHA-256. A direct
-CSV needs a retained `Content-Length` equal to the local byte size; a ZIP may
-instead use the existing complete-archive/CRC boundary. If neither exists,
-independent transfer completeness remains unverified and the result cannot pass
-the gate to a monthly request.
+Before requesting it, the author should use browser developer tools or
+equivalent download evidence to retain any available response status,
+`Content-Length`, `Content-Type`, `ETag`, and `Last-Modified` value without
+retaining or committing an email address, cookie, authorization header, or
+signed URL. After download, record the retrieval UTC timestamp, NOAA filename,
+local byte size, and SHA-256. Supply `--source-content-length` only when an
+independently retained HTTP value equals the local byte size. Without that value,
+publisher-side independent byte completeness remains `unverified`; for this
+portfolio MVP, that state no longer independently blocks the next scale test
+when the repeat-transfer and processing evidence below passes.
 
 The profiler CLI publishes each report only to a fresh path beneath ignored
 `data/interim/`; it rejects `data/raw/`, outside report paths, and obviously
@@ -474,11 +475,12 @@ These CLI restrictions do not apply to the internal test boundary, which can
 use pytest temporary directories.
 
 Run from `analysis/`, substituting a new ignored gate directory and the actual
-author-supplied path and retained byte count:
+author-supplied path. Omit the bracketed content-length argument unless a
+matching independently retained value exists:
 
 ```text
-python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-seven-day-gate\profile-first.json --label accessais-seven-day-first --disk-root ..\data\interim\m3-accessais-seven-day-gate\run --spill-root ..\data\interim\m3-accessais-seven-day-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --runtime-minimum-available-memory-gib 1 --runtime-minimum-free-disk-gib 4 --runtime-maximum-application-rss-gib 1 --runtime-maximum-spill-gib 2 --expected-exit-code 3 -- run --input <author-supplied-seven-day.csv-or-zip> --intake-dir ..\data\interim\m3-accessais-seven-day-gate\run\intake --requested-start 2024-07-15 --requested-end 2024-07-21 --source-content-length <retained-Content-Length> --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-seven-day-gate\spill --cleaned-root ..\data\interim\m3-accessais-seven-day-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-seven-day-gate\run\period.json
-python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-seven-day-gate\profile-retry.json --label accessais-seven-day-retry --disk-root ..\data\interim\m3-accessais-seven-day-gate\run --spill-root ..\data\interim\m3-accessais-seven-day-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --runtime-minimum-available-memory-gib 1 --runtime-minimum-free-disk-gib 4 --runtime-maximum-application-rss-gib 1 --runtime-maximum-spill-gib 2 --expected-exit-code 3 -- run --input <same-author-supplied-seven-day.csv-or-zip> --intake-dir ..\data\interim\m3-accessais-seven-day-gate\run\intake --requested-start 2024-07-15 --requested-end 2024-07-21 --source-content-length <same-retained-Content-Length> --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-seven-day-gate\spill --cleaned-root ..\data\interim\m3-accessais-seven-day-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-seven-day-gate\run\period.json
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-seven-day-gate\profile-first.json --label accessais-seven-day-first --disk-root ..\data\interim\m3-accessais-seven-day-gate\run --spill-root ..\data\interim\m3-accessais-seven-day-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --runtime-minimum-available-memory-gib 1 --runtime-minimum-free-disk-gib 4 --runtime-maximum-application-rss-gib 1 --runtime-maximum-spill-gib 2 --expected-exit-code 3 -- run --input <author-supplied-seven-day.csv-or-zip> --intake-dir ..\data\interim\m3-accessais-seven-day-gate\run\intake --requested-start 2024-07-15 --requested-end 2024-07-21 [--source-content-length <retained-Content-Length>] --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-seven-day-gate\spill --cleaned-root ..\data\interim\m3-accessais-seven-day-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-seven-day-gate\run\period.json
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-seven-day-gate\profile-retry.json --label accessais-seven-day-retry --disk-root ..\data\interim\m3-accessais-seven-day-gate\run --spill-root ..\data\interim\m3-accessais-seven-day-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --runtime-minimum-available-memory-gib 1 --runtime-minimum-free-disk-gib 4 --runtime-maximum-application-rss-gib 1 --runtime-maximum-spill-gib 2 --expected-exit-code 3 -- run --input <same-author-supplied-seven-day.csv-or-zip> --intake-dir ..\data\interim\m3-accessais-seven-day-gate\run\intake --requested-start 2024-07-15 --requested-end 2024-07-21 [--source-content-length <same-retained-Content-Length>] --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-seven-day-gate\spill --cleaned-root ..\data\interim\m3-accessais-seven-day-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-seven-day-gate\run\period.json
 ```
 
 On 2026-09-02 the author supplied the requested direct CSV. Read-only local
@@ -545,11 +547,21 @@ process-tree RSS, created no spill, and increased the generated root by only 501
 bytes of retry provenance. Both resource reports contain no absolute path,
 email address, URL, cookie, authorization value, or credential.
 
-This passes the seven-day processing and resource conditions only. No retained
-HTTP `Content-Length` or ZIP integrity boundary independently verifies transfer
-completeness, so the seven-day gate still does not authorize a monthly request.
-Observational completeness remains `unverified`; monthly and full-period safety
-remain untested.
+A subsequent author audit repeated the completed browser download separately.
+Both downloads produced a 399,148,173-byte file with SHA-256
+`0cc4ede8dc16504641f91e4ba44c1ce128933958abec1f855dc91196ae58dbd2`,
+exactly matching the processed artifact. No HTTP `Content-Length` was retained,
+so publisher-side independent byte completeness remains `unverified`.
+
+For this portfolio MVP, the two byte-identical completed browser downloads,
+successful complete parsing of each delivered row, exact seven-date coverage,
+full row reconciliation, deterministic 15--16 July overlap identities, bounded
+first run, and successful all-date reuse retry are accepted as sufficient
+operational evidence to authorize only the next **2024-07-01 through
+2024-07-31** AccessAIS monthly scale test over the same bounds. This does not
+establish observational completeness or prove that NOAA's server-side extract
+contained every possible AIS record. It does not authorize the other four
+monthly requests or establish full-period safety.
 
 The profiler refuses to start below the deliberately conservative 2 GiB
 available-memory or 8 GiB free-disk gates. During execution it displays live
@@ -566,15 +578,18 @@ day requirements. After an abort, do not reuse its intake directory; verify
 that no published partial bundle exists and remove any abandoned ignored
 staging/spill directory only after inspecting its exact resolved path.
 
-Proceed to request one monthly extract only if the seven-day source has
-independent transfer-completeness evidence; all seven requested dates are
-present with reconciled row accounting and no exceptions; 15--16 July match the
-established canonical identities; every date cleans and records sequentially;
-effective `488.2 MiB`, one thread, and isolated spill use are recorded; both
-profiles stay below all abort thresholds; spill returns to zero; and the retry
-skips all seven dates with unchanged identities. Observational completeness
-still remains `unverified`. Even a pass authorizes only the next monthly
-scaling gate, not all five months or full-period safety.
+Proceed to the one July monthly scale test only if two separate completed
+browser downloads have the same local byte size and SHA-256; all seven requested
+dates are present with reconciled row accounting and no exceptions; 15--16 July
+match the established canonical identities; every date cleans and records
+sequentially; effective `488.2 MiB`, one thread, and isolated spill use are
+recorded; both profiles stay below all abort thresholds; spill returns to zero;
+and the retry skips all seven dates with unchanged identities. A retained
+matching HTTP `Content-Length` may verify publisher-side byte completeness but
+is not required for this portfolio-MVP operational gate. Observational and
+publisher-side independent byte completeness remain `unverified` without their
+separate evidence. Even a pass authorizes only the **2024-07-01 through
+2024-07-31** scaling test, not the other four months or full-period safety.
 
 ### Verified one-day compatibility exercise
 
