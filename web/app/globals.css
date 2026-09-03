@@ -14,6 +14,10 @@
   --shell-panel: #17202a;
   --shell-error: #ffb4a8;
   --shell-error-border: #7a3b32;
+  --shell-error-bg: #311c1a;
+  --shell-focus: #7dd3fc;
+  --shell-link: #9bdcf8;
+  --vsr-boundary: #ffb45b;
 }
 
 html,

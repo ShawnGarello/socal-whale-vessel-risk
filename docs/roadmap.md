@@ -14,7 +14,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 | M2 | Data discovery and validation | Complete |
 | M3 | Processing workflow | In progress |
 | M4 | GIS application foundation | In progress |
-| M5 | Core input layers | Not started |
+| M5 | Core input layers | In progress |
 | M6 | Whale–vessel exposure analysis | Not started |
 | M7 | Application integration | Not started |
 | M8 | Verification and reproducibility | Not started |
@@ -980,7 +980,7 @@ this repository's own. Disabled with `agentRules: false`.
 
 ## M5 — Core input layers
 
-**Status:** Not started
+**Status:** In progress
 
 **Objective**
 Prepare the validated input datasets for public delivery and make them visible
@@ -989,6 +989,40 @@ in the application through the evidence-selected publication route.
 **Dependencies**
 - M3 (validated derived datasets exist).
 - M4 (application shell exists and account-type capability evidence is recorded).
+
+### Progress
+
+**Publisher-hosted VSR display implemented and locally verified; project-derived
+input layers remain unfinished**
+
+- The static client creates an ArcGIS `FeatureLayer` from the publisher's exact
+  `WhaleAtlas_2026/FeatureServer/0` URL and applies `FID = 126`. Source identity,
+  item, filter, expected one-feature response, attribution, and disclaimer live
+  in one typed configuration module; no VSR geometry is stored, transformed, or
+  republished by the application.
+- A stable layer ID and owned-resource cleanup prevent duplicate layers across
+  repeated ready events and React cleanup/remount behavior. Loading is tracked
+  separately from basemap initialization, bounded to 15 seconds, and verified
+  to reject a zero or otherwise unexpected filtered feature count.
+- The map provides a native checked visibility control, compact line legend,
+  publisher attribution, and an inline disclosure carrying the complete
+  non-navigational use notice. Controls have visible keyboard focus and preserve
+  space for ArcGIS zoom controls and SDK attribution.
+- On 2026-09-02 the keyed production/static export rendered the oceans basemap
+  and filtered boundary in the correct Southern California location in headless
+  Chrome at exact 390 × 844, 820 × 1180, and 1440 × 900 viewports. Visibility
+  hid and restored the layer, repeated ready events retained exactly one layer,
+  source/use content was reachable, and no horizontal overflow, HTTP error,
+  unexpected request failure, sign-in prompt, or unexpected console error was
+  observed. Publisher layer metadata and filtered query requests returned HTTP
+  200.
+- A separate 820 × 1180 check blocked only the publisher endpoint. It produced
+  the accessible VSR warning and the expected SDK layer-load console errors,
+  removed the failed layer, and retained a ready, non-updating oceans basemap,
+  zoom controls, and SDK attribution without an indefinite loading state or
+  sign-in prompt.
+- Project-derived study-area, whale, and vessel layer publication is not
+  implemented. M5 remains in progress, and its completion criteria are not met.
 
 **Deliverables**
 - Study area, whale density, and vessel activity prepared in a selected public
