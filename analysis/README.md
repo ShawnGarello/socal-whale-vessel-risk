@@ -591,6 +591,120 @@ publisher-side independent byte completeness remain `unverified` without their
 separate evidence. Even a pass authorizes only the **2024-07-01 through
 2024-07-31** scaling test, not the other four months or full-period safety.
 
+### July monthly scaling gate
+
+On 2026-09-03 the authorized monthly gate used the immutable author-supplied
+direct CSV for **2024-07-01 through 2024-07-31** over WGS 84 longitude -122 to
+-117 and latitude 32 to 35. The source was read in place and not changed. It
+contained 1,827,867,349 bytes and had SHA-256
+`30b64b3733f391a614faab0311e419b8b5e7d2262d196d87606de57397c11169`.
+No independently retained HTTP `Content-Length` was available, so the command
+omitted `--source-content-length` and publisher-side transfer completeness
+remains `unverified`.
+
+Run the gate from `analysis/` with a completely fresh ignored root. The retry
+uses the same immutable input and managed paths. These are the exact operational
+arguments, with only the private source path represented by a placeholder:
+
+```text
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-july-month-gate\profile-first.json --label accessais-july-month-first --disk-root ..\data\interim\m3-accessais-july-month-gate\run --spill-root ..\data\interim\m3-accessais-july-month-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --runtime-minimum-available-memory-gib 1 --runtime-minimum-free-disk-gib 4 --runtime-maximum-application-rss-gib 1 --runtime-maximum-spill-gib 2 --expected-exit-code 3 -- run --input <author-supplied-july.csv> --intake-dir ..\data\interim\m3-accessais-july-month-gate\run\intake --requested-start 2024-07-01 --requested-end 2024-07-31 --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-july-month-gate\spill --cleaned-root ..\data\interim\m3-accessais-july-month-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-july-month-gate\run\period.json
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-july-month-gate\profile-retry.json --label accessais-july-month-retry --disk-root ..\data\interim\m3-accessais-july-month-gate\run --spill-root ..\data\interim\m3-accessais-july-month-gate\spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --runtime-minimum-available-memory-gib 1 --runtime-minimum-free-disk-gib 4 --runtime-maximum-application-rss-gib 1 --runtime-maximum-spill-gib 2 --expected-exit-code 3 -- run --input <same-author-supplied-july.csv> --intake-dir ..\data\interim\m3-accessais-july-month-gate\run\intake --requested-start 2024-07-01 --requested-end 2024-07-31 --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-july-month-gate\spill --cleaned-root ..\data\interim\m3-accessais-july-month-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-july-month-gate\run\period.json
+```
+
+The first profile passed its 2 GiB memory and 8 GiB disk preflight with
+3,785,539,584 bytes (3.526 GiB) available memory and 27,559,759,872 bytes
+(25.667 GiB) free disk. The target returned the expected exit code `3`, meaning
+the 153-day input remained incomplete, while the profiler reported
+`target_completed` and returned success. It reconciled all 17,998,955 source
+rows: all 17,998,955 had valid in-request timestamps and were assigned, with
+zero malformed or unassignable timestamps and zero valid out-of-request rows.
+Exactly all 31 requested UTC dates were present and cleaned sequentially into
+3,384,056 commercial observations:
+
+| UTC date | Source rows | Cleaned rows |
+|---|---:|---:|
+| 2024-07-01 | 546,823 | 91,921 |
+| 2024-07-02 | 558,710 | 98,983 |
+| 2024-07-03 | 594,625 | 109,650 |
+| 2024-07-04 | 595,814 | 104,633 |
+| 2024-07-05 | 623,726 | 107,768 |
+| 2024-07-06 | 593,767 | 105,188 |
+| 2024-07-07 | 594,831 | 103,108 |
+| 2024-07-08 | 566,737 | 110,377 |
+| 2024-07-09 | 567,736 | 123,095 |
+| 2024-07-10 | 578,201 | 119,854 |
+| 2024-07-11 | 564,069 | 109,703 |
+| 2024-07-12 | 590,516 | 114,411 |
+| 2024-07-13 | 610,775 | 115,070 |
+| 2024-07-14 | 619,172 | 119,503 |
+| 2024-07-15 | 582,419 | 113,799 |
+| 2024-07-16 | 552,989 | 104,506 |
+| 2024-07-17 | 553,094 | 106,155 |
+| 2024-07-18 | 588,660 | 121,005 |
+| 2024-07-19 | 465,342 | 84,707 |
+| 2024-07-20 | 592,794 | 107,184 |
+| 2024-07-21 | 593,438 | 103,044 |
+| 2024-07-22 | 584,345 | 110,710 |
+| 2024-07-23 | 598,310 | 126,090 |
+| 2024-07-24 | 589,749 | 117,776 |
+| 2024-07-25 | 597,705 | 108,789 |
+| 2024-07-26 | 598,708 | 108,608 |
+| 2024-07-27 | 615,032 | 114,002 |
+| 2024-07-28 | 593,193 | 106,897 |
+| 2024-07-29 | 594,239 | 116,239 |
+| 2024-07-30 | 544,404 | 103,676 |
+| 2024-07-31 | 549,032 | 97,605 |
+| **Total** | **17,998,955** | **3,384,056** |
+
+All 31 cleaner bundles recorded effective `488.2 MiB`, one effective thread,
+the isolated spill directory, and successful spill-directory removal. The
+delivery ID is `accessais-period-c718fbfe6a3eb2d200ace41e`; the period input ID
+is `multiday-ais-d66b0637fb841469f4d585a5`. The period remained `not_ready`
+only because the 122 expected dates from August through November were missing;
+there were 31 compatible dates and no conflicts.
+
+Comparison of the monthly delivery and the prior seven-day evidence used their
+actual delivery and period manifests. Every 15--21 July source-row count,
+canonical content ID and SHA-256, cleaner run ID, cleaned-row count, and cleaned
+Parquet SHA-256 matched. This includes the previously established 15--16 July
+identities and proves that the entire seven-day overlap reproduced without
+relying on filenames.
+
+The first target operation took 848.101 seconds; elapsed time including imports
+and the profiler barrier was 849.649 seconds. Peak sampled application RSS was
+616,493,056 bytes (587.934 MiB), peak process-tree RSS was 620,728,320 bytes
+(591.973 MiB), and peak private bytes were 1,051,541,504 bytes (1,002.828 MiB).
+Minimum available memory was 1,774,354,432 bytes (1.652 GiB) and minimum free
+disk was 17,336,774,656 bytes (16.146 GiB). The generated root peaked at
+4,341,894,197 bytes (4.044 GiB) and ended at 2,489,388,135 bytes (2.318 GiB).
+Isolated spill peaked at 780,500,992 bytes (744.344 MiB) and returned to zero.
+No runtime threshold terminated the target.
+
+The identical retry also returned target exit code `3` with profiler outcome
+`target_completed`. It cleaned zero dates and skipped all 31 compatible July
+dates. Every deterministic daily, cleaner, cleaned-Parquet, delivery, and period
+identity remained unchanged; no per-date period attempt was added. The delivery
+manifest alone added the expected second attempt with outcome
+`identical_retry`. Final generated-root size increased by 814 bytes of retry
+provenance, while the sampled transient increase was 25,774 bytes. This was not
+a cold-cache run: no operating-system or application cache was cleared.
+
+The retry target operation took 179.454 seconds; elapsed time including imports
+and the profiler barrier was 181.048 seconds. Peak sampled application RSS was
+74,846,208 bytes (71.379 MiB), peak process-tree RSS was 78,761,984 bytes
+(75.113 MiB), and peak private bytes were 428,523,520 bytes (408.672 MiB).
+Minimum available memory was 4,046,598,144 bytes (3.769 GiB), minimum free disk
+was 26,424,954,880 bytes (24.610 GiB), and spill remained zero.
+
+This successful month is bounded operational evidence for this exact July
+delivery and the current resource-controlled implementation. It is not a
+production vessel input, does not establish publisher-side transfer
+completeness or observational completeness, and does not prove that the other
+four months or the full 153-day period are safe. It authorizes independent
+audit of this evidence and a subsequent explicit decision about one next
+bounded gate; it does not itself authorize August--November processing, accept
+ADR 0017 or ADR 0018, select vessel rules, or begin exposure analysis.
+
 ### Verified one-day compatibility exercise
 
 On 2026-08-28 the new `run` path read the permitted 2024-07-15 AccessAIS CSV

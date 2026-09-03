@@ -271,7 +271,7 @@ The distribution item is shared publicly by a NOAA account and carries no access
 **Analytical role**
 The vessel input to the exposure analysis: where large commercial vessels travel within the study area, how much traffic there is, and — if the data supports it — how fast they are moving.
 
-**Verification status: schema, field semantics, units, coverage statements and terms of use verified from the publisher's own documentation. Data properties verified by inspection of a small, stratified bulk sample and bounded one-day and two-day AccessAIS direct CSVs.** The bulk sample was retrieved 2026-08-25 and 2026-08-26; the AccessAIS deliveries were inspected 2026-08-28 and 2026-09-01. Provenance is in the [manifest](#retrieval-provenance-and-local-artifacts). Every quantity below is labelled with the population it was computed from, because the inputs have several populations and mixing them has already caused one error in this document.
+**Verification status: schema, field semantics, units, coverage statements and terms of use verified from the publisher's own documentation. Data properties verified by inspection of a small, stratified bulk sample and bounded one-day, two-day, seven-day, and July monthly AccessAIS direct CSVs.** The bulk sample was retrieved 2026-08-25 and 2026-08-26; the AccessAIS deliveries were inspected or processed between 2026-08-28 and 2026-09-03. Provenance is in the [manifest](#retrieval-provenance-and-local-artifacts). Every quantity below is labelled with the population it was computed from, because the inputs have several populations and mixing them has already caused one error in this document.
 
 **What the sample is, and is not.** Five daily files were sampled, one per month across the analytical period. Each sample is a **nationwide-scope snapshot of the records present in the source during the retained time window** — not a complete census of vessel activity, and not a period long enough to describe a day, a month or a season. Findings from it are stated as sample results throughout.
 
@@ -492,7 +492,7 @@ There is a near-empty gap between 50 m and 150 m separating small harbour and pa
 
 ### Retrieval route
 
-**Proposed in [ADR 0017](decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md), not accepted.** The preferred design is five sequential monthly AccessAIS extracts over the map/context bounds, with a guarded one-day-at-a-time bulk fallback. The bounded one-day and overlapping two-day AccessAIS direct-CSV deliveries passed the format, local-identity, header/date, and canonical cleaner-compatibility portion of the gate. Independent transfer completeness and safe monthly/full-period scaling remain unresolved, and no complete bulk day has been exercised.
+**Proposed in [ADR 0017](decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md), not accepted.** The preferred design is five sequential monthly AccessAIS extracts over the map/context bounds, with a guarded one-day-at-a-time bulk fallback. The bounded one-day, overlapping two-day, seven-day, and July monthly AccessAIS direct-CSV deliveries passed their authorized local format, identity, header/date, cleaner-compatibility, and operational gates. Independent transfer completeness, later-month/full-period scaling, and complete bulk-day handling remain unresolved.
 
 **Implemented local boundary.** The analysis package now inspects one explicit
 author-supplied artifact without network access, records the versioned retrieval
@@ -573,8 +573,34 @@ fresh period input ID is `multiday-ais-ddf23ba501bc834dbe5a2656`; cleaned
 Parquet checksums remained unchanged despite the corrected canonical CSV
 identities.
 
-The raw validator truthfully returned `passed: false`: 825 rows had invalid or
-missing MMSIs and 2,233 had missing vessel types. This is expected pre-cleaning
+**Real July monthly AccessAIS delivery exercised on 2026-09-03.** The immutable
+author-supplied input was inspected and processed in place and was not copied
+into this worktree.
+
+| Delivery field | Observed value |
+|---|---|
+| Request | UTC dates 2024-07-01 through 2024-07-31; WGS 84 longitude -122 to -117 and latitude 32 to 35 |
+| Route and container | Author-controlled AccessAIS; direct CSV |
+| NOAA filename | `AIS_178840031620476771_233-1788400317272.csv` |
+| Retrieval timestamp | Exact UTC retrieval timestamp not retained |
+| Local byte identity | 1,827,867,349 bytes; SHA-256 `30b64b3733f391a614faab0311e419b8b5e7d2262d196d87606de57397c11169` |
+| Independent source metadata | No retained HTTP `Content-Length`; publisher-side transfer completeness remains `unverified` |
+| CSV inspection | Exact NOAA 17-field rows; 17,998,955 rows assigned across exactly all 31 requested dates; 0 malformed/unassignable timestamps; 0 valid rows outside the request |
+| Processing result | 3,384,056 cleaned commercial observations; 31 compatible dates; 0 conflicts; 122 August--November dates missing |
+| Stable identities | Delivery `accessais-period-c718fbfe6a3eb2d200ace41e`; period input `multiday-ais-d66b0637fb841469f4d585a5` |
+
+Manifest-to-manifest comparison reproduced every canonical daily and cleaned
+output identity for the overlapping 15--21 July seven-day evidence. The first
+run and identical retry completed within the unchanged resource thresholds;
+the retry skipped all 31 dates without regeneration. This verifies the local
+identity, delivered-row/date reconciliation, cleaner compatibility, and bounded
+execution of this exact July artifact. It does not establish that the publisher
+delivered every possible record, observational completeness, later-month or
+full-period safety, or a production vessel input.
+
+For the one-day delivery, the raw validator truthfully returned `passed: false`:
+825 rows had invalid or missing MMSIs and 2,233 had missing vessel types. This
+is expected pre-cleaning
 evidence, not a failed retrieval. The cleaner accounted for and removed those
 rows along with 6,277 unavailable vessel types, 459,254 noncommercial vessel
 types, 13 exact duplicate rows, and 18 conflicting MMSI/timestamp rows. It
@@ -611,8 +637,9 @@ cleaned checksum. Two corrected fresh two-day runs peaked at 556.922/558.699
 MiB application RSS, while a date-restricted run peaked at 552.910 MiB and an
 identical retry at 65.918 MiB. Isolated spill peaked at 625.469--678.594 MiB and
 returned to zero. These observations support per-date-bounded execution for the
-two inspected dates; they do not establish seven-day, monthly, or full-period
-safety. The detailed measurement protocol and next gate are in the
+two inspected dates. The later seven-day and July monthly gates passed under the
+same explicit controls, but no result establishes later-month or full-period
+safety. The detailed measurement protocol and gate results are in the
 [analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
 
 The manifest preserves the required distinctions:
@@ -628,9 +655,9 @@ The manifest preserves the required distinctions:
 
 **Bulk metadata verification on 2026-08-27.** The official [2024 bulk index](https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/) listed all 366 daily filenames; comparison against the 153-date analytical calendar found zero missing names. HEAD requests for the first, a middle, and the last analytical date returned HTTP 200, byte lengths, validators and byte-range support. Together with the five M2 prefix transfers, this verifies listing and partial-transfer behavior. It does **not** verify a complete archive, ZIP CRC, daily semantics or observational completeness.
 
-**Still unverified.** Independent AccessAIS transfer completeness because no HTTP length or object validator was retained; download/range-resume behavior; seven-day, monthly, and full-period processing safety; complete bulk-file integrity; and any authoritative expected per-date record count. The real two-day pilot resolved reordered-overlap compatibility and the later resource investigation bounded the observed per-date cleaner; neither is a seven-day or monthly execution. NOAA documents collection interruptions, so a small or empty day requires review and cannot automatically be labelled incomplete or low traffic. Observed timestamp bounds do not resolve any of those questions or AIS receiver completeness.
+**Still unverified.** Independent AccessAIS transfer completeness because no HTTP length or object validator was retained; download/range-resume behavior; August--November and full-period processing safety; complete bulk-file integrity; and any authoritative expected per-date record count. The seven-day and exact July monthly operational gates passed, but one month cannot establish the other four months or the 153-day period. NOAA documents collection interruptions, so a small or empty day requires review and cannot automatically be labelled incomplete or low traffic. Observed timestamp bounds do not resolve any of those questions or AIS receiver completeness.
 
-The local handling and manifest policy is in [../data/README.md](../data/README.md). No monthly or full-period transfer is authorized from this evidence.
+The local handling and manifest policy is in [../data/README.md](../data/README.md). This evidence authorizes independent audit and a later explicit decision about one next bounded gate; it does not automatically authorize August--November or full-period transfer.
 
 ### Licensing, attribution, and redistribution
 
