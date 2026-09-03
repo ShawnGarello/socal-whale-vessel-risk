@@ -400,13 +400,17 @@ exercised with bounded two-day real data**
   minimum-disk, maximum-application-RSS, and maximum-spill choices; reports
   live state and sampled extrema; reaps the target tree on abort, exception, or
   interruption; and restricts normal evidence reports to ignored
-  `data/interim/`. The next real gate is one independently transfer-verified
-  2024-07-15 through 2024-07-21 delivery over longitude -122 to -117 and
-  latitude 32 to 35, under documented 2 GiB memory/8 GiB disk preflight and
-  explicit abort limits. It has not been requested or processed. Independent
-  transfer completeness, seven-day/monthly safety, and observational
-  completeness remain unresolved; ADR 0017 remains Proposed and M3 remains in
-  progress.
+  `data/interim/`. The author subsequently supplied the requested continuous
+  2024-07-15 through 2024-07-21 direct CSV over longitude -122 to -117 and
+  latitude 32 to 35. Read-only inspection identified 399,148,173 local bytes
+  and SHA-256
+  `0cc4ede8dc16504641f91e4ba44c1ce128933958abec1f855dc91196ae58dbd2`,
+  but no independent HTTP `Content-Length` was retained. The first processing
+  attempt was refused below the required 2 GiB available-memory preflight
+  before intake launched; it produced no report or processing artifacts, and
+  the stop rule prohibited the retry. Independent transfer completeness,
+  seven-day/monthly safety, and observational completeness remain unresolved;
+  ADR 0017 remains Proposed and M3 remains in progress.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
