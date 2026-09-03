@@ -831,10 +831,11 @@ content:
 Record the check date, anonymous outcome, current source identity, comparison
 method, and whether the geometry matches. Do not copy the current geometry into
 the repository or publish it through a project-controlled service. If the
-source differs, do not release wording that implies the displayed boundary
-produced the statistics: rerun or reconcile the analysis, or state the version
-mismatch clearly. This is a release gate, not an automatic synchronization or
-continuous-monitoring requirement.
+source differs, do not release the application while it displays that mismatched
+boundary. Rerun or reconcile the analysis so the displayed boundary matches the
+geometry that produced the statistics, or omit the mismatched remote boundary
+from the release. A warning alone does not satisfy this release gate. This is
+not an automatic synchronization or continuous-monitoring requirement.
 
 ## ArcGIS account-type capability checks and service access
 

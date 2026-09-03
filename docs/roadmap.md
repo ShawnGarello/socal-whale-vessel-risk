@@ -102,7 +102,7 @@ the publisher's public Feature Service.
 
 2. **The datum of the published VSR coordinates is unstated.** Assumed WGS 84, consistent with the geometry being served in EPSG:4326, but the program says nothing. At these latitudes a NAD 27 confusion would be on the order of 100 m.
 
-3. **VSR redistribution permission remains unconfirmed but no longer blocks Version 1.** ADR 0019 prohibits committing or publishing the snapshot or a project-created derivative. A later choice to host a copy would require a new permission posture.
+3. **VSR redistribution permission remains unconfirmed but no longer blocks Version 1.** ADR 0019 prohibits committing or publishing the snapshot or a project-created derivative. This no-copy architecture does not make a legal determination about other terms governing direct service use. A later choice to host a copy requires a confirmed permission posture.
 
 4. **Deferred to M3 rather than blocking M2**, but named so they are not rediscovered: the AIS retrieval route (the one-day AccessAIS direct-CSV compatibility exercise passed, but the route remains Proposed because independent transfer completeness and scaling are unresolved; guarded bulk fallback permitted — see [../data/README.md](../data/README.md)); whether AccessAIS can filter by vessel type server-side; and whether a length threshold is applied on top of the vessel-type filter, and at what value.
 
@@ -1065,8 +1065,10 @@ Produce the project's own analytical result: a documented relative exposure laye
 - The project-derived exposure layer and the statistics are consistent: the
   numbers are computed from the validated analytical output, and VSR fractions
   use the recorded local snapshot. Before release, the publisher-hosted display
-  geometry is compared with that snapshot and any mismatch is reconciled or
-  stated explicitly.
+  geometry is compared with that snapshot. If they differ, the application is
+  not released while displaying the mismatched boundary: the analysis is rerun
+  or reconciled so they match, or the remote boundary is omitted. A warning
+  alone does not satisfy this release gate.
 
 **Risks and open questions**
 - Combining a modeled density surface with an observed traffic measure implies choices about units and scaling that have no single correct answer; whatever is chosen must be justified and tested.
@@ -1172,9 +1174,10 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 - Every documentation link resolves.
 - Nothing in the repository claims a capability that does not exist.
 - Version 1 scope items in [project-brief.md](project-brief.md) are all satisfied or explicitly recorded as reduced, with the reason.
-- The displayed VSR source is either reconciled with the analytical snapshot or
-  the application states clearly that the displayed boundary is not the version
-  that produced the statistics.
+- The displayed VSR source matches the analytical snapshot that produced the
+  statistics. If release-time verification finds a mismatch, the analysis is
+  rerun or reconciled so they match, or the mismatched remote boundary is not
+  displayed in the released application; a warning alone is insufficient.
 
 **Risks and open questions**
 - **Public delivery depends on a verified publication route.** ArcGIS Location
