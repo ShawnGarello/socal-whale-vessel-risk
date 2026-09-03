@@ -14,6 +14,7 @@ import {
   describeLoadErrors,
   resolveArcgisConfig,
 } from "@/lib/arcgis-config";
+import { releaseOwnedVsrLayer } from "@/lib/vsr-layer-lifecycle";
 import { INITIAL_VSR_LAYER_STATE, vsrLayerReducer } from "@/lib/vsr-layer-state";
 import { assertExpectedVsrFeatureCount, VSR_SOURCE } from "@/lib/vsr-source";
 import VsrLayerControl from "./VsrLayerControl";
@@ -108,6 +109,7 @@ export default function ArcgisMapFrame({
     onSdkAttributionChange(false);
     setStatus("error");
     setMapIsReady(false);
+    dispatchVsr({ type: "map-unavailable" });
   }, [onSdkAttributionChange]);
 
   useEffect(() => {
@@ -118,6 +120,8 @@ export default function ArcgisMapFrame({
       setFailures(described.length > 0 ? described : [TIMEOUT_MESSAGE]);
       onSdkAttributionChange(false);
       setStatus("error");
+      setMapIsReady(false);
+      dispatchVsr({ type: "map-unavailable" });
     }, INITIALIZATION_TIMEOUT_MS);
     return () => window.clearTimeout(timer);
   }, [onSdkAttributionChange, status]);
@@ -127,12 +131,12 @@ export default function ArcgisMapFrame({
 
     const map = mapRef.current?.map;
     if (!map) {
-      dispatchVsr({ type: "load-failed", warning: VSR_FAILURE_MESSAGE });
+      dispatchVsr({ type: "map-unavailable" });
       return;
     }
 
     let disposed = false;
-    let ownsLayer = false;
+    let ownedLayer: FeatureLayer | null = null;
     const abortController = new AbortController();
     const timeout = window.setTimeout(
       () => abortController.abort(),
@@ -147,30 +151,30 @@ export default function ArcgisMapFrame({
         if (existingLayer && !(existingLayer instanceof FeatureLayer)) {
           throw new Error("The VSR layer id is already used by another layer.");
         }
-        const layer = existingLayer
-          ? existingLayer
-          : new FeatureLayer({
-              id: VSR_SOURCE.layerId,
-              title: VSR_SOURCE.title,
-              url: VSR_SOURCE.serviceUrl,
-              definitionExpression: VSR_SOURCE.definitionExpression,
-              outFields: ["FID"],
-              visible: vsrVisibleRef.current,
-              popupEnabled: false,
-              renderer: new SimpleRenderer({
-                symbol: new SimpleFillSymbol({
-                  color: [255, 180, 91, 0.08],
-                  outline: {
-                    color: [255, 180, 91, 0.95],
-                    width: 2,
-                  },
-                }),
+        let layer: FeatureLayer;
+        if (existingLayer) {
+          layer = existingLayer;
+        } else {
+          ownedLayer = new FeatureLayer({
+            id: VSR_SOURCE.layerId,
+            title: VSR_SOURCE.title,
+            url: VSR_SOURCE.serviceUrl,
+            definitionExpression: VSR_SOURCE.definitionExpression,
+            outFields: ["FID"],
+            visible: vsrVisibleRef.current,
+            popupEnabled: false,
+            renderer: new SimpleRenderer({
+              symbol: new SimpleFillSymbol({
+                color: [255, 180, 91, 0.08],
+                outline: {
+                  color: [255, 180, 91, 0.95],
+                  width: 2,
+                },
               }),
-            });
-
-        if (!existingLayer) {
-          map.add(layer);
-          ownsLayer = true;
+            }),
+          });
+          layer = ownedLayer;
+          map.add(ownedLayer);
         }
         vsrLayerRef.current = layer;
 
@@ -184,13 +188,8 @@ export default function ArcgisMapFrame({
           dispatchVsr({ type: "load-succeeded", featureCount });
         }
       } catch {
-        const failedLayer = vsrLayerRef.current;
-        if (failedLayer && ownsLayer) {
-          map.remove(failedLayer);
-          failedLayer.destroy();
-          vsrLayerRef.current = null;
-          ownsLayer = false;
-        }
+        releaseOwnedVsrLayer(map, ownedLayer, vsrLayerRef);
+        ownedLayer = null;
         if (!disposed) {
           dispatchVsr({ type: "load-failed", warning: VSR_FAILURE_MESSAGE });
         }
@@ -205,12 +204,8 @@ export default function ArcgisMapFrame({
       disposed = true;
       abortController.abort();
       window.clearTimeout(timeout);
-      const layer = vsrLayerRef.current;
-      if (layer && ownsLayer) {
-        map.remove(layer);
-        layer.destroy();
-      }
-      if (vsrLayerRef.current === layer) vsrLayerRef.current = null;
+      releaseOwnedVsrLayer(map, ownedLayer, vsrLayerRef);
+      ownedLayer = null;
     };
   }, [mapIsReady]);
 
