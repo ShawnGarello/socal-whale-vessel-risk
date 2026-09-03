@@ -331,10 +331,21 @@ An unchanged retry passed preflight, skipped all seven dates with unchanged
 identities, peaked at 70.367 MiB application RSS, and created no spill. Both
 profiles remained within every abort threshold and their reports contained no
 absolute private path or sensitive request metadata. This passes the seven-day
-processing/resource conditions. It does not establish independent transfer
-completeness because no retained HTTP `Content-Length` or ZIP integrity evidence
-exists, so it does not authorize the monthly request. Observational completeness
-and monthly/full-period safety remain `unverified`; this ADR remains Proposed.
+processing/resource conditions.
+
+A subsequent, separately completed browser download produced the same
+399,148,173-byte file and SHA-256
+`0cc4ede8dc16504641f91e4ba44c1ce128933958abec1f855dc91196ae58dbd2`
+as the completed download used for processing. No HTTP `Content-Length` was
+retained, so publisher-side independent byte completeness remains
+`unverified`. For this portfolio MVP, two byte-identical completed browser
+downloads plus successful complete parsing of the delivered rows, exact seven-
+date coverage, full row reconciliation, deterministic overlap identities,
+bounded processing, and successful retry are accepted as sufficient operational
+evidence to authorize only the 2024-07-01 through 2024-07-31 monthly scale test.
+This does not establish observational completeness or prove NOAA's server-side
+extract contained every possible AIS record. The other four months and full-
+period execution remain unauthorized; this ADR remains Proposed.
 
 ### Inferred
 
@@ -347,9 +358,10 @@ and monthly/full-period safety remain `unverified`; this ADR remains Proposed.
 
 ### Still unverified
 
-- Independent AccessAIS byte completeness, because HTTP length and stable
-  object metadata were not retained with the exercised direct CSV; download and
-  range-resume behavior also remain unverified.
+- Publisher-side independent AccessAIS byte completeness, because HTTP length
+  and stable object metadata were not retained with the exercised direct CSV.
+  Two completed browser downloads produced byte-identical files, but range-
+  resume behavior remains unverified.
 - Safe seven-day, monthly, or full-period processing. Explicit per-date cleaner
   resources resolve the avoidable machine-default peak for the observed two-day
   input. After the first seven-day attempt stopped at the required memory
@@ -374,12 +386,14 @@ ranges in the table above. Use the **guarded one-day-at-a-time bulk route** only
 when AccessAIS cannot create or deliver a bounded request, or when an exercised
 delivery proves incompatible with the required processing boundary.
 
-This decision remains **Proposed**. The real direct CSV passed the delivery-
-format, local-identity, header/date, and cleaner-compatibility portion of the
-gate. Independent transfer completeness was not retained, and the measured
-two-day resource correction does not establish safe seven-day, monthly, or
-full-period execution. The acceptance criteria below therefore remain only
-partially satisfied.
+This decision remains **Proposed** until the authorized July monthly scale test
+is exercised successfully. The real direct CSV passed the delivery-format,
+local-identity, header/date, cleaner-compatibility, seven-day processing, and
+retry portions of the gate. Two separate completed browser downloads produced
+byte-identical files. Publisher-side independent byte completeness remains
+`unverified`, but the combined operational evidence is sufficient for this
+portfolio MVP to authorize only the next July test. It is not evidence of safe
+execution for the other four months or the full period.
 
 AccessAIS order submission is an author-controlled action. It requires an email
 address, acceptance of NOAA's privacy statement, and an external order. The
@@ -517,9 +531,11 @@ This exercises the assembly boundary on one real date. It does not retrieve any
 further date, does not establish independent transfer completeness, does not
 establish observational completeness, and does not make the analytical period
 available. **This record stays Proposed.** The later two-day investigation
-bounded the observed cleaner allocation but did not pass the documented
-seven-day gate. Full-period acquisition still depends on independent transfer-
-completeness evidence and measured seven-day and monthly scaling gates.
+bounded the observed cleaner allocation. Subsequent seven-day processing and
+repeat-transfer evidence passed the revised portfolio-MVP operational gate and
+authorize only the July monthly scale test. Full-period acquisition remains
+unauthorized pending measured monthly evidence; publisher-side independent byte
+completeness and observational completeness remain `unverified`.
 
 ## Safe transfer, retry, and resume behavior
 
@@ -585,18 +601,19 @@ filename, and a one-date manifest entry. It:
 6. exercised the bounded period-intake, deterministic daily-slice, sequential
    cleaner, resumable period-recording, and incomplete-period status path.
 
-Route acceptance additionally requires independently supported transfer
-completeness and a measured processing design that makes the proposed monthly
-or full-period execution safe. Neither condition is satisfied here: source HTTP
-metadata was not retained, and neither the earlier one-day result nor the later
-two-day pilot establishes monthly safety. No monthly or full-period retrieval
-begins from this partially passed gate.
+The initial route gate required independently supported transfer completeness
+and a measured processing design. The later portfolio-MVP correction accepts
+two byte-identical completed browser downloads plus the successful seven-day
+processing and retry as sufficient operational evidence for one July monthly
+test without upgrading publisher-side independent byte completeness. The one-
+day and two-day results alone did not satisfy that revised gate.
 
 ## Consequences
 
 - Full-period transfer cannot start from this Proposed record. The immediate
-  next step is resolving independent transfer-completeness evidence and the
-  measured memory concern, not five monthly orders or 153 bulk downloads.
+  next step is one author-controlled 2024-07-01 through 2024-07-31 AccessAIS
+  monthly scale test under the documented resource controls, not the other four
+  monthly orders or 153 bulk downloads.
 - The local retrieval command implements artifact inspection, the manifest
   contract, safe optional ZIP extraction, and an optional bridge to the current
   one-date cleaner. Materialization revalidates the inspected source identity
