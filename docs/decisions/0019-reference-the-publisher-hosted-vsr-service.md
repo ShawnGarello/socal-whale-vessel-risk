@@ -49,14 +49,17 @@ Version 1 separates the VSR analytical input from the VSR display source:
   layer, and `FID = 126` still exist and must compare the then-current source
   state with the retained analytical snapshot.
 - If the publisher changes the geometry after the analytical snapshot, the
-  release must either rerun or reconcile the analysis against the changed
-  source, or state clearly that the remotely displayed boundary is not the
-  version that produced the statistics. It must not silently imply a match.
+  application must not be released while it displays that mismatched boundary.
+  The release must either rerun or reconcile the analysis so the displayed
+  boundary matches the geometry that produced the statistics, or omit the
+  mismatched remote boundary from the released application. A warning alone
+  does not satisfy this release gate.
 
-This is a conservative no-copy architecture, not a legal conclusion. Permission
-to redistribute remains unconfirmed. Permission would need to be established
-only if a later version chooses to host a project-controlled copy or derivative
-of the VSR geometry.
+Version 1 does not rely on redistribution permission because it does not host a
+copy. This conservative no-copy architecture does not make a legal determination
+about other terms governing direct service use. Permission to redistribute
+remains unconfirmed, and a future project-hosted copy or derivative requires a
+confirmed permission posture.
 
 ## Consequences
 
@@ -80,9 +83,10 @@ of the VSR geometry.
 No explicit redistribution grant has been found, and public access to the
 publisher's service is not treated as such a grant.
 
-**Ask the publisher for permission before release.** Not required for the
-selected no-copy route. It becomes relevant if the project later decides to
-host a copy.
+**Seek permission for a project-hosted copy before Version 1 release.** Not
+selected because Version 1 does not host a copy or rely on redistribution
+permission. This does not determine what other terms govern direct service use;
+a future project-hosted copy requires a confirmed permission posture.
 
 **Construct a new polygon from the published points and a shoreline.** Rejected.
 It would introduce project-chosen closure and shoreline assumptions at the

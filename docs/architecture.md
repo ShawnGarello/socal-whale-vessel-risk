@@ -303,13 +303,16 @@ The remote layer is not frozen and does not become analytical provenance. Its
 owner can change, remove, rate-limit, or privatize it. Version 1 does not add an
 automatic synchronization or monitoring service. Before release, an anonymous
 check must confirm the expected item, layer, and feature still exist and compare
-the current geometry with the analytical snapshot. A change requires either an
-analysis rerun or reconciliation, or explicit release wording that the displayed
-boundary differs from the version used for the statistics.
+the current geometry with the analytical snapshot. The application must not be
+released while it displays a boundary that differs from the geometry used for
+the statistics. A change requires an analysis rerun or reconciliation so they
+match, or omission of the mismatched remote boundary from the release; a warning
+alone is insufficient.
 
 This no-copy route does not establish redistribution permission. It removes
-redistribution from Version 1's publication requirements. A later decision to
-host a project-controlled VSR copy would first require a confirmed permission
+redistribution from Version 1's publication requirements, but it does not make a
+legal determination about other terms governing direct service use. A later
+decision to host a project-controlled VSR copy requires a confirmed permission
 posture.
 
 ### ArcGIS Online organization hosting

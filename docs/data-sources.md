@@ -796,10 +796,13 @@ establish that redistribution would be permitted.
 
 The remote service is not frozen. Before final release, anonymous verification
 must confirm the expected item, layer, and feature still exist and compare the
-current source state with the analytical snapshot. If they differ, the analysis
-must be rerun or reconciled, or the release must state the version mismatch.
-The publisher may change, remove, rate-limit, or privatize the service, and no
-automatic synchronization or monitoring service is planned for Version 1.
+current source state with the analytical snapshot. If they differ, the
+application must not be released while it displays the mismatched boundary. The
+analysis must be rerun or reconciled so the displayed boundary matches the
+geometry that produced the statistics, or the mismatched remote boundary must be
+omitted from the release. A warning alone is insufficient. The publisher may
+change, remove, rate-limit, or privatize the service, and no automatic
+synchronization or monitoring service is planned for Version 1.
 
 ### Considered and not selected
 
@@ -813,8 +816,9 @@ automatic synchronization or monitoring service is planned for Version 1.
 
 - **Redistribution permission for the zone geometry remains unconfirmed.** It
   does not block the selected Version 1 route because that route prohibits a
-  project-hosted copy. Permission would need to be established if a later
-  version chooses to host one.
+  project-hosted copy. A future project-hosted copy requires a confirmed
+  permission posture. This is not a legal determination about other terms
+  governing direct service use.
 - **The datum of the published coordinates.** Assumed WGS 84; not stated by the program.
 - **The 455 m discrepancy at point 7** between the published point list and the published geometry. Recorded, not explained.
 - Whether NOAA ONMS, which produced the map, publishes the 2026 statewide zone as a federal GIS layer. Only the Greater Farallones northern zone was found under a NOAA account.
