@@ -400,13 +400,32 @@ exercised with bounded two-day real data**
   minimum-disk, maximum-application-RSS, and maximum-spill choices; reports
   live state and sampled extrema; reaps the target tree on abort, exception, or
   interruption; and restricts normal evidence reports to ignored
-  `data/interim/`. The next real gate is one independently transfer-verified
-  2024-07-15 through 2024-07-21 delivery over longitude -122 to -117 and
-  latitude 32 to 35, under documented 2 GiB memory/8 GiB disk preflight and
-  explicit abort limits. It has not been requested or processed. Independent
-  transfer completeness, seven-day/monthly safety, and observational
-  completeness remain unresolved; ADR 0017 remains Proposed and M3 remains in
-  progress.
+  `data/interim/`. The author subsequently supplied the requested continuous
+  2024-07-15 through 2024-07-21 direct CSV over longitude -122 to -117 and
+  latitude 32 to 35. Read-only inspection identified 399,148,173 local bytes
+  and SHA-256
+  `0cc4ede8dc16504641f91e4ba44c1ce128933958abec1f855dc91196ae58dbd2`,
+  but no independent HTTP `Content-Length` was retained. The first processing
+  attempt was refused below the required 2 GiB available-memory preflight
+  before intake launched; it produced no report or processing artifacts, and
+  the stop rule prohibited the retry. Independent transfer completeness,
+  seven-day/monthly safety, and observational completeness remain unresolved;
+  ADR 0017 remains Proposed and M3 remains in progress.
+  The session later resumed after available memory recovered, without changing
+  a threshold. The first run reconciled 3,928,736 rows across exactly the seven
+  requested dates, sequentially cleaned and recorded every date, reproduced the
+  established 15--16 July identities, and peaked at 581.512 MiB application RSS
+  and 710.594 MiB spill before spill returned to zero. An identical retry
+  skipped all seven dates with unchanged identities, 70.367 MiB peak application
+  RSS, and zero spill. The seven-day processing/resource conditions therefore
+  passed. A separate completed browser download then reproduced the exact
+  399,148,173-byte source and SHA-256. No HTTP `Content-Length` was retained, so
+  publisher-side independent byte completeness remains `unverified`. For this
+  portfolio MVP, the repeat-transfer, parsing, date/row, identity, resource, and
+  retry evidence authorizes only the 2024-07-01 through 2024-07-31 monthly scale
+  test. It does not authorize the other four months or establish full-period or
+  observational completeness. ADR 0017 remains Proposed pending that monthly
+  exercise, and M3 remains in progress.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -642,10 +661,11 @@ exercised with bounded two-day real data**
 
 - Network AIS transfer, range-resume, and analytical-period retrieval. The local
   supplied-artifact validation, bounded multi-date delivery intake, resumable
-  daily-cleaner orchestration, and overlapping real one-day/two-day canonical
-  compatibility exercise are complete. Independent transfer completeness,
-  monthly/full-period memory safety, a guarded daily bulk download, and the
-  153-date retrieval remain unverified or unexercised.
+  daily-cleaner orchestration, overlapping real one-day/two-day canonical
+  compatibility exercise, and seven-day operational scale gate are complete.
+  Publisher-side independent byte completeness remains `unverified`; the next
+  authorized July monthly scale test, later-month/full-period memory safety, a
+  guarded daily bulk download, and the 153-date retrieval remain unexercised.
 - The final vessel-activity input proposed in ADR 0018. Candidate period segment
   construction, explicit filtering, exact grid allocation, per-cell vessel-
   kilometres, union-recomputed distinct counts, quality metadata, and lineage
