@@ -2,8 +2,10 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import VsrLayerControl from "../components/VsrLayerControl";
+import { releaseOwnedVsrLayer } from "./vsr-layer-lifecycle";
 import {
   INITIAL_VSR_LAYER_STATE,
+  VSR_MAP_UNAVAILABLE_MESSAGE,
   vsrLayerReducer,
   type VsrLayerState,
 } from "./vsr-layer-state";
@@ -62,6 +64,34 @@ describe("VSR layer state", () => {
     expect(markup).toContain("disabled");
   });
 
+  it("shows a truthful unavailable state when map initialization fails", () => {
+    const previouslyReady: VsrLayerState = {
+      status: "ready",
+      visible: true,
+      featureCount: 1,
+      warning: null,
+    };
+    const unavailable = vsrLayerReducer(previouslyReady, {
+      type: "map-unavailable",
+    });
+    const markup = renderToStaticMarkup(
+      createElement(VsrLayerControl, {
+        state: unavailable,
+        onVisibilityChange: () => undefined,
+      }),
+    );
+
+    expect(unavailable).toMatchObject({
+      status: "error",
+      featureCount: null,
+      warning: VSR_MAP_UNAVAILABLE_MESSAGE,
+    });
+    expect(markup).toContain("Boundary unavailable");
+    expect(markup).toContain(VSR_MAP_UNAVAILABLE_MESSAGE);
+    expect(markup).not.toContain("The basemap remains available");
+    expect(markup).toContain("disabled");
+  });
+
   it("exposes an enabled checked control, legend, source, and disclosure when ready", () => {
     const ready: VsrLayerState = {
       status: "ready",
@@ -83,5 +113,30 @@ describe("VSR layer state", () => {
     expect(markup).toContain("<details");
     expect(markup).toContain("Created by Danielle Alvarez, with CMSF and BWBS.");
     expect(markup).toContain("View publisher item");
+  });
+});
+
+describe("VSR layer lifecycle", () => {
+  it("keeps a replacement layer when stale-effect cleanup releases its own layer", () => {
+    class FakeLayer {
+      destroyed = false;
+
+      destroy() {
+        this.destroyed = true;
+      }
+    }
+
+    const staleLayer = new FakeLayer();
+    const replacementLayer = new FakeLayer();
+    const removed: FakeLayer[] = [];
+    const map = { remove: (layer: FakeLayer) => removed.push(layer) };
+    const layerRef = { current: replacementLayer as FakeLayer | null };
+
+    releaseOwnedVsrLayer(map, staleLayer, layerRef);
+
+    expect(removed).toEqual([staleLayer]);
+    expect(staleLayer.destroyed).toBe(true);
+    expect(replacementLayer.destroyed).toBe(false);
+    expect(layerRef.current).toBe(replacementLayer);
   });
 });

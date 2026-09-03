@@ -11,7 +11,11 @@ export type VsrLayerAction =
   | { readonly type: "load-started" }
   | { readonly type: "load-succeeded"; readonly featureCount: number }
   | { readonly type: "load-failed"; readonly warning: string }
+  | { readonly type: "map-unavailable" }
   | { readonly type: "visibility-changed"; readonly visible: boolean };
+
+export const VSR_MAP_UNAVAILABLE_MESSAGE =
+  "The 2026 California VSR zone is unavailable because the map could not be initialized.";
 
 export const INITIAL_VSR_LAYER_STATE: VsrLayerState = {
   status: "waiting",
@@ -40,6 +44,13 @@ export function vsrLayerReducer(
         status: "error",
         featureCount: null,
         warning: action.warning,
+      };
+    case "map-unavailable":
+      return {
+        ...state,
+        status: "error",
+        featureCount: null,
+        warning: VSR_MAP_UNAVAILABLE_MESSAGE,
       };
     case "visibility-changed":
       return { ...state, visible: action.visible };
