@@ -1,6 +1,6 @@
 # 0017 — Prefer AccessAIS extracts with a guarded daily-bulk fallback
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-08-27
 
 ## Context
@@ -33,7 +33,7 @@ completeness and AIS observability are therefore different questions. The
 unresolved offshore observability domain remains owned by
 [ADR 0002](0002-southern-california-study-area-extent.md).
 
-## Evidence gathered on 2026-08-27 and 2026-08-28
+## Evidence gathered from 2026-08-27 through 2026-09-03
 
 ### Verified from official documentation or read-only official endpoints
 
@@ -314,8 +314,9 @@ size was not treated as source metadata and transfer completeness remained
 `unverified`. The exact first-run command omitted `--source-content-length` and
 was refused before intake launch because available memory was below the required
 2 GiB preflight. No report, intake, cleaned bundle, manifest, or spill was
-created. The stop rule prohibited a retry or weaker threshold. The seven-day
-processing gate therefore remains unexercised and this ADR remains Proposed.
+created. The stop rule prohibited a retry or weaker threshold. At that point
+the seven-day processing gate remained unexercised and this ADR remained
+Proposed.
 
 The same session later resumed after available memory recovered, without
 changing any threshold or prior evidence. The first-run preflight recorded
@@ -345,7 +346,43 @@ bounded processing, and successful retry are accepted as sufficient operational
 evidence to authorize only the 2024-07-01 through 2024-07-31 monthly scale test.
 This does not establish observational completeness or prove NOAA's server-side
 extract contained every possible AIS record. The other four months and full-
-period execution remain unauthorized; this ADR remains Proposed.
+period execution remained unauthorized at that stage; this ADR remained
+Proposed pending the July monthly gate.
+
+### Observed in the July monthly delivery
+
+On 2026-09-03 the authorized 2024-07-01 through 2024-07-31 AccessAIS direct
+CSV was processed under the same WGS 84 longitude -122 to -117 and latitude 32
+to 35 request bounds and the documented resource controls. The immutable
+author-supplied delivery contained 1,827,867,349 bytes with SHA-256
+`30b64b3733f391a614faab0311e419b8b5e7d2262d196d87606de57397c11169`.
+No independently retained HTTP `Content-Length` was available, so
+publisher-side transfer completeness remained `unverified`.
+
+The first run reconciled all 17,998,955 source rows across exactly the 31
+requested UTC dates, with zero malformed or unassignable timestamps and zero
+valid out-of-request rows. It sequentially produced and validated 3,384,056
+cleaned commercial observations, recorded all 31 dates as compatible with no
+conflict, and reproduced every established 15--21 July canonical and cleaner
+identity. The period remained `not_ready` because 122 August--November dates
+were absent.
+
+The first target operation took 848.101 seconds. It peaked at 587.934 MiB
+application RSS, 1,002.828 MiB private bytes, 591.973 MiB process-tree RSS,
+744.344 MiB isolated spill, and 4.044 GiB generated-root size. Minimum
+available memory and free disk were 1.652 GiB and 16.146 GiB respectively;
+spill returned to zero, and no runtime threshold aborted the run. The
+identical 179.454-second retry skipped all 31 dates without regeneration,
+preserved every deterministic identity, peaked at 71.379 MiB application RSS,
+and used zero spill. Both target invocations returned the expected exit code
+`3` because the complete 153-date period was not ready. This evidence passed
+independent audit.
+
+This is successful bounded operational evidence for the exact July delivery.
+It does not establish publisher-side transfer completeness, observational
+completeness, safe processing of an August--November delivery, or safe
+complete-period processing. It produces no final vessel-activity input and
+does not select a vessel rule.
 
 ### Inferred
 
@@ -362,14 +399,10 @@ period execution remain unauthorized; this ADR remains Proposed.
   and stable object metadata were not retained with the exercised direct CSV.
   Two completed browser downloads produced byte-identical files, but range-
   resume behavior remains unverified.
-- Safe seven-day, monthly, or full-period processing. Explicit per-date cleaner
-  resources resolve the avoidable machine-default peak for the observed two-day
-  input. After the first seven-day attempt stopped at the required memory
-  preflight, a separately resumed run and retry passed the seven-day processing
-  and resource conditions. Monthly and full-period behavior remain untested.
-- Monthly-scale AccessAIS processing. The real two-day delivery exercises
-  unsorted/reordered overlap, row conservation, canonical reuse, and resume,
-  but it is not a monthly smoke run or transfer-completeness measurement.
+- Safe processing of the four later monthly deliveries or of the complete
+  153-day input. Explicit per-date cleaner resources and the seven-day and July
+  gates bound the observed executions; they do not prove August--November or
+  full-period behavior.
 - No complete bulk daily archive has been downloaded, opened through its ZIP
   central directory, or checked through its CRC. NOAA publishes no checksum in
   the bulk index, so a locally computed SHA-256 would identify retrieved bytes
@@ -378,7 +411,7 @@ period execution remain unauthorized; this ADR remains Proposed.
   A zero or unusually small date can be detected but cannot automatically be
   classified as low traffic, receiver interruption, or incomplete delivery.
 
-## Proposed decision
+## Decision
 
 Use **five sequential, author-submitted AccessAIS monthly extracts** as the
 preferred route, with the exact project map/context bounds and the five date
@@ -386,14 +419,24 @@ ranges in the table above. Use the **guarded one-day-at-a-time bulk route** only
 when AccessAIS cannot create or deliver a bounded request, or when an exercised
 delivery proves incompatible with the required processing boundary.
 
-This decision remains **Proposed** until the authorized July monthly scale test
-is exercised successfully. The real direct CSV passed the delivery-format,
-local-identity, header/date, cleaner-compatibility, seven-day processing, and
-retry portions of the gate. Two separate completed browser downloads produced
-byte-identical files. Publisher-side independent byte completeness remains
-`unverified`, but the combined operational evidence is sufficient for this
-portfolio MVP to authorize only the next July test. It is not evidence of safe
-execution for the other four months or the full period.
+The audited July monthly scale test satisfies this record's acceptance
+condition: the exact delivery reconciled every delivered row across all 31
+requested dates, completed inside the existing resource controls, and an
+identical retry reused every date without regeneration. This accepts AccessAIS
+as the preferred route and authorizes the author to submit and process the
+August, September, October, and November calendar-month extracts sequentially,
+one active order and one resource-profiled monthly execution at a time, under
+the same request bounds, preflight gates, runtime abort limits, immutable-input
+rules, row/date reconciliation, identity checks, and retry requirements used
+for July. A failure, resource abort, unexpected date, unreconciled row,
+identity conflict, or incompatible delivery stops the sequence for review; it
+does not authorize weaker controls or an automatic switch to a larger request.
+
+Acceptance authorizes those bounded monthly operations; it does not claim that
+publisher-side transfer completeness, observational completeness, later-month
+safety, or complete-period safety has already been established. It does not
+authorize one combined August--November or 153-day AccessAIS request. The
+guarded one-day-at-a-time bulk route remains fallback only.
 
 AccessAIS order submission is an author-controlled action. It requires an email
 address, acceptance of NOAA's privacy statement, and an external order. The
@@ -527,14 +570,13 @@ and reported 113,620 whole-period consecutive pairs, matching the structural
 segment count the one-bundle evidence harness produced independently for that
 input.
 
-This exercises the assembly boundary on one real date. It does not retrieve any
+This exercised the assembly boundary on one real date. It did not retrieve any
 further date, does not establish independent transfer completeness, does not
-establish observational completeness, and does not make the analytical period
-available. **This record stays Proposed.** The later two-day investigation
-bounded the observed cleaner allocation. Subsequent seven-day processing and
-repeat-transfer evidence passed the revised portfolio-MVP operational gate and
-authorize only the July monthly scale test. Full-period acquisition remains
-unauthorized pending measured monthly evidence; publisher-side independent byte
+establish observational completeness, and did not make the analytical period
+available. At that stage this record stayed Proposed. The later two-day
+investigation bounded the observed cleaner allocation, the seven-day evidence
+authorized the July scale test, and the audited July result subsequently
+satisfied this record's acceptance condition. Publisher-side independent byte
 completeness and observational completeness remain `unverified`.
 
 ## Safe transfer, retry, and resume behavior
@@ -573,7 +615,7 @@ failures. They remain visible source properties and are handled later by
 [ADR 0013](0013-remove-conflicting-ais-key-records.md). A duplicated archive,
 date, or manifest entry is a retrieval conflict and is handled here.
 
-## Acceptance gate: one bounded one-day exercise
+## Acceptance gate and outcome
 
 The author-controlled request for **2024-07-15**, WGS 84 bounds **longitude
 -122.0 to -117.0 and latitude 32.0 to 35.0**, delivered the direct CSV described
@@ -606,14 +648,17 @@ and a measured processing design. The later portfolio-MVP correction accepts
 two byte-identical completed browser downloads plus the successful seven-day
 processing and retry as sufficient operational evidence for one July monthly
 test without upgrading publisher-side independent byte completeness. The one-
-day and two-day results alone did not satisfy that revised gate.
+day and two-day results alone did not satisfy that revised gate. The seven-day
+gate then authorized only July. The audited July monthly run and identical
+retry supplied the acceptance evidence recorded above, so this decision is now
+Accepted without upgrading either completeness state.
 
 ## Consequences
 
-- Full-period transfer cannot start from this Proposed record. The immediate
-  next step is one author-controlled 2024-07-01 through 2024-07-31 AccessAIS
-  monthly scale test under the documented resource controls, not the other four
-  monthly orders or 153 bulk downloads.
+- The next author-controlled request is the August 2024 calendar-month
+  AccessAIS extract. September through November are authorized sequentially
+  under the same controls, not as one combined request. Each completed month
+  adds bounded evidence; none is pre-described as safe.
 - The local retrieval command implements artifact inspection, the manifest
   contract, safe optional ZIP extraction, and an optional bridge to the current
   one-date cleaner. Materialization revalidates the inspected source identity
@@ -626,8 +671,9 @@ day and two-day results alone did not satisfy that revised gate.
   thread count defaults explicitly to one. Inspection-only use requires none of
   those cleaner resources.
 - The local period-intake command implements bounded multi-date partitioning and
-  resumable sequential cleaner orchestration for one supplied delivery. It does
-  not resolve delivery transfer completeness, prove monthly scaling, or make
+  resumable sequential cleaner orchestration for one supplied delivery. July
+  demonstrated one monthly execution; the command does not resolve delivery
+  transfer completeness, prove later-month or complete-period safety, or make
   the analytical period available.
 - Monthly AccessAIS partitions bound each order below the currently reported
   service limit and make resubmission local to one month. Only one is submitted

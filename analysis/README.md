@@ -181,9 +181,11 @@ a measured bounded design before execution. The subsequent explicit resource
 controls supported successful seven-day and exact July monthly operational
 gates; August--November and complete 153-day processing remain untested. The
 full evidence and removal accounting are in the
-[source register](../docs/data-sources.md#retrieval-route). ADR 0017 remains
-Proposed because independent transfer completeness and later-month/full-period
-processing remain unresolved.
+[source register](../docs/data-sources.md#retrieval-route). The audited July
+gate satisfied ADR 0017's acceptance condition. ADR 0017 is Accepted and
+authorizes sequential author-submitted August--November calendar-month extracts
+under the same controls, while independent transfer completeness and later-
+month/full-period safety remain unresolved.
 
 ## Prepare one author-supplied multi-date AccessAIS delivery
 
@@ -375,8 +377,8 @@ retry took 10.1271792 seconds, peaked at 102,436,864 bytes RSS, and added 436
 bytes of attempt-history output. OS file caches were not cleared. A sampled
 peak can be missed, and wrapper
 overhead is included. None of these measurements is extrapolated to a month or
-five months. The pilot authorizes no additional order, does not establish
-complete reception, and does not accept ADR 0017 or ADR 0018.
+five months. At that stage, the pilot authorized no additional order, did not
+establish complete reception, and did not accept ADR 0017 or ADR 0018.
 
 ### AccessAIS intake resource investigation and seven-day gate
 
@@ -704,9 +706,11 @@ delivery and the current resource-controlled implementation. It is not a
 production vessel input, does not establish publisher-side transfer
 completeness or observational completeness, and does not prove that the other
 four months or the full 153-day period are safe. The evidence passed independent
-audit. A separate explicit post-audit decision is required before any next
-bounded gate; this result does not itself authorize August--November processing,
-accept ADR 0017 or ADR 0018, select vessel rules, or begin exposure analysis.
+audit and satisfied ADR 0017's acceptance condition. ADR 0017 now authorizes
+sequential author-submitted August--November calendar-month extracts under the
+same controls; it does not authorize one combined later-period request. This
+outcome does not accept ADR 0018, select vessel rules, or begin exposure
+analysis.
 
 ### Verified one-day compatibility exercise
 

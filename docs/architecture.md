@@ -496,16 +496,18 @@ project layers, and matching precomputed results.
   local and ignored. Public display references the publisher's service directly.
 - Git LFS is not planned for Version 1. Any demonstrated need requires a
   decision record before large binaries are added.
-- The AIS retrieval route remains a Proposed M3 decision. The local supplied-
+- ADR 0017 accepts AccessAIS as the preferred retrieval route. The local supplied-
   artifact verification boundary, bounded multi-date delivery intake, resumable
   daily-cleaner orchestration, overlapping real one-day/two-day compatibility
   exercise, seven-day operational gate, and exact July monthly operational gate
   are implemented and complete. The July artifact passed its bounded resource
-  and retry criteria, but August--November and complete 153-day processing
-  safety remain unverified. Network transfer, independent transfer completeness,
-  observational completeness, and analytical-period acquisition are not
-  established. An entire national season is never staged locally; the detailed
-  retrieval guard belongs to [data/README.md](../data/README.md).
+  and retry criteria, authorizing sequential author-submitted August--November
+  calendar-month extracts under the same controls. Their safety and complete
+  153-day processing safety remain unverified. Network transfer, independent
+  transfer completeness, observational completeness, and analytical-period
+  acquisition are not established. Guarded one-day-at-a-time bulk retrieval
+  remains fallback only. An entire national season is never staged locally; the
+  detailed retrieval guard belongs to [data/README.md](../data/README.md).
 - AccessAIS daily cleaner compatibility uses the Version 2 canonical parsed-row
   multiset identity and artifact checksum, not source delivery order. Whole-
   delivery byte size and SHA-256 remain separate provenance. Version 1 intake

@@ -306,7 +306,10 @@ design with bounded date-sized processing and explicit DuckDB memory, thread,
 and spill controls. The later seven-day and exact July monthly operational gates
 passed under those controls, while August--November and complete 153-day
 processing remain untested. The full evidence and removal accounting are in the
-[source register](data-sources.md#retrieval-route). ADR 0017 remains Proposed.
+[source register](data-sources.md#retrieval-route). ADR 0017 is now Accepted:
+the audited July gate authorizes sequential author-submitted August--November
+calendar-month extracts under the same controls, without establishing later-
+month or full-period safety.
 
 **Author-supplied multi-date AccessAIS intake**
 
