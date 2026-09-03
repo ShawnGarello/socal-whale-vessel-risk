@@ -6,7 +6,9 @@
 > accepted the initial direction. [ADR 0015](decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md)
 > refines its tooling and publication assumptions after implementation and
 > visual-verification evidence; it does not rewrite ADR 0001's historical
-> context.
+> context. [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md)
+> selects direct use of the publisher-hosted VSR Feature Service as a narrow
+> Version 1 exception to the project-derived-layer publication boundary.
 >
 > The Next.js application shell, Python processing foundation, deterministic
 > one-extract AIS cleaning, projected water-grid construction, and deterministic
@@ -20,27 +22,28 @@
 > two-day direct CSV deliveries; reordered equivalent 15 July content was
 > reused and 16 July was added. Network retrieval and analytical-period
 > acquisition remain unfinished. Final period-wide vessel aggregation,
-> exposure analysis, a final public layer representation, and deployment also
-> remain unfinished.
+> exposure analysis, final public representations for project-derived layers,
+> VSR service integration, and deployment also remain unfinished.
 > See the [roadmap](roadmap.md) for milestone status.
 
-Two independent questions remain open and gate different work. The analytical
-and statistical domain is accepted separately in
-[ADR 0002](decisions/0002-southern-california-study-area-extent.md):
+The analytical and statistical domain is accepted in
+[ADR 0002](decisions/0002-southern-california-study-area-extent.md), and the VSR
+display route is accepted in ADR 0019. Python uses the immutable ignored local
+VSR snapshot for analysis; the browser will display `FID = 126` directly from
+the publisher's public Feature Service. The project will not commit or publish
+a copy or derivative of that geometry. Permission to redistribute remains
+unconfirmed; Version 1 avoids redistribution rather than treating public access
+as a licence.
 
-1. **VSR geometry redistribution.** The BWBS/CMSF geometry is publicly shared
-   with attribution but has no confirmed redistribution grant. This gates
-   project-hosted publication of a copy, not analysis against the local source
-   or reference to the publisher's service.
-2. **Publication route.** Official documentation confirms the Location Platform
-   product supports feature, vector-tile, and map-tile services and public
-   anonymous sharing under metered monthly free tiers. The author's actual
-   account product identity, controls, usage, remaining headroom, and billing
-   state are unverified because no authenticated session was available. ArcGIS
-   Online organization access is not applicable to the reported Location
-   Platform branch unless that product check fails. Account-specific evidence
-   still constrains the publication route; it does not determine whether
-   Version 1 can be completed.
+The publication route for the project's derived whale, vessel, and exposure
+layers remains open. Official documentation confirms the Location Platform
+product supports feature, vector-tile, and map-tile services and public
+anonymous sharing under metered monthly free tiers. The author's actual account
+product identity, controls, usage, remaining headroom, and billing state are
+unverified because no authenticated session was available. ArcGIS Online
+organization access is not applicable to the reported Location Platform branch
+unless that product check fails. Account-specific evidence still constrains
+that publication route; it does not determine whether the analysis can exist.
 
 Changes to this accepted architecture are recorded under
 [decisions/](decisions/README.md), not made silently.
@@ -59,10 +62,12 @@ The system has four kinds of participant:
   and analysis. QGIS inspects source and derived spatial artifacts and supplies
   visual-verification evidence. Local source and generated data are not
   committed.
-- **Public publication services** — validated outputs cross a provider-neutral
+- **Public publication services** — validated project-derived outputs cross a provider-neutral
   boundary into a publicly accessible representation. ArcGIS Location Platform
   limited data services and ArcGIS Online organization-hosted layers are
   separate Esri candidates. A non-Esri route remains available if neither fits.
+  The VSR boundary is the Version 1 exception: the browser references the
+  publisher's service directly instead of sending a copy across this boundary.
 - **A visitor's browser** — a static Next.js application uses the ArcGIS Maps
   SDK for JavaScript to read public layers and available ArcGIS platform
   services. It presents and filters; it does not calculate exposure or reported
@@ -80,12 +85,13 @@ Authoritative sources
   NOAA whale distribution model
   NOAA / USCG AIS vessel records
   California BWBS VSR zone definition
-        |
-        v
+        |                         `----> Publisher-hosted BWBS Feature Service
+        v                                      |  FID = 126, display only
 Local raw data store  (Git-ignored; inputs remain unchanged)
-        |
-        v
-Deterministic Python processing and analysis
+  immutable VSR snapshot for reproducible analysis          |
+        |                                                    |
+        v                                                    |
+Deterministic Python processing and analysis                 |
   validate -> clean -> reproject -> grid/aggregate -> derive
   tests + versioned configuration + generation lineage
         |
@@ -96,7 +102,8 @@ Validated derived artifacts and lineage
         |        separate checksum-bound evidence; no production edits
         |
         v
-Provider-neutral publication / export boundary
+Provider-neutral publication / export boundary               |
+  project-derived whale, vessel, and exposure layers         |
         |
         +----> ArcGIS Location Platform feature/vector-tile/map-tile service,
         |        when free-tier capacity and account capabilities permit
@@ -108,18 +115,19 @@ Provider-neutral publication / export boundary
                when neither Esri-hosted route is suitable
         |
         v
-Next.js + ArcGIS Maps SDK for JavaScript
-  public layers + precomputed statistics
+Next.js + ArcGIS Maps SDK for JavaScript <--------------------'
+  project-derived public layers + publisher-hosted VSR + precomputed statistics
   ArcGIS platform basemap/services and public project layers where available
         |
         v
 Static deployment -> visitor's browser
 ```
 
-The three publication branches in this diagram are candidates, not implemented
-fallbacks. Their final format and host remain deferred. Summary statistics
-follow the same analysis boundary and may be delivered as a small, versioned
-file the static application reads; the browser does not recompute them.
+The three project-derived publication branches in this diagram are candidates,
+not implemented fallbacks. Their final format and host remain deferred. The VSR
+display source is selected but not implemented. Summary statistics follow the
+analysis boundary and may be delivered as a small, versioned file the static
+application reads; the browser does not recompute them.
 
 ## Component responsibilities
 
@@ -255,7 +263,8 @@ Publication begins only after programmatic validation and visual inspection. It
 may change representation for browser delivery, but it may not change the
 underlying analytical values without returning to the Python processing path.
 
-The boundary must preserve a traceable mapping among:
+For project-derived layers, the boundary must preserve a traceable mapping
+among:
 
 - the validated derived artifact and its checksum;
 - the generation run and source lineage;
@@ -263,14 +272,48 @@ The boundary must preserve a traceable mapping among:
 - any export or tiling parameters; and
 - the public layer or file the application consumes.
 
-The final representation is deliberately open. Candidate routes are ArcGIS
-Location Platform limited data services, ArcGIS Online organization-hosted
-layers, and a non-Esri public fallback if neither is suitable. Selection depends
-on measured output size, feature count or raster characteristics, geometry
-complexity, browser load/render performance, redistribution terms,
-anonymous-access requirements, and verified account or hosting capabilities.
-GeoJSON, vector tiles, hosted feature layers, hosted tile/imagery layers, and
-other supported representations are candidates, not decisions.
+The final representation for project-derived whale, vessel, and exposure layers
+is deliberately open. Candidate routes are ArcGIS Location Platform limited
+data services, ArcGIS Online organization-hosted layers, and a non-Esri public
+fallback if neither is suitable. Selection depends on measured output size,
+feature count or raster characteristics, geometry complexity, browser
+load/render performance, redistribution terms, anonymous-access requirements,
+and verified account or hosting capabilities. GeoJSON, vector tiles, hosted
+feature layers, hosted tile/imagery layers, and other supported representations
+are candidates, not decisions.
+
+### Publisher-hosted VSR display exception
+
+[ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md)
+selects one narrow Version 1 exception. Python uses the exact immutable local
+snapshot under ignored `data/raw/` for fractional inside-versus-outside
+analysis. The public application will instead load `FID = 126` directly from
+the publisher's public `WhaleAtlas_2026` Feature Service:
+
+`https://services5.arcgis.com/4biRnCjZju47bNvA/arcgis/rest/services/WhaleAtlas_2026/FeatureServer/0`
+
+The application will show that remote layer inside its own map, not redirect
+the visitor. It must attribute Danielle Alvarez, CMSF, and BWBS according to
+ArcGIS item `b400c7f418b04dc5a9d7ce5015adae32` and preserve the publisher's
+non-navigational disclaimer. The project must not commit or publish the local
+snapshot or any copied, clipped, simplified, converted, or derived VSR
+geometry.
+
+The remote layer is not frozen and does not become analytical provenance. Its
+owner can change, remove, rate-limit, or privatize it. Version 1 does not add an
+automatic synchronization or monitoring service. Before release, an anonymous
+check must confirm the expected item, layer, and feature still exist and compare
+the current geometry with the analytical snapshot. The application must not be
+released while it displays a boundary that differs from the geometry used for
+the statistics. A change requires an analysis rerun or reconciliation so they
+match, or omission of the mismatched remote boundary from the release; a warning
+alone is insufficient.
+
+This no-copy route does not establish redistribution permission. It removes
+redistribution from Version 1's publication requirements, but it does not make a
+legal determination about other terms governing direct service use. A later
+decision to host a project-controlled VSR copy requires a confirmed permission
+posture.
 
 ### ArcGIS Online organization hosting
 
@@ -361,7 +404,8 @@ enforces a static build with no application server.
 
 The client is responsible for:
 
-- loading the selected public layer representation;
+- loading the selected project-derived public layer representations and the
+  publisher-hosted VSR feature;
 - rendering the map, layers, legends, visibility controls, and popups;
 - presenting precomputed summary statistics and methodology;
 - exposing units, assumptions, limitations, and provenance; and
@@ -401,11 +445,12 @@ it belongs in the reproducible Python path.
 - Next.js produces a static export served over HTTPS from a stable public URL.
 - Version 1 has no custom backend, server-side analysis, database, or runtime
   application server.
-- Public project layers are loaded directly by the browser from the selected
-  delivery route.
+- Project-derived public layers are loaded directly by the browser from the
+  selected delivery route. The VSR boundary is loaded separately from the
+  publisher's public Feature Service with `FID = 126`.
 - ArcGIS platform basemap/service/item requests are made through the SDK with a
   scoped and origin-restricted browser API key where available.
-- The project-layer route may use ArcGIS Location Platform limited data
+- The project-derived-layer route may use ArcGIS Location Platform limited data
   services, ArcGIS Online organization-hosted layers, or a non-Esri public
   representation. A later evidence-based decision selects among them.
 
@@ -440,9 +485,11 @@ project layers, and matching precomputed results.
 - Local interim and derived artifacts remain ignored. Small results the static
   application reads may be committed when their contract is implemented and
   their provenance is recorded.
-- Public derived layers cross the publication boundary to the selected host;
+- Public project-derived layers cross the publication boundary to the selected host;
   ArcGIS Location Platform and ArcGIS Online are separate conditional Esri
   destinations, with a non-Esri public route retained if neither is suitable.
+- The VSR source snapshot and every project-created copy or derivative remain
+  local and ignored. Public display references the publisher's service directly.
 - Git LFS is not planned for Version 1. Any demonstrated need requires a
   decision record before large binaries are added.
 - The AIS retrieval route remains a Proposed M3 decision. The local supplied-
@@ -520,9 +567,11 @@ Reproducibility rests on four linked practices:
    metadata.
 3. **Separate spatial verification:** checksum-bound evidence recorded after
    inspecting the exact derived artifact.
-4. **Traceable publication:** every public layer and reported statistic maps to
-   a validated derived artifact, generation run, verification record, and any
-   representation-changing export step.
+4. **Traceable publication:** every project-derived public layer and reported
+   statistic maps to a validated derived artifact, generation run, verification
+   record, and any representation-changing export step. The publisher-hosted
+   VSR layer instead maps to its item, service, feature filter, and release-time
+   comparison with the local analytical snapshot.
 
 The intended end-to-end test is to rerun from unchanged raw inputs, reproduce
 the validated derived outputs, repeat spatial verification where required, and
@@ -530,8 +579,9 @@ compare them with what the deployed application serves. M8 owns that gate.
 
 ## Performance and publication-format selection
 
-No final project-layer format is selected. The decision requires evidence from
-the real whale, vessel, exposure, and boundary outputs, including:
+No final format or host is selected for the project-derived whale, vessel, and
+exposure layers. The decision requires evidence from those real outputs,
+including:
 
 - byte size, feature count, geometry complexity, and raster dimensions where
   applicable;
@@ -586,7 +636,7 @@ No implementation directory is scaffolded before its milestone needs it.
 |---|---|---|
 | Exposure formula, normalization, and weighting | Both final grid-aligned inputs are ready | Input units/distributions, scientific support, and sensitivity within the accepted `receivers_50_nautical_miles` domain. |
 | High-exposure threshold | Exposure surface exists | Real value distribution and sensitivity analysis. |
-| Final public layer representation and host | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, anonymous browser performance, required interactions, legal constraints, usage limits, and supported service types. No format or provider is preselected. |
+| Final public representation and host for project-derived whale, vessel, and exposure layers | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, anonymous browser performance, required interactions, legal constraints, usage limits, and supported service types. No format or provider is preselected. The publisher-hosted VSR exception is already selected in ADR 0019. |
 | ArcGIS Location Platform publication route | Author completes the authenticated portion of the Location Platform capability check | Official documentation confirms a limited single-user organization, feature/vector-tile/map-tile support, and public anonymous sharing with current monthly free tiers. The real account's product identity, controls, usage, headroom, and billing status remain unverified. No pay-as-you-go activation or spending is authorized. |
 | ArcGIS Online publication route | Author completes the ArcGIS Online capability check | Organization privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |
 | Non-Esri public delivery route, if needed | Both Esri routes are unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |
@@ -599,8 +649,10 @@ system-performance-qualified AIS analytical domain: 50 nautical miles, exactly
 It is not empirical 2024 coverage. Outside-domain cells are excluded from
 headline statistics and are not classified as low traffic. Receiver uptime,
 station completeness, feed interruptions, antenna and terrain effects, and
-observational completeness remain unknown or unverified. M2 remains **In
-progress** only because VSR redistribution is unresolved.
+observational completeness remain unknown or unverified. M2 is **Complete**:
+ADR 0019 resolves its final publication-posture criterion by prohibiting
+project-hosted VSR copies and selecting direct publisher-service display, not by
+claiming that redistribution permission was granted.
 
 Resolved choices remain recorded in their ADRs: the map/context extent and
 qualified analytical domain ([0002](decisions/0002-southern-california-study-area-extent.md)), EPSG:3310
@@ -612,4 +664,6 @@ the static application and client-only SDK boundary ([0008](decisions/0008-deliv
 [0009](decisions/0009-mount-arcgis-through-client-only-map-components.md)),
 the Python toolchain and DuckDB engine ([0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md),
 [0012](decisions/0012-use-duckdb-for-large-tabular-processing.md)), and the
-whale-model support mask ([0014](decisions/0014-select-the-grid-water-mask.md)).
+whale-model support mask ([0014](decisions/0014-select-the-grid-water-mask.md)),
+and direct publisher-hosted VSR display with no project-controlled copy
+([0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md)).

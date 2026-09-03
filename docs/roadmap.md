@@ -11,7 +11,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 | # | Milestone | Status |
 |---|-----------|--------|
 | M1 | Project foundation | Complete |
-| M2 | Data discovery and validation | In progress |
+| M2 | Data discovery and validation | Complete |
 | M3 | Processing workflow | In progress |
 | M4 | GIS application foundation | In progress |
 | M5 | Core input layers | Not started |
@@ -54,7 +54,7 @@ None.
 
 ## M2 — Data discovery and validation
 
-**Status:** In progress
+**Status:** Complete
 
 > An independent audit of this milestone on 2026-08-26 found five problems: provenance claimed but not recorded, AIS record counts quoted inconsistently and snapshot results generalised into period facts, an analytical domain accepted on evidence that could not support it, a boundary method that would have made the headline statistic an artefact of the grid, and a retrieval policy that contradicted itself. All five have been corrected. The corrections **enlarged** the set of open questions rather than shrinking it, which is the honest outcome.
 
@@ -68,13 +68,13 @@ Obtain and inspect the actual candidate datasets, and determine what analysis th
 
 | Deliverable | State |
 |---|---|
-| A small, retrievable sample of each candidate dataset, inspected locally | **Done.** Eighteen artifacts, each with a recorded size and SHA-256 |
-| For each source: confirmed format, CRS, spatial extent and resolution, temporal coverage, value meaning and units, and licence or terms of use | **Done**, except redistribution terms for the VSR geometry |
+| A small, retrievable sample of each candidate dataset, inspected locally | **Done.** Twenty artifacts, each with a recorded size and SHA-256 |
+| For each source: confirmed format, CRS, spatial extent and resolution, temporal coverage, value meaning and units, and licence or terms of use | **Done.** The VSR review found no explicit redistribution grant; ADR 0019 records a conservative no-copy public-use posture instead of converting that uncertainty into permission |
 | A written definition of the Southern California study area: extent, projected CRS, and analysis grid | **Done.** The map/context extent and scope-reduced `receivers_50_nautical_miles` analytical domain ([0002](decisions/0002-southern-california-study-area-extent.md)), projected CRS ([0003](decisions/0003-projected-coordinate-system.md)), grid ([0004](decisions/0004-analysis-grid-resolution.md)), and modeled-whale-support water geometry ([0014](decisions/0014-select-the-grid-water-mask.md)) are accepted and explicitly distinct |
 | A decision on the analytical period | **Done** ([0005](decisions/0005-analytical-period.md)) |
 | A decision on whether vessel speed can be derived reliably from the available AIS records | **Done, with its evidentiary limits stated** ([0006](decisions/0006-report-vessel-speed-separately.md)). `SOG` is present, documented, and appears usable in the inspected sample; that is not the same as established across the period |
 | Updated source register with verification status replacing every resolved "to be verified" entry | **Done**, with a provenance manifest and a utility that re-checks it |
-| Architecture decision records for choices that constrain later work | **Done.** ADR 0002 is accepted; the separate AIS retrieval and vessel-activity method records remain Proposed |
+| Architecture decision records for choices that constrain later work | **Done.** ADRs 0002 and 0019 are accepted; the separate AIS retrieval and vessel-activity method records remain Proposed M3 decisions |
 
 **Completion criteria**
 
@@ -84,21 +84,25 @@ Obtain and inspect the actual candidate datasets, and determine what analysis th
 | The whale model layer's values are understood well enough to state what they mean in the application legend | **Met.** `DENSITY` is animals per km², publisher-defined, with a per-cell coefficient of variation |
 | The AIS extract needed for the study area and analytical period has been scoped, and its volume is known | **Met, with the volume qualified.** The period is fixed and the retrieval footprint is bounded, but the volume is an **order-of-magnitude planning estimate** — 60 to 90 million study-area records, ≈56 GB of transfer — extrapolated from five 34-minute windows all at the same time of day. It is not a measurement and nothing analytical rests on it |
 | The VSR boundary geometry is confirmed as obtainable from an authoritative source, or a documented derivation from published coordinates is agreed on | **Met.** A closed, land-clipped polygon is retrievable, and seven of the program's eight published points lie exactly on its boundary |
-| Redistribution terms are known for each dataset, so it is clear what may be committed or hosted publicly | **Not met.** Clear for both NOAA sources. **Not clear for the VSR zone geometry** — publicly shared with attribution, but with no redistribution grant, and BWBS/CMSF is not a federal publisher |
+| Each input has a documented public-use and publication posture, so it is clear what may be committed, hosted, or referenced publicly | **Met.** The NOAA postures are recorded. For the VSR geometry, permission to redistribute remains unconfirmed, so [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md) prohibits project-hosted copies and selects direct display from the publisher's service with attribution, disclaimer, and release-time verification |
 | **The analytical and statistical domain over which headline results can be defended has been accepted** | **Met.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts `receivers_50_nautical_miles`: 50 nautical miles, exactly 92,600 metres, from the relevant NAIS reception stations, not from the coast. It is a scope-reduced, system-performance-qualified AIS receiver domain, not empirical 2024 coverage. Unknown receiver uptime, station completeness, feed interruptions, antenna and terrain effects, and observational completeness remain limitations |
 | Anything that cannot be verified is explicitly recorded as unresolved rather than assumed | **Met**, and this is what the audit repaired. Several things previously stated as established are now recorded as unresolved |
 
-**M2 is not complete.** VSR redistribution remains unresolved and keeps its completion criterion unmet. The analytical-domain criterion is now met, but acceptance does not resolve or weaken the separate publication constraint.
-
-- **VSR redistribution blocks project-hosted public sharing**, and keeps its own completion criterion unmet. It does not block the analysis: the statistics can be computed against the geometry either way, and the application can reference the publisher's service instead of hosting a copy.
+**M2 is complete.** Every criterion above is met. The original redistribution
+criterion was not satisfied by obtaining permission: no explicit grant was
+found, and public access is not treated as a redistribution licence. It was
+revised to the outcome discovery actually needs—a truthful public-use and
+publication posture—and [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md)
+meets it by prohibiting project-hosted VSR copies and selecting direct use of
+the publisher's public Feature Service.
 
 ### Open items, in order of how much they constrain the work
 
-1. **Redistribution of the VSR zone geometry is unresolved.** Publicly shared by BWBS/CMSF with attribution and no stated prohibition, but no grant either, and the publisher is not a federal agency. Options: obtain permission, reference the published service rather than copy it, or substitute a federally published geometry. **Gates public hosting, not analysis.**
+1. **The whale model's season definition is unconfirmed.** The survey basis is July–November; a redistributor describes the same models' predictions as late June to early December. [ADR 0005](decisions/0005-analytical-period.md) uses the conservative July–November reading and would need revisiting if the publisher states otherwise.
 
-2. **The whale model's season definition is unconfirmed.** The survey basis is July–November; a redistributor describes the same models' predictions as late June to early December. [ADR 0005](decisions/0005-analytical-period.md) uses the conservative July–November reading and would need revisiting if the publisher states otherwise.
+2. **The datum of the published VSR coordinates is unstated.** Assumed WGS 84, consistent with the geometry being served in EPSG:4326, but the program says nothing. At these latitudes a NAD 27 confusion would be on the order of 100 m.
 
-3. **The datum of the published VSR coordinates is unstated.** Assumed WGS 84, consistent with the geometry being served in EPSG:4326, but the program says nothing. At these latitudes a NAD 27 confusion would be on the order of 100 m.
+3. **VSR redistribution permission remains unconfirmed but no longer blocks Version 1.** ADR 0019 prohibits committing or publishing the snapshot or a project-created derivative. This no-copy architecture does not make a legal determination about other terms governing direct service use. A later choice to host a copy requires a confirmed permission posture.
 
 4. **Deferred to M3 rather than blocking M2**, but named so they are not rediscovered: the AIS retrieval route (the one-day AccessAIS direct-CSV compatibility exercise passed, but the route remains Proposed because independent transfer completeness and scaling are unresolved; guarded bulk fallback permitted — see [../data/README.md](../data/README.md)); whether AccessAIS can filter by vessel type server-side; and whether a length threshold is applied on top of the vessel-type filter, and at what value.
 
@@ -122,7 +126,9 @@ Doing this work gives a far better picture of the traffic the receivers recorded
 - Exposure formulas, surfaces, statistics, application results, and UI integration remain later milestone work and are not created by accepting the domain.
 - No exposure surface may be presented as covering the full map extent, and no application wording may treat outside-domain cells as observed low traffic.
 
-**Must wait for the redistribution question.** Hosting the VSR geometry as a project-owned layer. Displaying it by referencing the publisher's service does not.
+**Public VSR display is settled but not implemented.** M5 may load `FID = 126`
+directly from the publisher's public Feature Service. Hosting a project-owned
+copy remains prohibited.
 
 ### What was established
 
@@ -130,14 +136,14 @@ Detail is in [data-sources.md](data-sources.md); this is the summary that change
 
 - **The whale model is vector polygons, not a raster** — 12,257 cells in EPSG:4326 on a 0.1° equal-angle grid, values in animals per km², with a coefficient of variation per cell. It is a **single summer–fall multi-year average, not a time series**, which removes any possibility of seasonal claims from this input.
 - **AIS carries no gross tonnage**, so the VSR program's 300 GT criterion cannot be applied directly and any size filter is a project assumption.
-- **NOAA states AIS coverage is unavailable beyond 40–50 miles from shore**, and the sampled record density falls off in a way consistent with that. The VSR zone extends well past it. This is the most consequential finding of the milestone and it is what reopened item 1 above.
+- **NOAA states AIS coverage is unavailable beyond 40–50 miles from shore**, and the sampled record density falls off in a way consistent with that. The VSR zone extends well past it. This is the most consequential finding of the milestone and it drove the analytical-domain audit resolved in ADR 0002.
 - **2025 AIS broadcast points are partial through September 30.** NOAA's current vessel-traffic page lists data through 2025, and its January 2026 point-data summary records 273 daily 2025 files covering January 1–September 30 in the new `.zst` compression format. The accepted July–November period therefore cannot be completed from 2025, and 2026 data is not listed. Version 1 pairs the current zone with 2024, the latest published year covering the complete accepted period, and says so.
 - **The VSR zone's eight published points do not define a polygon** — they are the seaward boundary only — but a closed geometry is published separately and matches them at seven of eight vertices, the eighth by 455 m.
 - **Commercial vessel types were 18.2–20.7% of Southern California records** across five sampled windows. A snapshot result: five dates, one time of day, and the direction of any daily bias is unknown. What it supports is the conclusion that **vessel-class filtering is the most consequential processing choice for this input**, which holds across the sampled range and does not depend on the exact share.
 
 **Decisions recorded**
 
-**Accepted:** [0002](decisions/0002-southern-california-study-area-extent.md) map/context extent and scope-reduced `receivers_50_nautical_miles` analytical domain · [0003](decisions/0003-projected-coordinate-system.md) EPSG:3310 · [0004](decisions/0004-analysis-grid-resolution.md) 5 km grid with fractional VSR-boundary accounting · [0005](decisions/0005-analytical-period.md) 1 July – 30 November 2024 · [0006](decisions/0006-report-vessel-speed-separately.md) speed reported separately.
+**Accepted:** [0002](decisions/0002-southern-california-study-area-extent.md) map/context extent and scope-reduced `receivers_50_nautical_miles` analytical domain · [0003](decisions/0003-projected-coordinate-system.md) EPSG:3310 · [0004](decisions/0004-analysis-grid-resolution.md) 5 km grid with fractional VSR-boundary accounting · [0005](decisions/0005-analytical-period.md) 1 July – 30 November 2024 · [0006](decisions/0006-report-vessel-speed-separately.md) speed reported separately · [0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md) publisher-hosted VSR display with no project-controlled copy.
 
 **Risks and open questions**
 
@@ -145,7 +151,7 @@ Detail is in [data-sources.md](data-sources.md); this is the summary that change
 - ~~AIS volume for the study area may be large enough to force a narrower analytical period or a coarser aggregation.~~ **Partly realised:** volume is large — an estimated ≈56 GB of transfer for the chosen period — but the period was narrowed by data availability rather than by volume.
 - ~~The authoritative VSR boundary may only be published as text coordinates or as a map image.~~ **Resolved:** a downloadable closed geometry exists.
 - ~~Whale-model and AIS temporal coverage may not overlap cleanly.~~ **Realised, differently than expected:** the whale model has no time dimension at all, so there was nothing to overlap. Version 1 pairs a climatological surface with a fixed traffic window and states both vintages.
-- **Licensing may restrict redistribution of a processed derivative.** **Still open**, and now specific: it is the VSR zone geometry, not the NOAA data.
+- **VSR redistribution permission is not established.** **Handled for Version 1 by avoidance:** the project will not host a copy or derivative and will reference the publisher's service directly. This is not a legal conclusion or a permission claim.
 - **AIS observation remains unestablished outside the accepted receiver domain and incomplete observation remains possible inside it.** The author accepted a system-performance-qualified scope reduction, not empirical 2024 coverage; receiver uptime, station completeness, feed interruptions, antenna and terrain effects, and observational completeness remain limitations.
 - **New:** discovery findings can be written more confidently than the evidence behind them supports. Five such overstatements were found by audit in this milestone alone. The provenance manifest and [`tools/m2_verify.py`](../tools/m2_verify.py) exist so the next reader can check a number rather than trust it.
 
@@ -159,7 +165,7 @@ Detail is in [data-sources.md](data-sources.md); this is the summary that change
 Turn raw source data into validated, derived geospatial datasets through an ordered, repeatable process.
 
 **Dependencies**
-- M2 **in part.** Data, projection, grid, analytical period, and analytical domain are accepted. M2 remains In progress only because VSR redistribution is unresolved; that question gates project-hosted sharing, not processing or analysis against the local geometry.
+- M2. Data, projection, grid, analytical period, analytical domain, and the VSR no-copy publication posture are accepted. Permission to redistribute the VSR geometry remains unconfirmed, but Version 1 does not depend on it because project-hosted copies are prohibited.
 
 ### Progress
 
@@ -985,21 +991,27 @@ in the application through the evidence-selected publication route.
 - M4 (application shell exists and account-type capability evidence is recorded).
 
 **Deliverables**
-- Study area, VSR boundary, whale density, and vessel activity prepared in a
-  selected public representation based on measured output size, browser
-  performance, redistribution terms, and real account capabilities.
+- Study area, whale density, and vessel activity prepared in a selected public
+  representation based on measured output size, browser performance,
+  redistribution terms, and real account capabilities.
+- The VSR boundary loaded inside the project map directly from the publisher's
+  public `WhaleAtlas_2026` Feature Service using `FID = 126`, with Danielle
+  Alvarez, CMSF, and BWBS attribution and the publisher's non-navigational
+  disclaimer. No VSR geometry is copied into project-controlled hosting.
 - ArcGIS Location Platform feature/vector-tile/map-tile services when its
   verified free-tier capacity and service support fit; ArcGIS Online hosted
   layers and a web map when verified organization capabilities fit; or a
-  documented non-Esri public route selected later when neither does. No route
-  is implemented yet.
+  documented non-Esri public route selected later when neither does. No
+  project-derived-layer route is implemented yet.
 - The ArcGIS Maps SDK application assembling the public layers with symbology
   chosen for legibility, not decoration.
 - Layer visibility control and legends in the application.
 - Popups or panels that state what each layer's values mean, including units.
-- Recorded mapping from each public layer representation back to the validated
+- Recorded mapping from each project-derived public layer representation back to the validated
   derived dataset, output checksum, visual-verification evidence, and
   processing/export steps that produced it.
+- Recorded VSR item, service, feature filter, attribution, disclaimer, and
+  comparison with the analytical snapshot.
 
 **Completion criteria**
 - Each layer renders at the study-area scale within an acceptable load time.
@@ -1009,12 +1021,17 @@ in the application through the evidence-selected publication route.
 - Every layer's legend states its units and the meaning of its values.
 - Every layer names its source and its retrieval or processing date somewhere the user can reach.
 - Layer geometry visually aligns across layers; no projection mismatch is visible.
+- The VSR feature loads anonymously from the publisher's service and is not a
+  project-hosted copy.
 
 **Risks and open questions**
 - Layer size, feature-count limits, or browser performance may force a different
   representation, aggregation, or generalization.
 - Raster and vector outputs may need different public delivery methods.
 - Symbology for a continuous density surface needs a defensible classification, since the class breaks chosen will shape how the map is read.
+- The publisher can change, remove, rate-limit, or make the VSR service private.
+  The displayed remote geometry can also drift from the local analytical
+  snapshot; release verification in M9 must detect and address that condition.
 
 ---
 
@@ -1032,7 +1049,7 @@ Produce the project's own analytical result: a documented relative exposure laye
 **Deliverables**
 - A written definition of the relative exposure calculation: inputs, normalization, weighting, combination method, and units.
 - The derived exposure or hotspot layer over the study area.
-- Inside-versus-outside VSR statistics: share of total relative exposure, share of high-exposure area, and the threshold definitions used. **Computed by fractional area intersection** — each cell's water geometry is intersected with the VSR polygon and its exposure split by the resulting area fractions. Whole-cell, centroid, and majority-area assignment are all excluded; see [ADR 0004](decisions/0004-analysis-grid-resolution.md).
+- Inside-versus-outside VSR statistics: share of total relative exposure, share of high-exposure area, and the threshold definitions used. **Computed from the immutable local analytical snapshot by fractional area intersection** — each cell's water geometry is intersected with that VSR polygon and its exposure split by the resulting area fractions. The remotely displayed service is not substituted for this input. Whole-cell, centroid, and majority-area assignment are all excluded; see [ADR 0004](decisions/0004-analysis-grid-resolution.md).
 - **Tests of the fractional accounting** against the synthetic cases in ADR 0004, whose answers are known by construction, including the cell 45% inside the zone that centroid assignment scores as fully outside.
 - Identification of the largest concentrations of exposure outside the zone.
 - A sensitivity check showing how the reported statistics respond to the main arbitrary choices, particularly the high-exposure threshold and the normalization method.
@@ -1045,7 +1062,13 @@ Produce the project's own analytical result: a documented relative exposure laye
 - **The analytical domain has been accepted** in [ADR 0002](decisions/0002-southern-california-study-area-extent.md), and every result applies its exact qualified geometry and outside-domain treatment.
 - The results are described in the vocabulary required by the project brief, with no risk or probability language.
 - The sensitivity check is documented, including any case where a conclusion is not robust.
-- The layer and the statistics are consistent: the numbers are computed from the published layer, not from a different intermediate.
+- The project-derived exposure layer and the statistics are consistent: the
+  numbers are computed from the validated analytical output, and VSR fractions
+  use the recorded local snapshot. Before release, the publisher-hosted display
+  geometry is compared with that snapshot. If they differ, the application is
+  not released while displaying the mismatched boundary: the analysis is rerun
+  or reconciled so they match, or the remote boundary is omitted. A warning
+  alone does not satisfy this release gate.
 
 **Risks and open questions**
 - Combining a modeled density surface with an observed traffic measure implies choices about units and scaling that have no single correct answer; whatever is chosen must be justified and tested.
@@ -1140,6 +1163,10 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 - Methodology, provenance, assumptions, and limitations complete and linked.
 - Repository cleaned of dead files, unused scaffolding, and stale documentation.
 - Repository metadata — description, topics, license posture — set appropriately.
+- Anonymous release-time verification that ArcGIS item
+  `b400c7f418b04dc5a9d7ce5015adae32`, its expected layer, and `FID = 126` still
+  exist, plus a comparison of the current remote geometry with the immutable
+  local analytical snapshot.
 
 **Completion criteria**
 - The deployed application works from a clean browser session with no local setup.
@@ -1147,6 +1174,10 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 - Every documentation link resolves.
 - Nothing in the repository claims a capability that does not exist.
 - Version 1 scope items in [project-brief.md](project-brief.md) are all satisfied or explicitly recorded as reduced, with the reason.
+- The displayed VSR source matches the analytical snapshot that produced the
+  statistics. If release-time verification finds a mismatch, the analysis is
+  rerun or reconciled so they match, or the mismatched remote boundary is not
+  displayed in the released application; a warning alone is insufficient.
 
 **Risks and open questions**
 - **Public delivery depends on a verified publication route.** ArcGIS Location
@@ -1159,6 +1190,9 @@ Make the project publicly presentable: deployed, documented, and readable by a r
   does not enable pay-as-you-go or authorize spending. Any non-Esri host will
   have its own measured limits and operating constraints.
 - Deployment hosting and any ArcGIS credential requirements must be settled before release, not at release.
+- The external VSR service can change, disappear, be rate-limited, or become
+  private. Version 1 uses a documented release-time check rather than an
+  automatic monitoring or synchronization service.
 - Screenshots and headline numbers go stale if the analysis is later revised; they need a stated "results as of" date.
 
 ---
@@ -1173,7 +1207,7 @@ Nothing in this section is a guaranteed scientific result. A proxy is a proxy, a
 Improve how the exposure layer is explained and read: legend and classification design, guided interpretation, comparison views, mobile layout, and accessibility. Depends on Version 1 being deployed and on observing where the current presentation misleads.
 
 **Temporal analysis**
-Break the overlap down by month or across the VSR season. Depends on the whale model and the AIS extract both supporting the intended time step, which M2 will determine. If the whale model is not time-varying at that step, seasonal claims cannot be made from it.
+Break the overlap down by month or across the VSR season. M2 found that the selected whale model is not time-varying, so the current input cannot support seasonal claims. This direction requires a different validated whale input as well as AIS coverage at the intended time step.
 
 **Underwater-noise analysis**
 Derive an estimated acoustic proxy from vessel traffic, vessel characteristics, and speed, following published methodology. Requires a defensible published method and the vessel attributes that method needs. AIS alone does not give sound levels, and any output must be presented as a modeled proxy with stated assumptions.

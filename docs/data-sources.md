@@ -775,7 +775,34 @@ That last result is directly relevant to the research question: Tanner/Cortes Ba
 - The ArcGIS Online item's licence field is a **use disclaimer, not a licence grant**: the layer "should not be used for navigation purposes", mariners should operate at their own discretion, and "these measures may not be comprehensive and lack of inclusion does not indicate the absence of a VSR Zone, ATBA, or TSS". Attribution is given as "Created by Danielle Alvarez, with CMSF and BWBS."
 - The item is shared publicly and is queryable anonymously.
 
-**Assessment:** public sharing plus a stated attribution and no redistribution prohibition is a reasonable basis for using the geometry in this analysis and displaying it with attribution. It is **not** an explicit redistribution grant, and BWBS/CMSF is a non-profit coalition rather than a federal data publisher, so the public-domain reasoning that applies to the NOAA sources does not apply here. **Unresolved: whether republishing this geometry as a project-hosted layer is permitted.** Until that is settled, the safer options are to reference the BWBS service directly rather than copy it, or to ask the program. This must be decided before any public hosting, not at release.
+**Assessment:** the item is publicly accessible without authentication and
+provides attribution, so the project has selected anonymous direct service use
+as its conservative no-copy architecture. That choice is not a legal conclusion
+and public access is **not** treated as an explicit redistribution grant.
+BWBS/CMSF is a non-profit coalition rather than a federal data publisher, so the
+public-domain reasoning that applies to the NOAA sources does not apply here.
+Permission to republish the geometry as a project-hosted layer remains
+unconfirmed.
+
+[ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md)
+therefore adopts a conservative no-copy policy for Version 1. The immutable
+2026-08-25 snapshot under ignored `data/raw/` remains the analytical geometry,
+but the project must not commit or publish that snapshot or any copied, clipped,
+simplified, converted, or derived VSR geometry. The public application will
+load `FID = 126` directly from the publisher's public Feature Service and will
+identify Danielle Alvarez, CMSF, and BWBS while preserving the publisher's
+non-navigational disclaimer. This route avoids redistribution; it does not
+establish that redistribution would be permitted.
+
+The remote service is not frozen. Before final release, anonymous verification
+must confirm the expected item, layer, and feature still exist and compare the
+current source state with the analytical snapshot. If they differ, the
+application must not be released while it displays the mismatched boundary. The
+analysis must be rerun or reconciled so the displayed boundary matches the
+geometry that produced the statistics, or the mismatched remote boundary must be
+omitted from the release. A warning alone is insufficient. The publisher may
+change, remove, rate-limit, or privatize the service, and no automatic
+synchronization or monitoring service is planned for Version 1.
 
 ### Considered and not selected
 
@@ -787,7 +814,11 @@ That last result is directly relevant to the research question: Tanner/Cortes Ba
 
 ### Remaining unresolved
 
-- **Redistribution permission for the zone geometry** (above). This is the one licensing question in the project that is genuinely open.
+- **Redistribution permission for the zone geometry remains unconfirmed.** It
+  does not block the selected Version 1 route because that route prohibits a
+  project-hosted copy. A future project-hosted copy requires a confirmed
+  permission posture. This is not a legal determination about other terms
+  governing direct service use.
 - **The datum of the published coordinates.** Assumed WGS 84; not stated by the program.
 - **The 455 m discrepancy at point 7** between the published point list and the published geometry. Recorded, not explained.
 - Whether NOAA ONMS, which produced the map, publishes the 2026 statewide zone as a federal GIS layer. Only the Greater Farallones northern zone was found under a NOAA account.
