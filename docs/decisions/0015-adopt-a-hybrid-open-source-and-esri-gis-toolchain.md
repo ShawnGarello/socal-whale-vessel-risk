@@ -75,11 +75,13 @@ responsibilities:
 - **ArcGIS Pro is optional and unnecessary for Version 1.** It is neither a
   missing prerequisite nor a planned repository component.
 
-The final public layer representation is still deferred. It will be selected
-after real output size, geometry or raster characteristics, browser performance,
-redistribution constraints, and actual account capabilities are measured. This
-decision does not prematurely choose GeoJSON, vector tiles, hosted feature
-layers, hosted imagery, or any other representation.
+The final public representation for project-derived layers is still deferred.
+It will be selected after real output size, geometry or raster characteristics,
+browser performance, redistribution constraints, and actual account
+capabilities are measured. This decision does not prematurely choose GeoJSON,
+vector tiles, hosted feature layers, hosted imagery, or any other
+representation. [ADR 0019](0019-reference-the-publisher-hosted-vsr-service.md)
+later selects direct publisher-service display as the Version 1 VSR exception.
 
 ## Consequences
 
