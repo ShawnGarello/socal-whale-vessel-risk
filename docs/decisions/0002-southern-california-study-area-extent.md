@@ -111,7 +111,10 @@ No exposure formula, exposure surface, inside/outside statistics, application-re
 
 ## Consequences
 
-- **M2 remains In progress because VSR geometry redistribution is unresolved.** Domain acceptance satisfies the separate analytical-domain criterion; it does not settle publication rights.
+- **At the time of this decision, M2 remained In progress because the VSR
+  publication posture was unresolved.** [ADR 0019](0019-reference-the-publisher-hosted-vsr-service.md)
+  later completed that criterion through a no-copy direct-service route; it did
+  not establish redistribution permission.
 - M3 retrieval, cleaning, vessel-class filtering, reprojection, gridding, whale-model transfer, and vessel aggregation continue over the full map/context extent. The accepted domain is applied later at the reporting boundary so outside-domain cells cannot become low-traffic observations.
 - Reporting-domain-dependent contracts may now be designed against this accepted identity and semantics when their milestones need them. This record does not implement those contracts or the exposure method.
 - The analysis reports on the **Southern California portion of the 2026 VSR zone, not the whole zone**, under any candidate. Every statistic must say so.
