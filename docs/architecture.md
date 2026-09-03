@@ -19,8 +19,12 @@
 > partition one author-supplied multi-date AccessAIS CSV or safe ZIP into
 > deterministic daily cleaner inputs with resumable sequential period-manifest
 > recording. The boundary was exercised with overlapping real one-day and
-> two-day direct CSV deliveries; reordered equivalent 15 July content was
-> reused and 16 July was added. Network retrieval and analytical-period
+> two-day direct CSV deliveries, the seven-day operational gate, and the exact
+> July monthly operational gate. Reordered equivalent daily content was reused,
+> all 31 July dates reconciled, and the identical July retry reused every date.
+> The July evidence passed independent audit, but publisher-side transfer and
+> observational completeness remain unverified; August--November and complete
+> 153-day processing remain untested. Network retrieval and analytical-period
 > acquisition remain unfinished. Final period-wide vessel aggregation,
 > exposure analysis, final public representations for project-derived layers,
 > VSR service integration, and deployment also remain unfinished.
@@ -494,12 +498,14 @@ project layers, and matching precomputed results.
   decision record before large binaries are added.
 - The AIS retrieval route remains a Proposed M3 decision. The local supplied-
   artifact verification boundary, bounded multi-date delivery intake, resumable
-  daily-cleaner orchestration, and an overlapping real one-day/two-day
-  compatibility exercise are implemented. Network transfer, independent
-  transfer completeness, safe monthly scaling,
-  and analytical-period acquisition are not established. An entire national
-  season is never staged locally; the detailed retrieval guard belongs to
-  [data/README.md](../data/README.md).
+  daily-cleaner orchestration, overlapping real one-day/two-day compatibility
+  exercise, seven-day operational gate, and exact July monthly operational gate
+  are implemented and complete. The July artifact passed its bounded resource
+  and retry criteria, but August--November and complete 153-day processing
+  safety remain unverified. Network transfer, independent transfer completeness,
+  observational completeness, and analytical-period acquisition are not
+  established. An entire national season is never staged locally; the detailed
+  retrieval guard belongs to [data/README.md](../data/README.md).
 - AccessAIS daily cleaner compatibility uses the Version 2 canonical parsed-row
   multiset identity and artifact checksum, not source delivery order. Whole-
   delivery byte size and SHA-256 remain separate provenance. Version 1 intake

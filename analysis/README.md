@@ -175,12 +175,15 @@ The cleaner produced 113,799 rows under
 `ais-362502c6a37b53e681b745f5` and cleaned SHA-256
 `efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`.
 Two measured repeat runs reproduced both identities in 3.175186 and 3.094731
-seconds. Their approximately 1.59 GiB peak RSS is a scaling concern: monthly
-and full-period processing have not been shown safe and require optimization,
-bounded date-sized processing, spilling or memory controls, or another measured
-design before execution. The full evidence and removal accounting are in the
+seconds. At that stage, their approximately 1.59 GiB peak RSS was a scaling
+concern: monthly and full-period processing had not been shown safe and required
+a measured bounded design before execution. The subsequent explicit resource
+controls supported successful seven-day and exact July monthly operational
+gates; August--November and complete 153-day processing remain untested. The
+full evidence and removal accounting are in the
 [source register](../docs/data-sources.md#retrieval-route). ADR 0017 remains
-Proposed because independent transfer completeness and scaling are unresolved.
+Proposed because independent transfer completeness and later-month/full-period
+processing remain unresolved.
 
 ## Prepare one author-supplied multi-date AccessAIS delivery
 
@@ -501,8 +504,8 @@ cleaned bundle, manifest, or spill. Per the stop rule, the retry was not
 attempted and no threshold was weakened. Row/date reconciliation, daily
 cleaning, 15--16 July identity comparison, effective DuckDB settings, first-run
 runtime extrema, post-run spill cleanup, and seven-date retry reuse therefore
-have no new measurements. The processing portion of the seven-day gate remains
-unexercised and does not authorize a monthly request.
+had no new measurements at that point. The processing portion of the seven-day
+gate remained unexercised and did not authorize a monthly request.
 
 The same session resumed separately after available memory recovered. A direct
 check immediately before launch reported 4,325,081,088 bytes (4.028 GiB)
@@ -556,11 +559,11 @@ so publisher-side independent byte completeness remains `unverified`.
 For this portfolio MVP, the two byte-identical completed browser downloads,
 successful complete parsing of each delivered row, exact seven-date coverage,
 full row reconciliation, deterministic 15--16 July overlap identities, bounded
-first run, and successful all-date reuse retry are accepted as sufficient
-operational evidence to authorize only the next **2024-07-01 through
-2024-07-31** AccessAIS monthly scale test over the same bounds. This does not
+first run, and successful all-date reuse retry were accepted at that stage as
+sufficient operational evidence to authorize only the **2024-07-01 through
+2024-07-31** AccessAIS monthly scale test over the same bounds. This did not
 establish observational completeness or prove that NOAA's server-side extract
-contained every possible AIS record. It does not authorize the other four
+contained every possible AIS record. It did not authorize the other four
 monthly requests or establish full-period safety.
 
 The profiler refuses to start below the deliberately conservative 2 GiB
@@ -578,17 +581,17 @@ day requirements. After an abort, do not reuse its intake directory; verify
 that no published partial bundle exists and remove any abandoned ignored
 staging/spill directory only after inspecting its exact resolved path.
 
-Proceed to the one July monthly scale test only if two separate completed
-browser downloads have the same local byte size and SHA-256; all seven requested
-dates are present with reconciled row accounting and no exceptions; 15--16 July
-match the established canonical identities; every date cleans and records
-sequentially; effective `488.2 MiB`, one thread, and isolated spill use are
-recorded; both profiles stay below all abort thresholds; spill returns to zero;
-and the retry skips all seven dates with unchanged identities. A retained
+The July monthly scale test was authorized only after two separate completed
+browser downloads had the same local byte size and SHA-256; all seven requested
+dates were present with reconciled row accounting and no exceptions; 15--16 July
+matched the established canonical identities; every date cleaned and recorded
+sequentially; effective `488.2 MiB`, one thread, and isolated spill use were
+recorded; both profiles stayed below all abort thresholds; spill returned to
+zero; and the retry skipped all seven dates with unchanged identities. A retained
 matching HTTP `Content-Length` may verify publisher-side byte completeness but
-is not required for this portfolio-MVP operational gate. Observational and
+was not required for that portfolio-MVP operational gate. Observational and
 publisher-side independent byte completeness remain `unverified` without their
-separate evidence. Even a pass authorizes only the **2024-07-01 through
+separate evidence. That pass authorized only the **2024-07-01 through
 2024-07-31** scaling test, not the other four months or full-period safety.
 
 ### July monthly scaling gate
@@ -700,10 +703,10 @@ This successful month is bounded operational evidence for this exact July
 delivery and the current resource-controlled implementation. It is not a
 production vessel input, does not establish publisher-side transfer
 completeness or observational completeness, and does not prove that the other
-four months or the full 153-day period are safe. It authorizes independent
-audit of this evidence and a subsequent explicit decision about one next
-bounded gate; it does not itself authorize August--November processing, accept
-ADR 0017 or ADR 0018, select vessel rules, or begin exposure analysis.
+four months or the full 153-day period are safe. The evidence passed independent
+audit. A separate explicit post-audit decision is required before any next
+bounded gate; this result does not itself authorize August--November processing,
+accept ADR 0017 or ADR 0018, select vessel rules, or begin exposure analysis.
 
 ### Verified one-day compatibility exercise
 
@@ -1381,9 +1384,10 @@ render report has SHA-256
 The rendered views and render report were not committed. The VSR boundary was
 context only and was not used in candidate construction or exposure analysis.
 
-Only 15--16 July 2024 were processed. The full 2024-07-01 through 2024-11-30
-analytical period is still missing 151 dates. Independent transfer completeness,
-observational completeness, monthly and full-period safety, alternative edge
+Only 15--16 July 2024 were processed through this candidate vessel-grid
+exercise. Its full 2024-07-01 through 2024-11-30 analytical input is still
+missing 151 dates. Independent transfer completeness, observational completeness,
+later-month and full-period candidate-processing safety, alternative edge
 support, accepted thresholds, and a final vessel-activity input remain
 unverified. No production maximum-gap or implied-speed threshold was selected,
 no absent traffic outside the qualified receiver domain was interpreted as

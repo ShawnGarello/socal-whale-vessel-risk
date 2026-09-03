@@ -621,11 +621,10 @@ Two measured repeat cleaning runs reproduced the same cleaned SHA-256 and run
 ID. They completed in 3.175186 and 3.094731 seconds. Peak RSS was 1,591.441 and
 1,589.828 MiB, with measured RSS increases of 1,553.262 and 1,551.969 MiB. The
 first profiled run's peak generated temporary/output disk footprint was about
-1.576 MiB, excluding the immutable raw CSV. The roughly 1.59 GiB peak memory is
-a real scaling concern, not a basis for linear extrapolation. Monthly or
-full-period processing has not been shown safe and requires optimization,
-bounded date-sized processing, spilling or memory controls, or another measured
-design before execution.
+1.576 MiB, excluding the immutable raw CSV. At that stage, the roughly 1.59 GiB
+peak memory was a real scaling concern, not a basis for linear extrapolation;
+monthly and full-period processing had not been shown safe and required a
+measured bounded design before execution.
 
 A controlled 2026-09-02 follow-up isolated that peak to the cleaner's inherited
 DuckDB machine defaults (`12.5 GiB`, 12 threads), rather than fingerprinting,
@@ -657,7 +656,7 @@ The manifest preserves the required distinctions:
 
 **Still unverified.** Independent AccessAIS transfer completeness because no HTTP length or object validator was retained; download/range-resume behavior; August--November and full-period processing safety; complete bulk-file integrity; and any authoritative expected per-date record count. The seven-day and exact July monthly operational gates passed, but one month cannot establish the other four months or the 153-day period. NOAA documents collection interruptions, so a small or empty day requires review and cannot automatically be labelled incomplete or low traffic. Observed timestamp bounds do not resolve any of those questions or AIS receiver completeness.
 
-The local handling and manifest policy is in [../data/README.md](../data/README.md). This evidence authorizes independent audit and a later explicit decision about one next bounded gate; it does not automatically authorize August--November or full-period transfer.
+The local handling and manifest policy is in [../data/README.md](../data/README.md). The July evidence passed independent audit. A separate explicit post-audit decision is required before any next data request; August--November and full-period transfer are not automatically authorized.
 
 ### Licensing, attribution, and redistribution
 
@@ -690,9 +689,10 @@ NOAA's own terms are the standard 17 U.S.C. § 403 public-domain statement.
 
 - **Empirical 2024 observation remains unestablished.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts the `receivers_50_nautical_miles` scope reduction as a system-performance-qualified domain, not empirical coverage. Receiver uptime, station completeness, feed interruptions, antenna and terrain effects, and observational completeness remain unknown or unverified. Broadcast points cannot resolve those limitations at any sample size because a vessel no receiver heard leaves no trace in them.
 - **Whether the Proposed AccessAIS route can be accepted.** The bounded direct
-  CSVs passed format and overlapping two-day canonical cleaner compatibility,
-  but independent transfer completeness and measured monthly/full-period
-  scaling remain unresolved; see ADR 0017.
+  CSVs passed format, overlapping two-day canonical cleaner compatibility, the
+  seven-day operational gate, and the exact July monthly operational gate.
+  Independent transfer completeness and August--November/full-period processing
+  safety remain unresolved; see ADR 0017.
 - **Whether AccessAIS can filter by vessel type server-side.** No documented selector was found; not established and not assumed.
 - **Whether a length threshold is applied** on top of the type-group filter, and at what value.
 - **Whether the sample's clean coordinate result holds across the period.** 207,849 rows is a small fraction of ~10⁸.
