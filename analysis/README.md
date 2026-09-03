@@ -502,6 +502,55 @@ runtime extrema, post-run spill cleanup, and seven-date retry reuse therefore
 have no new measurements. The processing portion of the seven-day gate remains
 unexercised and does not authorize a monthly request.
 
+The same session resumed separately after available memory recovered. A direct
+check immediately before launch reported 4,325,081,088 bytes (4.028 GiB)
+available. The profiler then recorded 4,311,605,248 bytes (4.015 GiB) available
+memory and 34,392,182,784 bytes (32.030 GiB) free disk at first-run preflight.
+The unchanged command again omitted `--source-content-length`.
+
+The resumed first run reconciled all 3,928,736 source rows: 3,928,736 valid
+in-request rows were assigned, with zero malformed or unassignable timestamps
+and zero valid out-of-request rows. Exactly the requested seven UTC dates were
+present, with daily counts 582,419; 552,989; 553,094; 588,660; 465,342;
+592,794; and 593,438 for 15 through 21 July respectively. All seven dates were
+cleaned sequentially and recorded without conflict. The delivery ID was
+`accessais-period-6fb3cac947cd5671da899f80` and the seven-date period input ID
+was `multiday-ais-8ab9e2347a39f8844884bc24`.
+
+The intentional overlap reproduced the established identities. The 15 July
+canonical content ID, canonical SHA-256, cleaner run ID, and cleaned SHA-256
+were `accessais-day-content-ae090a6e387fe79ec2f64c6e`,
+`bf5a46c6196cf8a51ebfd62907f085a093afa64e2d4474c71ab7f441e68cf5cd`,
+`ais-9fc49e14601edea30064df97`, and
+`efbbcab006c63c8a4f021c7612dd3c84c25354a9805b55c4f7cebf00cc743ef6`.
+The corresponding 16 July identities were
+`accessais-day-content-065631b951a94d6c58165859`,
+`3727a12f607dfd4194159b34a291e59374660b95b3e59a45b3d349bb4bfaf49f`,
+`ais-e1ea93fe9ab4b4d068364a0c`, and
+`cb37b96a9f3e56838ca492a33dffc57a174fc92c1d385d3f3a1e848d2f7fbc5c`.
+
+The first run took 208.504 seconds excluding imports and the baseline barrier.
+It recorded effective `488.2 MiB`, one thread, the isolated spill directory,
+581.512 MiB peak application RSS, 970.613 MiB peak private bytes, 585.477 MiB
+peak process-tree RSS, 1.801 GiB minimum available memory, 30.809 GiB minimum
+free disk, 965.122 MiB peak generated-root disk, and 710.594 MiB peak spill.
+The final generated root was 518.530 MiB and spill returned to zero. No runtime
+threshold terminated the target.
+
+The unchanged retry passed preflight with 2.739 GiB available memory and 31.443
+GiB free disk, then skipped all seven dates with unchanged delivery, daily,
+cleaner, cleaned-Parquet, and period identities. It took 148.744 seconds,
+peaked at 70.367 MiB application RSS, 403.863 MiB private bytes, and 74.328 MiB
+process-tree RSS, created no spill, and increased the generated root by only 501
+bytes of retry provenance. Both resource reports contain no absolute path,
+email address, URL, cookie, authorization value, or credential.
+
+This passes the seven-day processing and resource conditions only. No retained
+HTTP `Content-Length` or ZIP integrity boundary independently verifies transfer
+completeness, so the seven-day gate still does not authorize a monthly request.
+Observational completeness remains `unverified`; monthly and full-period safety
+remain untested.
+
 The profiler refuses to start below the deliberately conservative 2 GiB
 available-memory or 8 GiB free-disk gates. During execution it displays live
 threshold state and automatically terminates and reaps the target process tree

@@ -284,6 +284,15 @@ missing evidence. The first processing attempt then stopped at the documented
 generated gate artifact was created. ADR 0017 remains Proposed, the processing
 gate remains open, and observational completeness remains `unverified`.
 
+After machine memory recovered, the same session resumed without changing any
+threshold. The first run reconciled all 3,928,736 rows across exactly 15--21
+July, sequentially cleaned and recorded all seven dates, and stayed within every
+runtime limit. The identical retry skipped and reused all seven dates with
+unchanged identities and zero spill. This passes the documented seven-day
+processing/resource conditions. It does not cure the missing independent HTTP
+length: transfer completeness and observational completeness both remain
+`unverified`, and no monthly request is authorized from this evidence.
+
 ### Author-supplied multi-date AccessAIS intake
 
 The implemented `accessais_period_delivery_v2` boundary accepts one explicit
