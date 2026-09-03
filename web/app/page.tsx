@@ -9,8 +9,9 @@ export default function Home() {
           Southern California whale–vessel spatial overlap
         </h1>
         <p className={styles.subtitle}>
-          Application foundation. The map below shows a basemap only — no project layers
-          have been published yet, and nothing shown here is an analytical result.
+          The map references the publisher-hosted 2026 California Vessel Speed Reduction
+          boundary. No project-derived layers have been published yet, and nothing shown
+          here is an analytical result.
         </p>
       </header>
       <main className={styles.main}>
