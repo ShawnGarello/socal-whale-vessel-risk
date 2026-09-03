@@ -1,7 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import esriConfig from "@arcgis/core/config.js";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
+import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer.js";
+import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol.js";
 import "@arcgis/map-components/components/arcgis-map";
 import "@arcgis/map-components/components/arcgis-zoom";
 import type { ArcgisMap } from "@arcgis/map-components/components/arcgis-map";
@@ -11,6 +14,10 @@ import {
   describeLoadErrors,
   resolveArcgisConfig,
 } from "@/lib/arcgis-config";
+import { releaseOwnedVsrLayer } from "@/lib/vsr-layer-lifecycle";
+import { INITIAL_VSR_LAYER_STATE, vsrLayerReducer } from "@/lib/vsr-layer-state";
+import { assertExpectedVsrFeatureCount, VSR_SOURCE } from "@/lib/vsr-source";
+import VsrLayerControl from "./VsrLayerControl";
 import styles from "./ArcgisMapFrame.module.css";
 
 /*
@@ -56,6 +63,11 @@ const TIMEOUT_MESSAGE =
   "SDK or the basemap service may be unreachable, or the configured API key may " +
   "not be authorized for the requested basemap.";
 
+const VSR_LOAD_TIMEOUT_MS = 15_000;
+const VSR_FAILURE_MESSAGE =
+  "The 2026 California VSR zone could not be loaded from the publisher's " +
+  "service. The basemap remains available.";
+
 type Status = "initializing" | "ready" | "error";
 
 interface ArcgisMapFrameProps {
@@ -68,7 +80,11 @@ export default function ArcgisMapFrame({
 }: ArcgisMapFrameProps) {
   const [status, setStatus] = useState<Status>("initializing");
   const [failures, setFailures] = useState<readonly string[]>([]);
+  const [mapIsReady, setMapIsReady] = useState(false);
+  const [vsrState, dispatchVsr] = useReducer(vsrLayerReducer, INITIAL_VSR_LAYER_STATE);
   const mapRef = useRef<ArcgisMap | null>(null);
+  const vsrLayerRef = useRef<FeatureLayer | null>(null);
+  const vsrVisibleRef = useRef(vsrState.visible);
 
   const handleReadyChange = useCallback(() => {
     const element = mapRef.current;
@@ -79,6 +95,7 @@ export default function ArcgisMapFrame({
     setFailures(describeLoadErrors(element.loadErrorSources ?? []));
     onSdkAttributionChange(true);
     setStatus("ready");
+    setMapIsReady(true);
   }, [onSdkAttributionChange]);
 
   const handleReadyError = useCallback(() => {
@@ -91,6 +108,8 @@ export default function ArcgisMapFrame({
     );
     onSdkAttributionChange(false);
     setStatus("error");
+    setMapIsReady(false);
+    dispatchVsr({ type: "map-unavailable" });
   }, [onSdkAttributionChange]);
 
   useEffect(() => {
@@ -101,9 +120,100 @@ export default function ArcgisMapFrame({
       setFailures(described.length > 0 ? described : [TIMEOUT_MESSAGE]);
       onSdkAttributionChange(false);
       setStatus("error");
+      setMapIsReady(false);
+      dispatchVsr({ type: "map-unavailable" });
     }, INITIALIZATION_TIMEOUT_MS);
     return () => window.clearTimeout(timer);
   }, [onSdkAttributionChange, status]);
+
+  useEffect(() => {
+    if (!mapIsReady) return;
+
+    const map = mapRef.current?.map;
+    if (!map) {
+      dispatchVsr({ type: "map-unavailable" });
+      return;
+    }
+
+    let disposed = false;
+    let ownedLayer: FeatureLayer | null = null;
+    const abortController = new AbortController();
+    const timeout = window.setTimeout(
+      () => abortController.abort(),
+      VSR_LOAD_TIMEOUT_MS,
+    );
+
+    const loadLayer = async () => {
+      dispatchVsr({ type: "load-started" });
+
+      try {
+        const existingLayer = map.findLayerById(VSR_SOURCE.layerId);
+        if (existingLayer && !(existingLayer instanceof FeatureLayer)) {
+          throw new Error("The VSR layer id is already used by another layer.");
+        }
+        let layer: FeatureLayer;
+        if (existingLayer) {
+          layer = existingLayer;
+        } else {
+          ownedLayer = new FeatureLayer({
+            id: VSR_SOURCE.layerId,
+            title: VSR_SOURCE.title,
+            url: VSR_SOURCE.serviceUrl,
+            definitionExpression: VSR_SOURCE.definitionExpression,
+            outFields: ["FID"],
+            visible: vsrVisibleRef.current,
+            popupEnabled: false,
+            renderer: new SimpleRenderer({
+              symbol: new SimpleFillSymbol({
+                color: [255, 180, 91, 0.08],
+                outline: {
+                  color: [255, 180, 91, 0.95],
+                  width: 2,
+                },
+              }),
+            }),
+          });
+          layer = ownedLayer;
+          map.add(ownedLayer);
+        }
+        vsrLayerRef.current = layer;
+
+        await layer.load({ signal: abortController.signal });
+        const featureCount = await layer.queryFeatureCount(undefined, {
+          signal: abortController.signal,
+        });
+
+        assertExpectedVsrFeatureCount(featureCount);
+        if (!disposed) {
+          dispatchVsr({ type: "load-succeeded", featureCount });
+        }
+      } catch {
+        releaseOwnedVsrLayer(map, ownedLayer, vsrLayerRef);
+        ownedLayer = null;
+        if (!disposed) {
+          dispatchVsr({ type: "load-failed", warning: VSR_FAILURE_MESSAGE });
+        }
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    };
+
+    void loadLayer();
+
+    return () => {
+      disposed = true;
+      abortController.abort();
+      window.clearTimeout(timeout);
+      releaseOwnedVsrLayer(map, ownedLayer, vsrLayerRef);
+      ownedLayer = null;
+    };
+  }, [mapIsReady]);
+
+  const handleVsrVisibilityChange = useCallback((visible: boolean) => {
+    vsrVisibleRef.current = visible;
+    if (vsrLayerRef.current) vsrLayerRef.current.visible = visible;
+    dispatchVsr({ type: "visibility-changed", visible });
+  }, []);
 
   const problems = [...config.warnings, ...failures];
 
@@ -128,6 +238,11 @@ export default function ArcgisMapFrame({
       >
         <arcgis-zoom slot="top-left" />
       </arcgis-map>
+
+      <VsrLayerControl
+        state={vsrState}
+        onVisibilityChange={handleVsrVisibilityChange}
+      />
 
       {status === "initializing" && (
         <div className={styles.overlay} role="status" aria-live="polite">
