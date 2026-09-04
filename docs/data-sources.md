@@ -492,7 +492,7 @@ There is a near-empty gap between 50 m and 150 m separating small harbour and pa
 
 ### Retrieval route
 
-**Accepted in [ADR 0017](decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md).** The preferred route is five sequential author-submitted monthly AccessAIS extracts over the map/context bounds, with guarded one-day-at-a-time bulk retrieval as fallback only. The bounded one-day, overlapping two-day, seven-day, and July monthly AccessAIS direct-CSV deliveries passed their authorized local format, identity, header/date, cleaner-compatibility, and operational gates. The audited July gate authorizes sequential August--November calendar-month extracts under the same controls. Independent transfer completeness, later-month/full-period safety, and complete bulk-day handling remain unresolved.
+**Accepted in [ADR 0017](decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md).** The preferred route is five sequential author-submitted monthly AccessAIS extracts over the map/context bounds, with guarded one-day-at-a-time bulk retrieval as fallback only. The bounded one-day, overlapping two-day, seven-day, July monthly, and August monthly AccessAIS direct-CSV deliveries passed their authorized local format, identity, header/date, cleaner-compatibility, and operational gates. The audited July gate authorizes sequential August--November calendar-month extracts under the same controls; August has now been processed under them. Independent transfer completeness, September--November/full-period safety, and complete bulk-day handling remain unresolved.
 
 **Implemented local boundary.** The analysis package now inspects one explicit
 author-supplied artifact without network access, records the versioned retrieval
@@ -598,6 +598,37 @@ execution of this exact July artifact. It does not establish that the publisher
 delivered every possible record, observational completeness, later-month or
 full-period safety, or a production vessel input.
 
+**Real August monthly AccessAIS delivery exercised on 2026-09-04.** The
+immutable author-supplied input was inspected and processed in place and was not
+copied into this worktree.
+
+| Delivery field | Observed value |
+|---|---|
+| Request | UTC dates 2024-08-01 through 2024-08-31; WGS 84 longitude -122 to -117 and latitude 32 to 35 |
+| Route and container | Author-controlled AccessAIS; direct CSV |
+| NOAA filename | `AIS_178847348862876793_703-1788473489035.csv` |
+| Retrieval timestamp | Exact UTC retrieval timestamp not retained |
+| Local byte identity | 1,857,171,239 bytes; SHA-256 `42cb9fbfa8623c64460c2cbfd3d878a5f4e035a746637a4bdb036657a57fc29e`, confirmed before and after processing |
+| Independent source metadata | No retained HTTP `Content-Length`; publisher-side transfer completeness remains `unverified` |
+| CSV inspection | Exact NOAA 17-field rows; 18,284,354 rows assigned across exactly all 31 requested dates; 0 malformed/unassignable timestamps; 0 valid rows outside the request |
+| Processing result | 3,501,843 cleaned commercial observations; 62 cumulative compatible dates; 0 conflicts; 91 September--November dates missing |
+| Stable identities | Delivery `accessais-period-9d5c80e7843e2ad9b8b2af2b`; period input `multiday-ais-d600bc7730f03ef82658a561` |
+
+August was accumulated into the existing July period state through a fresh
+month-specific intake and spill directory while sharing the established cleaned
+root and 153-date period manifest. The first run and its identical retry both
+completed inside the unchanged resource thresholds; the retry skipped all 31
+August dates without regeneration. An independent read-only audit recomputed
+every referenced checksum — 31 canonical daily slices and 186 cleaned-bundle
+files — with zero mismatches, and confirmed that all 31 July identities were
+unchanged. The period input ID changed from
+`multiday-ais-d66b0637fb841469f4d585a5` because that identity derives from the
+recorded per-date analytical identities. This verifies the local identity,
+delivered-row/date reconciliation, cleaner compatibility, and bounded execution
+of this exact August artifact. It does not establish that the publisher
+delivered every possible record, observational completeness, September--November
+or full-period safety, or a production vessel input.
+
 For the one-day delivery, the raw validator truthfully returned `passed: false`:
 825 rows had invalid or missing MMSIs and 2,233 had missing vessel types. This
 is expected pre-cleaning
@@ -654,9 +685,9 @@ The manifest preserves the required distinctions:
 
 **Bulk metadata verification on 2026-08-27.** The official [2024 bulk index](https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/) listed all 366 daily filenames; comparison against the 153-date analytical calendar found zero missing names. HEAD requests for the first, a middle, and the last analytical date returned HTTP 200, byte lengths, validators and byte-range support. Together with the five M2 prefix transfers, this verifies listing and partial-transfer behavior. It does **not** verify a complete archive, ZIP CRC, daily semantics or observational completeness.
 
-**Still unverified.** Independent AccessAIS transfer completeness because no HTTP length or object validator was retained; download/range-resume behavior; August--November and full-period processing safety; complete bulk-file integrity; and any authoritative expected per-date record count. The seven-day and exact July monthly operational gates passed, but one month cannot establish the other four months or the 153-day period. NOAA documents collection interruptions, so a small or empty day requires review and cannot automatically be labelled incomplete or low traffic. Observed timestamp bounds do not resolve any of those questions or AIS receiver completeness.
+**Still unverified.** Independent AccessAIS transfer completeness because no HTTP length or object validator was retained; download/range-resume behavior; September--November and full-period processing safety; complete bulk-file integrity; and any authoritative expected per-date record count. The seven-day, exact July monthly, and exact August monthly operational gates passed, but two processed months cannot establish the remaining three months or the 153-date period. NOAA documents collection interruptions, so a small or empty day requires review and cannot automatically be labelled incomplete or low traffic. Observed timestamp bounds do not resolve any of those questions or AIS receiver completeness.
 
-The local handling and manifest policy is in [../data/README.md](../data/README.md). The July evidence passed independent audit and satisfied ADR 0017's acceptance condition. Sequential author-submitted August--November calendar-month extracts are authorized under the same controls; one combined later-period request is not authorized, and later-month or full-period safety is not established in advance.
+The local handling and manifest policy is in [../data/README.md](../data/README.md). The July evidence passed independent audit and satisfied ADR 0017's acceptance condition. Sequential author-submitted August--November calendar-month extracts are authorized under the same controls; August has been processed and September is the next request. One combined later-period request is not authorized, and later-month or full-period safety is not established in advance.
 
 ### Licensing, attribution, and redistribution
 
@@ -689,9 +720,10 @@ NOAA's own terms are the standard 17 U.S.C. § 403 public-domain statement.
 
 - **Empirical 2024 observation remains unestablished.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts the `receivers_50_nautical_miles` scope reduction as a system-performance-qualified domain, not empirical coverage. Receiver uptime, station completeness, feed interruptions, antenna and terrain effects, and observational completeness remain unknown or unverified. Broadcast points cannot resolve those limitations at any sample size because a vessel no receiver heard leaves no trace in them.
 - **Later-month and full-period AccessAIS evidence.** ADR 0017 accepts AccessAIS
-  as the preferred route after the exact July monthly gate. Independent transfer
-  completeness and August--November/full-period processing safety remain
-  unresolved; see ADR 0017.
+  as the preferred route after the exact July monthly gate, and August has since
+  been processed under the same controls. Independent transfer completeness and
+  September--November/full-period processing safety remain unresolved; see
+  ADR 0017.
 - **Whether AccessAIS can filter by vessel type server-side.** No documented selector was found; not established and not assumed.
 - **Whether a length threshold is applied** on top of the type-group filter, and at what value.
 - **Whether the sample's clean coordinate result holds across the period.** 207,849 rows is a small fraction of ~10⁸.

@@ -157,8 +157,9 @@ and does not establish redistribution permission.
 accepts AccessAIS as the preferred retrieval route.** The design is five
 sequential author-submitted monthly AccessAIS extracts, with guarded daily bulk
 retrieval as fallback only. The author-controlled one-day compatibility,
-overlapping two-day, seven-day, and exact July monthly operational gates passed.
-Independent transfer completeness and August--November/full-period processing
+overlapping two-day, seven-day, exact July monthly, and exact August monthly
+operational gates passed.
+Independent transfer completeness and September--November/full-period processing
 safety remain unverified. What is settled here is the local handling constraint
 every route has to satisfy.
 
@@ -174,16 +175,19 @@ estimates place each calendar-month request below 2 GB; exact values and
 parameters are in ADR 0017 and the source register.
 
 **The bounded order-and-delivery compatibility and operational exercises
-passed through the exact July monthly gate.** The author-controlled 15 July
+passed through the exact August monthly accumulation.** The author-controlled
+15 July
 delivery was a direct CSV. Read-only inspection verified its local byte identity,
 exact header, exclusive UTC date, and cleaner compatibility; subsequent bounded
-deliveries established the overlapping two-day, seven-day, and exact July
-monthly operational evidence. No independent HTTP `Content-Length` or `ETag`
+deliveries established the overlapping two-day, seven-day, exact July monthly,
+and exact August monthly operational evidence. No independent HTTP
+`Content-Length` or `ETag`
 was retained, so independent byte completeness remains `unverified`. The
 resulting timestamp bounds do not prove transfer or observational completeness.
 The audited July gate satisfied ADR 0017's acceptance condition and authorizes
 sequential August--November calendar-month extracts under the same controls;
-transfer completeness and later-month/full-period safety remain unresolved.
+August has been processed under them, while transfer completeness and
+September--November/full-period safety remain unresolved.
 Order submission remains an author action;
 repository code does not submit an order, record an email address, or persist an
 expiring tokenized URL.
@@ -270,19 +274,21 @@ RSS because it inherited DuckDB's machine-default memory and thread settings.
 At that stage, the result was a scaling concern rather than a linear forecast.
 The 2026-09-02 investigation added explicit verified per-date cleaner resources
 and reduced two fresh two-day peaks to 556.922/558.699 MiB application RSS under
-`512MB` and one thread. The later seven-day and exact July monthly gates passed
-under those controls; August--November and full-period processing remain
-untested.
+`512MB` and one thread. The later seven-day, exact July monthly, and exact
+August monthly gates passed under those controls; September--November and
+full-period processing remain untested.
 
 ### Next data-gate decision
 
-The seven-day operational gate and the exact **2024-07-01 through 2024-07-31**
-monthly gate over WGS 84 longitude **-122 to -117** and latitude **32 to 35**
+The seven-day operational gate, the exact **2024-07-01 through 2024-07-31**
+monthly gate, and the exact **2024-08-01 through 2024-08-31** monthly
+accumulation over WGS 84 longitude **-122 to -117** and latitude **32 to 35**
 passed, and the July evidence passed independent audit. ADR 0017 authorizes the
 author to request and process the August, September, October, and November
-calendar-month extracts sequentially under the existing controls. August is the
-next request. This authorization does not establish any unprocessed month as
-safe and does not permit one combined August--November or 153-day request.
+calendar-month extracts sequentially under the existing controls. August is
+processed; September is the next request. This authorization does not establish
+any unprocessed month as safe and does not permit one combined
+September--November or 153-day request.
 
 Before starting the download, open browser developer tools (or an equivalent
 response-header view) and preserve the network entry. Record the response
@@ -463,11 +469,12 @@ and an explicit temporary/spill directory that must also sit under ignored
 `data/interim/`. A uniquely named spill subdirectory is created per run and
 removed afterwards. Ordered results are streamed as bounded Arrow record
 batches; the period is never assembled in memory. This bounds the assembly step
-only — it does not make full-period retrieval or cleaning safe. The seven-day
-and exact July monthly operational gates passed under explicit cleaner controls.
+only — it does not make full-period retrieval or cleaning safe. The seven-day,
+exact July monthly, and exact August monthly operational gates passed under
+explicit cleaner controls.
 ADR 0017 authorizes sequential author-submitted August--November calendar-month
-extracts under those controls, but those months and full-period processing
-remain untested.
+extracts under those controls, but September--November and full-period
+processing remain untested.
 
 **Why this is not simply forbidden.** An earlier version of this document banned
 downloading a national file and filtering locally, while the source register
