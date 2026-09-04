@@ -491,15 +491,16 @@ application RSS, 997.145 MiB private bytes, 593.195 MiB process-tree RSS, and
 2.645 GiB and 49.774 GiB respectively; spill returned to zero, and no runtime
 threshold aborted the run.
 
-Two earlier attempts at the October retry were terminated by the host
-environment for system-wide low memory while the profiler's own guard still
-reported `within-thresholds`. Neither was a profiler resource abort or a target
-failure; both ended during source fingerprinting, before any cleaning, and
-wrote no report, recorded no delivery attempt, and published no bundle. The
-recorded state was audited as unchanged after each, so the identical retry was
-repeated without weakening any threshold, and only the completed attempt is
-reported. That 145.569-second retry skipped all 31 October dates without
-regeneration, preserved every deterministic identity, peaked at 73.777 MiB
+Two earlier October retry invocations ended unexpectedly at the host/session
+level during source fingerprinting. Neither produced a profiler report, so their
+precise cause and classification are not established; the last observed guard
+state was within the configured thresholds. Neither recorded a delivery attempt
+or published a bundle, and spill stayed empty. Checksum and state audits after
+each confirmed the established 123-date state was unchanged, so the identical
+retry was repeated without weakening any threshold, and only the completed
+attempt is reported. That 145.569-second retry skipped all 31 October dates
+without regeneration, preserved every deterministic identity, peaked at
+73.777 MiB
 application RSS, and used zero spill. Both completed target invocations returned
 the expected exit code `3`.
 
@@ -805,9 +806,11 @@ Accepted without upgrading either completeness state.
   those cleaner resources.
 - The local period-intake command implements bounded multi-date partitioning and
   resumable sequential cleaner orchestration for one supplied delivery. July
-  demonstrated one monthly execution; the command does not resolve delivery
-  transfer completeness, prove later-month or complete-period safety, or make
-  the analytical period available.
+  through October have now been exercised successfully under the documented
+  controls, accumulating 123 of the 153 expected dates. The command does not
+  resolve delivery transfer completeness, prove November or complete-period
+  safety, or make the analytical period available; publisher-side transfer
+  completeness and observational completeness remain unverified.
 - Monthly AccessAIS partitions bound each order below the currently reported
   service limit and make resubmission local to one month. Only one is submitted
   at a time.
