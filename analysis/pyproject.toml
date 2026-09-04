@@ -25,6 +25,7 @@ whale-vessel-multiday-ais = "whale_vessel_analysis.multiday_ais_cli:main"
 whale-vessel-grid = "whale_vessel_analysis.spatial_cli:main"
 whale-vessel-whale-grid = "whale_vessel_analysis.whale_grid_cli:main"
 whale-vessel-vessel-grid = "whale_vessel_analysis.vessel_grid_cli:main"
+whale-vessel-period-vessel-rule-evidence = "whale_vessel_analysis.period_vessel_rule_evidence_cli:main"
 
 [dependency-groups]
 dev = [

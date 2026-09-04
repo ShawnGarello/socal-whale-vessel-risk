@@ -227,6 +227,70 @@ class PeriodRelation:
             raise MultiDayRelationError("batch size must be at least one")
         return self.connection.execute(self.ordered_query()).to_arrow_reader(batch_size)
 
+    def adjacent_observation_query(self) -> str:
+        """Return one deterministic whole-period observation/pair stream query."""
+        order = ", ".join(GLOBAL_ORDER_COLUMNS)
+        next_columns = (
+            "observed_at_utc",
+            "latitude",
+            "longitude",
+            "sog_knots",
+            "vessel_type_code",
+            "vessel_type_group",
+            "length_m",
+        )
+        lead_expressions = ",\n".join(
+            f"""                lead({column}) OVER (
+                    PARTITION BY mmsi ORDER BY {order}
+                ) AS next_{column}"""
+            for column in next_columns
+        )
+        return f"""
+            WITH ordered AS (
+                SELECT
+                    mmsi,
+                    observed_at_utc,
+                    observed_utc_date,
+                    latitude,
+                    longitude,
+                    sog_knots,
+                    vessel_type_code,
+                    vessel_type_group,
+                    length_m,
+{lead_expressions}
+                FROM {self.view_name}
+            )
+            SELECT
+                mmsi,
+                epoch_us(observed_at_utc) AS observed_at_utc,
+                observed_utc_date,
+                latitude,
+                longitude,
+                sog_knots,
+                vessel_type_code,
+                vessel_type_group,
+                length_m,
+                epoch_us(next_observed_at_utc) AS next_observed_at_utc,
+                next_latitude,
+                next_longitude,
+                next_sog_knots,
+                next_vessel_type_code,
+                next_vessel_type_group,
+                next_length_m
+            FROM ordered
+            ORDER BY {order}
+        """
+
+    def adjacent_observation_batches(
+        self, batch_size: int = DEFAULT_BATCH_SIZE
+    ) -> pa.RecordBatchReader:
+        """Stream observations with the next same-MMSI observation attached."""
+        if batch_size < 1:
+            raise MultiDayRelationError("batch size must be at least one")
+        return self.connection.execute(
+            self.adjacent_observation_query()
+        ).to_arrow_reader(batch_size)
+
     def continuity_summary(self) -> dict[str, object]:
         """Compare whole-period adjacency with artificial daily partitioning."""
         order = ", ".join(GLOBAL_ORDER_COLUMNS)

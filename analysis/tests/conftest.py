@@ -91,8 +91,14 @@ def build_cleaned_bundle(
     completeness_status: str = "unverified",
     started_at: str = "2026-08-28T00:00:00Z",
     completed_at: str = "2026-08-28T00:00:01Z",
+    sog_knots: Sequence[float | None] | None = None,
+    length_m: Sequence[float | None] | None = None,
 ) -> Path:
     """Write one synthetic three-file cleaner bundle with consistent checksums."""
+    if sog_knots is not None and len(sog_knots) != len(rows):
+        raise ValueError("synthetic SOG values must match row count")
+    if length_m is not None and len(length_m) != len(rows):
+        raise ValueError("synthetic length values must match row count")
     directory.mkdir(parents=True, exist_ok=True)
     table = pa.table(
         {
@@ -100,12 +106,16 @@ def build_cleaned_bundle(
             "observed_at_utc": [row[1] for row in rows],
             "latitude": [row[2] for row in rows],
             "longitude": [row[3] for row in rows],
-            "sog_knots": [10.0 for _ in rows],
+            "sog_knots": list(sog_knots)
+            if sog_knots is not None
+            else [10.0 for _ in rows],
             "cog_degrees": [90.0 for _ in rows],
             "heading_degrees": [90.0 for _ in rows],
             "vessel_type_code": [_GROUP_CODES[row[4]] for row in rows],
             "vessel_type_group": [row[4] for row in rows],
-            "length_m": [200.0 for _ in rows],
+            "length_m": list(length_m)
+            if length_m is not None
+            else [200.0 for _ in rows],
         },
         schema=CLEANED_SCHEMA,
     )
