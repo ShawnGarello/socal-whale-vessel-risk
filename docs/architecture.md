@@ -23,13 +23,14 @@
 > July monthly operational gate. Reordered equivalent daily content was reused,
 > all 31 July dates reconciled, and the identical July retry reused every date.
 > The July evidence passed independent audit, and the authorized August,
-> September, and October months were then accumulated into the same period
-> state: all 31 August, all 30 September, and all 31 October dates reconciled,
-> and each identical retry reused every date, leaving 123 of 153 expected dates
-> recorded with no conflict. Publisher-side transfer
-> and observational completeness remain unverified; November and
-> complete 153-day processing remain untested. Network retrieval and analytical-period
-> acquisition remain unfinished. Final period-wide vessel aggregation,
+> September, October, and November months were then accumulated into the same
+> period state: all 31 August, all 30 September, all 31 October, and all 30
+> November dates reconciled, and each identical retry reused every date, so all
+> 153 expected dates are recorded with no conflict and the shared manifest is
+> `ready`. Publisher-side transfer
+> and observational completeness remain unverified. Network retrieval remains
+> unimplemented, and a complete cleaned-input period is not a vessel grid or an
+> exposure result. Final period-wide vessel aggregation,
 > exposure analysis, final public representations for project-derived layers,
 > VSR service integration, and deployment also remain unfinished.
 > See the [roadmap](roadmap.md) for milestone status.

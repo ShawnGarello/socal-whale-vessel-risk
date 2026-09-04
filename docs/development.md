@@ -304,14 +304,15 @@ At that stage, the memory result was a scaling concern, not a linear forecast;
 monthly and full-period processing had not been shown safe. It led to a measured
 design with bounded date-sized processing and explicit DuckDB memory, thread,
 and spill controls. The later seven-day, exact July monthly, exact August
-monthly, exact September monthly, and exact October monthly operational gates
-passed under those controls, while November and complete 153-day processing
-remain untested. The full evidence and removal accounting are in the
+monthly, exact September monthly, exact October monthly, and exact November
+monthly operational gates
+passed under those controls, completing all 153 accepted dates. The full
+evidence and removal accounting are in the
 [source register](data-sources.md#retrieval-route). ADR 0017 is now Accepted:
-the audited July gate authorizes sequential author-submitted August--November
-calendar-month extracts under the same controls, without establishing later-
-month or full-period safety. August, September, and October have been processed
-under them; November is the next request.
+the audited July gate authorized sequential author-submitted August--November
+calendar-month extracts under the same controls, and all four have been
+processed under them, so the shared period manifest is `ready`. Publisher-side
+transfer completeness and observational completeness remain `unverified`.
 
 **Author-supplied multi-date AccessAIS intake**
 
