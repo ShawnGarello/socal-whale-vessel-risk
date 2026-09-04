@@ -21,13 +21,16 @@
 > producing a production vessel grid. A separate boundary assembles explicitly
 > supplied one-date cleaner bundles into a versioned multi-day period-input
 > manifest and scans its verified partitions through a bounded DuckDB relation,
-> without selecting a plausibility threshold. A separate candidate vessel-grid
-> boundary now requires explicit gap, implied-speed, readiness, edge,
+> without selecting a plausibility threshold. A focused period vessel-rule
+> evidence boundary reuses one whole-period adjacency stream to summarize the
+> four explicit ADR 0018 candidates in bounded batches; it is synthetically
+> tested but has not run on the real ready manifest. A separate candidate
+> vessel-grid boundary now requires explicit gap, implied-speed, readiness, edge,
 > and support parameters, streams whole-period pairs, and writes deterministic
 > per-cell vessel-kilometres with quality and lineage metadata beneath ignored
-> `data/derived/`. Network retrieval, analytical-period AIS acquisition,
-> accepted vessel rules, a final vessel input, and later derived processing
-> remain unfinished.
+> `data/derived/`. Network retrieval, publisher-side transfer completeness, AIS
+> observational completeness, accepted vessel rules, a final vessel input, and
+> later derived processing remain unfinished or unverified.
 
 ---
 
@@ -187,8 +190,9 @@ deterministic processing of one supplied NOAA AIS flat CSV extract, the
 deterministic EPSG:3310 water-grid process, abundance-conserving transfer of
 modeled blue-whale density to that grid, a read-only one-bundle vessel-measure
 evidence harness, a versioned multi-day cleaned-input manifest with a bounded
-DuckDB period relation, a parameterized candidate vessel-grid aggregation, and
-synthetic tests. It does **not** submit orders, download AIS, accept final
+DuckDB period relation, a bounded period vessel-rule evidence command, a
+parameterized candidate vessel-grid aggregation, and synthetic tests. It does
+**not** submit orders, download AIS, accept final
 vessel rules, produce a final analytical-period vessel input, or produce an
 exposure dataset or statistics. Run every command below from `analysis/`.
 
@@ -222,6 +226,7 @@ re-run; the built package declares only runtime requirements.
 | `python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli --help` | Proves the bounded local AccessAIS period-intake boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --help` | Proves the separate non-production vessel-evidence boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help` | Proves the separate multi-day cleaned-input boundary loads. |
+| `python -m uv run python -m whale_vessel_analysis.period_vessel_rule_evidence_cli --help` | Proves the bounded period vessel-rule evidence boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --help` | Proves the candidate multi-day vessel-grid aggregation boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help` | Proves the separate whale-grid transfer boundary loads. |
 
@@ -583,6 +588,48 @@ No production threshold has been selected. Source-transfer and observational
 completeness remain unverified, one day does not validate the analytical period,
 edge-support treatment remains unresolved, and this command produces neither a
 production vessel grid nor an exposure result.
+
+**Period-wide vessel-rule evidence**
+
+This command requires one explicit `multiday_cleaned_ais_input_v1` manifest,
+the complete four-candidate matrix, the type-only/no-length-filter treatment,
+and bounded DuckDB resources:
+
+```text
+python -m uv run python -m whale_vessel_analysis.period_vessel_rule_evidence_cli --manifest <period-manifest.json> --output-dir ..\data\interim\<evidence-bundle> --maximum-gap-seconds 300 --maximum-gap-seconds 1800 --implied-speed-ceiling-knots 30 --implied-speed-ceiling-knots 50 --vessel-length-treatment type-only-no-length-filter --memory-limit <size-with-unit> --temp-directory ..\data\interim\<duckdb-spill> [--threads <n>] [--batch-size <rows>] [--overwrite]
+```
+
+Normal execution requires the ready 153-date period. The optional
+`--allow-incomplete-non-production` flag is deliberately named and must not be
+used to create production evidence. The command reuses the relation's one
+deterministically ordered, whole-period same-MMSI adjacency stream and evaluates
+all four rules during one bounded Arrow iteration. It preserves cross-midnight
+pairing; daily segment accounting uses the starting observation's UTC date and
+reports cross-midnight segments separately.
+
+The output contains exact observation/distinct-identity counts and fixed-bin
+distributions for passenger, cargo, tanker, and the recomputed commercial union
+by date and whole period. It preserves structural and candidate exclusions,
+signed and absolute projected/geodesic distance differences, signed and
+absolute relative differences, the zero-geodesic undefined-relative count, SOG
+availability, and vessel-length availability. All distributions use the fixed
+edges documented in the analysis README; individual values are not retained
+for percentile calculation.
+
+One atomic bundle beneath ignored `data/interim/` contains deterministic
+`evidence.json` and time-bearing `run-metadata.json`. Local paths, checksums of
+local manifest bytes, clocks, runtime, output names, resource settings, and
+machine/software values remain execution provenance where applicable and do
+not enter evidence identity. Input checksums and manifest contracts are
+validated before the scan. The writer refuses raw or outside-interim targets,
+input/output overlap, arbitrary overwrite, and partial publication. Full
+contract details are in the [analysis README](../analysis/README.md#period-wide-vessel-rule-evidence).
+
+The command is implemented and synthetically tested only. Do not infer that the
+real five-month evidence matrix ran: it did not. No rule is accepted, ADR 0018
+remains Proposed, no production vessel grid exists, publisher-side transfer and
+AIS observational completeness remain unverified, and exposure analysis has
+not begun.
 
 **Candidate multi-day vessel-grid aggregation**
 
@@ -1132,7 +1179,7 @@ the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 361 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 376 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -1169,6 +1216,11 @@ union-recomputed distinct-vessel output, deterministic GeoParquet and quality
 serialization independent of volatile manifest provenance, parity with the
 evidence path for shared nonambiguous logic, sanitized bounded-execution
 settings in lineage, candidate-bundle atomicity and output safeguards, DuckDB
+period-rule single-stream candidate evaluation, fixed-bin bounded summaries,
+daily cross-midnight accounting, group/union reconciliation, path- and clock-
+independent period-evidence identity, ready-period and exact-date enforcement,
+zero-geodesic relative-difference handling, all-four-candidate parity with the
+grid evaluator, period-evidence atomic output and CLI behavior,
 normalized-memory verification, deterministic resource-threshold evaluation,
 mocked runtime abort and process cleanup, profiler CLI/output safeguards and
 version reporting, and all CLI boundaries.
