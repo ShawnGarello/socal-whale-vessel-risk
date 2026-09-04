@@ -178,9 +178,9 @@ Two measured repeat runs reproduced both identities in 3.175186 and 3.094731
 seconds. At that stage, their approximately 1.59 GiB peak RSS was a scaling
 concern: monthly and full-period processing had not been shown safe and required
 a measured bounded design before execution. The subsequent explicit resource
-controls supported successful seven-day, exact July monthly, and exact August
-monthly operational gates; September--November and complete 153-day processing
-remain untested. The
+controls supported successful seven-day, exact July monthly, exact August
+monthly, and exact September monthly operational gates; October--November and
+complete 153-day processing remain untested. The
 full evidence and removal accounting are in the
 [source register](../docs/data-sources.md#retrieval-route). The audited July
 gate satisfied ADR 0017's acceptance condition. ADR 0017 is Accepted and
@@ -830,6 +830,111 @@ delivery. It does not establish publisher-side transfer completeness,
 observational completeness, or safe processing of September, October, November,
 or the complete 153-day period. It produces no final vessel-activity input, does
 not accept ADR 0018, selects no vessel rule, and begins no exposure analysis.
+
+### September monthly accumulation
+
+On 2026-09-04 the second authorized later month was accumulated into the same
+analytical-period state. The immutable author-supplied direct CSV for
+**2024-09-01 through 2024-09-30** was read in place and not changed. It
+contained 1,583,433,195 bytes and had SHA-256
+`0f41e63ce1afa54f4a6372e79c71a523122975351120f82a435696e7394df334`,
+independently confirmed before and after processing. No independently retained
+HTTP `Content-Length` was available, so the command omitted
+`--source-content-length` and publisher-side transfer completeness remains
+`unverified`.
+
+The run again used a fresh month-specific intake directory
+(`run\intake-2024-09`), a fresh isolated spill directory (`spill-2024-09`), and
+fresh profile paths, while sharing the established `run\cleaned` root and
+`run\period.json` manifest. Every documented control was unchanged. The
+commands were the August pair with the month-specific paths, labels, and
+`--requested-start 2024-09-01 --requested-end 2024-09-30` substituted.
+
+The first profile passed preflight with 3,432,910,848 bytes (3.197 GiB)
+available memory and 70,632,796,160 bytes (65.782 GiB) free disk. The target
+returned the expected exit code `3` while the profiler reported
+`target_completed`. It reconciled all 15,638,516 source rows: all 15,638,516 had
+valid in-request timestamps and were assigned, with zero malformed or
+unassignable timestamps and zero valid out-of-request rows. Exactly all 30
+requested UTC dates were present and cleaned sequentially into 2,861,837
+commercial observations:
+
+| UTC date | Source rows | Cleaned rows |
+|---|---:|---:|
+| 2024-09-01 | 584,696 | 107,020 |
+| 2024-09-02 | 628,250 | 108,969 |
+| 2024-09-03 | 581,396 | 109,309 |
+| 2024-09-04 | 564,191 | 106,717 |
+| 2024-09-05 | 556,030 | 106,161 |
+| 2024-09-06 | 550,292 | 94,390 |
+| 2024-09-07 | 601,136 | 115,270 |
+| 2024-09-08 | 602,716 | 112,037 |
+| 2024-09-09 | 508,754 | 95,443 |
+| 2024-09-10 | 461,596 | 87,154 |
+| 2024-09-11 | 470,057 | 87,030 |
+| 2024-09-12 | 532,159 | 100,889 |
+| 2024-09-13 | 517,060 | 100,399 |
+| 2024-09-14 | 574,050 | 101,958 |
+| 2024-09-15 | 490,671 | 87,319 |
+| 2024-09-16 | 462,801 | 92,408 |
+| 2024-09-17 | 522,137 | 106,367 |
+| 2024-09-18 | 478,445 | 96,040 |
+| 2024-09-19 | 490,577 | 84,863 |
+| 2024-09-20 | 503,009 | 88,778 |
+| 2024-09-21 | 558,895 | 97,739 |
+| 2024-09-22 | 521,021 | 96,011 |
+| 2024-09-23 | 410,179 | 82,350 |
+| 2024-09-24 | 456,715 | 81,404 |
+| 2024-09-25 | 485,601 | 85,382 |
+| 2024-09-26 | 532,488 | 96,784 |
+| 2024-09-27 | 525,056 | 98,059 |
+| 2024-09-28 | 573,522 | 94,126 |
+| 2024-09-29 | 416,162 | 61,513 |
+| 2024-09-30 | 478,854 | 79,948 |
+| **Total** | **15,638,516** | **2,861,837** |
+
+All 30 new cleaner bundles recorded effective `488.2 MiB`, one effective thread,
+the isolated spill directory, and successful spill-directory removal. The
+delivery ID is `accessais-period-1babd48139b3b00e3b9f6d43`, and the period input
+ID moved to `multiday-ais-b4ba6bd6c418c81d6ace430c`. The period remained
+`not_ready` with 92 compatible dates, no conflicts, and 61 missing October and
+November dates.
+
+The first target operation took 442.139 seconds; elapsed time including imports
+and the profiler barrier was 444.190 seconds. Peak sampled application RSS was
+624,009,216 bytes (595.102 MiB), peak process-tree RSS was 628,285,440 bytes
+(599.180 MiB), and peak private bytes were 1,041,117,184 bytes (992.887 MiB).
+Minimum available memory was 2,770,632,704 bytes (2.580 GiB) and minimum free
+disk was 65,297,661,952 bytes (60.813 GiB). The shared generated root peaked at
+8,782,361,709 bytes (8.179 GiB) and ended at 7,176,394,488 bytes (6.684 GiB);
+those totals include the retained July and August artifacts. Isolated spill
+peaked at 788,987,904 bytes (752.438 MiB) and returned to zero. No runtime
+threshold terminated the target.
+
+The identical retry passed preflight with 3,754,618,880 bytes (3.497 GiB)
+available memory and 66,118,438,912 bytes (61.578 GiB) free disk, and also
+returned target exit code `3` with profiler outcome `target_completed`. It
+cleaned zero dates and skipped all 30 compatible September dates. Every
+deterministic canonical daily identity, cleaner run ID, cleaned-Parquet
+checksum, delivery ID, and period input ID remained unchanged, and no per-date
+period attempt was added; the delivery manifest alone recorded a second attempt
+with outcome `identical_retry`. The retry operation took 136.475 seconds, peaked
+at 77,262,848 bytes (73.684 MiB) application RSS, 81,416,192 bytes (77.644 MiB)
+process-tree RSS, and 425,447,424 bytes (405.738 MiB) private bytes, used zero
+spill, and increased the generated root by 801 bytes of retry provenance. This
+was not a cold-cache run: no operating-system or application cache was cleared.
+
+An independent read-only audit recomputed all 30 canonical daily slice SHA-256
+values and all 276 recorded cleaned-bundle file checksums with zero mismatches.
+Every previously established July and August identity was unchanged, no date was
+processed twice or replaced, and the source rehash reproduced the original byte
+size and SHA-256.
+
+This successful month is bounded operational evidence for this exact September
+delivery. It does not establish publisher-side transfer completeness,
+observational completeness, or safe processing of October, November, or the
+complete 153-day period. It produces no final vessel-activity input, does not
+accept ADR 0018, selects no vessel rule, and begins no exposure analysis.
 
 ### Verified one-day compatibility exercise
 
