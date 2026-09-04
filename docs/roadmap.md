@@ -467,9 +467,21 @@ exercised with bounded two-day real data**
   on a resource threshold. An independent read-only audit recomputed all 31
   canonical daily slice checksums and all 186 recorded cleaned-bundle file
   checksums with zero mismatches and confirmed that every July identity was
-  unchanged. No HTTP `Content-Length` was retained, so publisher-side transfer
+  unchanged.
+  September was accumulated the same way on the same date. Its delivery
+  reconciled 15,638,516 rows across exactly its 30 requested dates, cleaned
+  2,861,837 commercial observations, and raised the manifest to 92 compatible
+  dates with 61 October--November dates missing and no conflicts. Its first run
+  took 442.139 seconds and peaked at 595.102 MiB application RSS, 992.887 MiB
+  private bytes, 599.180 MiB process-tree RSS, and 752.438 MiB spill; minimum
+  available memory/free disk were 2.580/60.813 GiB and spill returned to zero.
+  The identical 136.475-second retry skipped all 30 September dates with
+  unchanged identities, peaked at 73.684 MiB application RSS, and used zero
+  spill. Its audit recomputed 30 canonical daily slice checksums and all 276
+  recorded cleaned-bundle file checksums with zero mismatches. No HTTP
+  `Content-Length` was retained for either month, so publisher-side transfer
   completeness and observational completeness remain `unverified`, and
-  September--November and full-period safety remain unestablished.
+  October--November and full-period safety remain unestablished.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -707,8 +719,9 @@ exercised with bounded two-day real data**
   supplied-artifact validation, bounded multi-date delivery intake, resumable
   daily-cleaner orchestration, overlapping real one-day/two-day canonical
   compatibility exercise, seven-day operational gate, July monthly operational
-  gate, and August monthly accumulation are complete. Publisher-side independent
-  byte completeness remains `unverified`; September--November/full-period memory
+  gate, and August and September monthly accumulations are complete.
+  Publisher-side independent
+  byte completeness remains `unverified`; October--November/full-period memory
   safety, a guarded daily bulk download, and the 153-date retrieval remain
   unexercised. Independent
   audit of the July evidence passed, and ADR 0017 authorizes the author to submit
