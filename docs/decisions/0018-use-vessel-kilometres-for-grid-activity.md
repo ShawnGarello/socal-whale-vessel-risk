@@ -542,10 +542,24 @@ separate.
 
 Distributions use exact counts/minima/maxima/sums/means plus fixed half-open
 bins recorded in the artifact; the implementation does not retain millions of
-values to calculate percentiles. It atomically writes deterministic
-`evidence.json` plus time-bearing `run-metadata.json` beneath ignored interim
-storage. Paths, clocks, runtime, output-directory names, machine details, and
-resource settings are non-identity execution provenance. Synthetic validation
+values to calculate percentiles. Processing version `1.1.0` adds absolute
+projected-minus-geodesic difference in metres; signed and absolute relative
+difference fractions using `(projected - geodesic) / geodesic`; and a separate
+undefined count when geodesic distance is zero. Absolute metre edges are
+`0`, `0.001`, `0.01`, `0.1`, `1`, `10`, `100`, `1,000`; signed relative edges
+are `-0.1`, `-0.01`, `-0.001`, `-0.0001`, `-0.00001`, `0`, `0.00001`,
+`0.0001`, `0.001`, `0.01`, `0.1`; and absolute relative edges are `0`,
+`0.000001`, `0.00001`, `0.0001`, `0.001`, `0.01`, `0.1`, `1`.
+
+The period and candidate-grid evaluators share the same narrow primary-
+exclusion classifier. Synthetic parity coverage applies every 300/1,800-second
+by 30/50-knot combination to the same cleaned observations and matches
+retained/excluded counts, primary reasons, retained projected distance,
+cross-midnight retained counts, and zero-length retained counts. The boundary
+atomically writes deterministic `evidence.json` plus time-bearing
+`run-metadata.json` beneath ignored interim storage. Paths, clocks, runtime,
+output-directory names, machine details, and resource settings are non-identity
+execution provenance. Synthetic validation
 covers pairing, exclusions, reconciliation, bounded batching, deterministic
 identity, input/date/checksum/contract refusal, output safeguards, and CLI
 exits.

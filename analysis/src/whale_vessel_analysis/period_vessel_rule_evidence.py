@@ -42,12 +42,13 @@ from whale_vessel_analysis.vessel_grid import (
     KNOTS_PER_METRE_PER_SECOND,
     LENGTH_TOLERANCE_M,
     VESSEL_GROUPS,
+    candidate_primary_exclusion,
 )
 
 EVIDENCE_CONTRACT: Final = "period_vessel_rule_evidence_v1"
 EVIDENCE_LINEAGE_CONTRACT: Final = "period_vessel_rule_evidence_lineage_v1"
 EVIDENCE_SCHEMA_VERSION: Final = 1
-EVIDENCE_PROCESSING_VERSION: Final = "1.0.0"
+EVIDENCE_PROCESSING_VERSION: Final = "1.1.0"
 EVIDENCE_ID_PREFIX: Final = "period-vessel-rule-evidence-"
 EVIDENCE_FILENAME: Final = "evidence.json"
 RUN_METADATA_FILENAME: Final = "run-metadata.json"
@@ -103,6 +104,39 @@ DISTANCE_DIFFERENCE_EDGES_M: Final = (
     1.0,
     10.0,
     100.0,
+)
+ABSOLUTE_DISTANCE_DIFFERENCE_EDGES_M: Final = (
+    0.0,
+    0.001,
+    0.01,
+    0.1,
+    1.0,
+    10.0,
+    100.0,
+    1_000.0,
+)
+SIGNED_RELATIVE_DISTANCE_DIFFERENCE_EDGES: Final = (
+    -0.1,
+    -0.01,
+    -0.001,
+    -0.0001,
+    -0.00001,
+    0.0,
+    0.00001,
+    0.0001,
+    0.001,
+    0.01,
+    0.1,
+)
+ABSOLUTE_RELATIVE_DISTANCE_DIFFERENCE_EDGES: Final = (
+    0.0,
+    0.000001,
+    0.00001,
+    0.0001,
+    0.001,
+    0.01,
+    0.1,
+    1.0,
 )
 SPEED_EDGES_KNOTS: Final = (
     0.0,
@@ -383,6 +417,22 @@ class PopulationSummary:
     projected_minus_geodesic: BoundedDistribution = field(
         default_factory=lambda: BoundedDistribution(DISTANCE_DIFFERENCE_EDGES_M)
     )
+    absolute_projected_minus_geodesic: BoundedDistribution = field(
+        default_factory=lambda: BoundedDistribution(
+            ABSOLUTE_DISTANCE_DIFFERENCE_EDGES_M
+        )
+    )
+    signed_relative_projected_minus_geodesic: BoundedDistribution = field(
+        default_factory=lambda: BoundedDistribution(
+            SIGNED_RELATIVE_DISTANCE_DIFFERENCE_EDGES
+        )
+    )
+    absolute_relative_projected_minus_geodesic: BoundedDistribution = field(
+        default_factory=lambda: BoundedDistribution(
+            ABSOLUTE_RELATIVE_DISTANCE_DIFFERENCE_EDGES
+        )
+    )
+    relative_distance_difference_undefined_count: int = 0
     implied_speed: BoundedDistribution = field(
         default_factory=lambda: BoundedDistribution(SPEED_EDGES_KNOTS)
     )
@@ -419,6 +469,25 @@ class PopulationSummary:
             raise PeriodVesselRuleEvidenceError(
                 "vessel-length availability does not reconcile with observations"
             )
+        distance_count = self.projected_minus_geodesic.count
+        if not (
+            self.projected_distance.count
+            == self.geodesic_distance.count
+            == self.absolute_projected_minus_geodesic.count
+            == distance_count
+        ):
+            raise PeriodVesselRuleEvidenceError(
+                "projected/geodesic distance diagnostics do not reconcile"
+            )
+        relative_count = self.signed_relative_projected_minus_geodesic.count
+        if not (
+            relative_count == self.absolute_relative_projected_minus_geodesic.count
+            and relative_count + self.relative_distance_difference_undefined_count
+            == distance_count
+        ):
+            raise PeriodVesselRuleEvidenceError(
+                "relative distance diagnostics do not reconcile"
+            )
         return {
             "cleaned_observations": self.observation_count,
             "distinct_mmsi": distinct["distinct_mmsi"],
@@ -452,6 +521,18 @@ class PopulationSummary:
                 ),
                 "projected_minus_geodesic_distance_m": (
                     self.projected_minus_geodesic.to_dict()
+                ),
+                "absolute_projected_minus_geodesic_distance_m": (
+                    self.absolute_projected_minus_geodesic.to_dict()
+                ),
+                "signed_relative_projected_minus_geodesic_difference_fraction": (
+                    self.signed_relative_projected_minus_geodesic.to_dict()
+                ),
+                "absolute_relative_projected_minus_geodesic_difference_fraction": (
+                    self.absolute_relative_projected_minus_geodesic.to_dict()
+                ),
+                "relative_difference_undefined_geodesic_zero": (
+                    self.relative_distance_difference_undefined_count
                 ),
                 "implied_speed_knots": self.implied_speed.to_dict(),
             },
@@ -584,9 +665,22 @@ def _distribution_contract() -> dict[str, object]:
             "time_gap_seconds": list(TIME_GAP_EDGES),
             "endpoint_distance_m": list(DISTANCE_EDGES_M),
             "projected_minus_geodesic_distance_m": list(DISTANCE_DIFFERENCE_EDGES_M),
+            "absolute_projected_minus_geodesic_distance_m": list(
+                ABSOLUTE_DISTANCE_DIFFERENCE_EDGES_M
+            ),
+            "signed_relative_projected_minus_geodesic_difference_fraction": list(
+                SIGNED_RELATIVE_DISTANCE_DIFFERENCE_EDGES
+            ),
+            "absolute_relative_projected_minus_geodesic_difference_fraction": list(
+                ABSOLUTE_RELATIVE_DISTANCE_DIFFERENCE_EDGES
+            ),
             "speed_knots": list(SPEED_EDGES_KNOTS),
             "vessel_length_m": list(LENGTH_EDGES_M),
         },
+        "relative_difference_formula": (
+            "(projected_endpoint_distance_m - geodesic_endpoint_distance_m) / "
+            "geodesic_endpoint_distance_m; undefined when geodesic distance is zero"
+        ),
         "percentiles": "not calculated; fixed bins avoid retaining full populations",
     }
 
@@ -682,30 +776,6 @@ def _record_observation(summary: PopulationSummary, row: Mapping[str, object]) -
         summary.vessel_length.add(length)
 
 
-def _candidate_primary_reason(
-    *,
-    coordinate_valid: bool,
-    elapsed_seconds: float,
-    group_changed: bool,
-    implied_speed_knots: float | None,
-    rule: CandidateRule,
-) -> str | None:
-    if not coordinate_valid:
-        return "invalid_coordinate_transform"
-    if elapsed_seconds <= 0:
-        return "non_increasing_time"
-    if group_changed:
-        return "vessel_group_change"
-    if elapsed_seconds > rule.maximum_gap_seconds:
-        return "maximum_gap"
-    if (
-        implied_speed_knots is not None
-        and implied_speed_knots > rule.implied_speed_ceiling_knots
-    ):
-        return "implied_speed"
-    return None
-
-
 def _record_segment(
     summary: PopulationSummary,
     *,
@@ -729,7 +799,17 @@ def _record_segment(
         geodesic = cast(float, geodesic_distance_m)
         summary.projected_distance.add(projected)
         summary.geodesic_distance.add(geodesic)
-        summary.projected_minus_geodesic.add(projected - geodesic)
+        difference = projected - geodesic
+        summary.projected_minus_geodesic.add(difference)
+        summary.absolute_projected_minus_geodesic.add(abs(difference))
+        if geodesic == 0:
+            summary.relative_distance_difference_undefined_count += 1
+        else:
+            relative_difference = difference / geodesic
+            summary.signed_relative_projected_minus_geodesic.add(relative_difference)
+            summary.absolute_relative_projected_minus_geodesic.add(
+                abs(relative_difference)
+            )
         if projected <= LENGTH_TOLERANCE_M:
             summary.zero_length_segment_count += 1
     if elapsed_seconds <= 0:
@@ -743,12 +823,15 @@ def _record_segment(
 
     for rule in rules:
         candidate = summary.candidates[rule.candidate_id]
-        reason = _candidate_primary_reason(
+        reason = candidate_primary_exclusion(
             coordinate_valid=coordinate_valid,
             elapsed_seconds=elapsed_seconds,
             group_changed=group_changed,
-            implied_speed_knots=implied_speed_knots,
-            rule=rule,
+            implied_speed_knots=(
+                math.nan if implied_speed_knots is None else implied_speed_knots
+            ),
+            maximum_gap_seconds=rule.maximum_gap_seconds,
+            implied_speed_ceiling_knots=rule.implied_speed_ceiling_knots,
         )
         if reason is not None:
             candidate.exclude(reason)
@@ -1069,6 +1152,88 @@ def build_period_vessel_rule_evidence(
     )
 
 
+def _nonnegative_integer(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
+def _validate_distribution(value: object, label: str, edges: Sequence[float]) -> int:
+    if not isinstance(value, Mapping):
+        raise PeriodVesselRuleEvidenceError(f"{label} distribution must be an object")
+    count = value.get("count")
+    bins = value.get("bin_counts")
+    if not _nonnegative_integer(count):
+        raise PeriodVesselRuleEvidenceError(f"{label} count must be nonnegative")
+    if (
+        not isinstance(bins, list)
+        or len(bins) != len(edges) + 1
+        or any(not _nonnegative_integer(item) for item in bins)
+        or sum(cast(list[int], bins)) != count
+    ):
+        raise PeriodVesselRuleEvidenceError(
+            f"{label} fixed-bin counts do not reconcile"
+        )
+    for field_name in ("sum", "minimum", "maximum", "mean"):
+        field_value = value.get(field_name)
+        if count == 0 and field_name != "sum":
+            if field_value is not None:
+                raise PeriodVesselRuleEvidenceError(
+                    f"empty {label} distribution has a {field_name}"
+                )
+            continue
+        if (
+            not isinstance(field_value, int | float)
+            or isinstance(field_value, bool)
+            or not math.isfinite(float(field_value))
+        ):
+            raise PeriodVesselRuleEvidenceError(f"{label} {field_name} must be finite")
+    return cast(int, count)
+
+
+def _validate_distance_comparison(population: object, label: str) -> None:
+    if not isinstance(population, Mapping):
+        raise PeriodVesselRuleEvidenceError(f"{label} population must be an object")
+    structural = population.get("structural_segments")
+    if not isinstance(structural, Mapping):
+        raise PeriodVesselRuleEvidenceError(
+            f"{label} structural segments must be an object"
+        )
+    signed_count = _validate_distribution(
+        structural.get("projected_minus_geodesic_distance_m"),
+        f"{label} signed projected/geodesic difference",
+        DISTANCE_DIFFERENCE_EDGES_M,
+    )
+    absolute_count = _validate_distribution(
+        structural.get("absolute_projected_minus_geodesic_distance_m"),
+        f"{label} absolute projected/geodesic difference",
+        ABSOLUTE_DISTANCE_DIFFERENCE_EDGES_M,
+    )
+    signed_relative_count = _validate_distribution(
+        structural.get("signed_relative_projected_minus_geodesic_difference_fraction"),
+        f"{label} signed relative projected/geodesic difference",
+        SIGNED_RELATIVE_DISTANCE_DIFFERENCE_EDGES,
+    )
+    absolute_relative_count = _validate_distribution(
+        structural.get(
+            "absolute_relative_projected_minus_geodesic_difference_fraction"
+        ),
+        f"{label} absolute relative projected/geodesic difference",
+        ABSOLUTE_RELATIVE_DISTANCE_DIFFERENCE_EDGES,
+    )
+    undefined = structural.get("relative_difference_undefined_geodesic_zero")
+    if not _nonnegative_integer(undefined):
+        raise PeriodVesselRuleEvidenceError(
+            f"{label} undefined relative difference count must be nonnegative"
+        )
+    if not (
+        signed_count == absolute_count
+        and signed_relative_count == absolute_relative_count
+        and signed_relative_count + cast(int, undefined) == signed_count
+    ):
+        raise PeriodVesselRuleEvidenceError(
+            f"{label} projected/geodesic difference counts do not reconcile"
+        )
+
+
 def validate_evidence_document(document: Mapping[str, object]) -> None:
     """Validate the deterministic evidence contract before atomic publication."""
     if document.get("contract") != EVIDENCE_CONTRACT:
@@ -1077,6 +1242,10 @@ def validate_evidence_document(document: Mapping[str, object]) -> None:
         raise PeriodVesselRuleEvidenceError("unsupported evidence schema version")
     if document.get("processing_version") != EVIDENCE_PROCESSING_VERSION:
         raise PeriodVesselRuleEvidenceError("unsupported evidence processing version")
+    if document.get("distribution_contract") != _distribution_contract():
+        raise PeriodVesselRuleEvidenceError(
+            "evidence fixed-bin distribution contract is incompatible"
+        )
     evidence_id = document.get("evidence_id")
     if not isinstance(evidence_id, str):
         raise PeriodVesselRuleEvidenceError("evidence document has no valid identity")
@@ -1098,6 +1267,27 @@ def validate_evidence_document(document: Mapping[str, object]) -> None:
         raise PeriodVesselRuleEvidenceError(
             "daily evidence must contain every accepted UTC date exactly once"
         )
+    period = document.get("whole_period_by_vessel_group")
+    if not isinstance(period, Mapping):
+        raise PeriodVesselRuleEvidenceError(
+            "whole-period vessel-group evidence must be an object"
+        )
+    for group in (*VESSEL_GROUPS, ALL_COMMERCIAL):
+        _validate_distance_comparison(period.get(group), f"whole period {group}")
+    for item in daily:
+        if not isinstance(item, Mapping):
+            raise PeriodVesselRuleEvidenceError(
+                "daily evidence entry must be an object"
+            )
+        by_group = item.get("by_vessel_group")
+        if not isinstance(by_group, Mapping):
+            raise PeriodVesselRuleEvidenceError(
+                "daily vessel-group evidence must be an object"
+            )
+        for group in (*VESSEL_GROUPS, ALL_COMMERCIAL):
+            _validate_distance_comparison(
+                by_group.get(group), f"date {item.get('utc_date')} {group}"
+            )
     rules = document.get("candidate_rules")
     if not isinstance(rules, list) or len(rules) != 4:
         raise PeriodVesselRuleEvidenceError(
@@ -1188,9 +1378,9 @@ def _lineage_document(
         steps=(
             ProcessingStep("verify-ready-period-input", "1.0.0"),
             ProcessingStep("form-whole-period-consecutive-pairs", "1.0.0"),
-            ProcessingStep("summarize-fixed-bin-rule-evidence", "1.0.0"),
+            ProcessingStep("summarize-fixed-bin-rule-evidence", "1.1.0"),
             ProcessingStep("evaluate-explicit-candidate-matrix", "1.0.0"),
-            ProcessingStep("write-deterministic-period-rule-evidence", "1.0.0"),
+            ProcessingStep("write-deterministic-period-rule-evidence", "1.1.0"),
         ),
         inputs=tuple(inputs),
         outputs=(

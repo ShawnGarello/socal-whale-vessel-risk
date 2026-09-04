@@ -610,8 +610,11 @@ reports cross-midnight segments separately.
 The output contains exact observation/distinct-identity counts and fixed-bin
 distributions for passenger, cargo, tanker, and the recomputed commercial union
 by date and whole period. It preserves structural and candidate exclusions,
-projected/geodesic distance comparison, SOG availability, and vessel-length
-availability. Individual values are not retained for percentile calculation.
+signed and absolute projected/geodesic distance differences, signed and
+absolute relative differences, the zero-geodesic undefined-relative count, SOG
+availability, and vessel-length availability. All distributions use the fixed
+edges documented in the analysis README; individual values are not retained
+for percentile calculation.
 
 One atomic bundle beneath ignored `data/interim/` contains deterministic
 `evidence.json` and time-bearing `run-metadata.json`. Local paths, checksums of
@@ -1176,7 +1179,7 @@ the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 374 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 376 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -1216,7 +1219,8 @@ settings in lineage, candidate-bundle atomicity and output safeguards, DuckDB
 period-rule single-stream candidate evaluation, fixed-bin bounded summaries,
 daily cross-midnight accounting, group/union reconciliation, path- and clock-
 independent period-evidence identity, ready-period and exact-date enforcement,
-period-evidence atomic output and CLI behavior,
+zero-geodesic relative-difference handling, all-four-candidate parity with the
+grid evaluator, period-evidence atomic output and CLI behavior,
 normalized-memory verification, deterministic resource-threshold evaluation,
 mocked runtime abort and process cleanup, profiler CLI/output safeguards and
 version reporting, and all CLI boundaries.

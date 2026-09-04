@@ -1635,16 +1635,32 @@ not relabel or count those source-stage removals a second time.
 Distributions use deterministic fixed half-open bins plus exact count, minimum,
 maximum, sum, and mean. Fixed edges are recorded in the artifact for time gap,
 projected and geodesic endpoint distance, signed projected-minus-geodesic
-difference, implied speed, reported SOG, and vessel length. Percentiles are not
-calculated, and individual values are never accumulated in Python. Memory is
-therefore bounded by the explicit DuckDB limit and Arrow batch size plus a
-constant set of date/group/candidate counters.
+difference, absolute projected-minus-geodesic difference, signed and absolute
+relative difference, implied speed, reported SOG, and vessel length. The
+relative value is `(projected - geodesic) / geodesic`; a zero geodesic distance
+has no relative value and increments a separate undefined count.
+
+The added projected/geodesic comparison edges are explicit and versioned:
+
+- absolute difference metres: `0`, `0.001`, `0.01`, `0.1`, `1`, `10`, `100`,
+  `1,000`;
+- signed relative fraction: `-0.1`, `-0.01`, `-0.001`, `-0.0001`, `-0.00001`,
+  `0`, `0.00001`, `0.0001`, `0.001`, `0.01`, `0.1`; and
+- absolute relative fraction: `0`, `0.000001`, `0.00001`, `0.0001`, `0.001`,
+  `0.01`, `0.1`, `1`.
+
+As with the other distributions, bin zero is below the first edge, interior
+bins are lower-inclusive and upper-exclusive, and the final bin includes values
+at or above the last edge. Percentiles are not calculated, and individual
+values are never accumulated in Python. Memory is therefore bounded by the
+explicit DuckDB limit and Arrow batch size plus a constant set of
+date/group/candidate counters.
 
 The atomic output is one named directory beneath ignored `data/interim/`:
 
 | File | Contract and purpose |
 |---|---|
-| `evidence.json` | Deterministic `period_vessel_rule_evidence_v1` candidate-method evidence with input identities, fixed-bin contract, daily and period summaries, reconciliation, and limitations. |
+| `evidence.json` | Deterministic `period_vessel_rule_evidence_v1`, processing version `1.1.0`, candidate-method evidence with input identities, fixed-bin contract, daily and period summaries, reconciliation, and limitations. |
 | `run-metadata.json` | Time-bearing `period_vessel_rule_evidence_lineage_v1` execution provenance with local paths, actual checksums, UTC times, runtime, resource settings, batch statistics, and software versions. |
 
 The content-derived evidence ID excludes local absolute paths, execution times,
@@ -1666,7 +1682,11 @@ movement, projected/geodesic comparison, SOG and length availability,
 date/group reconciliation, commercial-union distinct recomputation,
 batch-bounded single-stream iteration, path/clock-independent identity,
 readiness and checksum failures, path guards, atomic failure, overwrite, and
-CLI exits.
+CLI exits. A direct parity test also runs the period evaluator and existing
+candidate-grid evaluator over the same synthetic observations for all four
+candidate combinations and matches retained/excluded counts, primary reasons,
+retained projected distance, cross-midnight retained counts, and zero-length
+retained counts. Both evaluators call the same narrow primary-exclusion helper.
 
 The boundary has not been exercised against the real 153-date accumulation
 manifest. The real five-month evidence matrix and four candidate grid runs have
