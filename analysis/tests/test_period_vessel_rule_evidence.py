@@ -192,12 +192,27 @@ def test_one_ordered_stream_covers_all_rules_and_daily_accounting(
         assert structural["projected_endpoint_distance_m"]["count"] == 7
         assert structural["wgs84_geodesic_endpoint_distance_m"]["count"] == 7
         assert structural["projected_minus_geodesic_distance_m"]["count"] == 7
+        assert structural["absolute_projected_minus_geodesic_distance_m"]["count"] == 7
+        assert (
+            structural["signed_relative_projected_minus_geodesic_difference_fraction"][
+                "count"
+            ]
+            == 5
+        )
+        assert (
+            structural[
+                "absolute_relative_projected_minus_geodesic_difference_fraction"
+            ]["count"]
+            == 5
+        )
+        assert structural["relative_difference_undefined_geodesic_zero"] == 2
         assert structural["projected_endpoint_distance_m"]["sum"] - structural[
             "wgs84_geodesic_endpoint_distance_m"
         ]["sum"] == pytest.approx(
             structural["projected_minus_geodesic_distance_m"]["sum"], abs=1e-6
         )
         assert structural["projected_minus_geodesic_distance_m"]["sum"] != 0
+        assert structural["absolute_projected_minus_geodesic_distance_m"]["sum"] > 0
         assert structural["implied_speed_knots"]["count"] == 6
         assert commercial["observation_quality"]["reported_sog"] == {
             **commercial["observation_quality"]["reported_sog"],
@@ -248,6 +263,106 @@ def test_one_ordered_stream_covers_all_rules_and_daily_accounting(
         assert dataset.execution_stats.maximum_arrow_batch_rows <= 2
         assert dataset.execution_stats.streamed_observations == 13
         assert stream_calls == 1
+    finally:
+        context.__exit__(None, None, None)
+
+
+def test_zero_geodesic_distance_is_explicit_and_fixed_bins_are_validated(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    interim, _raw = _roots(tmp_path, monkeypatch)
+    rows = [
+        ("123456789", _at("2024-07-01", 0, 0), 34.0, -118.0, "cargo"),
+        ("123456789", _at("2024-07-01", 0, 1), 34.0, -118.0, "cargo"),
+        ("987654321", _at("2024-07-01", 1, 0), 34.0, -118.0, "tanker"),
+        ("987654321", _at("2024-07-01", 1, 1), 34.0, -117.999, "tanker"),
+    ]
+    bundle = build_cleaned_bundle(tmp_path / "zero-geodesic", rows)
+    manifest_path = interim / "zero-geodesic-period.json"
+    manifest = dict(
+        record_cleaned_days(manifest_path, [bundle], clock=lambda: FIXED_TIME).manifest
+    )
+    dataset, handle = _build_dataset(manifest, manifest_path, interim, batch_size=1)
+    context, _relation = handle
+    try:
+        edges = dataset.document["distribution_contract"]["edges"]
+        assert edges["absolute_projected_minus_geodesic_distance_m"] == [
+            0.0,
+            0.001,
+            0.01,
+            0.1,
+            1.0,
+            10.0,
+            100.0,
+            1_000.0,
+        ]
+        assert edges[
+            "signed_relative_projected_minus_geodesic_difference_fraction"
+        ] == [
+            -0.1,
+            -0.01,
+            -0.001,
+            -0.0001,
+            -0.00001,
+            0.0,
+            0.00001,
+            0.0001,
+            0.001,
+            0.01,
+            0.1,
+        ]
+        assert edges[
+            "absolute_relative_projected_minus_geodesic_difference_fraction"
+        ] == [0.0, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1.0]
+        structural = dataset.document["whole_period_by_vessel_group"]["all_commercial"][
+            "structural_segments"
+        ]
+        projected = structural["projected_endpoint_distance_m"]["sum"]
+        geodesic = structural["wgs84_geodesic_endpoint_distance_m"]["sum"]
+        difference = projected - geodesic
+        relative = difference / geodesic
+        assert structural["projected_minus_geodesic_distance_m"]["count"] == 2
+        assert structural["projected_minus_geodesic_distance_m"][
+            "sum"
+        ] == pytest.approx(difference, abs=1e-9)
+        assert structural["absolute_projected_minus_geodesic_distance_m"][
+            "sum"
+        ] == pytest.approx(abs(difference), abs=1e-9)
+        assert (
+            structural["signed_relative_projected_minus_geodesic_difference_fraction"][
+                "count"
+            ]
+            == 1
+        )
+        assert structural[
+            "signed_relative_projected_minus_geodesic_difference_fraction"
+        ]["sum"] == pytest.approx(relative, abs=1e-12)
+        assert (
+            structural[
+                "absolute_relative_projected_minus_geodesic_difference_fraction"
+            ]["count"]
+            == 1
+        )
+        assert structural[
+            "absolute_relative_projected_minus_geodesic_difference_fraction"
+        ]["sum"] == pytest.approx(abs(relative), abs=1e-12)
+        assert structural["relative_difference_undefined_geodesic_zero"] == 1
+
+        tampered = json.loads(json.dumps(dataset.document))
+        bins = tampered["whole_period_by_vessel_group"]["all_commercial"][
+            "structural_segments"
+        ]["absolute_projected_minus_geodesic_distance_m"]["bin_counts"]
+        bins[0] += 1
+        identity = dict(tampered)
+        del identity["evidence_id"]
+        tampered["evidence_id"] = (
+            period_vessel_rule_evidence.EVIDENCE_ID_PREFIX
+            + period_vessel_rule_evidence.hashlib.sha256(
+                period_vessel_rule_evidence.canonical_json(identity).encode("utf-8")
+            ).hexdigest()[:24]
+        )
+        with pytest.raises(PeriodVesselRuleEvidenceError, match="fixed-bin counts"):
+            validate_evidence_document(tampered)
     finally:
         context.__exit__(None, None, None)
 

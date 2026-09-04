@@ -92,10 +92,40 @@ VesselGroup = Literal["passenger", "cargo", "tanker"]
 PeriodReadinessTreatment = Literal["require-ready", "allow-incomplete-candidate"]
 EdgeTreatment = Literal["censor-at-cleaned-extent"]
 SupportTreatment = Literal["exact-water-geometry-exclude-and-report"]
+CandidateExclusionReason = Literal[
+    "invalid_coordinate_transform",
+    "non_increasing_time",
+    "vessel_group_change",
+    "maximum_gap",
+    "implied_speed",
+]
 
 
 class VesselGridError(ValueError):
     """Raised when candidate vessel-grid input, processing, or output is invalid."""
+
+
+def candidate_primary_exclusion(
+    *,
+    coordinate_valid: bool,
+    elapsed_seconds: float,
+    group_changed: bool,
+    implied_speed_knots: float,
+    maximum_gap_seconds: float,
+    implied_speed_ceiling_knots: float,
+) -> CandidateExclusionReason | None:
+    """Return the shared primary candidate exclusion in stable precedence order."""
+    if not coordinate_valid:
+        return "invalid_coordinate_transform"
+    if elapsed_seconds <= 0:
+        return "non_increasing_time"
+    if group_changed:
+        return "vessel_group_change"
+    if elapsed_seconds > maximum_gap_seconds:
+        return "maximum_gap"
+    if implied_speed_knots > implied_speed_ceiling_knots:
+        return "implied_speed"
+    return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -403,21 +433,37 @@ class _Accumulator:
                 _finite_number(row.get("next_latitude"), "next latitude"),
             )
         except VesselGridError:
-            self.exclusion_counts["invalid_coordinate_transform"] += 1
+            reason = candidate_primary_exclusion(
+                coordinate_valid=False,
+                elapsed_seconds=elapsed_seconds,
+                group_changed=False,
+                implied_speed_knots=math.nan,
+                maximum_gap_seconds=self.parameters.maximum_gap_seconds,
+                implied_speed_ceiling_knots=(
+                    self.parameters.implied_speed_ceiling_knots
+                ),
+            )
+            assert reason == "invalid_coordinate_transform"
+            self.exclusion_counts[reason] += 1
             return
         parent_distance = math.dist(start_xy, end_xy)
-        if elapsed_seconds <= 0:
-            self._exclude("non_increasing_time", parent_distance)
-            return
-        if next_group_value not in VESSEL_GROUPS or next_group_value != group:
-            self._exclude("vessel_group_change", parent_distance)
-            return
-        if elapsed_seconds > self.parameters.maximum_gap_seconds:
-            self._exclude("maximum_gap", parent_distance)
-            return
-        implied_speed = parent_distance / elapsed_seconds * KNOTS_PER_METRE_PER_SECOND
-        if implied_speed > self.parameters.implied_speed_ceiling_knots:
-            self._exclude("implied_speed", parent_distance)
+        implied_speed = (
+            math.nan
+            if elapsed_seconds <= 0
+            else parent_distance / elapsed_seconds * KNOTS_PER_METRE_PER_SECOND
+        )
+        reason = candidate_primary_exclusion(
+            coordinate_valid=True,
+            elapsed_seconds=elapsed_seconds,
+            group_changed=(
+                next_group_value not in VESSEL_GROUPS or next_group_value != group
+            ),
+            implied_speed_knots=implied_speed,
+            maximum_gap_seconds=self.parameters.maximum_gap_seconds,
+            implied_speed_ceiling_knots=self.parameters.implied_speed_ceiling_knots,
+        )
+        if reason is not None:
+            self._exclude(reason, parent_distance)
             return
         self.retained_counts[group] += 1
         if start_time.date() != end_time.date():
