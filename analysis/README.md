@@ -178,8 +178,9 @@ Two measured repeat runs reproduced both identities in 3.175186 and 3.094731
 seconds. At that stage, their approximately 1.59 GiB peak RSS was a scaling
 concern: monthly and full-period processing had not been shown safe and required
 a measured bounded design before execution. The subsequent explicit resource
-controls supported successful seven-day and exact July monthly operational
-gates; August--November and complete 153-day processing remain untested. The
+controls supported successful seven-day, exact July monthly, and exact August
+monthly operational gates; September--November and complete 153-day processing
+remain untested. The
 full evidence and removal accounting are in the
 [source register](../docs/data-sources.md#retrieval-route). The audited July
 gate satisfied ADR 0017's acceptance condition. ADR 0017 is Accepted and
@@ -711,6 +712,124 @@ sequential author-submitted August--November calendar-month extracts under the
 same controls; it does not authorize one combined later-period request. This
 outcome does not accept ADR 0018, select vessel rules, or begin exposure
 analysis.
+
+### August monthly accumulation
+
+On 2026-09-04 the first ADR 0017-authorized later month was accumulated into the
+existing July analytical-period state. The immutable author-supplied direct CSV
+for **2024-08-01 through 2024-08-31** was read in place and not changed. It
+contained 1,857,171,239 bytes and had SHA-256
+`42cb9fbfa8623c64460c2cbfd3d878a5f4e035a746637a4bdb036657a57fc29e`,
+independently confirmed before and after processing. No independently retained
+HTTP `Content-Length` was available, so the command omitted
+`--source-content-length` and publisher-side transfer completeness remains
+`unverified`.
+
+The run used a fresh month-specific intake directory
+(`run\intake-2024-08`), a fresh isolated spill directory (`spill-2024-08`), and
+fresh profile paths, while sharing the established `run\cleaned` root and
+`run\period.json` manifest. Every documented control was unchanged: `512MB`, one
+effective thread, the 2 GiB/8 GiB preflight, the 1 GiB/4 GiB/1 GiB/2 GiB runtime
+limits, and expected target exit code `3`:
+
+```text
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.accessais_period_intake_cli --output ..\data\interim\m3-accessais-july-month-gate\profile-2024-08-first.json --label accessais-august-month-first --disk-root ..\data\interim\m3-accessais-july-month-gate\run --spill-root ..\data\interim\m3-accessais-july-month-gate\spill-2024-08 --minimum-free-memory-gib 2 --minimum-free-disk-gib 8 --runtime-minimum-available-memory-gib 1 --runtime-minimum-free-disk-gib 4 --runtime-maximum-application-rss-gib 1 --runtime-maximum-spill-gib 2 --expected-exit-code 3 -- run --input <author-supplied-august.csv> --intake-dir ..\data\interim\m3-accessais-july-month-gate\run\intake-2024-08 --requested-start 2024-08-01 --requested-end 2024-08-31 --memory-limit 512MB --temp-directory ..\data\interim\m3-accessais-july-month-gate\spill-2024-08 --cleaned-root ..\data\interim\m3-accessais-july-month-gate\run\cleaned --period-manifest ..\data\interim\m3-accessais-july-month-gate\run\period.json
+```
+
+The retry repeated that command with the same immutable input and managed paths,
+changing only the report path and label to `profile-2024-08-retry.json` and
+`accessais-august-month-retry`.
+
+The first profile passed preflight with 3,152,637,952 bytes (2.936 GiB)
+available memory and 74,810,933,248 bytes (69.673 GiB) free disk. The target
+returned the expected exit code `3` because the 153-date input remained
+incomplete, while the profiler reported `target_completed`. It reconciled all
+18,284,354 source rows: all 18,284,354 had valid in-request timestamps and were
+assigned, with zero malformed or unassignable timestamps and zero valid
+out-of-request rows. Exactly all 31 requested UTC dates were present and cleaned
+sequentially into 3,501,843 commercial observations:
+
+| UTC date | Source rows | Cleaned rows |
+|---|---:|---:|
+| 2024-08-01 | 579,387 | 104,572 |
+| 2024-08-02 | 621,571 | 111,236 |
+| 2024-08-03 | 631,089 | 122,224 |
+| 2024-08-04 | 613,770 | 116,894 |
+| 2024-08-05 | 577,247 | 113,071 |
+| 2024-08-06 | 590,893 | 114,846 |
+| 2024-08-07 | 585,280 | 105,986 |
+| 2024-08-08 | 583,956 | 106,012 |
+| 2024-08-09 | 589,442 | 103,655 |
+| 2024-08-10 | 607,980 | 109,275 |
+| 2024-08-11 | 617,025 | 110,457 |
+| 2024-08-12 | 587,678 | 114,805 |
+| 2024-08-13 | 576,143 | 117,465 |
+| 2024-08-14 | 581,443 | 125,128 |
+| 2024-08-15 | 584,788 | 115,260 |
+| 2024-08-16 | 604,626 | 112,522 |
+| 2024-08-17 | 609,416 | 120,883 |
+| 2024-08-18 | 596,393 | 114,720 |
+| 2024-08-19 | 581,877 | 117,333 |
+| 2024-08-20 | 547,100 | 100,672 |
+| 2024-08-21 | 576,130 | 108,843 |
+| 2024-08-22 | 595,731 | 121,608 |
+| 2024-08-23 | 580,473 | 112,517 |
+| 2024-08-24 | 566,138 | 110,804 |
+| 2024-08-25 | 626,142 | 118,783 |
+| 2024-08-26 | 585,866 | 115,769 |
+| 2024-08-27 | 568,160 | 120,056 |
+| 2024-08-28 | 570,374 | 120,183 |
+| 2024-08-29 | 533,538 | 95,104 |
+| 2024-08-30 | 600,377 | 111,268 |
+| 2024-08-31 | 614,321 | 109,892 |
+| **Total** | **18,284,354** | **3,501,843** |
+
+All 31 new cleaner bundles recorded effective `488.2 MiB`, one effective thread,
+the isolated spill directory, and successful spill-directory removal. The
+delivery ID is `accessais-period-9d5c80e7843e2ad9b8b2af2b`. The period input ID
+moved from `multiday-ais-d66b0637fb841469f4d585a5` to
+`multiday-ais-d600bc7730f03ef82658a561` because the identity derives from the
+recorded per-date analytical identities and 31 dates were added. The period
+remained `not_ready` with 62 compatible dates, no conflicts, and 91 missing
+September--November dates.
+
+The first target operation took 567.190 seconds; elapsed time including imports
+and the profiler barrier was 568.991 seconds. Peak sampled application RSS was
+607,567,872 bytes (579.422 MiB), peak process-tree RSS was 611,569,664 bytes
+(583.238 MiB), and peak private bytes were 1,047,658,496 bytes (999.125 MiB).
+Minimum available memory was 2,524,327,936 bytes (2.351 GiB) and minimum free
+disk was 70,033,879,040 bytes (65.224 GiB). The shared generated root peaked at
+6,908,288,059 bytes (6.434 GiB) and ended at 5,019,308,918 bytes (4.675 GiB);
+those totals include the retained July artifacts. Isolated spill peaked at
+801,865,728 bytes (764.719 MiB) and returned to zero. No runtime threshold
+terminated the target.
+
+The identical retry passed preflight with 3,461,558,272 bytes (3.224 GiB)
+available memory and 71,786,319,872 bytes (66.856 GiB) free disk, and also
+returned target exit code `3` with profiler outcome `target_completed`. It
+cleaned zero dates and skipped all 31 compatible August dates. Every
+deterministic canonical daily identity, cleaner run ID, cleaned-Parquet
+checksum, delivery ID, and period input ID remained unchanged, and no per-date
+period attempt was added; the delivery manifest alone recorded a second attempt
+with outcome `identical_retry`. The retry operation took 171.885 seconds, peaked
+at 77,766,656 bytes (74.164 MiB) application RSS, 81,920,000 bytes (78.125 MiB)
+process-tree RSS, and 428,371,968 bytes (408.527 MiB) private bytes, used zero
+spill, and increased the generated root by 814 bytes of retry provenance. This
+was not a cold-cache run: no operating-system or application cache was cleared.
+
+An independent read-only audit then recomputed every checksum the manifests
+reference. All 31 canonical daily slice SHA-256 values matched, and all 62
+recorded bundles' cleaned-Parquet, quality-report, and run-metadata checksums
+matched — 186 bundle files with zero mismatches. Every one of the 31 previously
+established July identities was byte-for-byte unchanged, no date was processed
+twice or replaced, and the source rehash reproduced the original byte size and
+SHA-256.
+
+This successful month is bounded operational evidence for this exact August
+delivery. It does not establish publisher-side transfer completeness,
+observational completeness, or safe processing of September, October, November,
+or the complete 153-day period. It produces no final vessel-activity input, does
+not accept ADR 0018, selects no vessel rule, and begins no exposure analysis.
 
 ### Verified one-day compatibility exercise
 
