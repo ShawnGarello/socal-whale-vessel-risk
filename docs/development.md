@@ -304,14 +304,14 @@ At that stage, the memory result was a scaling concern, not a linear forecast;
 monthly and full-period processing had not been shown safe. It led to a measured
 design with bounded date-sized processing and explicit DuckDB memory, thread,
 and spill controls. The later seven-day, exact July monthly, exact August
-monthly, and exact September monthly operational gates passed under those
-controls, while October--November and complete 153-day processing remain
-untested. The full evidence and removal accounting are in the
+monthly, exact September monthly, and exact October monthly operational gates
+passed under those controls, while November and complete 153-day processing
+remain untested. The full evidence and removal accounting are in the
 [source register](data-sources.md#retrieval-route). ADR 0017 is now Accepted:
 the audited July gate authorizes sequential author-submitted August--November
 calendar-month extracts under the same controls, without establishing later-
-month or full-period safety. August and September have been processed under
-them; October is the next request.
+month or full-period safety. August, September, and October have been processed
+under them; November is the next request.
 
 **Author-supplied multi-date AccessAIS intake**
 
@@ -391,7 +391,7 @@ handling truthfully; unless a separate safe cache-reset procedure was actually u
 state that caches were not cleared and do not label repeats cold-cache runs.
 Run resource experiments sequentially so concurrent work does not invalidate
 the memory or disk measurements. The exact seven-day, July monthly, August
-monthly, and September monthly AccessAIS
+monthly, September monthly, and October monthly AccessAIS
 gates, stop conditions, and success criteria are in the
 [analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
 
