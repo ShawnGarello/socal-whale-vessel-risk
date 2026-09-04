@@ -27,7 +27,11 @@
 > period state: all 31 August, all 30 September, all 31 October, and all 30
 > November dates reconciled, and each identical retry reused every date, so all
 > 153 expected dates are recorded with no conflict and the shared manifest is
-> `ready`. Publisher-side transfer
+> `ready`. A bounded period vessel-rule evidence boundary is now implemented
+> and synthetically tested; it evaluates the four ADR 0018 candidate
+> combinations from one whole-period adjacency stream without spatial
+> allocation. It has not been run against that 153-date manifest, and no rule
+> has been accepted. Publisher-side transfer
 > and observational completeness remain unverified. Network retrieval remains
 > unimplemented, and a complete cleaned-input period is not a vessel grid or an
 > exposure result. Final period-wide vessel aggregation,
@@ -206,6 +210,23 @@ deterministic global ordering as Arrow record batches instead of concatenating
 the period in Python, and preserves same-vessel continuity across midnight. It
 selects no plausibility threshold, constructs no segment, and emits no
 vessel-activity grid.
+
+A focused period vessel-rule evidence boundary reuses that relation's single
+whole-period same-MMSI adjacency stream. Its production path requires the ready
+153-date manifest and explicit 300/1,800-second gap values, explicit 30/50-knot
+speed ceilings, and the explicit type-only/no-length-filter treatment. An
+explicitly named incomplete-period override is limited to non-production use.
+The boundary accounts cross-midnight segments to their starting observation's
+UTC date while reporting them separately; summarizes passenger, cargo, tanker,
+and union-recomputed commercial populations by date and whole period; and uses
+exact scalar aggregates plus fixed bins rather than retaining observations or
+segments for percentiles. All four candidate combinations are evaluated during
+one bounded Arrow iteration. The deterministic JSON identity excludes paths,
+clocks, runtime, machine details, resource settings, and output names; those
+execution facts occur only in a time-bearing lineage sidecar. Atomic output is
+restricted to ignored interim storage. This implementation is synthetically
+tested but has not processed the real five-month input, does not accept a rule,
+does not create a production vessel grid, and performs no exposure analysis.
 
 A separate candidate vessel-grid boundary is implemented and synthetically
 tested. It requires explicit maximum-gap, implied-speed, readiness, edge, and

@@ -170,8 +170,9 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 ### Progress
 
 **Foundation, first AIS processing slice, projected water grid, whale transfer,
-and candidate vessel-grid aggregation implemented; candidate vessel-grid also
-exercised with bounded two-day real data**
+candidate vessel-grid aggregation, and period vessel-rule evidence boundary
+implemented; candidate vessel-grid also exercised with bounded two-day real
+data**
 
 - A Python 3.13 src package exists under [`../analysis/`](../analysis/) with a
   committed `pyproject.toml` and `uv.lock`. uv sync/lock, Ruff format/lint,
@@ -699,6 +700,23 @@ exercised with bounded two-day real data**
   many pairs an artificial daily partitioning would have lost. No maximum gap,
   implied-speed, length, or edge-support rule is applied and no segment or
   vessel grid is emitted.
+- A focused `period_vessel_rule_evidence_v1` boundary now reuses the relation's
+  single whole-period same-MMSI adjacency stream to evaluate all four explicit
+  300/1,800-second by 30/50-knot combinations without grid intersection. Its
+  production path requires the ready 153-date manifest, all candidate values,
+  and the explicit type-only/no-length-filter treatment; a clearly named
+  incomplete-period override is non-production only. Daily segment accounting
+  uses the starting observation's UTC date and reports cross-midnight segments
+  separately. Date, whole-period, passenger, cargo, tanker, and union-
+  recomputed commercial summaries retain every structural and candidate
+  exclusion reason, SOG and length availability, and projected/geodesic
+  comparisons. Exact scalar aggregates plus fixed bins and one bounded Arrow
+  iteration avoid retaining full populations. Deterministic evidence JSON and
+  a time-bearing lineage sidecar are atomically restricted to ignored interim
+  storage; paths, clocks, runtime, output names, machine details, and resource
+  settings do not enter evidence identity. The boundary is synthetically
+  tested. It has not been run on the real ready manifest, selects no rule,
+  emits no production grid, and performs no exposure analysis.
 - A focused candidate vessel-grid boundary now consumes that verified relation
   and the exact `projected_water_grid_v1` contract. It requires explicit maximum
   gap, implied-speed ceiling, period-readiness, cleaned-extent censoring, and
@@ -775,8 +793,10 @@ exercised with bounded two-day real data**
   are implemented, synthetically verified, and exercised across the four
   documented parameter combinations on the real 15--16 July delivery. The
   candidate exercise used its own separate two-date period manifest, not the
-  now-`ready` accumulation-gate manifest; transfer and observational
-  completeness remain `unverified`. No production
+  now-`ready` accumulation-gate manifest. The new bounded period-rule evidence
+  command is implemented and synthetically tested but has likewise not run on
+  the real 153-date state; transfer and observational completeness remain
+  `unverified`. No production
   threshold was selected;
   accepted maximum-gap and implied-speed rules, alternative edge support,
   vessel-length population treatment, period-wide stability, observational

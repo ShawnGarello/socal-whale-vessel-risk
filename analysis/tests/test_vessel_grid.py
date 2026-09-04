@@ -20,6 +20,12 @@ from whale_vessel_analysis.multiday_ais_relation import (
     RelationResources,
     open_period_relation,
 )
+from whale_vessel_analysis.period_vessel_rule_evidence import (
+    VESSEL_LENGTH_TREATMENT,
+    PeriodEvidenceInputReference,
+    PeriodVesselRuleParameters,
+    build_period_vessel_rule_evidence,
+)
 from whale_vessel_analysis.vessel_activity_evidence import (
     build_evidence_report,
     load_cleaned_bundle,
@@ -409,6 +415,111 @@ def test_candidate_and_evidence_paths_match_for_shared_nonambiguous_logic(
         )
     finally:
         _close_relation(handle)
+
+
+def test_period_rule_evidence_matches_candidate_grid_for_all_four_rules(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Keep the non-spatial rule evidence aligned with candidate-grid filtering."""
+    interim, _derived, _raw = _roots(tmp_path, monkeypatch)
+    day_one = build_cleaned_bundle(
+        tmp_path / "bundles" / "parity-day-1",
+        [
+            ("111111111", _at("2024-07-01", 23, 59), 34.0, -118.005, "cargo"),
+            ("222222222", _at("2024-07-01", 0, 0), 34.0, -118.005, "passenger"),
+            ("222222222", _at("2024-07-01", 0, 10), 34.0, -117.999, "passenger"),
+            ("333333333", _at("2024-07-01", 1, 0), 34.0, -118.005, "tanker"),
+            ("333333333", _at("2024-07-01", 1, 1), 34.0, -117.980, "tanker"),
+            ("444444444", _at("2024-07-01", 2, 0), 34.0, -118.000, "cargo"),
+            ("444444444", _at("2024-07-01", 2, 1), 34.0, -118.000, "passenger"),
+            ("555555555", _at("2024-07-01", 3, 0), 34.0, -118.000, "cargo"),
+            ("555555555", _at("2024-07-01", 3, 0), 34.0, -117.999, "cargo"),
+            ("666666666", _at("2024-07-01", 4, 0), 34.0, -118.000, "cargo"),
+            ("666666666", _at("2024-07-01", 4, 1), 34.0, -117.986, "cargo"),
+        ],
+        run_id="ais-period-grid-parity-day-1",
+    )
+    day_two = build_cleaned_bundle(
+        tmp_path / "bundles" / "parity-day-2",
+        [
+            ("111111111", _at("2024-07-02", 0, 1), 34.0, -117.999, "cargo"),
+            ("111111111", _at("2024-07-02", 0, 3), 34.0, -117.999, "cargo"),
+        ],
+        run_id="ais-period-grid-parity-day-2",
+    )
+    manifest, grid_reference = _manifest_and_reference(
+        tmp_path, interim, [day_two, day_one]
+    )
+    evidence_reference = PeriodEvidenceInputReference(
+        manifest_path=grid_reference.manifest_path,
+        manifest_sha256=grid_reference.manifest_sha256,
+        period_input_id=grid_reference.period_input_id,
+        period_input_readiness=grid_reference.period_input_readiness,
+        independent_transfer_completeness=manifest["independent_transfer_completeness"],
+        observational_completeness=grid_reference.observational_completeness,
+    )
+    evidence_parameters = PeriodVesselRuleParameters(
+        maximum_gap_seconds=(300.0, 1_800.0),
+        implied_speed_ceiling_knots=(30.0, 50.0),
+        vessel_length_treatment=VESSEL_LENGTH_TREATMENT,
+        allow_incomplete_non_production=True,
+    )
+    resources = RelationResources(
+        memory_limit="256MB", temporary_directory=interim / "parity-spill", threads=1
+    )
+    with open_period_relation(manifest, resources) as relation:
+        evidence = build_period_vessel_rule_evidence(
+            relation,
+            evidence_reference,
+            evidence_parameters,
+            batch_size=2,
+        )
+        evidence_matrix = {
+            (
+                candidate["maximum_gap_seconds"],
+                candidate["implied_speed_ceiling_knots"],
+            ): candidate
+            for candidate in evidence.document["whole_period_by_vessel_group"][
+                "all_commercial"
+            ]["candidate_matrix"]
+        }
+        grid = _two_cell_grid()
+        for gap, speed in (
+            (300.0, 30.0),
+            (300.0, 50.0),
+            (1_800.0, 30.0),
+            (1_800.0, 50.0),
+        ):
+            candidate_grid = aggregate_vessel_grid(
+                relation,
+                grid,
+                grid_reference,
+                _parameters(gap=gap, speed=speed),
+                load_default_config(),
+                batch_size=3,
+            )
+            expected = evidence_matrix[(gap, speed)]
+            counts = candidate_grid.quality["counts"]["candidate_segments"]
+            assert counts["retained"] == expected["retained_segments"]
+            assert counts["excluded"] == expected["excluded_segments"]
+            assert (
+                candidate_grid.quality["counts"]["primary_exclusions"]
+                == expected["primary_exclusions"]
+            )
+            assert (
+                counts["cross_midnight_retained"]
+                == expected["cross_midnight_retained_segments"]
+            )
+            assert (
+                counts["zero_length_retained"]
+                == expected["zero_length_retained_segments"]
+            )
+            retained_parent = candidate_grid.quality["distance_conservation"][
+                "by_group"
+            ]["all_commercial"]["retained_parent_m"]
+            assert retained_parent == pytest.approx(
+                expected["retained_projected_endpoint_distance_m"], abs=1e-9
+            )
 
 
 def test_deterministic_serialization_overwrite_and_output_guards(
