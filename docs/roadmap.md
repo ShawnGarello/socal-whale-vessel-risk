@@ -488,11 +488,14 @@ exercised with bounded two-day real data**
   Its first run took 526.627 seconds and peaked at 589.160 MiB application RSS,
   997.145 MiB private bytes, 593.195 MiB process-tree RSS, and 685.781 MiB
   spill; minimum available memory/free disk were 2.645/49.774 GiB and spill
-  returned to zero. Two earlier attempts at its retry were terminated by the
-  host environment for system-wide low memory before any cleaning, wrote no
-  report and published nothing, and the audited state was unchanged; the
-  repeated 145.569-second retry then skipped all 31 October dates with unchanged
-  identities, peaked at 73.777 MiB application RSS, and used zero spill. Its
+  returned to zero. Two earlier retry invocations ended unexpectedly at the
+  host/session level during source fingerprinting; neither produced a profiler
+  report, so their cause and classification are not established, though the last
+  observed guard state was within the configured thresholds. Neither recorded a
+  delivery attempt or published a bundle, spill stayed empty, and the audited
+  123-date state was unchanged. The repeated 145.569-second retry then completed
+  normally, skipping all 31 October dates with unchanged identities, peaking at
+  73.777 MiB application RSS, and using zero spill. Its
   audit recomputed 31 canonical daily slice checksums and all 369 recorded
   cleaned-bundle file checksums with zero mismatches.
   The accumulated state is therefore 123 of 153 expected dates and 12,637,341

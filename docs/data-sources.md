@@ -676,12 +676,14 @@ copied into this worktree.
 
 October used the same accumulation pattern. The first run and its identical
 retry both completed inside the unchanged resource thresholds; the retry skipped
-all 31 October dates without regeneration. Two earlier attempts at that retry
-were terminated by the host environment for system-wide low memory before any
-cleaning began — neither was a profiler resource abort or a target failure, and
-neither wrote a report, recorded an attempt, or published a bundle; the state
-was audited unchanged before the retry was repeated. An independent read-only
-audit recomputed every referenced checksum — 31 canonical daily slices and 369
+all 31 October dates without regeneration. Two earlier retry invocations ended
+unexpectedly at the host/session level during source fingerprinting. Neither
+produced a profiler report, so their precise cause and classification are not
+established; the last observed guard state was within the configured thresholds.
+Neither recorded a delivery attempt or published a bundle, and spill stayed
+empty. Checksum and state audits after each confirmed the established 123-date
+state was unchanged, and the later retry then completed normally. An independent
+read-only audit recomputed every referenced checksum — 31 canonical daily slices and 369
 cleaned-bundle files — with zero mismatches, and confirmed that all July,
 August, and September identities were unchanged.
 
@@ -731,9 +733,11 @@ cleaned checksum. Two corrected fresh two-day runs peaked at 556.922/558.699
 MiB application RSS, while a date-restricted run peaked at 552.910 MiB and an
 identical retry at 65.918 MiB. Isolated spill peaked at 625.469--678.594 MiB and
 returned to zero. These observations support per-date-bounded execution for the
-two inspected dates. The later seven-day and July monthly gates passed under the
-same explicit controls, but no result establishes later-month or full-period
-safety. The detailed measurement protocol and gate results are in the
+two inspected dates. The later seven-day gate and the July, August, September,
+and October monthly gates passed under the same explicit controls, giving
+bounded operational evidence for those exact deliveries. No result establishes
+November or complete-period safety. The detailed measurement protocol and gate
+results are in the
 [analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
 
 The manifest preserves the required distinctions:
@@ -751,7 +755,7 @@ The manifest preserves the required distinctions:
 
 **Still unverified.** Independent AccessAIS transfer completeness because no HTTP length or object validator was retained; download/range-resume behavior; November and full-period processing safety; complete bulk-file integrity; and any authoritative expected per-date record count. The seven-day, exact July monthly, exact August monthly, exact September monthly, and exact October monthly operational gates passed, but four processed months cannot establish November or the complete 153-date period. NOAA documents collection interruptions, so a small or empty day requires review and cannot automatically be labelled incomplete or low traffic. Observed timestamp bounds do not resolve any of those questions or AIS receiver completeness.
 
-The local handling and manifest policy is in [../data/README.md](../data/README.md). The July evidence passed independent audit and satisfied ADR 0017's acceptance condition. Sequential author-submitted August--November calendar-month extracts are authorized under the same controls; August, September, and October have been processed and November is the next request. One combined later-period request is not authorized, and later-month or full-period safety is not established in advance.
+The local handling and manifest policy is in [../data/README.md](../data/README.md). The July evidence passed independent audit and satisfied ADR 0017's acceptance condition. Sequential author-submitted August--November calendar-month extracts are authorized under the same controls; August, September, and October have been processed and November is the next request. One combined later-period request is not authorized, and November or full-period safety is not established in advance.
 
 ### Licensing, attribution, and redistribution
 

@@ -1015,17 +1015,17 @@ those totals include the retained July, August, and September artifacts.
 Isolated spill peaked at 719,093,760 bytes (685.781 MiB) and returned to zero.
 No runtime threshold terminated the target.
 
-Two earlier attempts at the October retry were terminated by the host operating
-environment for system-wide low memory while the profiler's own guard was still
-reporting `within-thresholds` (approximately 3.75 GiB available, about 60 MB
-application RSS, zero spill). Neither was a profiler resource abort, and neither
-was a target failure. Both were killed during source fingerprinting, before any
-cleaning: no profile report was written, no delivery attempt was recorded, no
-bundle was published, and the spill directory stayed empty. A read-only audit
-after each termination confirmed the manifest, its 123 compatible dates, and
-every recorded checksum were unchanged, so the identical retry was then repeated
-without weakening any threshold. Only the completed third attempt is reported
-below; no measurement is carried over from the terminated ones.
+Two earlier October retry invocations ended unexpectedly at the host/session
+level during source fingerprinting. Neither produced a profiler report, so their
+precise cause and classification are not established. The last observed guard
+state was within the configured thresholds (approximately 3.75 GiB available,
+about 60 MB application RSS, zero spill), and that reading is the only durable
+runtime evidence from them. Neither recorded a delivery attempt or published a
+bundle, and the spill directory stayed empty. Read-only checksum and state
+audits after each confirmed the manifest, its 123 compatible dates, and every
+recorded checksum were unchanged, so the identical retry was repeated without
+weakening any threshold. Only the completed third attempt is reported below; no
+measurement is carried over from the incomplete ones.
 
 That completed retry passed preflight with 3,810,942,976 bytes (3.549 GiB)
 available memory and 65,311,789,056 bytes (60.826 GiB) free disk, and also
