@@ -104,7 +104,7 @@ the publisher's public Feature Service.
 
 3. **VSR redistribution permission remains unconfirmed but no longer blocks Version 1.** ADR 0019 prohibits committing or publishing the snapshot or a project-created derivative. This no-copy architecture does not make a legal determination about other terms governing direct service use. A later choice to host a copy requires a confirmed permission posture.
 
-4. **Deferred to M3 rather than blocking M2**, but named so they are not rediscovered: the AIS retrieval route (the one-day AccessAIS direct-CSV compatibility exercise passed, but the route remains Proposed because independent transfer completeness and scaling are unresolved; guarded bulk fallback permitted — see [../data/README.md](../data/README.md)); whether AccessAIS can filter by vessel type server-side; and whether a length threshold is applied on top of the vessel-type filter, and at what value.
+4. **Deferred to M3 rather than blocking M2**, but named so they are not rediscovered: at M2 completion, the AIS retrieval route remained Proposed after the one-day AccessAIS direct-CSV compatibility exercise, with independent transfer completeness and scaling unresolved and guarded bulk fallback permitted (see [../data/README.md](../data/README.md)); whether AccessAIS can filter by vessel type server-side; and whether a length threshold is applied on top of the vessel-type filter, and at what value.
 
 ### What M3 may safely begin, and what must wait
 
@@ -221,9 +221,11 @@ exercised with bounded two-day real data**
   presented as equivalent to the BWBS approximately 300 GT condition, and no
   universal speed or implied-speed threshold has been selected.
 - [ADR 0017](decisions/0017-prefer-accessais-with-guarded-bulk-fallback.md)
-  records the **Proposed** AIS retrieval policy. AccessAIS is preferred when an
-  author-submitted order satisfies its documented constraints, with guarded
-  one-day-at-a-time bulk retrieval as the proposed fallback. The read-only
+  records the **Accepted** AIS retrieval policy. AccessAIS is the preferred
+  route, and the audited July monthly gate authorizes sequential author-
+  submitted August--November calendar-month extracts under the existing
+  resource controls. Guarded one-day-at-a-time bulk retrieval remains fallback
+  only. The read-only
   AccessAIS estimator endpoint observed during research is an undocumented web-
   application interface and must not be treated as a stable production API.
   A separate local command now inspects and manifests one explicit supplied
@@ -446,10 +448,10 @@ exercised with bounded two-day real data**
   expected exit code `3` because 122 dates remain absent; both profiler runs
   completed without a resource abort. No HTTP `Content-Length` was retained,
   so publisher-side transfer completeness and observational completeness remain
-  `unverified`. The July evidence passed independent audit. A separate explicit
-  post-audit decision is required before any next bounded gate; this one
-  successful month does not automatically authorize August--November processing
-  or establish full-period safety. ADR 0017 remains Proposed and M3 remains in
+  `unverified`. The July evidence passed independent audit and satisfied ADR
+  0017's acceptance condition. ADR 0017 now authorizes sequential author-
+  submitted August--November calendar-month extracts under the same controls;
+  it does not establish later-month or full-period safety. M3 remains in
   progress.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
@@ -691,9 +693,10 @@ exercised with bounded two-day real data**
   operational gate are complete. Publisher-side independent byte completeness
   remains `unverified`; August--November/full-period memory safety, a guarded
   daily bulk download, and the 153-date retrieval remain unexercised. Independent
-  audit of the July evidence passed; a separate explicit post-audit decision is
-  required before any next bounded gate, with no automatic authorization of the
-  remaining months.
+  audit of the July evidence passed, and ADR 0017 authorizes the author to submit
+  and process the August--November calendar-month extracts sequentially under
+  the existing controls. It does not authorize a combined later-period request
+  or pre-establish the safety of an unprocessed month.
 - The final vessel-activity input proposed in ADR 0018. Candidate period segment
   construction, explicit filtering, exact grid allocation, per-cell vessel-
   kilometres, union-recomputed distinct counts, quality metadata, and lineage
