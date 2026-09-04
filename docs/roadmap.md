@@ -792,7 +792,9 @@ exercised with bounded two-day real data**
   unverified.
 - End-to-end analytical-period lineage and rerun. Candidate vessel-grid lineage
   now joins the one-extract AIS, projected water-grid, and whale-grid lineage
-  boundaries, but no full-period source set or final analytical result exists.
+  boundaries, and a complete 153-date cleaned-input source set now exists. No
+  accepted final period-wide vessel grid, speed summaries, exposure result, or
+  end-to-end analytical output exists.
 - The exposure calculation and surface, inside-versus-outside statistics, and
   their output contracts. The analytical-domain prerequisite is resolved, but
   these later analytical products are not implemented.

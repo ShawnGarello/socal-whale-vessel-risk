@@ -763,9 +763,13 @@ MiB application RSS, while a date-restricted run peaked at 552.910 MiB and an
 identical retry at 65.918 MiB. Isolated spill peaked at 625.469--678.594 MiB and
 returned to zero. These observations support per-date-bounded execution for the
 two inspected dates. The later seven-day gate and the July, August, September,
-and October monthly gates passed under the same explicit controls, giving
-bounded operational evidence for those exact deliveries. No result establishes
-November or complete-period safety. The detailed measurement protocol and gate
+October, and November monthly gates all passed under the same explicit controls,
+so all five exact monthly deliveries cleared the bounded intake and cleaning
+gates and together produced a `ready` 153-date cleaned-input period. That is
+bounded operational evidence for those exact deliveries only: it does not
+predict a different or re-requested delivery, and it establishes nothing about
+downstream period-wide vessel aggregation, which has not been run. The detailed
+measurement protocol and gate
 results are in the
 [analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
 

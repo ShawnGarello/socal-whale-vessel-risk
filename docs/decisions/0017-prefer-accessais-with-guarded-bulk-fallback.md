@@ -576,10 +576,18 @@ is not a final vessel-activity input and selects no vessel rule.
   and stable object metadata were not retained with the exercised direct CSV.
   Two completed browser downloads produced byte-identical files, but range-
   resume behavior remains unverified.
-- Safe processing of the remaining November delivery or of the complete
-  153-day input. Explicit per-date cleaner resources and the seven-day, July,
-  August, September, and October gates bound the observed executions; they do
-  not prove November or full-period behavior.
+- Behavior beyond the exact deliveries exercised. The five supplied monthly
+  deliveries all completed successfully under explicit per-date cleaner
+  resources — the seven-day, July, August, September, October, and November
+  gates each passed and together produced a `ready` 153-date cleaned-input
+  period. That is bounded evidence for those exact artifacts; it does not
+  predict a different delivery, a re-requested month, or the resource behavior
+  of any downstream period-wide processing.
+- Automated network transfer and range-resume behavior, which remain
+  unimplemented, and the guarded daily bulk fallback, which remains unexercised.
+- Downstream analysis. A complete cleaned-input period supplies no accepted
+  vessel rule, no period-wide vessel grid, no speed summaries, and no exposure
+  result; none of those exists.
 - No complete bulk daily archive has been downloaded, opened through its ZIP
   central directory, or checked through its CRC. NOAA publishes no checksum in
   the bulk index, so a locally computed SHA-256 would identify retrieved bytes
@@ -609,10 +617,14 @@ for July. A failure, resource abort, unexpected date, unreconciled row,
 identity conflict, or incompatible delivery stops the sequence for review; it
 does not authorize weaker controls or an automatic switch to a larger request.
 
-Acceptance authorizes those bounded monthly operations; it does not claim that
-publisher-side transfer completeness, observational completeness, later-month
-safety, or complete-period safety has already been established. It does not
-authorize one combined August--November or 153-day AccessAIS request. The
+Acceptance authorized those bounded monthly operations; it did not claim that
+publisher-side transfer completeness, observational completeness, or later-month
+safety had already been established. All four authorized months have since been
+submitted and processed one at a time under exactly those controls, so the
+sequence is complete; publisher-side transfer completeness and observational
+completeness remain unestablished, and completing the intake establishes nothing
+downstream of it. Acceptance never
+authorized one combined August--November or 153-day AccessAIS request. The
 guarded one-day-at-a-time bulk route remains fallback only.
 
 AccessAIS order submission is an author-controlled action. It requires an email

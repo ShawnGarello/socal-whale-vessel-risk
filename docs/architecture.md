@@ -507,11 +507,14 @@ project layers, and matching precomputed results.
   exercise, seven-day operational gate, and exact July monthly operational gate
   are implemented and complete. The July artifact passed its bounded resource
   and retry criteria, authorizing sequential author-submitted August--November
-  calendar-month extracts under the same controls. August, September, and
-  October have since been processed under those controls. November safety and
-  complete 153-day processing safety remain unverified. Network transfer, independent
-  transfer completeness, observational completeness, and analytical-period
-  acquisition are not established. Guarded one-day-at-a-time bulk retrieval
+  calendar-month extracts under the same controls. July through November have
+  all been processed under those controls, and the shared period manifest is
+  `ready` with 153 compatible dates, zero missing dates, and zero conflicts.
+  Automated network transfer remains unimplemented, and publisher-side independent
+  transfer completeness and observational completeness remain unverified.
+  A complete cleaned-input period is an input result only: it establishes no
+  period-wide vessel aggregation and no exposure analysis, neither of which
+  exists. Guarded one-day-at-a-time bulk retrieval
   remains fallback only. An entire national season is never staged locally; the
   detailed retrieval guard belongs to [data/README.md](../data/README.md).
 - AccessAIS daily cleaner compatibility uses the Version 2 canonical parsed-row
@@ -524,8 +527,8 @@ project layers, and matching precomputed results.
 - The multi-day cleaned-input relation scans daily Parquet partitions through
   DuckDB under an explicit memory limit and an explicit ignored spill directory,
   and streams ordered results rather than materializing the period in Python.
-  This bounds the assembly step; it does not establish that full-period
-  retrieval or cleaning is safe.
+  This bounds the assembly step; it does not by itself establish that a
+  period-wide scan or any downstream aggregation is safe.
 
 DuckDB is the production large-tabular boundary per
 [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md). The
