@@ -22,11 +22,12 @@
 > two-day direct CSV deliveries, the seven-day operational gate, and the exact
 > July monthly operational gate. Reordered equivalent daily content was reused,
 > all 31 July dates reconciled, and the identical July retry reused every date.
-> The July evidence passed independent audit, and the authorized August and
-> September months were then accumulated into the same period state: all 31
-> August and all 30 September dates reconciled, and each identical retry reused
-> every date. Publisher-side transfer
-> and observational completeness remain unverified; October--November and
+> The July evidence passed independent audit, and the authorized August,
+> September, and October months were then accumulated into the same period
+> state: all 31 August, all 30 September, and all 31 October dates reconciled,
+> and each identical retry reused every date, leaving 123 of 153 expected dates
+> recorded with no conflict. Publisher-side transfer
+> and observational completeness remain unverified; November and
 > complete 153-day processing remain untested. Network retrieval and analytical-period
 > acquisition remain unfinished. Final period-wide vessel aggregation,
 > exposure analysis, final public representations for project-derived layers,
@@ -505,8 +506,8 @@ project layers, and matching precomputed results.
   exercise, seven-day operational gate, and exact July monthly operational gate
   are implemented and complete. The July artifact passed its bounded resource
   and retry criteria, authorizing sequential author-submitted August--November
-  calendar-month extracts under the same controls. August and September have
-  since been processed under those controls. October--November safety and
+  calendar-month extracts under the same controls. August, September, and
+  October have since been processed under those controls. November safety and
   complete 153-day processing safety remain unverified. Network transfer, independent
   transfer completeness, observational completeness, and analytical-period
   acquisition are not established. Guarded one-day-at-a-time bulk retrieval

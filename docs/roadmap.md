@@ -480,8 +480,26 @@ exercised with bounded two-day real data**
   spill. Its audit recomputed 30 canonical daily slice checksums and all 276
   recorded cleaned-bundle file checksums with zero mismatches. No HTTP
   `Content-Length` was retained for either month, so publisher-side transfer
-  completeness and observational completeness remain `unverified`, and
-  October--November and full-period safety remain unestablished.
+  completeness and observational completeness remain `unverified`.
+  October was accumulated the same way on the same date. Its delivery reconciled
+  16,355,292 rows across exactly its 31 requested dates, cleaned 2,889,605
+  commercial observations, and raised the manifest to 123 compatible dates with
+  exactly the 30 dates 2024-11-01 through 2024-11-30 missing and no conflicts.
+  Its first run took 526.627 seconds and peaked at 589.160 MiB application RSS,
+  997.145 MiB private bytes, 593.195 MiB process-tree RSS, and 685.781 MiB
+  spill; minimum available memory/free disk were 2.645/49.774 GiB and spill
+  returned to zero. Two earlier attempts at its retry were terminated by the
+  host environment for system-wide low memory before any cleaning, wrote no
+  report and published nothing, and the audited state was unchanged; the
+  repeated 145.569-second retry then skipped all 31 October dates with unchanged
+  identities, peaked at 73.777 MiB application RSS, and used zero spill. Its
+  audit recomputed 31 canonical daily slice checksums and all 369 recorded
+  cleaned-bundle file checksums with zero mismatches.
+  The accumulated state is therefore 123 of 153 expected dates and 12,637,341
+  cleaned commercial observations with no conflict, still `not_ready`. No HTTP
+  `Content-Length` was retained for any month, so publisher-side transfer
+  completeness and observational completeness remain `unverified`, and November
+  and full-period safety remain unestablished.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -719,11 +737,11 @@ exercised with bounded two-day real data**
   supplied-artifact validation, bounded multi-date delivery intake, resumable
   daily-cleaner orchestration, overlapping real one-day/two-day canonical
   compatibility exercise, seven-day operational gate, July monthly operational
-  gate, and August and September monthly accumulations are complete.
+  gate, and August, September, and October monthly accumulations are complete.
   Publisher-side independent
-  byte completeness remains `unverified`; October--November/full-period memory
-  safety, a guarded daily bulk download, and the 153-date retrieval remain
-  unexercised. Independent
+  byte completeness remains `unverified`; November/full-period memory
+  safety, a guarded daily bulk download, and the complete 153-date retrieval
+  remain unexercised. Independent
   audit of the July evidence passed, and ADR 0017 authorizes the author to submit
   and process the August--November calendar-month extracts sequentially under
   the existing controls. It does not authorize a combined later-period request
