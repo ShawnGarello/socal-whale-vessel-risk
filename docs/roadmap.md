@@ -453,6 +453,76 @@ exercised with bounded two-day real data**
   submitted August--November calendar-month extracts under the same controls;
   it does not establish later-month or full-period safety. M3 remains in
   progress.
+  The first authorized later month was then accumulated into that same state on
+  2026-09-04. The August delivery reconciled 18,284,354 rows across exactly its
+  31 requested dates, cleaned 3,501,843 commercial observations, and raised the
+  period manifest to 62 compatible dates with 91 September--November dates
+  missing and no conflicts. Its first run took 567.190 seconds and peaked at
+  579.422 MiB application RSS, 999.125 MiB private bytes, 583.238 MiB
+  process-tree RSS, and 764.719 MiB spill; minimum available memory/free disk
+  were 2.351/65.224 GiB and spill returned to zero. The identical
+  171.885-second retry skipped all 31 August dates with unchanged deterministic
+  identities, peaked at 74.164 MiB application RSS, and used zero spill. Both
+  targets returned the expected exit code `3`, and neither profiler run aborted
+  on a resource threshold. An independent read-only audit recomputed all 31
+  canonical daily slice checksums and all 186 recorded cleaned-bundle file
+  checksums with zero mismatches and confirmed that every July identity was
+  unchanged.
+  September was accumulated the same way on the same date. Its delivery
+  reconciled 15,638,516 rows across exactly its 30 requested dates, cleaned
+  2,861,837 commercial observations, and raised the manifest to 92 compatible
+  dates with 61 October--November dates missing and no conflicts. Its first run
+  took 442.139 seconds and peaked at 595.102 MiB application RSS, 992.887 MiB
+  private bytes, 599.180 MiB process-tree RSS, and 752.438 MiB spill; minimum
+  available memory/free disk were 2.580/60.813 GiB and spill returned to zero.
+  The identical 136.475-second retry skipped all 30 September dates with
+  unchanged identities, peaked at 73.684 MiB application RSS, and used zero
+  spill. Its audit recomputed 30 canonical daily slice checksums and all 276
+  recorded cleaned-bundle file checksums with zero mismatches. No HTTP
+  `Content-Length` was retained for either month, so publisher-side transfer
+  completeness and observational completeness remain `unverified`.
+  October was accumulated the same way on the same date. Its delivery reconciled
+  16,355,292 rows across exactly its 31 requested dates, cleaned 2,889,605
+  commercial observations, and raised the manifest to 123 compatible dates with
+  exactly the 30 dates 2024-11-01 through 2024-11-30 missing and no conflicts.
+  Its first run took 526.627 seconds and peaked at 589.160 MiB application RSS,
+  997.145 MiB private bytes, 593.195 MiB process-tree RSS, and 685.781 MiB
+  spill; minimum available memory/free disk were 2.645/49.774 GiB and spill
+  returned to zero. Two earlier retry invocations ended unexpectedly at the
+  host/session level during source fingerprinting; neither produced a profiler
+  report, so their cause and classification are not established, though the last
+  observed guard state was within the configured thresholds. Neither recorded a
+  delivery attempt or published a bundle, spill stayed empty, and the audited
+  123-date state was unchanged. The repeated 145.569-second retry then completed
+  normally, skipping all 31 October dates with unchanged identities, peaking at
+  73.777 MiB application RSS, and using zero spill. Its
+  audit recomputed 31 canonical daily slice checksums and all 369 recorded
+  cleaned-bundle file checksums with zero mismatches.
+  November, the fourth and last authorized month, was accumulated the same way on
+  the same date. Its 1,461,597,110-byte delivery with SHA-256
+  `4cecc4641cc83b14d08b5bd98392bdecfe68a638224dbd456b6e80ff76f508dc`
+  reconciled 14,342,365 rows across exactly its 30 requested dates, cleaned
+  2,821,226 commercial observations, and raised the manifest to 153 compatible
+  dates with zero missing dates and no conflicts, moving
+  `period_input_readiness` to `ready`. Its first run took 472.146 seconds and
+  peaked at 596.336 MiB application RSS, 999.770 MiB private bytes, 600.184 MiB
+  process-tree RSS, and 663.375 MiB spill; minimum available memory/free disk
+  were 2.196/58.261 GiB and spill returned to zero. The identical 152.785-second
+  retry skipped all 30 November dates with unchanged identities, peaked at
+  74.637 MiB application RSS, and used zero spill. Both targets returned the
+  expected exit code `0` — not `3` — because the November append completes all
+  153 accepted dates, and neither profiler run aborted on a resource threshold.
+  Its audit rehashed the source, recomputed all 153 canonical daily slice
+  checksums and all 459 recorded cleaned-bundle file checksums with zero
+  mismatches, and confirmed every July through October identity unchanged, one
+  per-date attempt per compatible date, empty spill directories, and no
+  temporary or staging artifact.
+  The accumulated state is therefore 153 of 153 expected dates and 15,458,567
+  cleaned commercial observations with no conflict, and the period input is
+  `ready`. No HTTP `Content-Length` was retained for any month, so publisher-side
+  transfer completeness and observational completeness remain `unverified`. A
+  complete, ready cleaned-input period is not a final vessel-activity grid or an
+  exposure result; neither exists, so M3 remains **In progress**.
 - A separate spatial CLI now takes an explicit mask path/layer, declared source
   CRS, output path, and optional configuration. It rejects missing, mismatched,
   empty, invalid, non-finite, or non-polygon input, transforms with explicit x/y
@@ -686,24 +756,27 @@ exercised with bounded two-day real data**
 
 **Not implemented**
 
-- Network AIS transfer, range-resume, and analytical-period retrieval. The local
+- Network AIS transfer and range-resume. The local
   supplied-artifact validation, bounded multi-date delivery intake, resumable
   daily-cleaner orchestration, overlapping real one-day/two-day canonical
-  compatibility exercise, seven-day operational gate, and July monthly
-  operational gate are complete. Publisher-side independent byte completeness
-  remains `unverified`; August--November/full-period memory safety, a guarded
-  daily bulk download, and the 153-date retrieval remain unexercised. Independent
-  audit of the July evidence passed, and ADR 0017 authorizes the author to submit
+  compatibility exercise, seven-day operational gate, July monthly operational
+  gate, and August, September, October, and November monthly accumulations are
+  complete, so all 153 accepted dates now hold compatible cleaned inputs.
+  Publisher-side independent
+  byte completeness and observational completeness remain `unverified`; a
+  guarded daily bulk download remains unexercised. Independent
+  audit of the July evidence passed, and ADR 0017 authorized the author to submit
   and process the August--November calendar-month extracts sequentially under
-  the existing controls. It does not authorize a combined later-period request
-  or pre-establish the safety of an unprocessed month.
+  the existing controls. Assembling every accepted date is a cleaned-input
+  result, not an analytical result.
 - The final vessel-activity input proposed in ADR 0018. Candidate period segment
   construction, explicit filtering, exact grid allocation, per-cell vessel-
   kilometres, union-recomputed distinct counts, quality metadata, and lineage
   are implemented, synthetically verified, and exercised across the four
   documented parameter combinations on the real 15--16 July delivery. The
-  requested analytical period remains `not_ready` with 151 dates missing;
-  transfer and observational completeness remain `unverified`. No production
+  candidate exercise used its own separate two-date period manifest, not the
+  now-`ready` accumulation-gate manifest; transfer and observational
+  completeness remain `unverified`. No production
   threshold was selected;
   accepted maximum-gap and implied-speed rules, alternative edge support,
   vessel-length population treatment, period-wide stability, observational
@@ -719,7 +792,9 @@ exercised with bounded two-day real data**
   unverified.
 - End-to-end analytical-period lineage and rerun. Candidate vessel-grid lineage
   now joins the one-extract AIS, projected water-grid, and whale-grid lineage
-  boundaries, but no full-period source set or final analytical result exists.
+  boundaries, and a complete 153-date cleaned-input source set now exists. No
+  accepted final period-wide vessel grid, speed summaries, exposure result, or
+  end-to-end analytical output exists.
 - The exposure calculation and surface, inside-versus-outside statistics, and
   their output contracts. The analytical-domain prerequisite is resolved, but
   these later analytical products are not implemented.
