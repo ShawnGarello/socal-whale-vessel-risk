@@ -521,6 +521,41 @@ working-set measurement, memory regressed by about 66 MiB (27%); different
 approximate sampling methods make that directional rather than exact. No
 one-day measurement is extrapolated linearly to 153 days.
 
+### Period-wide rule-evidence implementation
+
+The `period_vessel_rule_evidence_v1` boundary and isolated CLI are implemented
+and synthetically tested. The production path requires the compatible, ready
+153-date `multiday_cleaned_ais_input_v1` manifest and requires callers to state
+both 300/1,800-second gaps, both 30/50-knot ceilings, and
+`type-only-no-length-filter`; none is an analytical default. A deliberately
+named incomplete-period override is non-production only.
+
+The implementation reuses the bounded DuckDB relation and constructs one
+whole-period same-MMSI adjacency stream. All four candidate combinations are
+evaluated during one bounded Arrow iteration without segment/grid intersection.
+Pairing crosses UTC midnight. Daily segment summaries use the starting
+observation's UTC date and report cross-midnight segments separately. Exact SQL
+grouping sets and streamed summaries keep passenger, cargo, tanker, and union-
+recomputed all-commercial observation, distinct-identity, structural,
+exclusion, distance, time-gap, implied-speed, SOG, and vessel-length evidence
+separate.
+
+Distributions use exact counts/minima/maxima/sums/means plus fixed half-open
+bins recorded in the artifact; the implementation does not retain millions of
+values to calculate percentiles. It atomically writes deterministic
+`evidence.json` plus time-bearing `run-metadata.json` beneath ignored interim
+storage. Paths, clocks, runtime, output-directory names, machine details, and
+resource settings are non-identity execution provenance. Synthetic validation
+covers pairing, exclusions, reconciliation, bounded batching, deterministic
+identity, input/date/checksum/contract refusal, output safeguards, and CLI
+exits.
+
+This is an implementation boundary, not the missing period evidence. The real
+five-month command and candidate-grid matrix have not run, no threshold has
+been accepted, no production vessel grid exists, publisher-side transfer and
+AIS observational completeness remain unverified, and no exposure analysis has
+begun. This record therefore remains **Proposed**.
+
 ### Real two-day candidate-grid execution
 
 On 2026-09-01, the focused multi-day boundary was exercised against the exact
@@ -577,8 +612,9 @@ is not sufficient to settle this Proposed decision.
 
 ## Remaining decision evidence
 
-The implemented foundation supports the remaining research without repeating
-geometry cost. Before this decision can be accepted, later evidence must:
+The implemented period-rule boundary supports the remaining research without
+repeating geometry cost for each candidate. Before this decision can be
+accepted, later evidence must:
 
 1. repeat the 300/1,800-second and 30/50-knot matrix across the accepted period,
    retaining daily and vessel-group distributions so seasonal or source-quality
@@ -592,10 +628,10 @@ geometry cost. Before this decision can be accepted, later evidence must:
    exclusion rates, sensitivity, vessel-group distributions, and reported-SOG
    availability across the accepted period before producing a vessel grid.
 
-The bounded one-day harness and two-day candidate-grid executions establish
-that the implemented subset is executable. They do not complete the measure
-comparison, select a rule, establish stability across 153 days, or validate a
-production analytical input.
+The bounded one-day harness, two-day candidate-grid executions, and synthetic
+period-rule boundary establish that the implemented subsets are executable.
+They do not complete the measure comparison, select a rule, establish stability
+across 153 days, or validate a production analytical input.
 
 All four combinations deserve period-wide testing: the two gap values bracket
 a locally inferred short-gap treatment and NOAA's tool default, while the two
@@ -616,6 +652,11 @@ testing conclusion, not acceptance of any threshold.
   while the numeric thresholds remain unresolved. Its candidate bundles stay
   under ignored derived storage and cannot become a production result using
   hidden defaults.
+- Period-wide candidate-rule summarization now has a deterministic, bounded,
+  non-spatial implementation with explicit readiness and parameter gates. Its
+  existence removes four redundant full scans from the planned rule review but
+  supplies no real period result until the ready 153-date command is executed
+  and audited.
 - The current cleaned files are sufficient for interior candidate segments but
   not for uncensored entry/exit portions. The future implementation must expose
   that limitation or revise the pre-segmentation boundary.
