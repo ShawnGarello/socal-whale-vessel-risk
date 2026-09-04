@@ -5,8 +5,8 @@
 **Status:** Version 1 is defined and partially implemented. The application and
 processing foundations exist, and the deterministic whale-grid transfer is
 implemented, tested, reproducible, and visually verified. Version 1 remains
-incomplete: AIS retrieval, vessel aggregation, exposure analysis, publication,
-and deployment are unfinished.
+incomplete: cleaned AIS inputs now cover the whole accepted period, but vessel
+aggregation, exposure analysis, publication, and deployment are unfinished.
 
 ---
 
@@ -51,8 +51,9 @@ Version 1 is complete when the research question above has a defensible, documen
 
 Version 1 must ultimately include all of the following. Supporting foundations
 and the grid-aligned whale input are implemented, but the complete functional
-scope is not: AIS retrieval, vessel aggregation, exposure analysis,
-publication, and deployment remain unfinished.
+scope is not: the accepted period's cleaned AIS inputs are assembled, but
+vessel aggregation, exposure analysis, publication, and deployment remain
+unfinished.
 
 **Analytical inputs**
 

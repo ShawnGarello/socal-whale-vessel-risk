@@ -158,9 +158,10 @@ accepts AccessAIS as the preferred retrieval route.** The design is five
 sequential author-submitted monthly AccessAIS extracts, with guarded daily bulk
 retrieval as fallback only. The author-controlled one-day compatibility,
 overlapping two-day, seven-day, exact July monthly, exact August monthly, exact
-September monthly, and exact October monthly operational gates passed.
-Independent transfer completeness and November/full-period processing
-safety remain unverified. What is settled here is the local handling constraint
+September monthly, exact October monthly, and exact November monthly operational
+gates passed, completing every accepted date.
+Independent transfer completeness and observational completeness
+remain unverified. What is settled here is the local handling constraint
 every route has to satisfy.
 
 Two routes exist. Both are documented in
@@ -185,10 +186,10 @@ operational evidence. No independent HTTP
 `Content-Length` or `ETag`
 was retained, so independent byte completeness remains `unverified`. The
 resulting timestamp bounds do not prove transfer or observational completeness.
-The audited July gate satisfied ADR 0017's acceptance condition and authorizes
+The audited July gate satisfied ADR 0017's acceptance condition and authorized
 sequential August--November calendar-month extracts under the same controls;
-August, September, and October have been processed under them, while transfer
-completeness and November/full-period safety remain unresolved.
+all four have been processed under them, while publisher-side transfer
+completeness and observational completeness remain unresolved.
 Order submission remains an author action;
 repository code does not submit an order, record an email address, or persist an
 expiring tokenized URL.
@@ -276,22 +277,35 @@ At that stage, the result was a scaling concern rather than a linear forecast.
 The 2026-09-02 investigation added explicit verified per-date cleaner resources
 and reduced two fresh two-day peaks to 556.922/558.699 MiB application RSS under
 `512MB` and one thread. The later seven-day, exact July monthly, exact August
-monthly, exact September monthly, and exact October monthly gates passed under
-those controls; November and full-period processing remain untested.
+monthly, exact September monthly, exact October monthly, and exact November
+monthly gates passed under those controls, completing all 153 accepted dates.
 
-### Next data-gate decision
+### Analytical-period retrieval state
 
 The seven-day operational gate, the exact **2024-07-01 through 2024-07-31**
 monthly gate, and the exact **2024-08-01 through 2024-08-31**,
-**2024-09-01 through 2024-09-30**, and **2024-10-01 through 2024-10-31** monthly
+**2024-09-01 through 2024-09-30**, **2024-10-01 through 2024-10-31**, and
+**2024-11-01 through 2024-11-30** monthly
 accumulations over WGS 84 longitude **-122 to -117** and latitude
 **32 to 35**
-passed, and the July evidence passed independent audit. ADR 0017 authorizes the
+passed, and the July evidence passed independent audit. ADR 0017 authorized the
 author to request and process the August, September, October, and November
-calendar-month extracts sequentially under the existing controls. August,
-September, and October are processed; **2024-11-01 through 2024-11-30** is the
-next and last request. This authorization does not establish that unprocessed
-month as safe.
+calendar-month extracts sequentially under the existing controls, and all four
+are now processed. The November delivery
+`AIS_178849884757876802_1101-1788498847948.csv` contained 1,461,597,110 bytes
+with SHA-256
+`4cecc4641cc83b14d08b5bd98392bdecfe68a638224dbd456b6e80ff76f508dc`,
+reconciled 14,342,365 source rows across exactly its 30 requested dates, and
+cleaned 2,821,226 commercial observations. No further AccessAIS request is
+needed for the accepted period: the shared manifest now holds all 153 dates with
+15,458,567 cleaned commercial observations, no conflict, and
+`period_input_readiness: ready`. No HTTP `Content-Length` was retained for any
+month, so publisher-side transfer completeness and observational completeness
+remain `unverified`, and a ready cleaned-input period is not a vessel grid or an
+exposure result.
+
+The guidance below applies to any further author-controlled retrieval, including
+a guarded bulk fallback.
 
 Before starting the download, open browser developer tools (or an equivalent
 response-header view) and preserve the network entry. Record the response
@@ -472,12 +486,13 @@ and an explicit temporary/spill directory that must also sit under ignored
 `data/interim/`. A uniquely named spill subdirectory is created per run and
 removed afterwards. Ordered results are streamed as bounded Arrow record
 batches; the period is never assembled in memory. This bounds the assembly step
-only — it does not make full-period retrieval or cleaning safe. The seven-day,
-exact July monthly, exact August monthly, exact September monthly, and exact
-October monthly operational gates passed under explicit cleaner controls.
-ADR 0017 authorizes sequential author-submitted August--November calendar-month
-extracts under those controls, but November and full-period
-processing remain untested.
+only — it does not by itself make a full-period scan or later processing safe.
+The seven-day,
+exact July monthly, exact August monthly, exact September monthly, exact
+October monthly, and exact November monthly operational gates passed under
+explicit cleaner controls.
+ADR 0017 authorized sequential author-submitted August--November calendar-month
+extracts under those controls, and all four are now processed.
 
 **Why this is not simply forbidden.** An earlier version of this document banned
 downloading a national file and filtering locally, while the source register
