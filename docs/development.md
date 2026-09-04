@@ -306,7 +306,10 @@ design with bounded date-sized processing and explicit DuckDB memory, thread,
 and spill controls. The later seven-day and exact July monthly operational gates
 passed under those controls, while August--November and complete 153-day
 processing remain untested. The full evidence and removal accounting are in the
-[source register](data-sources.md#retrieval-route). ADR 0017 remains Proposed.
+[source register](data-sources.md#retrieval-route). ADR 0017 is now Accepted:
+the audited July gate authorizes sequential author-submitted August--November
+calendar-month extracts under the same controls, without establishing later-
+month or full-period safety.
 
 **Author-supplied multi-date AccessAIS intake**
 
@@ -603,11 +606,15 @@ arbitrary overwrite, and partial publication. The complete contract, fields,
 quality semantics, and limitations are in the [analysis
 README](../analysis/README.md#candidate-multi-day-vessel-grid-aggregation).
 
-This is a candidate vessel-grid processing foundation, not an accepted
-final vessel input. The real two-day delivery stopped at intake/cleaning; no
-candidate vessel-grid run has been executed. Period-wide sensitivity, accepted
-thresholds, alternative edge support, transfer and observational completeness,
-and the final analytical population remain unresolved; ADR 0018 stays Proposed.
+This is a candidate vessel-grid processing foundation, not an accepted final
+vessel input. All four 300/1,800-second by 30/50-knot combinations were executed
+against the real 15--16 July delivery. Distinct-output repeats reproduced the
+deterministic GeoParquet and quality-report bytes, and corrected QGIS 4.2.1
+inspection placed the accepted-domain and VSR outlines visibly above all four
+candidate grids. Period-wide sensitivity, accepted thresholds, alternative edge
+support, transfer and observational completeness, and the final analytical
+population remain unresolved; no production rule was selected and ADR 0018
+stays Proposed.
 
 **Projected water-grid generation**
 
