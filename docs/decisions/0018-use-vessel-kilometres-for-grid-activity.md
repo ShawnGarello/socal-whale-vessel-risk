@@ -565,10 +565,12 @@ found. The longer-gap additions were more visible than the speed-ceiling
 differences. This visual inspection establishes no analytical completeness or
 policy conclusion.
 
-This execution covers only 15--16 July 2024. The requested 1 July through 30
-November period remains `not_ready` with 151 missing dates. Source-transfer
-completeness and observational completeness remain `unverified`; monthly and
-full-period safety remain unverified; no production maximum-gap or implied-
+This execution covers only 15--16 July 2024, through its own separate two-date
+period manifest, which stood at two compatible and 151 missing dates. The
+separate accumulation-gate manifest has since reached all 153 dates, but this
+matrix was never rerun against it. Source-transfer
+completeness and observational completeness remain `unverified`; no production
+maximum-gap or implied-
 speed rule was selected; and no final vessel-activity input or exposure
 analysis was produced. The two-day matrix is candidate sensitivity evidence and
 is not sufficient to settle this Proposed decision.

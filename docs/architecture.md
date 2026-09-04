@@ -22,10 +22,15 @@
 > two-day direct CSV deliveries, the seven-day operational gate, and the exact
 > July monthly operational gate. Reordered equivalent daily content was reused,
 > all 31 July dates reconciled, and the identical July retry reused every date.
-> The July evidence passed independent audit, but publisher-side transfer and
-> observational completeness remain unverified; August--November and complete
-> 153-day processing remain untested. Network retrieval and analytical-period
-> acquisition remain unfinished. Final period-wide vessel aggregation,
+> The July evidence passed independent audit, and the authorized August,
+> September, October, and November months were then accumulated into the same
+> period state: all 31 August, all 30 September, all 31 October, and all 30
+> November dates reconciled, and each identical retry reused every date, so all
+> 153 expected dates are recorded with no conflict and the shared manifest is
+> `ready`. Publisher-side transfer
+> and observational completeness remain unverified. Network retrieval remains
+> unimplemented, and a complete cleaned-input period is not a vessel grid or an
+> exposure result. Final period-wide vessel aggregation,
 > exposure analysis, final public representations for project-derived layers,
 > VSR service integration, and deployment also remain unfinished.
 > See the [roadmap](roadmap.md) for milestone status.
@@ -502,10 +507,14 @@ project layers, and matching precomputed results.
   exercise, seven-day operational gate, and exact July monthly operational gate
   are implemented and complete. The July artifact passed its bounded resource
   and retry criteria, authorizing sequential author-submitted August--November
-  calendar-month extracts under the same controls. Their safety and complete
-  153-day processing safety remain unverified. Network transfer, independent
-  transfer completeness, observational completeness, and analytical-period
-  acquisition are not established. Guarded one-day-at-a-time bulk retrieval
+  calendar-month extracts under the same controls. July through November have
+  all been processed under those controls, and the shared period manifest is
+  `ready` with 153 compatible dates, zero missing dates, and zero conflicts.
+  Automated network transfer remains unimplemented, and publisher-side independent
+  transfer completeness and observational completeness remain unverified.
+  A complete cleaned-input period is an input result only: it establishes no
+  period-wide vessel aggregation and no exposure analysis, neither of which
+  exists. Guarded one-day-at-a-time bulk retrieval
   remains fallback only. An entire national season is never staged locally; the
   detailed retrieval guard belongs to [data/README.md](../data/README.md).
 - AccessAIS daily cleaner compatibility uses the Version 2 canonical parsed-row
@@ -518,8 +527,8 @@ project layers, and matching precomputed results.
 - The multi-day cleaned-input relation scans daily Parquet partitions through
   DuckDB under an explicit memory limit and an explicit ignored spill directory,
   and streams ordered results rather than materializing the period in Python.
-  This bounds the assembly step; it does not establish that full-period
-  retrieval or cleaning is safe.
+  This bounds the assembly step; it does not by itself establish that a
+  period-wide scan or any downstream aggregation is safe.
 
 DuckDB is the production large-tabular boundary per
 [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md). The

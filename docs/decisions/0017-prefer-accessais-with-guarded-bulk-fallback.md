@@ -384,6 +384,183 @@ completeness, safe processing of an August--November delivery, or safe
 complete-period processing. It produces no final vessel-activity input and
 does not select a vessel rule.
 
+### Observed in the August monthly delivery
+
+On 2026-09-04 the first authorized later month was accumulated into the existing
+July analytical-period state under the same WGS 84 longitude -122 to -117 and
+latitude 32 to 35 request bounds and the same resource controls. The immutable
+author-supplied delivery contained 1,857,171,239 bytes with SHA-256
+`42cb9fbfa8623c64460c2cbfd3d878a5f4e035a746637a4bdb036657a57fc29e`,
+confirmed by an independent rehash after processing. No independently retained
+HTTP `Content-Length` was available, so publisher-side transfer completeness
+remained `unverified`.
+
+The month used a fresh intake directory, a fresh isolated spill directory, and
+fresh profile reports, while sharing the established cleaned root and 153-date
+period manifest. The first run reconciled all 18,284,354 source rows across
+exactly the 31 requested UTC dates, with zero malformed or unassignable
+timestamps and zero valid out-of-request rows. It sequentially produced and
+validated 3,501,843 cleaned commercial observations and recorded all 31 dates as
+compatible with no conflict. The period remained `not_ready` because 91
+September--November dates were absent; the cumulative compatible count reached
+62. The delivery ID is `accessais-period-9d5c80e7843e2ad9b8b2af2b`, and the
+period input ID moved to `multiday-ais-d600bc7730f03ef82658a561` because that
+identity derives from the recorded per-date analytical identities.
+
+The first target operation took 567.190 seconds. It peaked at 579.422 MiB
+application RSS, 999.125 MiB private bytes, 583.238 MiB process-tree RSS, and
+764.719 MiB isolated spill. Minimum available memory and free disk were
+2.351 GiB and 65.224 GiB respectively; spill returned to zero, and no runtime
+threshold aborted the run. The identical 171.885-second retry skipped all 31
+August dates without regeneration, preserved every deterministic identity,
+peaked at 74.164 MiB application RSS, and used zero spill. Both target
+invocations returned the expected exit code `3`.
+
+An independent read-only audit recomputed all 31 canonical daily slice
+checksums and all 186 recorded cleaned-bundle file checksums with zero
+mismatches, and confirmed that every previously established July identity was
+unchanged and that no date was processed twice or replaced.
+
+This is successful bounded operational evidence for the exact August delivery.
+It does not establish publisher-side transfer completeness, observational
+completeness, safe processing of a September, October, or November delivery, or
+safe complete-period processing. It produces no final vessel-activity input and
+does not select a vessel rule.
+
+### Observed in the September monthly delivery
+
+On 2026-09-04 the second authorized later month was accumulated into the same
+analytical-period state under the same request bounds and resource controls. The
+immutable author-supplied delivery contained 1,583,433,195 bytes with SHA-256
+`0f41e63ce1afa54f4a6372e79c71a523122975351120f82a435696e7394df334`,
+confirmed by an independent rehash after processing. No independently retained
+HTTP `Content-Length` was available, so publisher-side transfer completeness
+remained `unverified`.
+
+The first run reconciled all 15,638,516 source rows across exactly the 30
+requested UTC dates, with zero malformed or unassignable timestamps and zero
+valid out-of-request rows. It sequentially produced and validated 2,861,837
+cleaned commercial observations and recorded all 30 dates as compatible with no
+conflict. The period remained `not_ready` because 61 October and November dates
+were absent; the cumulative compatible count reached 92. The delivery ID is
+`accessais-period-1babd48139b3b00e3b9f6d43` and the period input ID moved to
+`multiday-ais-b4ba6bd6c418c81d6ace430c`.
+
+The first target operation took 442.139 seconds. It peaked at 595.102 MiB
+application RSS, 992.887 MiB private bytes, 599.180 MiB process-tree RSS, and
+752.438 MiB isolated spill. Minimum available memory and free disk were
+2.580 GiB and 60.813 GiB respectively; spill returned to zero, and no runtime
+threshold aborted the run. The identical 136.475-second retry skipped all 30
+September dates without regeneration, preserved every deterministic identity,
+peaked at 73.684 MiB application RSS, and used zero spill. Both target
+invocations returned the expected exit code `3`.
+
+An independent read-only audit recomputed all 30 canonical daily slice checksums
+and all 276 recorded cleaned-bundle file checksums with zero mismatches, and
+confirmed that every previously established July and August identity was
+unchanged and that no date was processed twice or replaced.
+
+This is successful bounded operational evidence for the exact September
+delivery. It does not establish publisher-side transfer completeness,
+observational completeness, safe processing of an October or November delivery,
+or safe complete-period processing. It produces no final vessel-activity input
+and does not select a vessel rule.
+
+### Observed in the October monthly delivery
+
+On 2026-09-04 the third authorized later month was accumulated into the same
+analytical-period state under the same request bounds and resource controls. The
+immutable author-supplied delivery contained 1,659,529,483 bytes with SHA-256
+`859d97845fb6f1eb8b61a26e3dd3105c0477b3cc0db60fc6cca9e1f1149a348c`,
+confirmed by an independent rehash after processing. No independently retained
+HTTP `Content-Length` was available, so publisher-side transfer completeness
+remained `unverified`.
+
+The first run reconciled all 16,355,292 source rows across exactly the 31
+requested UTC dates, with zero malformed or unassignable timestamps and zero
+valid out-of-request rows. It sequentially produced and validated 2,889,605
+cleaned commercial observations and recorded all 31 dates as compatible with no
+conflict. The period remained `not_ready` with exactly the 30 dates 2024-11-01
+through 2024-11-30 absent; the cumulative compatible count reached 123. The
+delivery ID is `accessais-period-bb0ffdedb948398fa753c3d2` and the period input
+ID moved to `multiday-ais-24de82c644e2c1c7d25d457e`.
+
+The first target operation took 526.627 seconds. It peaked at 589.160 MiB
+application RSS, 997.145 MiB private bytes, 593.195 MiB process-tree RSS, and
+685.781 MiB isolated spill. Minimum available memory and free disk were
+2.645 GiB and 49.774 GiB respectively; spill returned to zero, and no runtime
+threshold aborted the run.
+
+Two earlier October retry invocations ended unexpectedly at the host/session
+level during source fingerprinting. Neither produced a profiler report, so their
+precise cause and classification are not established; the last observed guard
+state was within the configured thresholds. Neither recorded a delivery attempt
+or published a bundle, and spill stayed empty. Checksum and state audits after
+each confirmed the established 123-date state was unchanged, so the identical
+retry was repeated without weakening any threshold, and only the completed
+attempt is reported. That 145.569-second retry skipped all 31 October dates
+without regeneration, preserved every deterministic identity, peaked at
+73.777 MiB
+application RSS, and used zero spill. Both completed target invocations returned
+the expected exit code `3`.
+
+An independent read-only audit recomputed all 31 canonical daily slice checksums
+and all 369 recorded cleaned-bundle file checksums with zero mismatches, and
+confirmed that every previously established July, August, and September identity
+was unchanged and that no date was processed twice or replaced.
+
+This is successful bounded operational evidence for the exact October delivery.
+It does not establish publisher-side transfer completeness, observational
+completeness, safe processing of a November delivery, or safe complete-period
+processing. It produces no final vessel-activity input and does not select a
+vessel rule.
+
+### Observed in the November monthly delivery
+
+On 2026-09-04 the fourth and last authorized month was accumulated into the same
+analytical-period state under the same request bounds and resource controls. The
+immutable author-supplied delivery
+`AIS_178849884757876802_1101-1788498847948.csv` contained 1,461,597,110 bytes
+with SHA-256
+`4cecc4641cc83b14d08b5bd98392bdecfe68a638224dbd456b6e80ff76f508dc`,
+confirmed by an independent rehash after processing. No independently retained
+HTTP `Content-Length` was available, so publisher-side transfer completeness
+remained `unverified`.
+
+The first run reconciled all 14,342,365 source rows across exactly the 30
+requested UTC dates, with zero malformed or unassignable timestamps and zero
+valid out-of-request rows. It sequentially produced and validated 2,821,226
+cleaned commercial observations and recorded all 30 dates as compatible with no
+conflict. The period reached `ready` with 153 compatible dates, zero missing
+dates, and 15,458,567 cleaned commercial observations. The delivery ID is
+`accessais-period-bad86e685077a002810360e2` and the period input ID moved to
+`multiday-ais-17e982f999f7093945193378`.
+
+The first target operation took 472.146 seconds. It peaked at 596.336 MiB
+application RSS, 999.770 MiB private bytes, 600.184 MiB process-tree RSS, and
+663.375 MiB isolated spill. Minimum available memory and free disk were
+2.196 GiB and 58.261 GiB respectively; spill returned to zero, and no runtime
+threshold aborted the run. The identical 152.785-second retry skipped all 30
+November dates without regeneration, preserved every deterministic identity,
+added no per-date attempt, peaked at 74.637 MiB application RSS, and used zero
+spill. Both target invocations returned the expected exit code `0` rather than
+`3`, because completing November leaves no expected date missing.
+
+An independent read-only audit rehashed the source, recomputed all 153 canonical
+daily slice checksums across the five intake directories and all 459 recorded
+cleaned-bundle file checksums with zero mismatches, and confirmed that every
+previously established July through October identity was unchanged, that no date
+was processed twice or replaced, that each compatible date carried exactly one
+per-date attempt, that each monthly delivery recorded one `prepared` and one
+`identical_retry` attempt, and that all five spill directories ended empty with
+no temporary, partial, or staging artifact remaining.
+
+This is successful bounded operational evidence for the exact November delivery
+and completes the four authorized later months. Local checksum verification is
+not publisher-side transfer completeness, and AIS observational completeness is
+not verified; both remain `unverified`. A complete, `ready` cleaned-input period
+is not a final vessel-activity input and selects no vessel rule.
+
 ### Inferred
 
 - Five sequential monthly AccessAIS orders are the smallest simple partition
@@ -399,10 +576,18 @@ does not select a vessel rule.
   and stable object metadata were not retained with the exercised direct CSV.
   Two completed browser downloads produced byte-identical files, but range-
   resume behavior remains unverified.
-- Safe processing of the four later monthly deliveries or of the complete
-  153-day input. Explicit per-date cleaner resources and the seven-day and July
-  gates bound the observed executions; they do not prove August--November or
-  full-period behavior.
+- Behavior beyond the exact deliveries exercised. The five supplied monthly
+  deliveries all completed successfully under explicit per-date cleaner
+  resources — the seven-day, July, August, September, October, and November
+  gates each passed and together produced a `ready` 153-date cleaned-input
+  period. That is bounded evidence for those exact artifacts; it does not
+  predict a different delivery, a re-requested month, or the resource behavior
+  of any downstream period-wide processing.
+- Automated network transfer and range-resume behavior, which remain
+  unimplemented, and the guarded daily bulk fallback, which remains unexercised.
+- Downstream analysis. A complete cleaned-input period supplies no accepted
+  vessel rule, no period-wide vessel grid, no speed summaries, and no exposure
+  result; none of those exists.
 - No complete bulk daily archive has been downloaded, opened through its ZIP
   central directory, or checked through its CRC. NOAA publishes no checksum in
   the bulk index, so a locally computed SHA-256 would identify retrieved bytes
@@ -432,10 +617,14 @@ for July. A failure, resource abort, unexpected date, unreconciled row,
 identity conflict, or incompatible delivery stops the sequence for review; it
 does not authorize weaker controls or an automatic switch to a larger request.
 
-Acceptance authorizes those bounded monthly operations; it does not claim that
-publisher-side transfer completeness, observational completeness, later-month
-safety, or complete-period safety has already been established. It does not
-authorize one combined August--November or 153-day AccessAIS request. The
+Acceptance authorized those bounded monthly operations; it did not claim that
+publisher-side transfer completeness, observational completeness, or later-month
+safety had already been established. All four authorized months have since been
+submitted and processed one at a time under exactly those controls, so the
+sequence is complete; publisher-side transfer completeness and observational
+completeness remain unestablished, and completing the intake establishes nothing
+downstream of it. Acceptance never
+authorized one combined August--November or 153-day AccessAIS request. The
 guarded one-day-at-a-time bulk route remains fallback only.
 
 AccessAIS order submission is an author-controlled action. It requires an email
@@ -655,10 +844,12 @@ Accepted without upgrading either completeness state.
 
 ## Consequences
 
-- The next author-controlled request is the August 2024 calendar-month
-  AccessAIS extract. September through November are authorized sequentially
-  under the same controls, not as one combined request. Each completed month
-  adds bounded evidence; none is pre-described as safe.
+- August, September, October, and November 2024 have been requested, delivered,
+  and processed under these controls, recording all 153 expected dates. No
+  further author-controlled AccessAIS request is authorized or needed for the
+  accepted period. Each completed month added bounded evidence; completing all
+  four does not establish publisher-side transfer completeness or observational
+  completeness, both of which remain `unverified`.
 - The local retrieval command implements artifact inspection, the manifest
   contract, safe optional ZIP extraction, and an optional bridge to the current
   one-date cleaner. Materialization revalidates the inspected source identity
@@ -672,9 +863,11 @@ Accepted without upgrading either completeness state.
   those cleaner resources.
 - The local period-intake command implements bounded multi-date partitioning and
   resumable sequential cleaner orchestration for one supplied delivery. July
-  demonstrated one monthly execution; the command does not resolve delivery
-  transfer completeness, prove later-month or complete-period safety, or make
-  the analytical period available.
+  through November have now been exercised successfully under the documented
+  controls, accumulating all 153 expected dates and moving the shared period
+  manifest to `ready`. The command does not resolve delivery transfer
+  completeness or observational completeness, both of which remain unverified,
+  and a ready cleaned-input period is not a vessel grid or an exposure result.
 - Monthly AccessAIS partitions bound each order below the currently reported
   service limit and make resubmission local to one month. Only one is submitted
   at a time.

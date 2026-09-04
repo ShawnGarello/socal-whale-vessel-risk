@@ -303,13 +303,16 @@ footprint was approximately 1.576 MiB excluding the immutable raw CSV.
 At that stage, the memory result was a scaling concern, not a linear forecast;
 monthly and full-period processing had not been shown safe. It led to a measured
 design with bounded date-sized processing and explicit DuckDB memory, thread,
-and spill controls. The later seven-day and exact July monthly operational gates
-passed under those controls, while August--November and complete 153-day
-processing remain untested. The full evidence and removal accounting are in the
+and spill controls. The later seven-day, exact July monthly, exact August
+monthly, exact September monthly, exact October monthly, and exact November
+monthly operational gates
+passed under those controls, completing all 153 accepted dates. The full
+evidence and removal accounting are in the
 [source register](data-sources.md#retrieval-route). ADR 0017 is now Accepted:
-the audited July gate authorizes sequential author-submitted August--November
-calendar-month extracts under the same controls, without establishing later-
-month or full-period safety.
+the audited July gate authorized sequential author-submitted August--November
+calendar-month extracts under the same controls, and all four have been
+processed under them, so the shared period manifest is `ready`. Publisher-side
+transfer completeness and observational completeness remain `unverified`.
 
 **Author-supplied multi-date AccessAIS intake**
 
@@ -388,7 +391,8 @@ evidence and unrelated temporary files are never overwritten. Record cache
 handling truthfully; unless a separate safe cache-reset procedure was actually used,
 state that caches were not cleared and do not label repeats cold-cache runs.
 Run resource experiments sequentially so concurrent work does not invalidate
-the memory or disk measurements. The exact seven-day and July monthly AccessAIS
+the memory or disk measurements. The exact seven-day, July monthly, August
+monthly, September monthly, and October monthly AccessAIS
 gates, stop conditions, and success criteria are in the
 [analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
 
