@@ -699,45 +699,6 @@ class _Accumulator:
         }
 
 
-def _window_query(relation: PeriodRelation) -> str:
-    order = ", ".join(GLOBAL_ORDER_COLUMNS)
-    return f"""
-        WITH ordered AS (
-            SELECT
-                mmsi,
-                observed_at_utc,
-                latitude,
-                longitude,
-                vessel_type_group,
-                lead(observed_at_utc) OVER (
-                    PARTITION BY mmsi ORDER BY {order}
-                ) AS next_observed_at_utc,
-                lead(latitude) OVER (
-                    PARTITION BY mmsi ORDER BY {order}
-                ) AS next_latitude,
-                lead(longitude) OVER (
-                    PARTITION BY mmsi ORDER BY {order}
-                ) AS next_longitude,
-                lead(vessel_type_group) OVER (
-                    PARTITION BY mmsi ORDER BY {order}
-                ) AS next_vessel_type_group
-            FROM {relation.view_name}
-        )
-        SELECT
-            mmsi,
-            epoch_us(observed_at_utc) AS observed_at_utc,
-            latitude,
-            longitude,
-            vessel_type_group,
-            epoch_us(next_observed_at_utc) AS next_observed_at_utc,
-            next_latitude,
-            next_longitude,
-            next_vessel_type_group
-        FROM ordered
-        ORDER BY mmsi, observed_at_utc, latitude, longitude, vessel_type_group
-    """
-
-
 def _identity_material(
     *,
     cells: tuple[VesselGridCell, ...],
@@ -784,9 +745,7 @@ def aggregate_vessel_grid(
         raise VesselGridError("batch size must be at least one")
     accumulator = _Accumulator(target_grid, parameters)
     try:
-        reader = relation.connection.execute(_window_query(relation)).to_arrow_reader(
-            batch_size
-        )
+        reader = relation.adjacent_observation_batches(batch_size)
         for batch in reader:
             rows = cast(list[dict[str, object]], batch.to_pylist())
             for row in rows:

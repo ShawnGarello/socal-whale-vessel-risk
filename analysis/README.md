@@ -19,9 +19,13 @@ vessel-grid boundary streams that relation, forms whole-period consecutive
 pairs, applies explicitly supplied gap and implied-speed rules, and allocates
 retained segment distance to the exact projected water grid. It writes
 candidate per-cell vessel-kilometres and union-recomputed distinct-vessel
-descriptors under ignored `data/derived/`. It does not submit AccessAIS orders,
-download AIS, process a season implicitly, accept final vessel rules, calculate
-relative exposure, or report inside-versus-outside statistics.
+descriptors under ignored `data/derived/`. A separate period vessel-rule
+evidence boundary reuses the same whole-period adjacency stream to summarize
+all four ADR 0018 candidate combinations without spatial allocation. That
+boundary is implemented and synthetically tested, but it has not been run on
+the ready 153-date input. It does not submit AccessAIS orders, download AIS,
+process a season implicitly, accept final vessel rules, calculate relative
+exposure, or report inside-versus-outside statistics.
 
 Run all commands below from this directory.
 
@@ -46,6 +50,7 @@ python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help
 python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli --help
 python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --help
 python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help
+python -m uv run python -m whale_vessel_analysis.period_vessel_rule_evidence_cli --help
 python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --help
 python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help
 ```
@@ -1584,6 +1589,92 @@ observational completeness remain unverified; one day does not validate the
 analytical period; edge-support treatment remains unresolved; and no production
 vessel grid or exposure result exists.
 
+## Period-wide vessel-rule evidence
+
+The focused `period_vessel_rule_evidence_cli` consumes one explicit
+`multiday_cleaned_ais_input_v1` manifest through the existing bounded DuckDB
+relation. Its normal path requires `period_input_readiness: ready`, including
+all 153 accepted dates. The deliberately named
+`--allow-incomplete-non-production` override exists only for synthetic and
+other explicitly non-production checks; it does not change the manifest's
+readiness state.
+
+The complete candidate matrix and the current type-only population treatment
+must be stated on every invocation. None has a hidden analytical default:
+
+```text
+python -m uv run python -m whale_vessel_analysis.period_vessel_rule_evidence_cli --manifest <period-manifest.json> --output-dir ..\data\interim\<evidence-bundle> --maximum-gap-seconds 300 --maximum-gap-seconds 1800 --implied-speed-ceiling-knots 30 --implied-speed-ceiling-knots 50 --vessel-length-treatment type-only-no-length-filter --memory-limit <size-with-unit> --temp-directory ..\data\interim\<duckdb-spill> [--threads <n>] [--batch-size <rows>] [--overwrite]
+```
+
+DuckDB constructs one same-MMSI adjacency stream in deterministic whole-period
+order. UTC date does not partition pairing, so cross-midnight observations stay
+adjacent. A segment is assigned to the UTC date of its **starting observation**
+for daily accounting, and cross-midnight segments are also reported explicitly.
+The starting observation's vessel group owns the structural segment; a change
+at the ending observation is preserved as a group-change diagnostic and as the
+candidate exclusion reason when no earlier reason applies.
+
+That single ordered stream is read in bounded Arrow batches and evaluates all
+four 300/1,800-second by 30/50-knot combinations. It does not run four full
+input scans and does not intersect segments with the spatial grid. Exact
+DuckDB grouping sets compute observations, distinct MMSIs, and distinct
+MMSI-date combinations by UTC date, whole period, and vessel group. The
+all-commercial distinct populations are recomputed from the passenger/cargo/
+tanker union rather than added from group results.
+
+Each date and the whole period report passenger, cargo, tanker, and commercial-
+union observation quality, structural diagnostics, and candidate outcomes.
+The diagnostics retain non-increasing timestamps, group changes, invalid
+coordinate transformations, zero-length movement, cross-midnight segments,
+maximum-gap exclusions, implied-speed exclusions, reported-SOG availability,
+and valid, null, or unexpected invalid retained vessel-length values. Upstream
+unsupported types, malformed values, duplicates, and other cleaner removals
+remain traceable in the one-date cleaner quality reports; this boundary does
+not relabel or count those source-stage removals a second time.
+
+Distributions use deterministic fixed half-open bins plus exact count, minimum,
+maximum, sum, and mean. Fixed edges are recorded in the artifact for time gap,
+projected and geodesic endpoint distance, signed projected-minus-geodesic
+difference, implied speed, reported SOG, and vessel length. Percentiles are not
+calculated, and individual values are never accumulated in Python. Memory is
+therefore bounded by the explicit DuckDB limit and Arrow batch size plus a
+constant set of date/group/candidate counters.
+
+The atomic output is one named directory beneath ignored `data/interim/`:
+
+| File | Contract and purpose |
+|---|---|
+| `evidence.json` | Deterministic `period_vessel_rule_evidence_v1` candidate-method evidence with input identities, fixed-bin contract, daily and period summaries, reconciliation, and limitations. |
+| `run-metadata.json` | Time-bearing `period_vessel_rule_evidence_lineage_v1` execution provenance with local paths, actual checksums, UTC times, runtime, resource settings, batch statistics, and software versions. |
+
+The content-derived evidence ID excludes local absolute paths, execution times,
+runtime, output-directory names, machine/software details, and resource
+settings. Those values occur only in the lineage sidecar. The stable identity
+includes the compatible period ID, readiness and completeness states, daily
+cleaner identities and checksums, explicit candidate choices, distribution
+contract, and summaries. Input checksums are reverified before scanning, the
+deterministic JSON is validated before and after writing, and publication uses
+a sibling temporary directory followed by rename. Raw destinations, paths
+outside ignored interim storage, input/output ancestry overlap, arbitrary
+overwrite, incomplete production input, unsupported contracts or versions,
+and invalid or incomplete candidate sets are refused.
+
+Synthetic tests cover all four candidate combinations, global ordering,
+cross-midnight pairing and starting-date accounting, group change,
+non-increasing time, maximum-gap and implied-speed exclusion, zero-length
+movement, projected/geodesic comparison, SOG and length availability,
+date/group reconciliation, commercial-union distinct recomputation,
+batch-bounded single-stream iteration, path/clock-independent identity,
+readiness and checksum failures, path guards, atomic failure, overwrite, and
+CLI exits.
+
+The boundary has not been exercised against the real 153-date accumulation
+manifest. The real five-month evidence matrix and four candidate grid runs have
+not begun, no candidate rule has been accepted, no production vessel grid
+exists, and no exposure analysis has begun. Publisher-side transfer
+completeness and AIS observational completeness remain unverified. ADR 0018
+remains Proposed.
+
 ## Candidate multi-day vessel-grid aggregation
 
 The focused `vessel_grid_cli` promotes the reusable consecutive-pair,
@@ -1853,13 +1944,16 @@ The rendered views and render report were not committed. The VSR boundary was
 context only and was not used in candidate construction or exposure analysis.
 
 Only 15--16 July 2024 were processed through this candidate vessel-grid
-exercise. Its full 2024-07-01 through 2024-11-30 analytical input is still
-missing 151 dates. Independent transfer completeness, observational completeness,
-later-month and full-period candidate-processing safety, alternative edge
-support, accepted thresholds, and a final vessel-activity input remain
-unverified. No production maximum-gap or implied-speed threshold was selected,
-no absent traffic outside the qualified receiver domain was interpreted as
-zero, and no exposure analysis was performed. ADR 0018 remains Proposed.
+exercise. Its separate two-date manifest still records the other 151 accepted
+dates as missing. The later accumulation manifest now contains compatible
+cleaned inputs for all 153 dates and is ready, but neither the new period-rule
+evidence boundary nor the four candidate grid runs have been exercised against
+it. Independent transfer completeness, observational completeness, full-period
+candidate-processing safety, alternative edge support, accepted thresholds,
+and a final vessel-activity input remain unverified. No production maximum-gap
+or implied-speed threshold was selected, no absent traffic outside the
+qualified receiver domain was interpreted as zero, and no exposure analysis
+was performed. ADR 0018 remains Proposed.
 
 ## Projected water-grid command
 
