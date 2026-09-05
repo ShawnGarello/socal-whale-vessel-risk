@@ -564,11 +564,107 @@ covers pairing, exclusions, reconciliation, bounded batching, deterministic
 identity, input/date/checksum/contract refusal, output safeguards, and CLI
 exits.
 
-This is an implementation boundary, not the missing period evidence. The real
-five-month command and candidate-grid matrix have not run, no threshold has
-been accepted, no production vessel grid exists, publisher-side transfer and
-AIS observational completeness remain unverified, and no exposure analysis has
-begun. This record therefore remains **Proposed**.
+### Real 153-date non-spatial rule evidence
+
+On 2026-09-04, two independent profiled executions used the exact ready
+`multiday_cleaned_ais_input_v1` manifest with period ID
+`multiday-ais-17e982f999f7093945193378`, all four required candidate
+combinations, `type-only-no-length-filter`, a 1 GB DuckDB limit, one thread,
+50,000-row batches, and isolated spill directories. Both runs returned exit
+code 0, reverified all 153 cleaned-Parquet checksums, streamed 15,458,567
+cleaned observations in 310 Arrow batches, and reconciled 15,457,099 structural
+segments. Those segments include 25,655 cross-midnight pairs, 1,413,704
+zero-length movements, zero invalid coordinate transformations, zero
+non-increasing timestamps and zero vessel-group changes.
+
+The artifact contract and processing version are
+`period_vessel_rule_evidence_v1` / `1.1.0`. Both runs produced evidence ID
+`period-vessel-rule-evidence-cb2525fab34c4b8848146365` and byte-identical
+`evidence.json` files with SHA-256
+`1b90ebd4e8d340cdb09709557d154f5b55f7882cba8cbc08b548958edbb25ff4`.
+The time-bearing `period_vessel_rule_evidence_lineage_v1` files differed as
+intended, with SHA-256 values
+`16e4a722ed06bf3b8e53ece2a07855a1a4487f136bdfb8896e6889806242a562`
+and `b23652ae599ebcb4c35883d3df62077ed2d94dc68c9d671841b03cd79d98824e`.
+Every daily summary reconciles to its whole-period passenger, cargo, tanker and
+union-recomputed all-commercial summary. Every candidate's retained and
+excluded populations, primary reasons, distances, cross-midnight counts and
+zero-length counts reconcile by date and vessel group.
+
+| Maximum gap (s) | Speed ceiling (kn) | Retained / excluded segments | Excluded share | Gap / speed exclusions | Retained projected / geodesic km | Projected relative to geodesic | Cross-midnight retained | Zero-length retained |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 300 | 30 | 14,946,183 / 510,916 | 3.305% | 461,769 / 49,147 | 2,257,826.775 / 2,257,926.165 | -0.004402% | 19,667 | 1,346,338 |
+| 300 | 50 | 14,959,600 / 497,499 | 3.219% | 461,769 / 35,730 | 2,274,142.490 / 2,274,241.131 | -0.004337% | 19,686 | 1,346,338 |
+| 1,800 | 30 | 15,380,549 / 76,550 | 0.495% | 24,935 / 51,615 | 2,342,366.828 / 2,342,468.413 | -0.004337% | 21,183 | 1,413,123 |
+| 1,800 | 50 | 15,394,342 / 62,757 | 0.406% | 24,935 / 37,822 | 2,366,859.397 / 2,366,960.189 | -0.004258% | 21,202 | 1,413,123 |
+
+The vessel-group candidate outcomes are:
+
+| Vessel group | Gap (s) | Ceiling (kn) | Retained / excluded | Gap / speed exclusions | Retained projected km | Projected relative to geodesic |
+|---|---:|---:|---:|---:|---:|---:|
+| Passenger | 300 | 30 | 6,191,714 / 207,644 | 190,504 / 17,140 | 805,571.910 | -0.000205% |
+| Passenger | 300 | 50 | 6,198,468 / 200,890 | 190,504 / 10,386 | 813,884.253 | -0.000285% |
+| Passenger | 1,800 | 30 | 6,368,833 / 30,525 | 12,737 / 17,788 | 837,203.780 | -0.000286% |
+| Passenger | 1,800 | 50 | 6,375,729 / 23,629 | 12,737 / 10,892 | 848,120.894 | -0.000324% |
+| Cargo | 300 | 30 | 5,788,038 / 186,237 | 163,445 / 22,792 | 1,036,391.081 | -0.008705% |
+| Cargo | 300 | 50 | 5,793,924 / 180,351 | 163,445 / 16,906 | 1,043,381.378 | -0.008518% |
+| Cargo | 1,800 | 30 | 5,941,952 / 32,323 | 8,219 / 24,104 | 1,074,356.202 | -0.008491% |
+| Cargo | 1,800 | 50 | 5,948,002 / 26,273 | 8,219 / 18,054 | 1,085,329.227 | -0.008311% |
+| Tanker | 300 | 30 | 2,966,431 / 117,035 | 107,820 / 9,215 | 415,863.783 | -0.001806% |
+| Tanker | 300 | 50 | 2,967,208 / 116,258 | 107,820 / 8,438 | 416,876.859 | -0.001784% |
+| Tanker | 1,800 | 30 | 3,069,764 / 13,702 | 3,979 / 9,723 | 430,806.846 | -0.001846% |
+| Tanker | 1,800 | 50 | 3,070,611 / 12,855 | 3,979 / 8,876 | 433,409.277 | -0.001808% |
+
+Raising the speed ceiling retained 13,417 more segments and 16,315.715 more
+projected vessel-km in the 300-second case, and 13,793 more segments and
+24,492.569 more projected vessel-km in the 1,800-second case. Raising the gap
+retained 434,366--434,742 more segments and 84,540.053--92,716.907 more
+projected vessel-km. These are objective sensitivity differences. A candidate
+is not preferred merely because it retains more distance.
+
+All-commercial daily observations had a median of 103,590. The three lowest
+dates were 2024-09-29 at 61,513, 2024-11-24 at 64,268 and 2024-11-28 at 71,841.
+The highest all-commercial 300-second exclusion rates were 8.701% on
+2024-11-24, 8.226% on 2024-11-25 and 8.164% on 2024-09-24 at 30 knots; at 50
+knots the same dates were 8.692%, 8.174% and 7.938%. The highest 1,800-second
+rates were 2.767% on 2024-09-29, 2.382% on 2024-09-24 and 2.140% on
+2024-10-14 at 30 knots, and 2.618%, 2.130% and 2.053% on those dates at 50
+knots. Group extrema reinforce the need for review: the tanker 300-second rate
+reached 13.118% on 2024-11-24, while the largest 1,800-second rates were 2.995%
+for passenger and 2.863% for cargo on 2024-09-29 and 2.570% for tanker on
+2024-09-24. These dates and groups are flagged for later source-quality and
+threshold-rationale review; the evidence does not establish why they differ or
+whether source transfer or observation was complete.
+
+Reported SOG was available on 15,449,086 observations and unavailable on 9,481
+(0.0613%). Vessel length was valid on 15,410,164 observations and null because
+it was missing or upstream-invalid on 48,403 (0.3131%). Cargo accounts for
+21,419 missing-length observations and tanker for 26,977; the type-only
+treatment does not convert those lengths into gross tonnage. Across the
+unfiltered structural population, projected distance was 5,421,561.955 km and
+geodesic distance was 5,421,442.496 km. Candidate retained projected totals
+were 0.004258%--0.004402% below geodesic totals. Cargo candidate differences
+were larger than the other group totals at -0.008311% to -0.008705%; the
+largest daily candidate magnitude was 0.058123% for tanker on 2024-11-04. The
+separately accumulated projected-minus-geodesic totals reconcile to the two
+distance totals within 0.0094 m over the all-commercial structural population.
+
+The first and repeat target operations took 788.7328084999463 and
+954.8200375000015 seconds; elapsed time including import and profiler barrier
+was 790.3853937999811 and 956.718648100039 seconds. The lineage-recorded
+processing intervals within the target operations were 788.334678 and
+954.415569 seconds. Peak application RSS was 1,302,044,672 and 1,303,158,784
+bytes. Minimum available memory was 795,631,616
+and 2,742,149,120 bytes; maximum spill was 1,117,716,480 and 1,201,438,720
+bytes; minimum free disk was 59,567,480,832 and 56,436,678,656 bytes. Both
+profilers reported `target_completed`; both spill directories returned to zero;
+and no partial or unexpected file remained.
+
+This evidence is JSON, not a spatial layer, so no spatial or QGIS verification
+was required. No production rule has been selected, no final vessel grid or
+exposure result exists, publisher-side transfer completeness and AIS
+observational completeness remain `unverified`, and edge support remains
+unresolved. This record therefore remains **Proposed**.
 
 ### Real two-day candidate-grid execution
 
@@ -626,35 +722,43 @@ is not sufficient to settle this Proposed decision.
 
 ## Remaining decision evidence
 
-The implemented period-rule boundary supports the remaining research without
-repeating geometry cost for each candidate. Before this decision can be
-accepted, later evidence must:
+The implemented period-rule boundary supports the remaining research by
+identifying dates, vessel groups, and exclusion reasons that need closer review.
+It does not replace the spatial sensitivity evidence. Before this decision can
+be accepted, later evidence must:
 
-1. repeat the 300/1,800-second and 30/50-knot matrix across the accepted period,
-   retaining daily and vessel-group distributions so seasonal or source-quality
-   changes cannot be hidden in one total;
-2. review projected-versus-geodesic differences and excluded populations
-   period-wide; the bounded-day difference is immaterial, but it is not a
-   period guarantee;
-3. retain source-transfer and observational completeness as unverified unless
+1. investigate the flagged daily and vessel-group exclusion variation against
+   source-quality evidence and a defensible threshold rationale;
+2. decide the edge-support treatment and determine whether a matched support-
+   ring retrieval is required before production aggregation;
+3. run the four candidates against the ready 153-date input on one exact grid
+   with common support and edge-treatment choices, then compare the resulting
+   vessel-kilometres in individual cells, the spatial distribution of changes,
+   and cell-level vessel-group summaries; repeat deterministic artifacts and
+   visually inspect the checksum-bound spatial outputs;
+4. retain source-transfer and observational completeness as unverified unless
    independent evidence establishes otherwise; and
-4. establish a threshold rationale and edge-support treatment, then validate
-   exclusion rates, sensitivity, vessel-group distributions, and reported-SOG
-   availability across the accepted period before producing a vessel grid.
+5. select or reject candidate thresholds only after the non-spatial and spatial
+   sensitivity reviews, then run and spatially validate a final period-wide
+   vessel grid before exposure analysis.
 
-The bounded one-day harness, two-day candidate-grid executions, and synthetic
-period-rule boundary establish that the implemented subsets are executable.
-They do not complete the measure comparison, select a rule, establish stability
-across 153 days, or validate a production analytical input.
+The bounded one-day harness, two-day candidate-grid executions, synthetic
+period-rule tests, and repeated real 153-date non-spatial evidence establish
+that those implemented subsets are executable and that the period evidence is
+deterministic. They do not select a rule, resolve the flagged variation or edge
+support, establish period-wide spatial stability, or validate a production
+analytical input. Whole-period endpoint-distance and exclusion totals cannot
+show whether candidate differences are concentrated in, or change the relative
+pattern among, individual grid cells. The real two-day spatial matrix is not a
+substitute for that whole-period per-cell comparison.
 
-All four combinations deserve period-wide testing: the two gap values bracket
-a locally inferred short-gap treatment and NOAA's tool default, while the two
-speed values test a locally inferred ceiling against a permissive published
-comparison. The 30/50-knot difference changes 97 retained segments and about
-111--119 parent vessel-km within each gap case; the 300/1,800-second difference
-changes vessel-hours much more strongly. The resulting per-cell changes are
-large enough that this one day cannot justify dropping either axis. This is a
-testing conclusion, not acceptance of any threshold.
+The full-period non-spatial matrix now supplies date and vessel-group exclusion
+sensitivity evidence, while the two gap values still bracket a locally inferred
+short-gap treatment and NOAA's tool default and the two speed values still test
+a locally inferred ceiling against a permissive published comparison. The
+observed differences are large enough to require methodological, source-quality,
+and per-cell spatial review. This is a testing conclusion, not acceptance of any
+threshold.
 
 ## Consequences
 
@@ -667,10 +771,10 @@ testing conclusion, not acceptance of any threshold.
   under ignored derived storage and cannot become a production result using
   hidden defaults.
 - Period-wide candidate-rule summarization now has a deterministic, bounded,
-  non-spatial implementation with explicit readiness and parameter gates. Its
-  existence removes four redundant full scans from the planned rule review but
-  supplies no real period result until the ready 153-date command is executed
-  and audited.
+  non-spatial implementation with explicit readiness and parameter gates. Two
+  profiled executions against the ready 153-date state reproduced exact
+  deterministic evidence bytes. The output supplies candidate evidence, not an
+  accepted rule or a spatial vessel input.
 - The current cleaned files are sufficient for interior candidate segments but
   not for uncensored entry/exit portions. The future implementation must expose
   that limitation or revise the pre-segmentation boundary.

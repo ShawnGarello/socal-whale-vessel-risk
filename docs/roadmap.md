@@ -171,8 +171,8 @@ Turn raw source data into validated, derived geospatial datasets through an orde
 
 **Foundation, first AIS processing slice, projected water grid, whale transfer,
 candidate vessel-grid aggregation, and period vessel-rule evidence boundary
-implemented; candidate vessel-grid also exercised with bounded two-day real
-data**
+implemented; candidate vessel-grid exercised with bounded two-day real data and
+non-spatial rule evidence exercised with the real ready 153-date input**
 
 - A Python 3.13 src package exists under [`../analysis/`](../analysis/) with a
   committed `pyproject.toml` and `uv.lock`. uv sync/lock, Ruff format/lint,
@@ -715,8 +715,18 @@ data**
   a time-bearing lineage sidecar are atomically restricted to ignored interim
   storage; paths, clocks, runtime, output names, machine details, and resource
   settings do not enter evidence identity. The boundary is synthetically
-  tested. It has not been run on the real ready manifest, selects no rule,
-  emits no production grid, and performs no exposure analysis.
+  tested. On 2026-09-04 it also completed two profiled runs against the exact
+  ready 153-date manifest. Both streamed 15,458,567 observations and reconciled
+  15,457,099 structural segments, all four candidate populations, all dates,
+  and all vessel groups. The repeat reproduced evidence ID
+  `period-vessel-rule-evidence-cb2525fab34c4b8848146365` and the exact
+  `evidence.json` bytes (SHA-256
+  `1b90ebd4e8d340cdb09709557d154f5b55f7882cba8cbc08b548958edbb25ff4`);
+  time-bearing lineage bytes differed as intended and both spill directories
+  ended empty. This non-spatial JSON evidence required no QGIS verification.
+  It selects no rule, emits no production grid, and performs no exposure
+  analysis. Publisher-side transfer and AIS observational completeness remain
+  `unverified`.
 - A focused candidate vessel-grid boundary now consumes that verified relation
   and the exact `projected_water_grid_v1` contract. It requires explicit maximum
   gap, implied-speed ceiling, period-readiness, cleaned-extent censoring, and
@@ -793,15 +803,15 @@ data**
   are implemented, synthetically verified, and exercised across the four
   documented parameter combinations on the real 15--16 July delivery. The
   candidate exercise used its own separate two-date period manifest, not the
-  now-`ready` accumulation-gate manifest. The new bounded period-rule evidence
-  command is implemented and synthetically tested but has likewise not run on
-  the real 153-date state; transfer and observational completeness remain
-  `unverified`. No production
-  threshold was selected;
+  now-`ready` accumulation-gate manifest. The separate non-spatial period-rule
+  evidence command has now run twice on the real 153-date state and reproduced
+  exact deterministic evidence bytes, while transfer and observational
+  completeness remain `unverified`. No production threshold was selected;
   accepted maximum-gap and implied-speed rules, alternative edge support,
-  vessel-length population treatment, period-wide stability, observational
-  completeness, monthly/full-period safety, and final speed summaries remain
-  unresolved. The implemented output therefore remains a candidate result, no
+  vessel-length population treatment, interpretation of the flagged daily and
+  vessel-group variation, observational completeness, final period-wide spatial
+  aggregation, and final speed summaries remain unresolved. The implemented
+  spatial output therefore remains a candidate result, no
   exposure analysis has been performed, and ADR 0018 remains Proposed.
 - Normalization of whale or vessel values. Both grid-aligned candidate inputs
   preserve physical or source units; normalization remains part of the deferred
