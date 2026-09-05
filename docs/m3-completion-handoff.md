@@ -257,3 +257,204 @@ recorded in ADR 0018 and `analysis/README.md` were produced under `1.0.0` and
 history and must be labelled with the processing version that produced them
 rather than silently re-run. The change is unavoidable: under `1.0.0` the
 full-period aggregation cannot complete at all.
+
+## Full-period spatial matrix execution
+
+Processing version `1.1.0`. Every run used the same exact grid
+(`7229098c...c087031`), the same ready period
+`multiday-ais-17e982f999f7093945193378`, `require-ready`,
+`censor-at-cleaned-extent`, `exact-water-geometry-exclude-and-report`, no length
+filter, DuckDB `1GB`, one thread, Arrow batch 50000, and a fresh ignored
+output/profile/spill path. Runs were strictly sequential; none ran beside another.
+
+### 300 seconds / 30 knots
+
+Completed on the third attempt, the first two having failed the conservation
+check described above. Both earlier profiles are retained as evidence.
+
+| Item | Value |
+|---|---|
+| Grid ID | `candidate-vessel-grid-197aebe346602981b79501fa` |
+| `vessel-grid.parquet` | `be3dc74d1c07525ef2a74cba1d0062abd97496b4043b3dd26847f9c3a65ec860` |
+| `quality-report.json` | `05260f8991e31fd1677b0f7b248dd0e96b97adbfabbd5d9240926d09aeac6faa` |
+| Operation elapsed | 1,956.912 s |
+| Peak application RSS | 1,418,575,872 of 1,879,048,192 bytes |
+| Peak spill | 1,192,919,040 of 12,884,901,888 bytes; final zero |
+| Minimum available memory | 2,712,629,248 of 536,870,912 bytes |
+| `termination_threshold` | `null`; no resource abort |
+
+The independent repeat reproduced **both checksums exactly**, so the candidate is
+deterministic under the corrected accumulation.
+
+Distance conservation passed with `difference_m` exactly `0.0` for passenger,
+cargo, tanker and all-commercial; the maximum single-segment difference was
+`1e-12` metres. Populations: 15,458,567 observations; 15,457,099 structural
+segments; 14,946,183 retained; 510,916 excluded, all of them either
+`maximum_gap` (461,769) or `implied_speed` (49,147), with zero
+`invalid_coordinate_transform`, `non_increasing_time` and `vessel_group_change`.
+Zero-length retained pairs 1,346,338; cross-midnight candidates 25,655 with
+19,667 retained. Allocated 2,084,502,496.069 metres with 173,324,278.518 metres
+of retained parent distance outside modeled-whale support. 5,847,760 observations
+fell outside exact cell support and 20 were boundary-ambiguous; these are
+reported, not reclassified as land or absent coverage.
+
+The earlier 91.7-minute timings were cold-read cost. With the 153 daily Parquet
+files in the operating-system page cache a run takes about 33 minutes.
+
+### Remaining runs
+
+`g300-s50`, `g1800-s30` and `g1800-s50`, each with its repeat, run sequentially
+from `scratchpad/run_matrix.sh`, halting on the first failure. Results are
+appended here as they complete.
+
+### Visual verification inputs confirmed available
+
+QGIS 4.2.1 is present at `C:\Program Files\QGIS 4.2.1\bin\python-qgis.bat`.
+`domain-candidate-masks.parquet` matches
+`4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77`. The
+immutable VSR snapshot matching
+`2358bd39df3f3ca084b8ef8c3ea3321c7d93fe9bec76f5a2d61e01370549c783` is read
+read-only from the analytical-domain worktree; it is not copied, committed, or
+derived from, per ADR 0019.
+
+### Completed candidates and whole-period sensitivity
+
+Each pair below reproduced **both** checksums exactly on an independent repeat.
+
+| Candidate | Grid ID | `vessel-grid.parquet` | `quality-report.json` |
+|---|---|---|---|
+| 300 / 30 | `candidate-vessel-grid-197aebe346602981b79501fa` | `be3dc74d1c07525ef2a74cba1d0062abd97496b4043b3dd26847f9c3a65ec860` | `05260f8991e31fd1677b0f7b248dd0e96b97adbfabbd5d9240926d09aeac6faa` |
+| 300 / 50 | recorded with results | `30209bb2b7195a77dedfef7082214315275c15f6d219d39d2f726d5c8d24c3b2` | `aefd2a939be61d97aa3ddc67493fbfb449d1b902e6d3b99a1dbd0ff2e1159cbb` |
+| 1800 / 30 | recorded with results | `6e17b8b109e07e35a24c00531528bc8cce106055528212debc7b3578606e0aeb` | `be05a406f1536fee62a1105b1d2ce70c64d61fa7b08241ff1cf1676c72c105ac` |
+
+| Candidate | Retained | Gap excluded | Speed excluded | Passenger km | Cargo km | Tanker km | All-commercial km | Outside support km |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 300 / 30 | 14,946,183 | 461,769 | 49,147 | 728,151.586 | 970,908.248 | 385,442.662 | 2,084,502.496 | 173,324.279 |
+| 300 / 50 | 14,959,600 | 461,769 | 35,730 | 736,093.425 | 977,440.347 | 386,349.492 | 2,099,883.264 | 174,259.226 |
+| 1800 / 30 | 15,380,549 | 24,935 | 51,615 | 756,460.744 | 1,006,386.386 | 399,080.095 | 2,161,927.225 | 180,439.603 |
+
+Observations, not selection criteria:
+
+- The gap change dominates the speed change. Relaxing the gap from 300 to 1,800
+  seconds adds 77,424.729 allocated km (+3.71%); relaxing the ceiling from 30 to
+  50 knots adds 15,380.768 km (+0.74%), roughly one fifth as much.
+- Relaxing the gap **increases** implied-speed exclusions, 49,147 to 51,615,
+  because longer admitted gaps then fail the plausibility test. The two rules are
+  not independent and must not be described as separable filters.
+- Outside-support share is stable at 7.677%, 7.663% and 7.703% of retained parent
+  distance, so the exact-support treatment is not candidate-sensitive.
+- Zero-length retained pairs rise from 1,346,338 to 1,413,123 with the longer gap.
+
+Whole-period totals cannot show whether these differences are concentrated in
+particular cells or change the relative pattern among them. Per-cell comparison
+and visual inspection remain required, and retaining more distance is explicitly
+not a reason to prefer a candidate.
+
+### Execution note
+
+The harness repeatedly terminated this session's background **shells** when free
+physical memory fell to about 2.2 GiB of 16 GiB, largely because the 153 daily
+Parquet files occupy the operating-system file cache. No profiled run was ever
+affected: each detached run continued through those terminations, every profile
+recorded `termination_threshold: null`, and the runtime guard consistently
+reported about 2.3 GiB available against its 0.5 GiB floor. No gate was relaxed.
+The remaining runs were therefore launched detached from the session shell, from
+an idempotent script that skips any already-complete bundle and refuses to start
+a second profiled job while one is running.
+
+### Full matrix complete
+
+All eight runs completed. Every candidate reproduced **both** checksums exactly on
+an independent repeat, satisfying the ADR 0018 determinism requirement.
+
+| Candidate | `vessel-grid.parquet` | `quality-report.json` |
+|---|---|---|
+| 300 / 30 | `be3dc74d1c07525ef2a74cba1d0062abd97496b4043b3dd26847f9c3a65ec860` | `05260f8991e31fd1677b0f7b248dd0e96b97adbfabbd5d9240926d09aeac6faa` |
+| 300 / 50 | `30209bb2b7195a77dedfef7082214315275c15f6d219d39d2f726d5c8d24c3b2` | `aefd2a939be61d97aa3ddc67493fbfb449d1b902e6d3b99a1dbd0ff2e1159cbb` |
+| 1800 / 30 | `6e17b8b109e07e35a24c00531528bc8cce106055528212debc7b3578606e0aeb` | `be05a406f1536fee62a1105b1d2ce70c64d61fa7b08241ff1cf1676c72c105ac` |
+| 1800 / 50 | `5759fa1a22a4f7c5ecd2ea46c226a3c2bc5d6642f1780e3f56c25e12277c42ea` | `ad28904d0fc82963e529d86c33603e11498e9b4e121dd9b05230cd3742352ca4` |
+
+Comparison artifact `data/interim/m3-full-period-matrix/candidate-comparison-v2.json`,
+SHA-256 `db34cf842fe88558e2866d3168f6ffe2af3cd7fcbc71c99d11a8b20bcbddb0b6`. It
+re-verified repeat bytes, lineage run IDs and output digests, grid checksum,
+parameters, period identity, per-cell derived intensity, group summation, and
+per-group conservation against the quality reports before comparing.
+
+### Per-cell comparison
+
+| Comparison | Cells changed | Cells >= 1 km | Net km | Top-10 share | Spearman |
+|---|---:|---:|---:|---:|---:|
+| 300/30 to 300/50 | 2,482 | 2,025 | 15,380.768 | 0.1417 | 0.999933 |
+| 1800/30 to 1800/50 | 2,694 | 2,279 | 23,184.731 | 0.1242 | 0.999899 |
+| 300/30 to 1800/30 | 3,502 | 3,259 | 77,424.728 | 0.0988 | 0.999255 |
+| 300/50 to 1800/50 | 3,528 | 3,296 | 85,228.692 | 0.0958 | 0.999192 |
+
+- Net and absolute difference are equal in every comparison, so **no cell ever
+  loses distance** when a rule is relaxed; relaxation only adds.
+- The top ten cells hold only 9.6-14.2% of the absolute difference, so the changes
+  are broadly distributed rather than concentrated in a few cells.
+- Rank correlation is at least 0.999192 and the ten highest cells are **identical
+  and identically ordered in all four candidates**, so no candidate reorders the
+  headline spatial pattern.
+- Individual cells still move materially: maximum relative increase 330.09% for
+  the gap change and 66.62% for the speed change, with 538-584 cells above 10%
+  for the gap change.
+- `distinct_mmsi` and `distinct_mmsi_dates` are identical across candidates, as
+  expected for point-based descriptors.
+
+### Where each rule adds distance
+
+Quintiles of cells by their 300/30 baseline vessel-kilometres:
+
+| Quintile | Median baseline km | Median distinct MMSI | Gain, gap 300 to 1800 | Gain, ceiling 30 to 50 |
+|---|---:|---:|---:|---:|
+| Q1 sparsest | 17.7 | 4 | 7.58% | 0.94% |
+| Q2 | 68.5 | 14 | 5.74% | 1.16% |
+| Q3 | 132.4 | 25 | 4.60% | 0.96% |
+| Q4 | 235.6 | 32 | 4.45% | 1.01% |
+| Q5 busiest | 789.2 | 72 | 4.13% | 0.75% |
+
+The gap relaxation adds proportionally about 1.8 times more distance in the
+sparsest cells than the busiest. The ceiling relaxation is essentially flat, and
+falls mainly on passenger (1.09%) rather than cargo (0.67%) or tanker (0.24%).
+
+### Visual verification, 2026-09-05
+
+QGIS 4.2.1, offscreen rendering, common physical-unit class breaks for every
+candidate rather than per-layer quantiles, with the accepted-domain outline in
+blue and the VSR outline in orange drawn above the grid. Each render re-verified
+the grid checksum, the mask checksum, and the immutable VSR snapshot checksum,
+and reported 4,516 features, EPSG:3310, and zero invalid geometries. Images are
+under `data/interim/m3-qgis-inspection/<candidate>/` and are ignored.
+
+The renders were **examined**, not merely produced:
+
+- Geography is correct: Point Conception, the northern Channel Islands, Santa
+  Catalina, San Clemente, and the coast to San Diego all sit correctly, with land
+  and islands excluded as holes and no cell over land.
+- Cells are square and axis-aligned in EPSG:3310 with no shear, rotation, or
+  offset, and the coastline registers against cell edges.
+- Traffic structure is coherent: the Santa Barbara Channel approaches, the
+  coastwise corridor, and the Los Angeles/Long Beach concentration all appear
+  where commercial traffic is expected, with the darkest cells at the port.
+- **A suspected artifact was investigated rather than accepted.** Several straight
+  one-cell-tall east-west bands appear, which grid-aligned features often are. No
+  row is anomalous: no grid row exceeds 1.8 times its neighbours' mean. Only three
+  short high-contrast runs exist, of 5 to 10 cells. Their projected coordinates
+  place the strongest one at x -15,000 to 20,000, y -405,000, which is the Santa
+  Barbara Channel, whose traffic separation scheme genuinely runs east-west; the
+  other two lie on the established east-west approaches south of the Channel
+  Islands. They are real traffic lanes, not projection or aggregation artifacts.
+- The northern and southern grid margins are visibly paler than the interior, the
+  expected signature of `censor-at-cleaned-extent`: tracks crossing the map
+  boundary lose their entry and exit distance. This makes the documented
+  limitation visible rather than merely asserted. It is not evidence of low
+  traffic there.
+- The 300/30 and 1800/50 extremes are visually near-identical, consistent with the
+  rank correlation. The visible differences are additional fill in sparse offshore
+  cells and slightly stronger east-west bands.
+
+No projection shift, geometry gap, unexplained clipping, sliver, or displaced
+feature was found in any candidate. This inspection establishes rendering and
+spatial plausibility only. It is not evidence of observational completeness,
+coverage, or any exposure or policy conclusion.
