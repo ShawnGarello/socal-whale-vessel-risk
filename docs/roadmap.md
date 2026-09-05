@@ -806,13 +806,23 @@ non-spatial rule evidence exercised with the real ready 153-date input**
   now-`ready` accumulation-gate manifest. The separate non-spatial period-rule
   evidence command has now run twice on the real 153-date state and reproduced
   exact deterministic evidence bytes, while transfer and observational
-  completeness remain `unverified`. No production threshold was selected;
-  accepted maximum-gap and implied-speed rules, alternative edge support,
-  vessel-length population treatment, interpretation of the flagged daily and
-  vessel-group variation, observational completeness, final period-wide spatial
-  aggregation, and final speed summaries remain unresolved. The implemented
-  spatial output therefore remains a candidate result, no
-  exposure analysis has been performed, and ADR 0018 remains Proposed.
+  completeness remain `unverified`.
+  On 2026-09-05 the same four-candidate matrix was executed against the ready
+  153-date manifest on the exact water grid. Eight sequential profiled runs
+  completed with no resource abort; each candidate reproduced its GeoParquet and
+  quality-report bytes exactly on an independent repeat; all six candidate pairs
+  were compared per cell and by vessel group; and the four checksum-bound
+  outputs were inspected in QGIS 4.2.1. A distance-accumulation defect found by
+  that run was corrected, raising the candidate processing version to `1.1.0`,
+  so identities recorded under `1.0.0` no longer reproduce byte-for-byte. The
+  edge-support treatment, the type-only vessel-length population, and the
+  interpretation of the flagged daily and vessel-group variation are now
+  resolved in the [method review](m3-vessel-method-review.md).
+  **Still unresolved: no maximum-gap or implied-speed rule is accepted, no final
+  vessel-activity input or speed summary exists, and observational completeness
+  remains `unverified`.** The spatial output therefore remains a candidate
+  result, no exposure analysis has been performed, and ADR 0018 remains
+  Proposed.
 - Normalization of whale or vessel values. Both grid-aligned candidate inputs
   preserve physical or source units; normalization remains part of the deferred
   exposure-method decision.

@@ -119,7 +119,14 @@ zero-length vessel. No rule maps these lengths to gross tonnage.
 The diagnostic artifact is
 `data/interim/m3-completion-diagnostics-second/run/diagnostics.json`, SHA-256
 `aace97dd777e3b87350c1808e1d4ff00b66ab6e723d941d232fd493236265656`.
-It is non-spatial and needs no QGIS inspection. Full-period spatial sensitivity,
-threshold selection, a truthful final-input boundary, speed summaries,
-reproduction and spatial verification remain outstanding. ADR 0018 and M3
-remain open.
+It is non-spatial and needs no QGIS inspection.
+
+Updated 2026-09-05: the full-period spatial sensitivity evidence this review
+called for **has since been produced**. The four-candidate matrix ran against the
+ready 153-date period, each candidate reproduced its bytes exactly, all six
+candidate pairs were compared per cell, and the outputs were inspected in QGIS.
+See `analysis/README.md` and the [session handoff](m3-completion-handoff.md).
+
+Still outstanding: threshold selection is **not** recorded, and a truthful
+final-input boundary, speed summaries, their reproduction and their spatial
+verification do not exist. ADR 0018 and M3 remain open.

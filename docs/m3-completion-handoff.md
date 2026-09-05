@@ -4,6 +4,39 @@ Session date: 2026-09-04. Branch: `feat/m3-vessel-processing-completion`.
 This is execution history; the roadmap and ADRs own status and methodology.
 `docs/delivery-assessment.md` belongs to another session and is excluded.
 
+## Current status, 2026-09-05 (read this first)
+
+This document is append-ordered execution history. Later sections supersede
+earlier ones; the "Outstanding / next action" section below is **stale history
+from the first session** and is retained only as a record of what was true then.
+
+**M3 is In progress. ADR 0018 remains Proposed. No vessel rule is accepted.**
+
+Done: the period, evidence, grid and lineage identities were re-verified; the
+non-spatial evidence and flagged dates were reviewed; the edge treatment and
+type-only population were resolved; a distance-accumulation defect was found,
+measured and corrected; and the complete four-candidate spatial matrix was
+executed, repeated byte-for-byte, compared across all six candidate pairs, and
+inspected in QGIS.
+
+Not done, in order:
+
+1. **Rule selection is not recorded.** The evidence points to 300 seconds and
+   30 knots, but no selection is written into ADR 0018 and no alternative has
+   been formally rejected.
+2. **No final vessel-input boundary or speed-summary contract exists.** The
+   speed population, weighting, units, unavailable-value and zero-activity
+   semantics are undefined and untested.
+3. **No production vessel grid or speed summary has been generated,**
+   reproduced, lineage-checked or visually verified.
+4. **Owner documents are not reconciled beyond this file, the method review,
+   ADR 0018 and `analysis/README.md`.** `docs/roadmap.md`,
+   `docs/architecture.md`, `docs/development.md`, `docs/decisions/README.md`
+   and the root `README.md` still describe the pre-matrix state.
+
+Exposure calculation belongs to M6 and is out of scope. Nothing has been pushed
+or merged.
+
 ## Execution plan
 
 1. Verify retained period, evidence, grid and lineage identities against committed
@@ -82,7 +115,10 @@ preflight 2 GiB available memory and 20 GiB free disk; runtime minimum memory
 Stop on failed preflight or resource abort without relaxing gates. Caches are
 not cleared. Inputs and historical evidence remain unchanged.
 
-## Outstanding / next action
+## Outstanding / next action (superseded, first session)
+
+> **Stale.** Retained as history. The candidate described here later failed its
+> own conservation check; see the sections below for what actually happened.
 
 Commit `96274f9` records the methodological review. The first spatial candidate
 is running in terminal session 39087. No completed spatial artifact, new visual
@@ -382,20 +418,33 @@ per-group conservation against the quality reports before comparing.
 
 ### Per-cell comparison
 
-| Comparison | Cells changed | Cells >= 1 km | Net km | Top-10 share | Spearman |
-|---|---:|---:|---:|---:|---:|
-| 300/30 to 300/50 | 2,482 | 2,025 | 15,380.768 | 0.1417 | 0.999933 |
-| 1800/30 to 1800/50 | 2,694 | 2,279 | 23,184.731 | 0.1242 | 0.999899 |
-| 300/30 to 1800/30 | 3,502 | 3,259 | 77,424.728 | 0.0988 | 0.999255 |
-| 300/50 to 1800/50 | 3,528 | 3,296 | 85,228.692 | 0.0958 | 0.999192 |
+An earlier run of this comparison covered only the four axis-aligned pairs and
+used ordinal ranks that broke ties by cell index. Both were corrected: all six
+unordered pairs are now compared, and tied cells share a mean rank. The
+superseded artifacts remain on disk. Corrected results, from
+`candidate-comparison-v3.json`:
+
+| Comparison | Cells changed | Net km | Spearman (tie-corrected) |
+|---|---:|---:|---:|
+| 300/30 to 300/50 | 2,482 | 15,380.768 | 0.999933 |
+| 1800/30 to 1800/50 | 2,694 | 23,184.731 | 0.999900 |
+| 300/50 to 1800/50 | 3,528 | 85,228.692 | 0.999194 |
+| 300/30 to 1800/30 | 3,502 | 77,424.728 | 0.999255 |
+| 300/50 to 1800/30 | 3,741 | 62,043.961 | 0.999209 |
+| **300/30 to 1800/50** | **3,761** | **100,609.459** | **0.999122** |
+
+The minimum across all six pairs is `0.999122`, between the two extremes. The
+earlier claim that correlation was "at least 0.999192 between any two
+candidates" was wrong on both counts: it omitted the two diagonal pairs and used
+the uncorrected statistic.
 
 - Net and absolute difference are equal in every comparison, so **no cell ever
   loses distance** when a rule is relaxed; relaxation only adds.
 - The top ten cells hold only 9.6-14.2% of the absolute difference, so the changes
   are broadly distributed rather than concentrated in a few cells.
-- Rank correlation is at least 0.999192 and the ten highest cells are **identical
-  and identically ordered in all four candidates**, so no candidate reorders the
-  headline spatial pattern.
+- The ten highest cells are **identical and identically ordered in all four
+  candidates**, and the lowest tie-corrected rank correlation over all six pairs
+  is 0.999122, so no candidate reorders the headline spatial pattern.
 - Individual cells still move materially: maximum relative increase 330.09% for
   the gap change and 66.62% for the speed change, with 538-584 cells above 10%
   for the gap change.
@@ -437,19 +486,24 @@ The renders were **examined**, not merely produced:
 - Traffic structure is coherent: the Santa Barbara Channel approaches, the
   coastwise corridor, and the Los Angeles/Long Beach concentration all appear
   where commercial traffic is expected, with the darkest cells at the port.
-- **A suspected artifact was investigated rather than accepted.** Several straight
-  one-cell-tall east-west bands appear, which grid-aligned features often are. No
-  row is anomalous: no grid row exceeds 1.8 times its neighbours' mean. Only three
-  short high-contrast runs exist, of 5 to 10 cells. Their projected coordinates
-  place the strongest one at x -15,000 to 20,000, y -405,000, which is the Santa
-  Barbara Channel, whose traffic separation scheme genuinely runs east-west; the
-  other two lie on the established east-west approaches south of the Channel
-  Islands. They are real traffic lanes, not projection or aggregation artifacts.
-- The northern and southern grid margins are visibly paler than the interior, the
-  expected signature of `censor-at-cleaned-extent`: tracks crossing the map
-  boundary lose their entry and exit distance. This makes the documented
-  limitation visible rather than merely asserted. It is not evidence of low
-  traffic there.
+- **A suspected artifact was investigated rather than accepted at face value.**
+  Several straight one-cell-tall east-west bands appear, which grid-aligned
+  artifacts often are. No row is anomalous: no grid row exceeds 1.8 times its
+  neighbours' mean. Only three short high-contrast runs exist, of 5 to 10 cells.
+  Their projected coordinates place the strongest at x -15,000 to 20,000,
+  y -405,000, in the Santa Barbara Channel, and the other two on the approaches
+  south of the Channel Islands. Established traffic separation in those waters
+  runs broadly east-west, so a traffic explanation is **plausible**. That is an
+  interpretation, not an established cause: coordinate agreement is not proof,
+  the bands were not compared against published traffic-separation geometry, and
+  no independent traffic product was consulted. What the numbers do establish is
+  narrower — the banding is local, not a grid-wide row artifact.
+- The northern and southern grid margins render paler than the interior. This is
+  **consistent with** `censor-at-cleaned-extent` removing entry and exit distance
+  where tracks cross the map boundary, but genuinely sparser boundary and
+  offshore traffic would look the same, and these renders do not separate the two
+  explanations. Neither reading is established here, and the pallor is not
+  evidence about coverage in either direction.
 - The 300/30 and 1800/50 extremes are visually near-identical, consistent with the
   rank correlation. The visible differences are additional fill in sparse offshore
   cells and slightly stronger east-west bands.
