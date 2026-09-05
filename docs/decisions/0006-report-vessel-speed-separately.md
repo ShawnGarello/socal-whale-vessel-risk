@@ -75,6 +75,25 @@ Source-transfer and observational completeness remain unverified, and receiver
 domain restrictions apply to any later headline summary. Implementation and
 real-data validation status are recorded in the analysis README and roadmap.
 
+**Real-data validation, 2026-09-05.** The summary ran over the full 153-date
+production input `vessel-input-5e590ff3d85ee7acb16e2fd1`. Speed distance
+conserved exactly against unchanged activity: 2,031,132.165 km available plus
+52,948.904 km inconsistent plus 421.427 km unavailable equals the 2,084,502.496 km
+allocated, in every vessel group. Reported endpoint-mean SOG spans 1.96–23.03
+knots and segment-implied speed 2.21–22.68 knots, with movement-weighted
+all-commercial means of 11.396 and 11.563 knots respectively; the two remain
+separately named and neither substitutes for the other. Means are null in exactly
+the 140 cells with no usable SOG distance, and null-versus-zero equivalence holds
+for every row, so no cell reports a fabricated zero. The exploratory 5-knot
+screen excluded 124,436 of 14,946,183 retained segments, about 0.83%, carrying
+52,948.904 km, about 2.54% of allocated distance; that exclusion is reported, not
+removed from activity. QGIS inspection showed a speed field structurally distinct
+from the activity field, lighter in port approaches and darker offshore, which is
+the expected behaviour of an intensive mean rather than a copy of the extensive
+sum. The screen remains a labelled exploratory choice and is still not an
+independently calibrated error bound; no compliance or inside/outside claim
+follows.
+
 - The exposure index keeps a statement of meaning that the method actually supports: **where modeled whale density and commercial vessel activity coincide.** Nothing in it has to be defended as a lethality assumption.
 - Speed becomes a **more** visible part of the deliverable, not a less visible one. It is the quantity the VSR program actually asks about, and a descriptive speed result answers a question a reader will have — are ships slowing down in the zone? — that a composite index would bury.
 - The speed result is descriptive and must be worded as such. Observing speeds inside and outside the zone is not a measurement of program compliance: the program's own map states that vessels under a licensed pilot are exempt, and the analysis cannot identify which vessels are enrolled in the program. **Any comparison is between waters, not between participants.**
