@@ -46,6 +46,55 @@ def compare_cells(first, second, group):
     }
 
 
+def rank_positions(values):
+    """Rank cells by descending value; ties broken by cell order, not value."""
+    order = sorted(range(len(values)), key=lambda i: (-values[i], i))
+    positions = [0] * len(values)
+    for position, index in enumerate(order):
+        positions[index] = position
+    return positions
+
+
+def spearman(first, second):
+    """Rank correlation of two per-cell measures over the identical cell set."""
+    a, b = rank_positions(first), rank_positions(second)
+    count = len(a)
+    mean_a, mean_b = sum(a) / count, sum(b) / count
+    numerator = math.fsum((a[i] - mean_a) * (b[i] - mean_b) for i in range(count))
+    deviation_a = math.sqrt(math.fsum((value - mean_a) ** 2 for value in a))
+    deviation_b = math.sqrt(math.fsum((value - mean_b) ** 2 for value in b))
+    return numerator / (deviation_a * deviation_b)
+
+
+def pattern_stability(first, second, group):
+    """Report whether a candidate change reorders cells or only rescales them.
+
+    Whole-period totals cannot show this. Relative change is defined only where
+    the baseline cell already carries distance; newly touched cells are counted
+    separately rather than treated as an infinite increase.
+    """
+    field = f"vessel_km_{group}"
+    a = [row[field] for row in first]
+    b = [row[field] for row in second]
+    relative = [(b[i] - a[i]) / a[i] for i in range(len(a)) if a[i] > 0]
+    return {
+        "spearman_rank_correlation": spearman(a, b),
+        "maximum_relative_increase": max(relative) if relative else None,
+        "cells_above_10_percent_relative": sum(value > 0.10 for value in relative),
+        "cells_above_50_percent_relative": sum(value > 0.50 for value in relative),
+        "cells_with_baseline_distance": len(relative),
+        "newly_positive_cells": sum(1 for i in range(len(a)) if a[i] == 0 and b[i] > 0),
+        "top_ten_cell_ids_first": [
+            first[i]["cell_id"]
+            for i in sorted(range(len(a)), key=lambda i: (-a[i], i))[:10]
+        ],
+        "top_ten_cell_ids_second": [
+            second[i]["cell_id"]
+            for i in sorted(range(len(b)), key=lambda i: (-b[i], i))[:10]
+        ],
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--matrix-root", type=Path, required=True)
@@ -133,7 +182,11 @@ def main(argv=None):
         ("g300-s50", "g1800-s50"),
     ):
         comparisons[f"{a}_to_{b}"] = {
-            group: compare_cells(tables[a], tables[b], group) for group in GROUPS
+            group: {
+                **compare_cells(tables[a], tables[b], group),
+                **pattern_stability(tables[a], tables[b], group),
+            }
+            for group in GROUPS
         }
         for x, y in zip(tables[a], tables[b], strict=True):
             assert all(x[key] == y[key] for key in x if key.startswith("distinct_"))
@@ -146,7 +199,9 @@ def main(argv=None):
                 "distinct_counts_candidate_invariant": True,
                 "limitations": (
                     "Parent and allocated distance are distinct; "
-                    "no coverage or exposure result."
+                    "no coverage or exposure result. Rank correlation and "
+                    "relative change describe candidate sensitivity only; "
+                    "neither establishes that any candidate is correct."
                 ),
             },
             stream,

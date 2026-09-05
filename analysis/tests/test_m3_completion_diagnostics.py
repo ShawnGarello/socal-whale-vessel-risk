@@ -133,3 +133,53 @@ def test_diagnostics_known_distances_missing_speed_and_hourly_evidence(
     assert report["hourly"] == [["2024-09-29", 20, "passenger", 5, 1]]
     with pytest.raises(ValueError, match="fresh ignored interim"):
         module.main(arguments)
+
+
+def _comparison_module():
+    script = (
+        Path(__file__).resolve().parents[1] / "scripts/compare_vessel_candidates.py"
+    )
+    spec = importlib.util.spec_from_file_location("m3_comparison_patterns", script)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_spearman_detects_preserved_and_reversed_cell_orderings():
+    module = _comparison_module()
+    ascending = [1.0, 2.0, 3.0, 4.0]
+    rescaled = [10.0, 20.0, 30.0, 40.0]
+    reversed_order = [4.0, 3.0, 2.0, 1.0]
+    assert module.spearman(ascending, rescaled) == pytest.approx(1.0)
+    assert module.spearman(ascending, reversed_order) == pytest.approx(-1.0)
+    # Ranks are positions in descending order, ties broken by cell index.
+    assert module.rank_positions([5.0, 9.0, 5.0]) == [1, 0, 2]
+
+
+def test_pattern_stability_separates_rescaling_from_reordering():
+    module = _comparison_module()
+    field = "vessel_km_cargo"
+    first = [
+        {"cell_id": "a", field: 100.0},
+        {"cell_id": "b", field: 10.0},
+        {"cell_id": "c", field: 1.0},
+        {"cell_id": "d", field: 0.0},
+    ]
+    # a unchanged, b +20%, c +100%, d newly positive from a zero baseline.
+    second = [
+        {"cell_id": "a", field: 100.0},
+        {"cell_id": "b", field: 12.0},
+        {"cell_id": "c", field: 2.0},
+        {"cell_id": "d", field: 7.0},
+    ]
+
+    result = module.pattern_stability(first, second, "cargo")
+
+    assert result["cells_with_baseline_distance"] == 3
+    assert result["maximum_relative_increase"] == pytest.approx(1.0)
+    assert result["cells_above_10_percent_relative"] == 2
+    assert result["cells_above_50_percent_relative"] == 1
+    assert result["newly_positive_cells"] == 1
+    assert result["top_ten_cell_ids_first"] == ["a", "b", "c", "d"]
+    assert result["top_ten_cell_ids_second"] == ["a", "b", "d", "c"]
+    assert result["spearman_rank_correlation"] < 1.0
