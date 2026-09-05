@@ -775,3 +775,46 @@ def test_failed_publication_leaves_no_output_or_temporary_bundle(
         assert list(derived.glob(".failed.temporary-*")) == []
     finally:
         context.__exit__(None, None, None)
+
+
+def test_conservation_failure_reports_the_measured_quantities() -> None:
+    """A conservation failure must carry the numbers needed to diagnose it.
+
+    The check is unchanged; only its message is. Values are chosen so every
+    reported quantity is known by construction and distinguishable.
+    """
+    accumulator = cast(Any, vessel_grid._Accumulator.__new__(vessel_grid._Accumulator))
+    accumulator.retained_counts = {"passenger": 11, "cargo": 5, "tanker": 3}
+    accumulator.status_counts = {
+        "invalid_intersection_geometry": 2,
+        "positive_length_ambiguous_boundary": 7,
+    }
+    accumulator.maximum_segment_conservation_difference_m = 1.5e-9
+    values = {
+        "parent_m": 1000.0,
+        "allocated_m": 600.0,
+        "outside_support_m": 300.0,
+        "ambiguous_boundary_m": 75.0,
+        "invalid_geometry_m": 20.0,
+    }
+
+    message = accumulator._conservation_failure_message("passenger", values, 5.0, 1e-06)
+
+    assert message.startswith("retained distance is not conserved for passenger: ")
+    assert "difference_m=5.0" in message
+    assert "tolerance_m=1e-06" in message
+    assert "parent_m=1000.0" in message
+    assert "allocated_m=600.0" in message
+    assert "outside_support_m=300.0" in message
+    assert "ambiguous_boundary_m=75.0" in message
+    assert "invalid_geometry_m=20.0" in message
+    assert "retained_segments=11" in message
+    assert "maximum_segment_difference_m=1.5e-09" in message
+    assert "invalid_intersection_geometry=2" in message
+    assert "positive_length_ambiguous_boundary=7" in message
+
+    combined = accumulator._conservation_failure_message(
+        vessel_grid.ALL_COMMERCIAL, values, -0.25, 2e-06
+    )
+    assert "retained_segments=19" in combined
+    assert "difference_m=-0.25" in combined
