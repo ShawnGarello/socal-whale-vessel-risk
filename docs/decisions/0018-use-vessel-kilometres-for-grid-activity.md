@@ -722,31 +722,43 @@ is not sufficient to settle this Proposed decision.
 
 ## Remaining decision evidence
 
-The implemented period-rule boundary supports the remaining research without
-repeating geometry cost for each candidate. Before this decision can be
-accepted, later evidence must:
+The implemented period-rule boundary supports the remaining research by
+identifying dates, vessel groups, and exclusion reasons that need closer review.
+It does not replace the spatial sensitivity evidence. Before this decision can
+be accepted, later evidence must:
 
 1. investigate the flagged daily and vessel-group exclusion variation against
    source-quality evidence and a defensible threshold rationale;
 2. decide the edge-support treatment and determine whether a matched support-
    ring retrieval is required before production aggregation;
-3. retain source-transfer and observational completeness as unverified unless
+3. run the four candidates against the ready 153-date input on one exact grid
+   with common support and edge-treatment choices, then compare the resulting
+   vessel-kilometres in individual cells, the spatial distribution of changes,
+   and cell-level vessel-group summaries; repeat deterministic artifacts and
+   visually inspect the checksum-bound spatial outputs;
+4. retain source-transfer and observational completeness as unverified unless
    independent evidence establishes otherwise; and
-4. select or reject candidate thresholds only after that review, then run and
-   spatially validate a final period-wide vessel grid before exposure analysis.
+5. select or reject candidate thresholds only after the non-spatial and spatial
+   sensitivity reviews, then run and spatially validate a final period-wide
+   vessel grid before exposure analysis.
 
 The bounded one-day harness, two-day candidate-grid executions, synthetic
 period-rule tests, and repeated real 153-date non-spatial evidence establish
 that those implemented subsets are executable and that the period evidence is
 deterministic. They do not select a rule, resolve the flagged variation or edge
-support, or validate a production analytical input.
+support, establish period-wide spatial stability, or validate a production
+analytical input. Whole-period endpoint-distance and exclusion totals cannot
+show whether candidate differences are concentrated in, or change the relative
+pattern among, individual grid cells. The real two-day spatial matrix is not a
+substitute for that whole-period per-cell comparison.
 
-The full-period matrix now supplies the required date and vessel-group
+The full-period non-spatial matrix now supplies date and vessel-group exclusion
 sensitivity evidence, while the two gap values still bracket a locally inferred
 short-gap treatment and NOAA's tool default and the two speed values still test
 a locally inferred ceiling against a permissive published comparison. The
-observed differences are large enough to require methodological and source-
-quality review. This is a testing conclusion, not acceptance of any threshold.
+observed differences are large enough to require methodological, source-quality,
+and per-cell spatial review. This is a testing conclusion, not acceptance of any
+threshold.
 
 ## Consequences
 

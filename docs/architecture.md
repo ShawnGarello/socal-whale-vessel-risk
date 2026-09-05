@@ -27,11 +27,13 @@
 > period state: all 31 August, all 30 September, all 31 October, and all 30
 > November dates reconciled, and each identical retry reused every date, so all
 > 153 expected dates are recorded with no conflict and the shared manifest is
-> `ready`. A bounded period vessel-rule evidence boundary is now implemented
-> and synthetically tested; it evaluates the four ADR 0018 candidate
-> combinations from one whole-period adjacency stream without spatial
-> allocation. It has not been run against that 153-date manifest, and no rule
-> has been accepted. Publisher-side transfer
+> `ready`. A bounded period vessel-rule evidence boundary is implemented and
+> synthetically tested; it evaluates the four ADR 0018 candidate combinations
+> from one whole-period adjacency stream without spatial allocation. On
+> 2026-09-04, two profiled executions against that ready 153-date manifest
+> reproduced exact deterministic evidence bytes. Those non-spatial executions
+> did not compare candidate effects in individual grid cells, and no rule has
+> been accepted. Publisher-side transfer
 > and observational completeness remain unverified. Network retrieval remains
 > unimplemented, and a complete cleaned-input period is not a vessel grid or an
 > exposure result. Final period-wide vessel aggregation,
@@ -224,9 +226,12 @@ segments for percentiles. All four candidate combinations are evaluated during
 one bounded Arrow iteration. The deterministic JSON identity excludes paths,
 clocks, runtime, machine details, resource settings, and output names; those
 execution facts occur only in a time-bearing lineage sidecar. Atomic output is
-restricted to ignored interim storage. This implementation is synthetically
-tested but has not processed the real five-month input, does not accept a rule,
-does not create a production vessel grid, and performs no exposure analysis.
+restricted to ignored interim storage. In addition to its synthetic tests, two
+profiled executions processed the real ready five-month input and reproduced
+the exact deterministic `evidence.json` bytes. These executions were
+non-spatial: they do not establish how the four candidates change individual
+grid cells, accept a rule, create a production vessel grid, or perform exposure
+analysis.
 
 A separate candidate vessel-grid boundary is implemented and synthetically
 tested. It requires explicit maximum-gap, implied-speed, readiness, edge, and
@@ -236,8 +241,9 @@ and writes deterministic candidate GeoParquet and quality-report artifacts plus
 time-bearing lineage. The documented four-parameter matrix was exercised and
 repeated on the real 15--16 July input. This bounded execution does not select
 accepted thresholds, establish period-wide completeness or scaling safety, or
-produce the final production vessel-activity input. Final period-wide vessel
-aggregation therefore remains unfinished.
+show period-wide per-cell sensitivity among the four candidates. A whole-period
+spatial candidate comparison and the final production vessel-activity input
+therefore remain unfinished.
 
 Python owns or is planned to own:
 

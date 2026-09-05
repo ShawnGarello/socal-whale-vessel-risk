@@ -1689,6 +1689,26 @@ candidate combinations and matches retained/excluded counts, primary reasons,
 retained projected distance, cross-midnight retained counts, and zero-length
 retained counts. Both evaluators call the same narrow primary-exclusion helper.
 
+The following are the exact profiled commands used for the real executions.
+Run them from `analysis/`; every path shown is relative to that directory. The
+repeat uses independent profile, evidence, and spill paths while leaving every
+candidate argument and resource gate unchanged.
+
+```text
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.period_vessel_rule_evidence_cli --output ..\data\interim\m3-period-vessel-rule-evidence-run\profile-first.json --label m3-period-vessel-rule-evidence-first --disk-root ..\data\interim\m3-period-vessel-rule-evidence-run --spill-root ..\data\interim\m3-period-vessel-rule-evidence-run\spill-first --minimum-free-memory-gib 2 --minimum-free-disk-gib 20 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 12 --runtime-maximum-application-rss-gib 1.75 --runtime-maximum-spill-gib 12 --expected-exit-code 0 -- --manifest ..\data\interim\m3-accessais-july-month-gate\run\period.json --output-dir ..\data\interim\m3-period-vessel-rule-evidence-run\evidence-first --maximum-gap-seconds 300 --maximum-gap-seconds 1800 --implied-speed-ceiling-knots 30 --implied-speed-ceiling-knots 50 --vessel-length-treatment type-only-no-length-filter --memory-limit 1GB --temp-directory ..\data\interim\m3-period-vessel-rule-evidence-run\spill-first --threads 1 --batch-size 50000
+```
+
+```text
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.period_vessel_rule_evidence_cli --output ..\data\interim\m3-period-vessel-rule-evidence-run\profile-repeat.json --label m3-period-vessel-rule-evidence-repeat --disk-root ..\data\interim\m3-period-vessel-rule-evidence-run --spill-root ..\data\interim\m3-period-vessel-rule-evidence-run\spill-repeat --minimum-free-memory-gib 2 --minimum-free-disk-gib 20 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 12 --runtime-maximum-application-rss-gib 1.75 --runtime-maximum-spill-gib 12 --expected-exit-code 0 -- --manifest ..\data\interim\m3-accessais-july-month-gate\run\period.json --output-dir ..\data\interim\m3-period-vessel-rule-evidence-run\evidence-repeat --maximum-gap-seconds 300 --maximum-gap-seconds 1800 --implied-speed-ceiling-knots 30 --implied-speed-ceiling-knots 50 --vessel-length-treatment type-only-no-length-filter --memory-limit 1GB --temp-directory ..\data\interim\m3-period-vessel-rule-evidence-run\spill-repeat --threads 1 --batch-size 50000
+```
+
+The ignored execution artifacts are located as follows:
+
+| Execution | Profiler output | Deterministic evidence | Time-bearing lineage | Spill directory after completion |
+|---|---|---|---|---|
+| First | `..\data\interim\m3-period-vessel-rule-evidence-run\profile-first.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\evidence-first\evidence.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\evidence-first\run-metadata.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\spill-first` (empty) |
+| Repeat | `..\data\interim\m3-period-vessel-rule-evidence-run\profile-repeat.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\evidence-repeat\evidence.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\evidence-repeat\run-metadata.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\spill-repeat` (empty) |
+
 On 2026-09-04 the non-spatial boundary was exercised twice against the exact
 ready 153-date accumulation manifest, period ID
 `multiday-ais-17e982f999f7093945193378`. Both runs reverified all 153 local
