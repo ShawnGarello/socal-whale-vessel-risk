@@ -601,6 +601,44 @@ class _Accumulator:
         quality = self._quality(cells)
         return tuple(cells), quality
 
+    def _conservation_failure_message(
+        self,
+        group: str,
+        values: Mapping[str, float],
+        difference: float,
+        tolerance: float,
+    ) -> str:
+        """Describe a conservation failure with the quantities already measured.
+
+        The check itself is unchanged. Reporting the measured residual, the
+        tolerance it exceeded, and the branch counts that can produce a residual
+        distinguishes floating-point accumulation from an accounting leak
+        without repeating a long run blind.
+        """
+        retained = (
+            sum(self.retained_counts.values())
+            if group == ALL_COMMERCIAL
+            else self.retained_counts[group]
+        )
+        branches = (
+            f"invalid_intersection_geometry="
+            f"{self.status_counts['invalid_intersection_geometry']}, "
+            f"positive_length_ambiguous_boundary="
+            f"{self.status_counts['positive_length_ambiguous_boundary']}"
+        )
+        return (
+            f"retained distance is not conserved for {group}: "
+            f"difference_m={difference!r}, tolerance_m={tolerance!r}, "
+            f"parent_m={values['parent_m']!r}, "
+            f"allocated_m={values['allocated_m']!r}, "
+            f"outside_support_m={values['outside_support_m']!r}, "
+            f"ambiguous_boundary_m={values['ambiguous_boundary_m']!r}, "
+            f"invalid_geometry_m={values['invalid_geometry_m']!r}, "
+            f"retained_segments={retained}, "
+            f"maximum_segment_difference_m="
+            f"{self.maximum_segment_conservation_difference_m!r}, {branches}"
+        )
+
     def _quality(self, cells: list[VesselGridCell]) -> dict[str, object]:
         total_observations = sum(self.observation_counts.values())
         outside_observations = sum(self.outside_observation_counts.values())
@@ -652,7 +690,11 @@ class _Accumulator:
                 rel_tol=CONSERVATION_RELATIVE_TOLERANCE,
                 abs_tol=tolerance,
             ):
-                raise VesselGridError(f"retained distance is not conserved for {group}")
+                raise VesselGridError(
+                    self._conservation_failure_message(
+                        group, values, difference, tolerance
+                    )
+                )
             group_distance[group] = {
                 "retained_parent_m": _round(values["parent_m"]),
                 "allocated_to_cells_m": _round(values["allocated_m"]),
@@ -674,7 +716,10 @@ class _Accumulator:
             ),
         ):
             raise VesselGridError(
-                "per-cell vessel-kilometres do not reconcile with allocated pieces"
+                "per-cell vessel-kilometres do not reconcile with allocated pieces: "
+                f"cell_total_m={output_total_m!r}, "
+                f"allocated_m={commercial_totals['allocated_m']!r}, "
+                f"difference_m={output_total_m - commercial_totals['allocated_m']!r}"
             )
         return {
             "counts": {
