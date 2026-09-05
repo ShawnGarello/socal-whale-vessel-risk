@@ -21,21 +21,28 @@ measured and corrected; and the complete four-candidate spatial matrix was
 executed, repeated byte-for-byte, compared across all six candidate pairs, and
 inspected in QGIS.
 
-Not done, in order:
+Current implementation: the production vessel-input boundary and separate
+movement-speed summary are implemented. ADR 0018 selects 300 seconds / 30 knots,
+with type-only population, cleaned-extent censoring and exact water support.
+ADR 0006 records distance weighting, endpoint SOG, the explicit exploratory
+5-knot consistency screen and unavailable/zero semantics. Candidate artifacts
+remain unchanged; production commands recompute from the ready period.
 
-1. **Rule selection is recorded in ADR 0018:** 300 seconds / 30 knots,
-   type-only population, cleaned-extent censoring and exact water support.
-   The 1,800-second and 50-knot alternatives are rejected for production;
-   final production validation remains required before ADR acceptance.
-2. **No final vessel-input boundary or speed-summary contract exists.** The
-   speed population, weighting, units, unavailable-value and zero-activity
-   semantics are undefined and untested.
-3. **No production vessel grid or speed summary has been generated,**
-   reproduced, lineage-checked or visually verified.
-4. **Owner documents are not reconciled beyond this file, the method review,
-   ADR 0018, `analysis/README.md` and `docs/roadmap.md`.**
-   `docs/architecture.md`, `docs/development.md`, `docs/decisions/README.md`
-   and the root `README.md` still describe the pre-matrix state.
+Remaining, in order:
+
+1. Finish focused validation and run the production command through the resource
+   profiler, then repeat in a fresh location. No final output exists yet.
+2. Verify counts, identities, lineage, conservation and speed exclusions; inspect
+   exact activity and speed fields in QGIS and record checksum-bound evidence.
+3. Run final analysis quality gates, reconcile owner status and assess M3/ADR
+   completion criteria. No criterion is complete merely because code exists.
+
+Documentation correction commit: `cf7439b`. Method selection: `5a8ae54`.
+The current branch began this continuation at author-confirmed `de6408c`.
+The input identities and resource controls below remain authoritative for runs;
+production command syntax is in `analysis/README.md`. Owner documents now
+reflect the implementation and pending verification; historical sections below
+retain the state at their recorded time.
 
 Exposure calculation belongs to M6 and is out of scope. Nothing has been pushed
 or merged.

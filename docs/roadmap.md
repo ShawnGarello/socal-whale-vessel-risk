@@ -820,8 +820,12 @@ non-spatial rule evidence exercised with the real ready 153-date input**
   resolved in the [method review](m3-vessel-method-review.md).
   ADR 0018 now selects 300 seconds / 30 knots for production, with type-only
   population, cleaned-extent censoring and exact-support treatment. Its final
-  production-validation criterion remains unfinished. **No final vessel input
-  or speed summary exists; observational completeness remains `unverified`.**
+  production-validation criterion remains unfinished. The production boundary
+  now reuses the aggregation engine with distinct production contracts and
+  separate descriptive movement-speed fields under ADR 0006. It requires the
+  ready period and exact grid checksum, has no rule/overwrite override, and
+  preserves failure evidence. **Real final artifacts have not been generated,
+  reproduced or visually verified; observational completeness remains `unverified`.**
   The retained spatial artifacts remain candidate results, no exposure analysis
   has been performed, and ADR 0018 remains Proposed.
 - Normalization of whale or vessel values. Both grid-aligned candidate inputs

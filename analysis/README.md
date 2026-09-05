@@ -26,7 +26,10 @@ boundary is implemented, synthetically tested, and exercised twice on the
 ready 153-date input with byte-identical deterministic evidence. It does not
 submit AccessAIS orders, download AIS,
 process a season implicitly, accept final vessel rules, calculate relative
-exposure, or report inside-versus-outside statistics.
+exposure, or report inside-versus-outside statistics. A distinct production
+vessel-input command now uses the selected rules and shared allocation engine
+with separate descriptive speed fields; real production verification remains
+pending as recorded below.
 
 Run all commands below from this directory.
 
@@ -1783,6 +1786,61 @@ has since selected the common cleaned-extent censoring and exact-support
 treatment and the type-only population, and the full-period matrix below
 supplies the per-cell threshold sensitivity evidence, but no threshold is
 accepted. ADR 0018 remains Proposed.
+
+## Production vessel input and descriptive movement speed
+
+Implemented under `production_vessel_input_v1` / processing version `1.0.0`.
+Real production generation, repetition and QGIS validation are still pending;
+ADR 0018 remains Proposed until its final validation criterion passes.
+
+From `analysis/`, through the resource profiler and gates recorded in the
+[current M3 handoff](../docs/m3-completion-handoff.md):
+
+```text
+python -m whale_vessel_analysis.vessel_input_cli --manifest <ready-period.json> --grid-input <exact-water-grid.parquet> --expected-grid-sha256 <sha256> --output-dir ../data/derived/<fresh-production-bundle> --memory-limit 1GB --threads 1 --batch-size 50000 --temp-directory ../data/interim/<fresh-run>/spill
+```
+
+The command uses the packaged spatial configuration, requires all exact accepted
+dates and an expected water-grid checksum, and exposes no rule, incomplete-period
+or overwrite override. It revalidates the manifest, cleaned partition checksums
+and row/date alignment through the existing bounded relation. It freshly runs
+the tested aggregation engine with 300 seconds / 30 knots, type-only commercial
+population, cleaned-extent censoring and exact water support. It consumes no
+candidate artifact and makes no new data retrieval. Candidate contracts and
+their historical identities remain separate and unchanged.
+
+The atomic bundle contains `vessel-grid.parquet`, `quality-report.json` and
+`run-metadata.json` under production input, quality and lineage contracts.
+The shared engine supplies vessel km, km per actual water km² and union-recomputed
+distinct MMSI/MMSI-date fields, exact target WKB and row order, exclusions and
+the unchanged distance-conservation gates. Speed observes the same allocated
+pieces; it never changes vessel km or repeats spatial intersection.
+
+For each group, additional fields are `reported_sog_mean_knots`,
+`implied_speed_mean_knots`, `sog_available_km`, `sog_unavailable_km` and
+`sog_inconsistent_km`. [ADR 0006](../docs/decisions/0006-report-vessel-speed-separately.md)
+owns the exact population, endpoint averaging, allocated-distance weighting and
+explicit exploratory 5-knot consistency screen. Either unavailable endpoint
+means unavailable SOG. The three SOG distance categories conserve vessel km;
+zero denominator means null, while a usable zero reported value stays zero.
+These describe movement, excluding stationary presence; they are not transit
+counts, time averages, compliance, exposure weighting or inside/outside results.
+The quality report records retained-segment SOG classifications (including
+zero-length/outside-support parents) separately from allocated-cell km categories.
+
+Production identity binds the stable ready-period and cleaned-partition
+identities, exact grid checksum, configuration, selected method, engine version,
+speed contract/version, cell values and deterministic quality. Execution paths,
+manifest retry bytes, clocks and resource settings stay in time-bearing lineage.
+Unchanged inputs must reproduce identical Parquet and quality bytes; lineage
+timestamps differ. Generation lineage leaves visual inspection `not_completed`;
+later inspection is recorded separately against the output checksum.
+
+The writer refuses existing or unsafe destinations, raw/output/input overlap,
+and the CLI refuses output/spill overlap before processing. It writes to a
+fresh sibling temporary directory, verifies exact Parquet read-back, and renames
+the complete bundle. On failure the temporary evidence is retained, with its
+location in the error; existing artifacts are never silently replaced.
 
 ## Candidate multi-day vessel-grid aggregation
 

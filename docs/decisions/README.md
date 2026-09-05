@@ -28,6 +28,10 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | [0018](0018-use-vessel-kilometres-for-grid-activity.md) | Use vessel-kilometres as the primary grid activity measure | Proposed |
 | [0019](0019-reference-the-publisher-hosted-vsr-service.md) | Reference the publisher-hosted VSR service | Accepted |
 
+ADR 0018 remains Proposed: its 300-second/30-knot production configuration is
+selected, but final production generation and spatial validation remain pending.
+ADR 0006 now defines the separate descriptive movement-speed summary.
+
 ## Why these exist
 
 The most expensive question in a project six months old is "why is it like this?" Code shows what was decided; it rarely shows what else was considered or what was known at the time. An ADR captures the reasoning while it is still fresh, so a later reader can tell the difference between a deliberate choice and an accident — and so a decision can be revisited on its merits rather than re-argued from scratch.

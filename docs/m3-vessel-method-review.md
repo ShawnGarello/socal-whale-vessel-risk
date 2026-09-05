@@ -129,6 +129,7 @@ See `analysis/README.md` and the [session handoff](m3-completion-handoff.md).
 
 ADR 0018 now records the 300-second/30-knot production selection and rejects
 the other gap/speed alternatives for this input, with the limitations above.
-A truthful final-input boundary, speed summaries, their reproduction and their
-spatial verification remain unfinished. ADR 0018 remains Proposed until final
-production validation; M3 remains In progress.
+The production boundary and separate descriptive speed summary are implemented;
+their real-data generation, reproduction and spatial verification remain
+unfinished. ADR 0006 defines the explicit speed choices. ADR 0018 remains
+Proposed until final production validation; M3 remains In progress.
