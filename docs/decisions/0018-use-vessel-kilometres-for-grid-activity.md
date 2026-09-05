@@ -722,6 +722,17 @@ is not sufficient to settle this Proposed decision.
 
 ## Remaining decision evidence
 
+The [2026-09-04 method review](../m3-vessel-method-review.md) now records
+checksum-verified cleaner-report accounting, flagged-date hourly diagnostics,
+reported-SOG cross-checks, and length-population sensitivity. It selects common
+cleaned-extent censoring and exact-support allocation for the whole-period
+spatial matrix, with unknown omitted entry/exit distance explicitly retained.
+The selected population is type-only passenger/cargo/tanker, with no length
+proxy for 300 GT. A support-ring retrieval is unnecessary for the censored
+observed-movement comparison; it would be required to evaluate uncensored
+boundary movement. The historical one-day ring comparison above was not run.
+Maximum-gap and implied-speed choices remain open pending the spatial matrix.
+
 The implemented period-rule boundary supports the remaining research by
 identifying dates, vessel groups, and exclusion reasons that need closer review.
 It does not replace the spatial sensitivity evidence. Before this decision can
