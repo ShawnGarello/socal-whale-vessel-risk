@@ -25,11 +25,12 @@ all four ADR 0018 candidate combinations without spatial allocation. That
 boundary is implemented, synthetically tested, and exercised twice on the
 ready 153-date input with byte-identical deterministic evidence. It does not
 submit AccessAIS orders, download AIS,
-process a season implicitly, accept final vessel rules, calculate relative
+process a season implicitly, calculate relative
 exposure, or report inside-versus-outside statistics. A distinct production
-vessel-input command now uses the selected rules and shared allocation engine
-with separate descriptive speed fields; real production verification remains
-pending as recorded below.
+vessel-input command uses the accepted ADR 0018 rules and the shared allocation
+engine with separate descriptive speed fields. Its real production generation,
+byte-identical repetition, independent verification and QGIS validation passed
+on 2026-09-05, as recorded below.
 
 Run all commands below from this directory.
 
@@ -1784,14 +1785,15 @@ exposure analysis has begun. Publisher-side transfer completeness and AIS
 observational completeness remain `unverified`. The [method review](../docs/m3-vessel-method-review.md)
 has since selected the common cleaned-extent censoring and exact-support
 treatment and the type-only population, and the full-period matrix below
-supplies the per-cell threshold sensitivity evidence, but no threshold is
-accepted. ADR 0018 remains Proposed.
+supplies the per-cell threshold sensitivity evidence. ADR 0018 has since
+selected 300 seconds / 30 knots and was **Accepted** on 2026-09-05.
 
 ## Production vessel input and descriptive movement speed
 
 Implemented under `production_vessel_input_v1` / processing version `1.0.0`.
-Real production generation, repetition and QGIS validation are still pending;
-ADR 0018 remains Proposed until its final validation criterion passes.
+Real production generation, byte-identical repetition, independent verification
+and QGIS validation passed on 2026-09-05; **ADR 0018 is Accepted**. Identities
+are recorded in "Real production execution" below.
 
 From `analysis/`, through the resource profiler and gates recorded in the
 [current M3 handoff](../docs/m3-completion-handoff.md):
@@ -1849,6 +1851,38 @@ The independent `scripts/verify_production_vessel_input.py` command accepts
 It recomputes identity, physical-unit and speed invariants, checks lineage and
 candidate parity, and compares repeat hashes without rerunning the aggregation.
 Its report remains separate from the required QGIS visual evidence.
+
+### Real production execution, 2026-09-05
+
+Generated from the ready period `multiday-ais-17e982f999f7093945193378` on the
+exact water grid `7229098c…`, giving input identity
+`vessel-input-5e590ff3d85ee7acb16e2fd1`.
+
+| Artifact | SHA-256 |
+|---|---|
+| `vessel-grid.parquet` | `5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0` |
+| `quality-report.json` | `4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7` |
+
+An independent repeat reproduced both bytes exactly; `run-metadata.json`
+differed (`799bc9c9…` first, `150dc573…` repeat) because lineage carries real
+execution timestamps.
+
+4,516 cells; 14,946,183 retained segments; 510,916 excluded (461,769 gap,
+49,147 implied speed); 15,458,567 observations matching the manifest. Distance
+conservation passed at 0.0 m per group, and speed distance conserved: available
+2,031,132.165 km plus inconsistent 52,948.904 km plus unavailable 421.427 km
+equals the 2,084,502.496 km allocated. All four groups match the retained 300/30
+candidate exactly. Reported SOG spans 1.96–23.03 knots, segment-implied
+2.21–22.68 knots; the movement-weighted all-commercial means are 11.396 and
+11.563 knots. Speed means are null in exactly the 140 cells with no usable SOG
+distance, and that equivalence holds for every row.
+
+`verify_production_vessel_input.py` returned `passed: true` across both bundles.
+QGIS 4.2.1 inspected the exact checksums; evidence and image checksums are in the
+[M3 completion handoff](../docs/m3-completion-handoff.md).
+
+The first attempt aborted on the profiler's `minimum_available_memory` guard and
+wrote no bundle. The gate was not relaxed and the evidence is retained.
 
 ## Candidate multi-day vessel-grid aggregation
 
@@ -1921,8 +1955,9 @@ offshore and boundary traffic would look similar and these images do not
 separate the two. Neither reading is established here, and neither is evidence
 about coverage.
 
-This is candidate sensitivity evidence. **No maximum-gap or implied-speed rule is
-accepted, no final vessel-activity input exists, and ADR 0018 remains Proposed.**
+This is candidate sensitivity evidence. It selected no rule by itself; ADR 0018
+subsequently selected 300 seconds / 30 knots and was **Accepted** on 2026-09-05
+after production validation, and the final vessel-activity input now exists.
 Transfer and observational completeness remain `unverified`.
 
 ### Distance accumulation correction
@@ -2222,7 +2257,8 @@ candidate-processing safety, alternative edge support, accepted thresholds,
 and a final vessel-activity input remain unverified. No production maximum-gap
 or implied-speed threshold was selected, no absent traffic outside the
 qualified receiver domain was interpreted as zero, and no exposure analysis
-was performed. ADR 0018 remains Proposed.
+was performed. *(History: this records the two-day exercise's state. ADR 0018
+was accepted and the final vessel input produced on 2026-09-05.)*
 
 ## Projected water-grid command
 

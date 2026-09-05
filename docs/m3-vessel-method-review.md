@@ -1,6 +1,7 @@
 # M3 vessel-method review
 
-2026-09-04. Supporting evidence for ADR 0018, which remains Proposed.
+2026-09-04. Supporting evidence for ADR 0018, which was **Accepted** on
+2026-09-05 after production validation.
 These observations concern the checksum-verified ready period
 `multiday-ais-17e982f999f7093945193378`; they do not establish transfer or
 observational completeness.
@@ -129,7 +130,9 @@ See `analysis/README.md` and the [session handoff](m3-completion-handoff.md).
 
 ADR 0018 now records the 300-second/30-knot production selection and rejects
 the other gap/speed alternatives for this input, with the limitations above.
-The production boundary and separate descriptive speed summary are implemented;
-their real-data generation, reproduction and spatial verification remain
-unfinished. ADR 0006 defines the explicit speed choices. ADR 0018 remains
-Proposed until final production validation; M3 remains In progress.
+The production boundary and separate descriptive speed summary are implemented,
+and their real-data generation, byte-identical reproduction, independent
+verification and checksum-bound spatial inspection passed on 2026-09-05.
+ADR 0006 defines the explicit speed choices. ADR 0018 is **Accepted**. M3's five
+completion criteria are met; the milestone flag remains In progress pending the
+author's decision on residual non-criterion items recorded in the roadmap.
