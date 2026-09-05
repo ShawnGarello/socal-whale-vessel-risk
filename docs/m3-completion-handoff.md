@@ -30,9 +30,13 @@ remain unchanged; production commands recompute from the ready period.
 
 Remaining, in order:
 
-1. The first production run is active through the resource profiler (command
-   below). Wait for its measured outcome, then repeat in a fresh location only
-   after success. No final output exists yet.
+1. **The first production run aborted on a resource gate at 11:15 on 2026-09-05
+   and produced no output.** Its measured evidence is recorded under "First
+   production run: resource abort" below. Rerun it in a **fresh** location once
+   the machine has enough free memory; do not reuse
+   `m3-production-vessel-first`, relax any gate, or retry blindly. Repeat in a
+   second fresh location only after a successful first run. No final output
+   exists yet.
 2. Verify counts, identities, lineage, conservation and speed exclusions; inspect
    exact activity and speed fields in QGIS and record checksum-bound evidence.
 3. Reconcile owner status and assess M3/ADR completion criteria. Required
@@ -55,15 +59,55 @@ retain the state at their recorded time.
 Exposure calculation belongs to M6 and is out of scope. Nothing has been pushed
 or merged.
 
-### Active production execution
+### First production run: resource abort
 
 Launched from `analysis/` on 2026-09-05, after a clean implementation commit.
-Terminal session `63282`; target PID `7156` when checked. Do not start a repeat
-beside it. Preflight passed; no cache was cleared. The exact invocation is:
+Terminal session `63282`; target PID `7156`. Preflight passed; no cache was
+cleared. **The run aborted after 1,029.935 seconds and wrote no bundle**;
+`data/derived/m3-production-vessel-first/` was never created. The exact
+invocation is:
 
 ```powershell
 python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.vessel_input_cli --output ../data/interim/m3-production-vessel-first/profile.json --label m3-production-vessel-first --disk-root ../data/derived/m3-production-vessel-first --spill-root ../data/interim/m3-production-vessel-first/spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 20 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 12 --runtime-maximum-application-rss-gib 1.75 --runtime-maximum-spill-gib 12 -- --manifest ../data/interim/m3-accessais-july-month-gate/run/period.json --grid-input C:/Users/teche/socal-whale-vessel-risk-analytical-domain/data/interim/m2-domain-evidence/noaa-whale-footprint-water-grid.parquet --expected-grid-sha256 7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031 --output-dir ../data/derived/m3-production-vessel-first --memory-limit 1GB --threads 1 --batch-size 50000 --temp-directory ../data/interim/m3-production-vessel-first/spill
 ```
+
+Measured outcome, from retained
+`data/interim/m3-production-vessel-first/profile.json`:
+
+| Measurement | Value |
+|---|---|
+| `exit_code` | 1 |
+| `target_outcome` | `resource_abort` |
+| `runtime_guard.termination_threshold` | `minimum_available_memory` |
+| Available memory at termination | 527,904,768 B (0.4917 GiB) against the 536,870,912 B floor |
+| Application peak RSS | 1,337,786,368 B (1.246 GiB) against the 1.75 GiB cap |
+| Peak spill | 1,167,556,608 B (1.087 GiB) against the 12 GiB cap |
+| Free disk at termination | 42,449,526,784 B (39.5 GiB) against the 12 GiB floor |
+| Operation elapsed | 1,029.935 s |
+| Target stdout / stderr | 13,327 B / **0 B** |
+
+The guard terminated the process because **machine-wide** available memory fell
+8,966,144 bytes (about 8.6 MB) below the runtime floor. The application stayed
+well inside its own RSS, spill and disk limits and emitted no stderr, so this is
+a host memory-pressure condition, not a defect in the production boundary. The
+gate behaved as designed and **was not relaxed**.
+
+Preflight available memory was 2,719,301,632 B (2.53 GiB), the least headroom of
+any full-period run attempted so far. For comparison, all ten retained candidate
+profiles recorded 3.17–5.70 GiB of preflight available memory, and their lowest
+observed available memory during execution was 0.85–4.16 GiB. The application
+needs roughly 1.25 GiB of RSS growth above its baseline, so a launch needs
+materially more than the 2 GiB preflight minimum to stay above the 0.5 GiB
+runtime floor for the whole run.
+
+Retained failure evidence, not to be deleted or overwritten: the profile above
+and the orphaned DuckDB spill under
+`data/interim/m3-production-vessel-first/spill/`, about 1.1 GB, which the
+profiler's termination prevented DuckDB from clearing. Its size is already
+recorded in the profile, so the author may reclaim it; free disk was not a
+factor in this failure. The next attempt must use a fresh output, profile and
+spill path, for example `m3-production-vessel-first-attempt2`, because the
+writer refuses existing destinations by design.
 
 After successful first/repeat execution, use
 `analysis/scripts/verify_production_vessel_input.py` with both fresh bundles,
