@@ -30,7 +30,7 @@ Not done, in order:
 3. **No production vessel grid or speed summary has been generated,**
    reproduced, lineage-checked or visually verified.
 4. **Owner documents are not reconciled beyond this file, the method review,
-   ADR 0018 and `analysis/README.md`.** `docs/roadmap.md`,
+   ADR 0018, `analysis/README.md` and `docs/roadmap.md`.**
    `docs/architecture.md`, `docs/development.md`, `docs/decisions/README.md`
    and the root `README.md` still describe the pre-matrix state.
 
@@ -438,9 +438,12 @@ earlier claim that correlation was "at least 0.999192 between any two
 candidates" was wrong on both counts: it omitted the two diagonal pairs and used
 the uncorrected statistic.
 
-- Net and absolute difference are equal in every comparison, so **no cell ever
-  loses distance** when a rule is relaxed; relaxation only adds.
-- The top ten cells hold only 9.6-14.2% of the absolute difference, so the changes
+- Net and absolute difference are equal in comparisons that only relax rules;
+  those comparisons only add distance. The 300/50 to 1800/30 comparison relaxes
+  the gap but tightens the speed ceiling: net change is 62,043.961 km and
+  absolute change is 64,597.778 km, so some cells lose distance.
+- Across all six all-commercial pairs, the top ten cells hold approximately
+  9.35–14.17% of the absolute difference, so the changes
   are broadly distributed rather than concentrated in a few cells.
 - The ten highest cells are **identical and identically ordered in all four
   candidates**, and the lowest tie-corrected rank correlation over all six pairs
