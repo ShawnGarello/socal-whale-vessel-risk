@@ -8,11 +8,13 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > and visually verified. All four full-period candidate vessel grids were
 > generated, repeated, compared and inspected in QGIS.
 >
-> ADR 0018 selects 300 seconds / 30 knots with explicit limitations, pending
-> final production validation. A production vessel-input command now reuses the
-> tested aggregation engine and adds separate descriptive movement-speed fields.
-> Real production generation, reproduction and visual verification remain pending.
-> Publisher-transfer and observational completeness remain unverified.
+> ADR 0018 is **Accepted**: it selects 300 seconds / 30 knots with explicit
+> limitations. A production vessel-input command reuses the tested aggregation
+> engine and adds separate descriptive movement-speed fields. The final
+> period-wide vessel grid and speed summaries were generated, reproduced
+> byte-identically, independently verified and inspected in QGIS on 2026-09-05.
+> Acceptance does not claim the thresholds are scientifically validated, and
+> publisher-transfer and observational completeness remain unverified.
 >
 > The web shell displays the publisher-hosted VSR boundary directly; project
 > copies of VSR geometry are prohibited. Exposure analysis, project-derived web
