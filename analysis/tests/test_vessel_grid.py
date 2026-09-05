@@ -818,3 +818,45 @@ def test_conservation_failure_reports_the_measured_quantities() -> None:
     )
     assert "retained_segments=19" in combined
     assert "difference_m=-0.25" in combined
+
+
+def test_compensated_total_holds_conservation_where_naive_summation_fails() -> None:
+    """Whole-period distance accounting needs the compensated running sum.
+
+    The addends reproduce the measured passenger population's shape: a total
+    near 8.06e8 metres reached in 6.2 million steps. A naive running sum drifts
+    past the 1e-12 relative conservation tolerance; the compensated sum does
+    not. The tolerance itself is unchanged.
+    """
+    steps = 6_191_714
+    addend = 805_571_909.6036832 / steps
+
+    naive = 0.0
+    compensated = vessel_grid._CompensatedTotal()
+    for _ in range(steps):
+        naive += addend
+        compensated.add(addend)
+
+    exact = math.fsum([addend] * steps)
+    tolerance = max(
+        vessel_grid.LENGTH_TOLERANCE_M,
+        exact * vessel_grid.CONSERVATION_RELATIVE_TOLERANCE,
+    )
+
+    assert abs(naive - exact) > tolerance
+    assert abs(compensated.total - exact) <= tolerance
+
+
+def test_compensated_total_matches_exact_summation_on_known_values() -> None:
+    """Known-by-construction values, including a catastrophic cancellation."""
+    total = vessel_grid._CompensatedTotal()
+    assert total.total == 0.0
+
+    for value in (1.0, 1e100, 1.0, -1e100):
+        total.add(value)
+    assert total.total == 2.0
+
+    ordered = vessel_grid._CompensatedTotal()
+    for value in (0.0, 0.1, 0.2, 0.3):
+        ordered.add(value)
+    assert ordered.total == math.fsum((0.0, 0.1, 0.2, 0.3))

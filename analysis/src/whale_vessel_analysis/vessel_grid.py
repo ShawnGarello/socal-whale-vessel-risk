@@ -63,7 +63,7 @@ VESSEL_GRID_CONTRACT: Final = "candidate_vessel_grid_v1"
 VESSEL_GRID_QUALITY_CONTRACT: Final = "candidate_vessel_grid_quality_v1"
 VESSEL_GRID_LINEAGE_CONTRACT: Final = "candidate_vessel_grid_lineage_v1"
 VESSEL_GRID_SCHEMA_VERSION: Final = 1
-VESSEL_GRID_PROCESSING_VERSION: Final = "1.0.0"
+VESSEL_GRID_PROCESSING_VERSION: Final = "1.1.0"
 VESSEL_GRID_ID_PREFIX: Final = "candidate-vessel-grid-"
 VESSEL_GRID_FILENAME: Final = "vessel-grid.parquet"
 QUALITY_REPORT_FILENAME: Final = "quality-report.json"
@@ -103,6 +103,41 @@ CandidateExclusionReason = Literal[
 
 class VesselGridError(ValueError):
     """Raised when candidate vessel-grid input, processing, or output is invalid."""
+
+
+class _CompensatedTotal:
+    """Neumaier compensated running sum of segment distances in metres.
+
+    A naive running total cannot carry whole-period distance accounting. The
+    measured 300-second/30-knot passenger population summed 805,571,909.6 metres
+    over 6,191,714 retained segments, and the naive totals disagreed by
+    -1.28e-3 metres against a 8.06e-4-metre tolerance, while the largest
+    single-segment residual was only 9.09e-13 metres. The rounding of the
+    additions themselves, not the geometry, produced that difference.
+
+    The compensation term is added only when the total is read, so the recorded
+    value stays a plain float and the conservation criterion is unchanged.
+    """
+
+    __slots__ = ("_compensation", "_total")
+
+    def __init__(self) -> None:
+        self._total = 0.0
+        self._compensation = 0.0
+
+    def add(self, value: float) -> None:
+        """Accumulate one distance, retaining the low-order rounding term."""
+        updated = self._total + value
+        if abs(self._total) >= abs(value):
+            self._compensation += (self._total - updated) + value
+        else:
+            self._compensation += (value - updated) + self._total
+        self._total = updated
+
+    @property
+    def total(self) -> float:
+        """Return the compensated sum."""
+        return self._total + self._compensation
 
 
 def candidate_primary_exclusion(
@@ -362,13 +397,13 @@ class _Accumulator:
         self.exclusion_distance_m: dict[str, float] = defaultdict(float)
         self.retained_counts: dict[str, int] = defaultdict(int)
         self.status_counts: dict[str, int] = defaultdict(int)
-        self.distance_by_group = {
+        self.distance_by_group: dict[str, dict[str, _CompensatedTotal]] = {
             group: {
-                "parent_m": 0.0,
-                "allocated_m": 0.0,
-                "outside_support_m": 0.0,
-                "ambiguous_boundary_m": 0.0,
-                "invalid_geometry_m": 0.0,
+                "parent_m": _CompensatedTotal(),
+                "allocated_m": _CompensatedTotal(),
+                "outside_support_m": _CompensatedTotal(),
+                "ambiguous_boundary_m": _CompensatedTotal(),
+                "invalid_geometry_m": _CompensatedTotal(),
             }
             for group in VESSEL_GROUPS
         }
@@ -469,7 +504,7 @@ class _Accumulator:
         if start_time.date() != end_time.date():
             self.cross_midnight_retained_count += 1
         totals = self.distance_by_group[group]
-        totals["parent_m"] += parent_distance
+        totals["parent_m"].add(parent_distance)
         if parent_distance <= LENGTH_TOLERANCE_M:
             self.zero_length_count += 1
             self._record_zero_length(Point(start_xy))
@@ -520,7 +555,7 @@ class _Accumulator:
                     intersections.append(component)
         except GEOSException:
             self.status_counts["invalid_intersection_geometry"] += 1
-            self.distance_by_group[group]["invalid_geometry_m"] += parent_distance
+            self.distance_by_group[group]["invalid_geometry_m"].add(parent_distance)
             return
         raw_pieces.sort(key=lambda item: item[:4])
         piece_sum = math.fsum(item[2] for item in raw_pieces)
@@ -540,14 +575,14 @@ class _Accumulator:
             )
         outside = max(0.0, parent_distance - union_length)
         totals = self.distance_by_group[group]
-        totals["outside_support_m"] += outside
+        totals["outside_support_m"].add(outside)
         if not math.isclose(
             piece_sum,
             union_length,
             rel_tol=CONSERVATION_RELATIVE_TOLERANCE,
             abs_tol=tolerance,
         ):
-            totals["ambiguous_boundary_m"] += union_length
+            totals["ambiguous_boundary_m"].add(union_length)
             self.status_counts["positive_length_ambiguous_boundary"] += 1
             difference = parent_distance - outside - union_length
             self.maximum_segment_conservation_difference_m = max(
@@ -556,7 +591,7 @@ class _Accumulator:
             return
         for _position, cell_order, length, _wkb, _geometry in raw_pieces:
             self.cell_distance_m[group][cell_order] += length
-        totals["allocated_m"] += piece_sum
+        totals["allocated_m"].add(piece_sum)
         if union_length <= LENGTH_TOLERANCE_M:
             self.status_counts["positive_length_outside_support"] += 1
         elif outside <= LENGTH_TOLERANCE_M:
@@ -654,10 +689,12 @@ class _Accumulator:
                 "candidate segment counts do not reconcile with exclusions"
             )
         group_distance: dict[str, object] = {}
+        distance_totals = {
+            group: {key: total.total for key, total in totals.items()}
+            for group, totals in self.distance_by_group.items()
+        }
         commercial_totals = {
-            key: math.fsum(
-                self.distance_by_group[group][key] for group in VESSEL_GROUPS
-            )
+            key: math.fsum(distance_totals[group][key] for group in VESSEL_GROUPS)
             for key in (
                 "parent_m",
                 "allocated_m",
@@ -668,9 +705,7 @@ class _Accumulator:
         }
         for group in (*VESSEL_GROUPS, ALL_COMMERCIAL):
             values = (
-                commercial_totals
-                if group == ALL_COMMERCIAL
-                else self.distance_by_group[group]
+                commercial_totals if group == ALL_COMMERCIAL else distance_totals[group]
             )
             difference = values["parent_m"] - math.fsum(
                 (
