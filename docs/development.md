@@ -236,10 +236,11 @@ deterministic EPSG:3310 water-grid process, abundance-conserving transfer of
 modeled blue-whale density to that grid, a read-only one-bundle vessel-measure
 evidence harness, a versioned multi-day cleaned-input manifest with a bounded
 DuckDB period relation, a bounded period vessel-rule evidence command, a
-parameterized candidate vessel-grid aggregation, and synthetic tests. It does
-**not** submit orders, download AIS, accept final
-vessel rules, produce a final analytical-period vessel input, or produce an
-exposure dataset or statistics. Run every command below from `analysis/`.
+parameterized candidate vessel-grid aggregation, a production vessel-input
+boundary with separate movement-speed summaries, and synthetic tests. Final
+real production verification remains pending. It does **not** submit orders,
+download AIS, or produce exposure datasets or statistics. Run every command
+below from `analysis/`.
 
 **Prerequisites**
 
@@ -273,6 +274,7 @@ re-run; the built package declares only runtime requirements.
 | `python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help` | Proves the separate multi-day cleaned-input boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.period_vessel_rule_evidence_cli --help` | Proves the bounded period vessel-rule evidence boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --help` | Proves the candidate multi-day vessel-grid aggregation boundary loads. |
+| `python -m uv run python -m whale_vessel_analysis.vessel_input_cli --help` | Proves the selected production vessel-input boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help` | Proves the separate whale-grid transfer boundary loads. |
 
 The toolchain decision is [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md).
@@ -1247,7 +1249,7 @@ the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 376 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 417 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
