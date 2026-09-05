@@ -731,7 +731,24 @@ The selected population is type-only passenger/cargo/tanker, with no length
 proxy for 300 GT. A support-ring retrieval is unnecessary for the censored
 observed-movement comparison; it would be required to evaluate uncensored
 boundary movement. The historical one-day ring comparison above was not run.
-Maximum-gap and implied-speed choices remain open pending the spatial matrix.
+Maximum-gap and implied-speed choices remain open.
+
+**Criterion 3 was satisfied on 2026-09-05.** The four candidates ran against the
+ready 153-date period on the exact grid with common support and edge treatment;
+each reproduced its GeoParquet and quality-report bytes exactly on an
+independent repeat; all six candidate pairs were compared per cell and by vessel
+group; and the four checksum-bound outputs were inspected in QGIS. No cell loses
+distance when a rule is relaxed, the ten highest cells are identical and
+identically ordered in every candidate, and the lowest tie-corrected rank
+correlation across the six pairs is 0.999122, between 300/30 and 1800/50.
+Individual cells still move by up to 330%, and the gap relaxation adds
+proportionally about 1.8 times more distance in the sparsest cells than the
+busiest, while the ceiling relaxation is spatially flat.
+
+Criteria 1, 2 and 4 are satisfied by the method review and the retained
+`unverified` completeness states. **Criterion 5 is not satisfied**: no threshold
+is selected here, and no final period-wide vessel grid has been produced or
+spatially validated. This record therefore stays **Proposed**.
 
 The implemented period-rule boundary supports the remaining research by
 identifying dates, vessel groups, and exclusion reasons that need closer review.
