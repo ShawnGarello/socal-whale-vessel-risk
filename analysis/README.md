@@ -1823,11 +1823,14 @@ distance outside modeled-whale support. All 510,916 exclusions were
 conservation passed with a difference of exactly `0.0` and a maximum
 single-segment difference of `1e-12` metres.
 
-Comparing candidates, no cell ever loses distance when a rule is relaxed, the
-ten highest cells are identical and identically ordered in all four candidates,
-and the rank correlation between any two candidates is at least `0.999192`.
-Individual cells still move materially: up to 330.09% for the gap change and
-66.62% for the ceiling change. Grouping cells by their 300/30 baseline, the gap
+Comparing candidates, no cell ever loses distance when a rule is relaxed and the
+ten highest cells are identical and identically ordered in all four candidates.
+Across **all six** candidate pairs the tie-corrected rank correlation is at
+least `0.999122`, its minimum between 300/30 and 1800/50, the two extremes.
+Ranks use mean ranks for tied cells; many cells share a value, including every
+cell holding exactly zero, and ordinal ranks broken by cell index would invent
+an ordering the data does not contain. Individual cells still move materially:
+up to 330.09% for the gap change and 66.62% for the ceiling change. Grouping cells by their 300/30 baseline, the gap
 relaxation adds 7.58% in the sparsest quintile against 4.13% in the busiest,
 while the ceiling relaxation is flat at 0.75-1.16% and falls mainly on passenger.
 `distinct_mmsi` and `distinct_mmsi_dates` are candidate-invariant.
@@ -1837,12 +1840,20 @@ The four exact checksum-bound GeoParquet outputs were rendered in QGIS 4.2.1 and
 southern support edges, using common physical-unit class breaks. Geography,
 EPSG:3310 cell alignment, land and island exclusion, and corridor structure were
 correct, with no projection shift, geometry gap, unexplained clipping or sliver.
-Straight east-west banding was investigated numerically rather than accepted: no
-grid row exceeds 1.8 times its neighbours' mean, and the three short
-high-contrast runs lie in the Santa Barbara Channel and on the east-west
-approaches south of the Channel Islands, where traffic separation genuinely runs
-east-west. The paler northern and southern margins are the visible signature of
-cleaned-extent censoring and are not evidence of low traffic.
+Straight east-west banding was investigated numerically rather than accepted at
+face value: no grid row exceeds 1.8 times its neighbours' mean, and only three
+short high-contrast runs of 5 to 10 cells exist. Their projected coordinates
+place the strongest in the Santa Barbara Channel and the others on the
+approaches south of the Channel Islands. Established traffic separation in
+those waters runs broadly east-west, so a traffic explanation is **plausible**,
+but coordinate agreement is not proof of cause; the bands were not checked
+against published traffic-separation geometry, and no comparison against an
+independent traffic product was made. The northern and southern margins render
+paler than the interior, which is **consistent with** `censor-at-cleaned-extent`
+removing entry and exit distance at the map boundary, but genuinely lower
+offshore and boundary traffic would look similar and these images do not
+separate the two. Neither reading is established here, and neither is evidence
+about coverage.
 
 This is candidate sensitivity evidence. **No maximum-gap or implied-speed rule is
 accepted, no final vessel-activity input exists, and ADR 0018 remains Proposed.**
