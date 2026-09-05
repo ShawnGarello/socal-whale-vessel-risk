@@ -1,0 +1,163 @@
+"""Verify and compare the four completed, repeated M3 candidate bundles."""
+
+import argparse
+import json
+import math
+from pathlib import Path
+
+import pyarrow.parquet as pq
+
+from whale_vessel_analysis.cleaned_ais_bundle import sha256_file
+
+GROUPS = ("passenger", "cargo", "tanker", "all_commercial")
+
+
+def compare_cells(first, second, group):
+    """Compare aligned physical-unit cells; thresholds are reporting choices."""
+    if [row["cell_id"] for row in first] != [row["cell_id"] for row in second]:
+        raise ValueError("cell identities/order differ")
+    field = f"vessel_km_{group}"
+    differences = [b[field] - a[field] for a, b in zip(first, second, strict=True)]
+    absolute_total = math.fsum(abs(value) for value in differences)
+    top = sorted(
+        range(len(first)), key=lambda i: (-abs(differences[i]), first[i]["cell_id"])
+    )[:10]
+    return {
+        "changed_above_1e_minus_9_km": sum(abs(value) > 1e-9 for value in differences),
+        "changed_at_least_1_km": sum(abs(value) >= 1 for value in differences),
+        "positive_cells_first": sum(row[field] > 0 for row in first),
+        "positive_cells_second": sum(row[field] > 0 for row in second),
+        "net_difference_km": math.fsum(differences),
+        "absolute_difference_km": absolute_total,
+        "top_ten_share_of_absolute_difference": (
+            math.fsum(abs(differences[i]) for i in top) / absolute_total
+            if absolute_total
+            else None
+        ),
+        "top_ten_cells": [
+            {
+                "cell_id": first[i]["cell_id"],
+                "first_km": first[i][field],
+                "second_km": second[i][field],
+                "difference_km": differences[i],
+            }
+            for i in top
+        ],
+    }
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--matrix-root", type=Path, required=True)
+    parser.add_argument("--grid", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args(argv)
+    interim = Path(__file__).resolve().parents[2] / "data/interim"
+    if not args.output.resolve().is_relative_to(interim) or args.output.exists():
+        raise ValueError("comparison requires a fresh ignored interim output")
+    grid_hash = sha256_file(args.grid)
+    if grid_hash != "7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031":
+        raise ValueError("water-grid checksum mismatch")
+    grid = pq.read_table(args.grid).to_pylist()
+    bundles, tables = {}, {}
+    for gap, speed in ((300, 30), (300, 50), (1800, 30), (1800, 50)):
+        name = f"g{gap}-s{speed}"
+        first, repeat = (
+            args.matrix_root / f"{name}-{suffix}" for suffix in ("first", "repeat")
+        )
+        hashes = {}
+        for filename in ("vessel-grid.parquet", "quality-report.json"):
+            digest = sha256_file(first / filename)
+            if sha256_file(repeat / filename) != digest:
+                raise ValueError(f"repeat bytes differ: {name}/{filename}")
+            hashes[filename] = digest
+        quality = json.loads((first / "quality-report.json").read_text())
+        if quality["input"]["target_grid"]["sha256"] != grid_hash:
+            raise ValueError("candidate has a different grid")
+        if (
+            quality["parameters"]["maximum_gap_seconds"] != gap
+            or quality["parameters"]["implied_speed_ceiling_knots"] != speed
+        ):
+            raise ValueError("candidate parameter mismatch")
+        if (
+            quality["input"]["period_input_id"]
+            != "multiday-ais-17e982f999f7093945193378"
+        ):
+            raise ValueError("period identity mismatch")
+        for directory in (first, repeat):
+            lineage = json.loads((directory / "run-metadata.json").read_text())
+            assert lineage["run"]["run_id"] == quality["grid_id"]
+            assert {item["sha256"] for item in lineage["run"]["outputs"]} == set(
+                hashes.values()
+            )
+        table = pq.read_table(first / "vessel-grid.parquet").to_pylist()
+        assert len(table) == len(grid) == 4516
+        for actual, expected in zip(table, grid, strict=True):
+            assert all(actual[key] == value for key, value in expected.items())
+            assert all(value is not None for value in actual.values())
+            for group in GROUPS:
+                km = actual[f"vessel_km_{group}"]
+                assert math.isfinite(km) and km >= 0
+                assert math.isclose(
+                    actual[f"vessel_km_per_water_km2_{group}"],
+                    km / actual["water_area_km2"],
+                    rel_tol=1e-10,
+                    abs_tol=1e-10,
+                )
+            assert math.isclose(
+                actual["vessel_km_all_commercial"],
+                math.fsum(actual[f"vessel_km_{group}"] for group in GROUPS[:3]),
+                abs_tol=1e-8,
+            )
+        for group in GROUPS:
+            distance = quality["distance_conservation"]["by_group"][group]
+            assert math.isclose(
+                math.fsum(row[f"vessel_km_{group}"] for row in table) * 1000,
+                distance["allocated_to_cells_m"],
+                rel_tol=1e-12,
+                abs_tol=1e-6,
+            )
+        tables[name] = table
+        bundles[name] = {
+            "grid_id": quality["grid_id"],
+            "hashes": hashes,
+            "conservation": quality["distance_conservation"],
+            "counts": quality["counts"],
+            "exclusions": quality["exclusions"],
+        }
+    comparisons = {}
+    for a, b in (
+        ("g300-s30", "g300-s50"),
+        ("g1800-s30", "g1800-s50"),
+        ("g300-s30", "g1800-s30"),
+        ("g300-s50", "g1800-s50"),
+    ):
+        comparisons[f"{a}_to_{b}"] = {
+            group: compare_cells(tables[a], tables[b], group) for group in GROUPS
+        }
+        for x, y in zip(tables[a], tables[b], strict=True):
+            assert all(x[key] == y[key] for key in x if key.startswith("distinct_"))
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with args.output.open("x", encoding="utf-8") as stream:
+        json.dump(
+            {
+                "bundles": bundles,
+                "comparisons": comparisons,
+                "distinct_counts_candidate_invariant": True,
+                "limitations": (
+                    "Parent and allocated distance are distinct; "
+                    "no coverage or exposure result."
+                ),
+            },
+            stream,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+        stream.write("\n")
+    print(sha256_file(args.output))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
