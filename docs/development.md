@@ -56,6 +56,41 @@ Each kind of information has exactly one owning document. When information chang
 
 If two documents contradict each other, the owner above wins and the other is corrected in the same change that discovers the contradiction.
 
+## Agent reading and handoff workflow
+
+[AGENTS.md](../AGENTS.md) owns the operational rules and reading routes for all
+agents; [CLAUDE.md](../CLAUDE.md) points there rather than repeating status.
+Start with the project brief, then the roadmap status table and the milestone
+sections relevant to the task. Read complete selected sections and applicable
+workflow sections below, not every historical run record by default.
+
+- For any change, read **Keeping documentation synchronized with implementation**,
+  **Concurrent sessions**, **Recording incomplete or uncertain work**, and
+  **Commits** below. Before proposing a merge, also read **Pull request and
+  continuous integration workflow** and **Review before merge**.
+- For implementation or audit, read **Testing and verification**,
+  **Formatting and linting**, and the relevant component's commands/contracts.
+- For data or heavy execution, read **Raw data**, **Generated outputs**, the
+  **Direct-process resource profiling** procedure, and the exact task's run
+  settings and stop conditions in the analysis README or current run handoff.
+- For credentials, publishing, or deployment, read **Environment variables and
+  secrets**, **Deploying the application**, and **ArcGIS account-type capability
+  checks and service access**, plus applicable source-use decisions. These are
+  not authorization to change an account or publish anything.
+
+Use headings and search to locate evidence. Read historical commands, hashes,
+and failure records when needed to verify a claim or reproduce a run; do not
+discard them or substitute a summary for necessary evidence. Avoid repeated
+full-file dumps and re-reading unchanged material within one session. Refresh
+applicable instructions and missing/changed context after a branch change,
+compaction, or handoff.
+
+A current branch handoff should lead with its branch/commit, completed work,
+remaining work in dependency order, exact input/output identities and commands,
+verification results, blockers, and next action. Label older execution entries
+as history. It aids navigation but does not supersede owners or prove that a
+claimed result actually ran. Keep status history out of agent entrypoints.
+
 ## Local development
 
 This section fills in as each part is built. The **web application shell and
@@ -1169,6 +1204,19 @@ in [architecture.md](architecture.md#testing-and-visual-verification-boundaries)
 
 In practice:
 
+- During implementation, use focused tests for changed behavior. Before handoff,
+  run the affected component's required quality gates listed above. Repeat or
+  broaden passing checks only when subsequent changes, failures, or unresolved
+  concerns justify it; independent review still verifies the claims.
+- For Markdown-only changes with no executable/configuration change, review
+  the diff, relative links/anchors, consistency, and factual claims. Local full
+  Python/web suites and dependency installation are not required merely to edit
+  prose. Executable examples or changed commands require relevant verification.
+  Both PR CI jobs remain mandatory regardless of the changed files.
+- Do not rerun expensive real-data processing solely for wording changes. Reuse
+  retained evidence only after checking relevant identities and whether the
+  change invalidates it. Required reproducibility, resource, scientific, and
+  spatial-verification gates are not waived to reduce usage.
 - Analytical logic — aggregation, normalization, the exposure calculation, inside/outside statistics — gets tests with small synthetic inputs whose correct answers are known by construction.
 - Input validation — coordinate reference system, extent, nulls, value ranges — is asserted inside the processing path so a bad input fails loudly rather than producing a plausible-looking wrong map.
 - Application code gets type checking and linting, plus tests for non-trivial presentational logic.
