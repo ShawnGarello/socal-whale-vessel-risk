@@ -1,6 +1,7 @@
 """Verify and compare the four completed, repeated M3 candidate bundles."""
 
 import argparse
+import itertools
 import json
 import math
 from pathlib import Path
@@ -47,22 +48,42 @@ def compare_cells(first, second, group):
 
 
 def rank_positions(values):
-    """Rank cells by descending value; ties broken by cell order, not value."""
-    order = sorted(range(len(values)), key=lambda i: (-values[i], i))
-    positions = [0] * len(values)
-    for position, index in enumerate(order):
-        positions[index] = position
+    """Average ranks in descending order; tied values share their mean rank.
+
+    Ordinal ranks broken by cell index would invent an ordering the data does
+    not contain. Many cells hold identical vessel-kilometres, including the
+    many that hold exactly zero, so tie handling changes the result: it can
+    reverse the sign of the correlation and make a constant column look
+    perfectly correlated with anything.
+    """
+    order = sorted(range(len(values)), key=lambda i: -values[i])
+    positions = [0.0] * len(values)
+    start = 0
+    while start < len(order):
+        end = start
+        while end + 1 < len(order) and values[order[end + 1]] == values[order[start]]:
+            end += 1
+        mean_rank = (start + end) / 2
+        for index in order[start : end + 1]:
+            positions[index] = mean_rank
+        start = end + 1
     return positions
 
 
 def spearman(first, second):
-    """Rank correlation of two per-cell measures over the identical cell set."""
+    """Tie-corrected rank correlation over the identical cell set.
+
+    Returns None when either side has no rank variance at all, because the
+    correlation is undefined rather than perfect.
+    """
     a, b = rank_positions(first), rank_positions(second)
     count = len(a)
-    mean_a, mean_b = sum(a) / count, sum(b) / count
+    mean_a, mean_b = math.fsum(a) / count, math.fsum(b) / count
     numerator = math.fsum((a[i] - mean_a) * (b[i] - mean_b) for i in range(count))
     deviation_a = math.sqrt(math.fsum((value - mean_a) ** 2 for value in a))
     deviation_b = math.sqrt(math.fsum((value - mean_b) ** 2 for value in b))
+    if deviation_a == 0.0 or deviation_b == 0.0:
+        return None
     return numerator / (deviation_a * deviation_b)
 
 
@@ -175,12 +196,8 @@ def main(argv=None):
             "exclusions": quality["exclusions"],
         }
     comparisons = {}
-    for a, b in (
-        ("g300-s30", "g300-s50"),
-        ("g1800-s30", "g1800-s50"),
-        ("g300-s30", "g1800-s30"),
-        ("g300-s50", "g1800-s50"),
-    ):
+    names = ("g300-s30", "g300-s50", "g1800-s30", "g1800-s50")
+    for a, b in itertools.combinations(names, 2):
         comparisons[f"{a}_to_{b}"] = {
             group: {
                 **compare_cells(tables[a], tables[b], group),

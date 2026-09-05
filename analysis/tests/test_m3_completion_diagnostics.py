@@ -152,8 +152,27 @@ def test_spearman_detects_preserved_and_reversed_cell_orderings():
     reversed_order = [4.0, 3.0, 2.0, 1.0]
     assert module.spearman(ascending, rescaled) == pytest.approx(1.0)
     assert module.spearman(ascending, reversed_order) == pytest.approx(-1.0)
-    # Ranks are positions in descending order, ties broken by cell index.
-    assert module.rank_positions([5.0, 9.0, 5.0]) == [1, 0, 2]
+
+
+def test_tied_values_share_a_mean_rank_rather_than_cell_order():
+    """Regression: ordinal ranks invented an ordering ties do not contain.
+
+    Breaking ties by cell index reversed the sign of this correlation, giving
+    -0.5 where the tie-corrected value is +0.5.
+    """
+    module = _comparison_module()
+    # Descending ranks: 9.0 is rank 0; the two 5.0 values share rank (1+2)/2.
+    assert module.rank_positions([5.0, 9.0, 5.0]) == [1.5, 0.0, 1.5]
+    assert module.rank_positions([7.0, 7.0, 7.0]) == [1.0, 1.0, 1.0]
+    assert module.spearman([1.0, 2.0, 2.0], [1.0, 1.0, 2.0]) == pytest.approx(0.5)
+
+
+def test_spearman_is_undefined_rather_than_perfect_without_rank_variance():
+    """Regression: a constant column previously reported near-perfect correlation."""
+    module = _comparison_module()
+    assert module.spearman([5.0, 5.0, 5.0], [1.0, 2.0, 3.0]) is None
+    assert module.spearman([1.0, 2.0, 3.0], [0.0, 0.0, 0.0]) is None
+    assert module.spearman([0.0, 0.0], [0.0, 0.0]) is None
 
 
 def test_pattern_stability_separates_rescaling_from_reordering():
