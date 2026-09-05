@@ -10,7 +10,9 @@ This document is append-ordered execution history. Later sections supersede
 earlier ones; the "Outstanding / next action" section below is **stale history
 from the first session** and is retained only as a record of what was true then.
 
-**M3 is In progress. ADR 0018 remains Proposed. No vessel rule is accepted.**
+**M3 is In progress. ADR 0018 remains Proposed pending production validation.**
+The 300-second/30-knot configuration is selected with explicit limitations;
+selection does not complete the ADR's final validation criterion.
 
 Done: the period, evidence, grid and lineage identities were re-verified; the
 non-spatial evidence and flagged dates were reviewed; the edge treatment and
@@ -21,9 +23,10 @@ inspected in QGIS.
 
 Not done, in order:
 
-1. **Rule selection is not recorded.** The evidence points to 300 seconds and
-   30 knots, but no selection is written into ADR 0018 and no alternative has
-   been formally rejected.
+1. **Rule selection is recorded in ADR 0018:** 300 seconds / 30 knots,
+   type-only population, cleaned-extent censoring and exact water support.
+   The 1,800-second and 50-knot alternatives are rejected for production;
+   final production validation remains required before ADR acceptance.
 2. **No final vessel-input boundary or speed-summary contract exists.** The
    speed population, weighting, units, unavailable-value and zero-activity
    semantics are undefined and untested.

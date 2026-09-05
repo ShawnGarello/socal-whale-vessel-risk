@@ -127,6 +127,8 @@ ready 153-date period, each candidate reproduced its bytes exactly, all six
 candidate pairs were compared per cell, and the outputs were inspected in QGIS.
 See `analysis/README.md` and the [session handoff](m3-completion-handoff.md).
 
-Still outstanding: threshold selection is **not** recorded, and a truthful
-final-input boundary, speed summaries, their reproduction and their spatial
-verification do not exist. ADR 0018 and M3 remain open.
+ADR 0018 now records the 300-second/30-knot production selection and rejects
+the other gap/speed alternatives for this input, with the limitations above.
+A truthful final-input boundary, speed summaries, their reproduction and their
+spatial verification remain unfinished. ADR 0018 remains Proposed until final
+production validation; M3 remains In progress.

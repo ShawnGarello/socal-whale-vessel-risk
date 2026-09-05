@@ -3,6 +3,50 @@
 **Status:** Proposed
 **Date:** 2026-08-27
 
+## Selected production configuration, 2026-09-05
+
+Select **300 seconds maximum gap and 30 knots maximum projected implied
+speed**, inclusive, for the censored observed-commercial-movement input.
+This is a project choice supported by the combined diagnostic and spatial
+review, not a scientifically validated universal threshold. This record stays
+**Proposed** until criterion 5's final production generation and checksum-bound
+spatial validation pass. Selection alone does not satisfy that criterion.
+
+The 300-second gap limits straight-line inference through unobserved movement.
+The 1,800-second alternative adds 77,424.728 allocated km at 30 knots, with
+proportionally larger additions in sparse cells; recovering more distance does
+not establish those paths. Reject 1,800 seconds for this production input,
+while retaining its sensitivity artifacts. The 30-knot ceiling rejects many
+discordant jumps: among the short-gap 30–50-knot additions, only 103 passenger
+segments and no cargo or tanker segments agree with endpoint mean SOG within
+the diagnostic 5-knot band. Reject 50 knots for this production input. Some
+passenger movement over 30 knots may be credible and is knowingly omitted;
+neither SOG agreement nor high grid-rank correlation supplies independent
+scientific validation. The four candidates' stable highest cells do not erase
+material changes in individual cells or prove the chosen configuration correct.
+
+Retain passenger types 60–69, cargo 70–79 and tanker 80–89 without a length
+filter. This population is not program participation, eligibility, or a
+300-GT proxy. Keep `censor-at-cleaned-extent`: pair the whole period by MMSI,
+including midnight crossings, without extrapolating missing entry/exit paths
+or reconstructing unobserved excursions. Their omitted distance is unknown.
+Use `exact-water-geometry-exclude-and-report`: allocate only exact projected
+water-support pieces, report outside/ambiguous/invalid distance separately,
+and give zero-length movement zero vessel-km. The receiver domain remains a
+separate downstream statistical boundary. Do not remove or reweight flagged
+dates, or upgrade publisher-transfer or observational completeness.
+
+The [method review](../m3-vessel-method-review.md) owns supporting interpretation;
+the [current handoff](../m3-completion-handoff.md) locates exact retained
+diagnostic and six-pair comparison artifacts. Their recorded diagnostic,
+period-evidence and water-grid checksums were reverified on 2026-09-05.
+NOAA's FAQ and USCG's Class A report documentation were reopened that day;
+the Track Builder PDF failed to reopen, so its prior default finding is not
+claimed as newly verified. No candidate grids were regenerated for selection.
+
+Historical sections below retain the evidence and open states at their dates;
+this section supersedes their statements that no threshold has been selected.
+
 ## Context
 
 M3 needs to convert cleaned commercial AIS observations into a vessel-activity
@@ -746,9 +790,10 @@ proportionally about 1.8 times more distance in the sparsest cells than the
 busiest, while the ceiling relaxation is spatially flat.
 
 Criteria 1, 2 and 4 are satisfied by the method review and the retained
-`unverified` completeness states. **Criterion 5 is not satisfied**: no threshold
-is selected here, and no final period-wide vessel grid has been produced or
-spatially validated. This record therefore stays **Proposed**.
+`unverified` completeness states. **Criterion 5 is not satisfied**: the selection
+at the top of this record resolves its threshold decision, but no final
+period-wide vessel grid has been produced or spatially validated. This record
+therefore stays **Proposed**.
 
 The implemented period-rule boundary supports the remaining research by
 identifying dates, vessel groups, and exclusion reasons that need closer review.
