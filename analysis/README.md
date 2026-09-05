@@ -1778,11 +1778,93 @@ unexpected artifact remained.
 
 No candidate rule has been accepted, no production vessel grid exists, and no
 exposure analysis has begun. Publisher-side transfer completeness and AIS
-observational completeness remain `unverified`. The upstream map-extent
-censoring/edge-support choice and a defensible threshold rationale still need
-decision evidence. ADR 0018 remains Proposed.
+observational completeness remain `unverified`. The [method review](../docs/m3-vessel-method-review.md)
+has since selected the common cleaned-extent censoring and exact-support
+treatment and the type-only population, and the full-period matrix below
+supplies the per-cell threshold sensitivity evidence, but no threshold is
+accepted. ADR 0018 remains Proposed.
 
 ## Candidate multi-day vessel-grid aggregation
+
+The [M3 method review](../docs/m3-vessel-method-review.md) records the subsequent
+ready-period cleaner, hourly, length and SOG diagnostics. The session tool
+`scripts/m3_completion_diagnostics.py` runs through the existing resource
+profiler with its exact command and resource results in the
+[handoff](../docs/m3-completion-handoff.md). A synthetic known-distance check
+covers its diagnostic arithmetic and missing/zero populations.
+`scripts/qgis_inspect_vessel_grid.py` is separate QGIS inspection tooling;
+rendering alone never constitutes visual verification.
+`scripts/compare_vessel_candidates.py` re-verifies repeated candidate bytes,
+lineage, per-cell physical units and conservation, and compares the four
+candidates by cell and by vessel group.
+
+### Full-period candidate matrix, 2026-09-05
+
+The documented 300/1,800-second by 30/50-knot matrix has now been executed
+against the ready 153-date period `multiday-ais-17e982f999f7093945193378` on the
+exact water grid, with `require-ready`, `censor-at-cleaned-extent`,
+`exact-water-geometry-exclude-and-report`, no length filter, a `1GB` DuckDB
+limit, one thread, and a fresh ignored output/profile/spill path per run. The
+eight runs were strictly sequential. Each candidate was run twice and reproduced
+**both** its GeoParquet and quality-report bytes exactly:
+
+| Gap (s) / speed (kn) | GeoParquet SHA-256 | Quality-report SHA-256 |
+|---|---|---|
+| 300 / 30 | `be3dc74d1c07525ef2a74cba1d0062abd97496b4043b3dd26847f9c3a65ec860` | `05260f8991e31fd1677b0f7b248dd0e96b97adbfabbd5d9240926d09aeac6faa` |
+| 300 / 50 | `30209bb2b7195a77dedfef7082214315275c15f6d219d39d2f726d5c8d24c3b2` | `aefd2a939be61d97aa3ddc67493fbfb449d1b902e6d3b99a1dbd0ff2e1159cbb` |
+| 1,800 / 30 | `6e17b8b109e07e35a24c00531528bc8cce106055528212debc7b3578606e0aeb` | `be05a406f1536fee62a1105b1d2ce70c64d61fa7b08241ff1cf1676c72c105ac` |
+| 1,800 / 50 | `5759fa1a22a4f7c5ecd2ea46c226a3c2bc5d6642f1780e3f56c25e12277c42ea` | `ad28904d0fc82963e529d86c33603e11498e9b4e121dd9b05230cd3742352ca4` |
+
+The 300/30 candidate retained 14,946,183 of 15,457,099 structural segments and
+allocated 2,084,502.496 vessel-km, with 173,324.279 km of retained parent
+distance outside modeled-whale support. All 510,916 exclusions were
+`maximum_gap` (461,769) or `implied_speed` (49,147); `invalid_coordinate_transform`,
+`non_increasing_time` and `vessel_group_change` were zero. Per-group distance
+conservation passed with a difference of exactly `0.0` and a maximum
+single-segment difference of `1e-12` metres.
+
+Comparing candidates, no cell ever loses distance when a rule is relaxed, the
+ten highest cells are identical and identically ordered in all four candidates,
+and the rank correlation between any two candidates is at least `0.999192`.
+Individual cells still move materially: up to 330.09% for the gap change and
+66.62% for the ceiling change. Grouping cells by their 300/30 baseline, the gap
+relaxation adds 7.58% in the sparsest quintile against 4.13% in the busiest,
+while the ceiling relaxation is flat at 0.75-1.16% and falls mainly on passenger.
+`distinct_mmsi` and `distinct_mmsi_dates` are candidate-invariant.
+
+The four exact checksum-bound GeoParquet outputs were rendered in QGIS 4.2.1 and
+**inspected**, at the full domain, the shipping corridors, and the northern and
+southern support edges, using common physical-unit class breaks. Geography,
+EPSG:3310 cell alignment, land and island exclusion, and corridor structure were
+correct, with no projection shift, geometry gap, unexplained clipping or sliver.
+Straight east-west banding was investigated numerically rather than accepted: no
+grid row exceeds 1.8 times its neighbours' mean, and the three short
+high-contrast runs lie in the Santa Barbara Channel and on the east-west
+approaches south of the Channel Islands, where traffic separation genuinely runs
+east-west. The paler northern and southern margins are the visible signature of
+cleaned-extent censoring and are not evidence of low traffic.
+
+This is candidate sensitivity evidence. **No maximum-gap or implied-speed rule is
+accepted, no final vessel-activity input exists, and ADR 0018 remains Proposed.**
+Transfer and observational completeness remain `unverified`.
+
+### Distance accumulation correction
+
+The first full-period attempt completed its work and then failed its own
+per-group distance-conservation check for passenger, with a residual of
+`-1.28e-3` metres against a `8.06e-4`-metre tolerance over 6,191,714 retained
+segments totalling 805,571,909.6 metres. The measurement excluded the geometry:
+ambiguous-boundary and invalid-geometry distance were both exactly zero and the
+largest single-segment residual was `9.09e-13` metres, so all retained segments
+together could contribute at most about `5.6e-6` metres, roughly 229 times too
+little. The residual came from rounding in five naive running totals.
+
+Those accumulators now use a Neumaier compensated sum. The conservation
+criterion and its tolerance are unchanged; the tolerance was deliberately not
+widened to admit a known numerical error. Because `processing_version` and
+`quality` both enter the candidate identity, `VESSEL_GRID_PROCESSING_VERSION` is
+now `1.1.0`, and the two-day candidate identities recorded below were produced
+under `1.0.0` and do not reproduce byte-for-byte under `1.1.0`.
 
 The focused `vessel_grid_cli` promotes the reusable consecutive-pair,
 plausibility-filter, exact-intersection, conservation, and distinct-union logic
@@ -1977,6 +2059,9 @@ spill directory, and no vessel-length filter:
 ```text
 python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --manifest ..\data\interim\m3-two-day-vessel-candidate-evidence\period\period-manifest.json --grid-input <water-grid.parquet> --expected-grid-sha256 7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031 --output-dir ..\data\derived\m3-two-day-vessel-candidate-evidence\<candidate-run> --maximum-gap-seconds <300|1800> --implied-speed-ceiling-knots <30|50> --period-readiness-treatment allow-incomplete-candidate --edge-treatment censor-at-cleaned-extent --support-treatment exact-water-geometry-exclude-and-report --memory-limit 2GB --temp-directory ..\data\interim\m3-two-day-vessel-candidate-evidence\<candidate-spill> --threads 4 --batch-size 50000
 ```
+
+These two-day identities were produced under processing version `1.0.0`; see
+the accumulation correction above for why they no longer reproduce byte-for-byte.
 
 | Gap (s) / speed (kn) | Candidate ID | GeoParquet SHA-256 | Quality-report SHA-256 |
 |---|---|---|---|
