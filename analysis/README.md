@@ -22,8 +22,9 @@ candidate per-cell vessel-kilometres and union-recomputed distinct-vessel
 descriptors under ignored `data/derived/`. A separate period vessel-rule
 evidence boundary reuses the same whole-period adjacency stream to summarize
 all four ADR 0018 candidate combinations without spatial allocation. That
-boundary is implemented and synthetically tested, but it has not been run on
-the ready 153-date input. It does not submit AccessAIS orders, download AIS,
+boundary is implemented, synthetically tested, and exercised twice on the
+ready 153-date input with byte-identical deterministic evidence. It does not
+submit AccessAIS orders, download AIS,
 process a season implicitly, accept final vessel rules, calculate relative
 exposure, or report inside-versus-outside statistics.
 
@@ -1688,12 +1689,98 @@ candidate combinations and matches retained/excluded counts, primary reasons,
 retained projected distance, cross-midnight retained counts, and zero-length
 retained counts. Both evaluators call the same narrow primary-exclusion helper.
 
-The boundary has not been exercised against the real 153-date accumulation
-manifest. The real five-month evidence matrix and four candidate grid runs have
-not begun, no candidate rule has been accepted, no production vessel grid
-exists, and no exposure analysis has begun. Publisher-side transfer
-completeness and AIS observational completeness remain unverified. ADR 0018
-remains Proposed.
+The following are the exact profiled commands used for the real executions.
+Run them from `analysis/`; every path shown is relative to that directory. The
+repeat uses independent profile, evidence, and spill paths while leaving every
+candidate argument and resource gate unchanged.
+
+```text
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.period_vessel_rule_evidence_cli --output ..\data\interim\m3-period-vessel-rule-evidence-run\profile-first.json --label m3-period-vessel-rule-evidence-first --disk-root ..\data\interim\m3-period-vessel-rule-evidence-run --spill-root ..\data\interim\m3-period-vessel-rule-evidence-run\spill-first --minimum-free-memory-gib 2 --minimum-free-disk-gib 20 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 12 --runtime-maximum-application-rss-gib 1.75 --runtime-maximum-spill-gib 12 --expected-exit-code 0 -- --manifest ..\data\interim\m3-accessais-july-month-gate\run\period.json --output-dir ..\data\interim\m3-period-vessel-rule-evidence-run\evidence-first --maximum-gap-seconds 300 --maximum-gap-seconds 1800 --implied-speed-ceiling-knots 30 --implied-speed-ceiling-knots 50 --vessel-length-treatment type-only-no-length-filter --memory-limit 1GB --temp-directory ..\data\interim\m3-period-vessel-rule-evidence-run\spill-first --threads 1 --batch-size 50000
+```
+
+```text
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.period_vessel_rule_evidence_cli --output ..\data\interim\m3-period-vessel-rule-evidence-run\profile-repeat.json --label m3-period-vessel-rule-evidence-repeat --disk-root ..\data\interim\m3-period-vessel-rule-evidence-run --spill-root ..\data\interim\m3-period-vessel-rule-evidence-run\spill-repeat --minimum-free-memory-gib 2 --minimum-free-disk-gib 20 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 12 --runtime-maximum-application-rss-gib 1.75 --runtime-maximum-spill-gib 12 --expected-exit-code 0 -- --manifest ..\data\interim\m3-accessais-july-month-gate\run\period.json --output-dir ..\data\interim\m3-period-vessel-rule-evidence-run\evidence-repeat --maximum-gap-seconds 300 --maximum-gap-seconds 1800 --implied-speed-ceiling-knots 30 --implied-speed-ceiling-knots 50 --vessel-length-treatment type-only-no-length-filter --memory-limit 1GB --temp-directory ..\data\interim\m3-period-vessel-rule-evidence-run\spill-repeat --threads 1 --batch-size 50000
+```
+
+The ignored execution artifacts are located as follows:
+
+| Execution | Profiler output | Deterministic evidence | Time-bearing lineage | Spill directory after completion |
+|---|---|---|---|---|
+| First | `..\data\interim\m3-period-vessel-rule-evidence-run\profile-first.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\evidence-first\evidence.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\evidence-first\run-metadata.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\spill-first` (empty) |
+| Repeat | `..\data\interim\m3-period-vessel-rule-evidence-run\profile-repeat.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\evidence-repeat\evidence.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\evidence-repeat\run-metadata.json` | `..\data\interim\m3-period-vessel-rule-evidence-run\spill-repeat` (empty) |
+
+On 2026-09-04 the non-spatial boundary was exercised twice against the exact
+ready 153-date accumulation manifest, period ID
+`multiday-ais-17e982f999f7093945193378`. Both runs reverified all 153 local
+partition checksums, streamed 15,458,567 cleaned commercial observations in 310
+bounded Arrow batches, and reconciled 15,457,099 structural segments, including
+25,655 cross-midnight segments. Daily summaries reconcile to the whole-period
+passenger, cargo, tanker, and union-recomputed all-commercial summaries. Every
+candidate's retained and excluded populations and primary exclusion reasons
+also reconcile by date and vessel group. The deterministic artifact is
+`period_vessel_rule_evidence_v1` / processing version `1.1.0`, evidence ID
+`period-vessel-rule-evidence-cb2525fab34c4b8848146365`, and SHA-256
+`1b90ebd4e8d340cdb09709557d154f5b55f7882cba8cbc08b548958edbb25ff4`.
+The repeat reproduced the exact `evidence.json` bytes. The time-bearing lineage
+SHA-256 values differed as intended:
+`16e4a722ed06bf3b8e53ece2a07855a1a4487f136bdfb8896e6889806242a562`
+and `b23652ae599ebcb4c35883d3df62077ed2d94dc68c9d671841b03cd79d98824e`.
+
+| Maximum gap (s) | Speed ceiling (kn) | Retained / excluded | Gap / speed exclusions | Retained projected / geodesic km | Projected relative to geodesic | Cross-midnight retained | Zero-length retained |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 300 | 30 | 14,946,183 / 510,916 | 461,769 / 49,147 | 2,257,826.775 / 2,257,926.165 | -0.004402% | 19,667 | 1,346,338 |
+| 300 | 50 | 14,959,600 / 497,499 | 461,769 / 35,730 | 2,274,142.490 / 2,274,241.131 | -0.004337% | 19,686 | 1,346,338 |
+| 1,800 | 30 | 15,380,549 / 76,550 | 24,935 / 51,615 | 2,342,366.828 / 2,342,468.413 | -0.004337% | 21,183 | 1,413,123 |
+| 1,800 | 50 | 15,394,342 / 62,757 | 24,935 / 37,822 | 2,366,859.397 / 2,366,960.189 | -0.004258% | 21,202 | 1,413,123 |
+
+These are candidate sensitivity outcomes, not accepted rules. The 300-second
+cases excluded 3.305% and 3.219% of structural segments; the 1,800-second cases
+excluded 0.495% and 0.406%. Raising the speed ceiling retained 13,417 more
+segments and 16,315.715 more projected vessel-km in the 300-second case, and
+13,793 more segments and 24,492.569 more projected vessel-km in the 1,800-second
+case. Raising the gap retained 434,366--434,742 more segments and
+84,540.053--92,716.907 more projected vessel-km. More retained distance is not
+evidence that a candidate is analytically preferable.
+
+The full artifact preserves all 153 date rows and vessel groups. Dates flagged
+for later source-quality and methodological review include 2024-09-29,
+2024-11-24, and 2024-11-28, the three lowest all-commercial observation totals
+(61,513, 64,268, and 71,841 versus a 103,590 daily median). The highest
+all-commercial 300-second exclusion rates were 8.701% on 2024-11-24, 8.226% on
+2024-11-25, and 8.164% on 2024-09-24 for the 30-knot case; the 50-knot case
+showed the same dates at 8.692%, 8.174%, and 7.938%. The highest 1,800-second
+rates were 2.767% on 2024-09-29, 2.382% on 2024-09-24, and 2.140% on
+2024-10-14 at 30 knots, and 2.618%, 2.130%, and 2.053% on those dates at 50
+knots. Group extrema reinforce those review flags: tanker 300-second exclusion
+reached 13.118% on 2024-11-24, while the largest 1,800-second rates were 2.995%
+for passenger and 2.863% for cargo on 2024-09-29 and 2.570% for tanker on
+2024-09-24. These are anomaly flags, not completeness findings.
+
+Reported SOG was available for 15,449,086 observations and unavailable for
+9,481 (0.0613%); vessel length was valid for 15,410,164 and null because it was
+missing or upstream-invalid for 48,403 (0.3131%). The structural population's
+projected total was 5,421,561.955 km and its geodesic total was 5,421,442.496
+km. Candidate retained projected totals were 0.004258%--0.004402% below their
+geodesic counterparts. The largest daily candidate relative difference was
+0.058123% in magnitude for tanker on 2024-11-04. The JSON summaries, rather
+than a spatial layer, were the output, so no spatial or QGIS verification was
+required.
+
+The profiled target operations took 788.7328084999463 and 954.8200375000015
+seconds; the lineage-recorded processing intervals within those operations were
+788.334678 and 954.415569 seconds. Peak application RSS was 1,302,044,672 and
+1,303,158,784 bytes;
+minimum available memory was 795,631,616 and 2,742,149,120 bytes; maximum spill
+was 1,117,716,480 and 1,201,438,720 bytes; and minimum free disk was
+59,567,480,832 and 56,436,678,656 bytes. Both profilers reported
+`target_completed`, exit code 0, and final spill of zero. No partial or
+unexpected artifact remained.
+
+No candidate rule has been accepted, no production vessel grid exists, and no
+exposure analysis has begun. Publisher-side transfer completeness and AIS
+observational completeness remain `unverified`. The upstream map-extent
+censoring/edge-support choice and a defensible threshold rationale still need
+decision evidence. ADR 0018 remains Proposed.
 
 ## Candidate multi-day vessel-grid aggregation
 

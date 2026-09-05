@@ -24,7 +24,8 @@
 > without selecting a plausibility threshold. A focused period vessel-rule
 > evidence boundary reuses one whole-period adjacency stream to summarize the
 > four explicit ADR 0018 candidates in bounded batches; it is synthetically
-> tested but has not run on the real ready manifest. A separate candidate
+> tested and its two profiled real-ready-manifest runs reproduced exact
+> deterministic evidence bytes. A separate candidate
 > vessel-grid boundary now requires explicit gap, implied-speed, readiness, edge,
 > and support parameters, streams whole-period pairs, and writes deterministic
 > per-cell vessel-kilometres with quality and lineage metadata beneath ignored
@@ -625,11 +626,21 @@ validated before the scan. The writer refuses raw or outside-interim targets,
 input/output overlap, arbitrary overwrite, and partial publication. Full
 contract details are in the [analysis README](../analysis/README.md#period-wide-vessel-rule-evidence).
 
-The command is implemented and synthetically tested only. Do not infer that the
-real five-month evidence matrix ran: it did not. No rule is accepted, ADR 0018
-remains Proposed, no production vessel grid exists, publisher-side transfer and
-AIS observational completeness remain unverified, and exposure analysis has
-not begun.
+On 2026-09-04 the command completed two profiled runs against the exact ready
+153-date manifest. Both returned exit code 0, streamed 15,458,567 observations,
+reconciled 15,457,099 structural segments and all date/group/candidate
+populations, and produced evidence ID
+`period-vessel-rule-evidence-cb2525fab34c4b8848146365`. The repeat reproduced
+the exact deterministic `evidence.json` bytes with SHA-256
+`1b90ebd4e8d340cdb09709557d154f5b55f7882cba8cbc08b548958edbb25ff4`;
+time-bearing lineage and profiler bytes differed as intended. Both spill
+directories ended empty. This was a JSON evidence run, not spatial aggregation,
+so no QGIS verification was required. No rule is accepted, ADR 0018 remains
+Proposed, no production vessel grid exists, publisher-side transfer and AIS
+observational completeness remain unverified, and exposure analysis has not
+begun. Exact outcomes and resource measurements are recorded in the
+[analysis README](../analysis/README.md#period-wide-vessel-rule-evidence) and
+[ADR 0018](decisions/0018-use-vessel-kilometres-for-grid-activity.md).
 
 **Candidate multi-day vessel-grid aggregation**
 
