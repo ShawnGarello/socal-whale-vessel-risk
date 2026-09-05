@@ -35,6 +35,15 @@
 
 ---
 
+**M3 update, 2026-09-05:** the full-period candidate matrix was generated,
+repeated, compared and visually inspected. ADR 0018 selects 300 seconds /
+30 knots pending final production validation. The new
+`whale_vessel_analysis.vessel_input_cli` reuses the shared aggregation engine
+and writes a distinct production contract with separate descriptive speed
+fields. Its command, safeguards and pending real-data verification are in
+the [analysis README](../analysis/README.md#production-vessel-input-and-descriptive-movement-speed).
+Historical candidate-run sections below retain their original scope.
+
 ## Documentation sources of truth
 
 Each kind of information has exactly one owning document. When information changes, update the owner. Other documents may link to it; they must not restate it in a way that can drift.

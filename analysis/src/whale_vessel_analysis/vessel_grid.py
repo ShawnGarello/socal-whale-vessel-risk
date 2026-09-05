@@ -505,6 +505,7 @@ class _Accumulator:
             self.cross_midnight_retained_count += 1
         totals = self.distance_by_group[group]
         totals["parent_m"].add(parent_distance)
+        self.retained_segment(row, parent_distance, implied_speed)
         if parent_distance <= LENGTH_TOLERANCE_M:
             self.zero_length_count += 1
             self._record_zero_length(Point(start_xy))
@@ -516,6 +517,17 @@ class _Accumulator:
     def _exclude(self, reason: str, distance_m: float) -> None:
         self.exclusion_counts[reason] += 1
         self.exclusion_distance_m[reason] += distance_m
+
+    def retained_segment(
+        self, row: Mapping[str, object], distance_m: float, implied_speed: float
+    ) -> None:
+        """Extension point for separate descriptors; never changes allocation."""
+
+    def allocated_piece(
+        self, group: VesselGroup, cell_order: int, length: float
+    ) -> None:
+        """Accumulate one unambiguous piece using the established arithmetic."""
+        self.cell_distance_m[group][cell_order] += length
 
     def _record_zero_length(self, point: Point) -> None:
         matching = self._matching_cells(point)
@@ -590,7 +602,7 @@ class _Accumulator:
             )
             return
         for _position, cell_order, length, _wkb, _geometry in raw_pieces:
-            self.cell_distance_m[group][cell_order] += length
+            self.allocated_piece(group, cell_order, length)
         totals["allocated_m"].add(piece_sum)
         if union_length <= LENGTH_TOLERANCE_M:
             self.status_counts["positive_length_outside_support"] += 1
@@ -865,11 +877,17 @@ def aggregate_vessel_grid(
     config: ProcessingConfig,
     *,
     batch_size: int,
+    _accumulator: _Accumulator | None = None,
 ) -> VesselGridDataset:
     """Stream one bounded relation into a deterministic candidate vessel grid."""
     if batch_size < 1:
         raise VesselGridError("batch size must be at least one")
-    accumulator = _Accumulator(target_grid, parameters)
+    accumulator = _accumulator or _Accumulator(target_grid, parameters)
+    if (
+        accumulator.target_grid is not target_grid
+        or accumulator.parameters != parameters
+    ):
+        raise VesselGridError("aggregation extension must use the same grid and rules")
     try:
         reader = relation.adjacent_observation_batches(batch_size)
         for batch in reader:

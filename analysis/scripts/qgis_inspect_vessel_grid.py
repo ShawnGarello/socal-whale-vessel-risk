@@ -22,6 +22,7 @@ from qgis.core import (
     QgsProject,
     QgsRectangle,
     QgsRendererRange,
+    QgsRuleBasedRenderer,
     QgsVectorLayer,
 )
 from qgis.PyQt.QtCore import QSize
@@ -40,6 +41,15 @@ def main():
     parser.add_argument("--masks", type=Path, required=True)
     parser.add_argument("--vsr", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--field",
+        default="vessel_km_all_commercial",
+        choices=(
+            "vessel_km_all_commercial",
+            "reported_sog_mean_knots_all_commercial",
+            "implied_speed_mean_knots_all_commercial",
+        ),
+    )
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2] / "data/interim"
     if not args.output_dir.resolve().is_relative_to(root) or args.output_dir.exists():
@@ -80,14 +90,27 @@ def main():
         raise ValueError("invalid grid geometry")
     # Common physical-unit breaks for all candidates: never per-layer quantiles.
     breaks = [0, 1e-12, 100, 1000, 10000, 100000, 1e15]
+    if args.field != "vessel_km_all_commercial":
+        breaks = [0, 5, 10, 15, 20, 25, 35.000001]
     colors = ["#f3f3f3", "#dce9ef", "#9bc6d4", "#4592b5", "#185886", "#122b56"]
     ranges = []
     for low, high, color in zip(breaks[:-1], breaks[1:], colors, strict=True):
         symbol = QgsFillSymbol.createSimple({"color": color, "outline_style": "no"})
-        ranges.append(
-            QgsRendererRange(low, high, symbol, f"{low:g}-{high:g} vessel km")
+        ranges.append(QgsRendererRange(low, high, symbol, f"{low:g}-{high:g}"))
+    renderer = QgsGraduatedSymbolRenderer(args.field, ranges)
+    if args.field != "vessel_km_all_commercial":
+        renderer = QgsRuleBasedRenderer.convertFromRenderer(renderer)
+        null_symbol = QgsFillSymbol.createSimple(
+            {"color": "#dedede", "outline_style": "no"}
         )
-    grid.setRenderer(QgsGraduatedSymbolRenderer("vessel_km_all_commercial", ranges))
+        renderer.rootRule().appendChild(
+            QgsRuleBasedRenderer.Rule(
+                null_symbol,
+                filterExp=f'"{args.field}" IS NULL',
+                label="No usable movement-speed weight",
+            )
+        )
+    grid.setRenderer(renderer)
     for layer, color in ((masks, "0,90,210,255"), (vsr, "230,100,0,255")):
         layer.renderer().setSymbol(
             QgsFillSymbol.createSimple(
@@ -130,7 +153,9 @@ def main():
         "crs": grid.crs().authid(),
         "features": grid.featureCount(),
         "invalid_geometry_count": invalid,
-        "classification_breaks_vessel_km": breaks,
+        "classification_breaks": breaks,
+        "rendered_field": args.field,
+        "units": "km" if args.field == "vessel_km_all_commercial" else "knots",
         "images": images,
         "visual_inspection_status": "not_completed_by_rendering",
         "context": "Blue receiver domain, orange VSR; not coverage evidence.",
