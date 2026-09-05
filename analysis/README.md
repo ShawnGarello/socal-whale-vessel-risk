@@ -1842,6 +1842,14 @@ fresh sibling temporary directory, verifies exact Parquet read-back, and renames
 the complete bundle. On failure the temporary evidence is retained, with its
 location in the error; existing artifacts are never silently replaced.
 
+The independent `scripts/verify_production_vessel_input.py` command accepts
+`--first <bundle> --repeat <bundle> --grid <water-grid.parquet>`
+`--expected-grid-sha256 <hash> --candidate <retained-selected-candidate.parquet>`
+`--expected-candidate-sha256 <hash> --output <fresh-interim-report.json>`.
+It recomputes identity, physical-unit and speed invariants, checks lineage and
+candidate parity, and compares repeat hashes without rerunning the aggregation.
+Its report remains separate from the required QGIS visual evidence.
+
 ## Candidate multi-day vessel-grid aggregation
 
 The [M3 method review](../docs/m3-vessel-method-review.md) records the subsequent

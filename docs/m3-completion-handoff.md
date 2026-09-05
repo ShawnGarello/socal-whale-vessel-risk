@@ -30,14 +30,22 @@ remain unchanged; production commands recompute from the ready period.
 
 Remaining, in order:
 
-1. Finish focused validation and run the production command through the resource
-   profiler, then repeat in a fresh location. No final output exists yet.
+1. The first production run is active through the resource profiler (command
+   below). Wait for its measured outcome, then repeat in a fresh location only
+   after success. No final output exists yet.
 2. Verify counts, identities, lineage, conservation and speed exclusions; inspect
    exact activity and speed fields in QGIS and record checksum-bound evidence.
-3. Run final analysis quality gates, reconcile owner status and assess M3/ADR
-   completion criteria. No criterion is complete merely because code exists.
+3. Reconcile owner status and assess M3/ADR completion criteria. Required
+   analysis gates passed below; rerun affected checks if subsequent code changes
+   warrant it. No criterion is complete merely because code exists.
 
 Documentation correction commit: `cf7439b`. Method selection: `5a8ae54`.
+Production/speed implementation: `c977ed9`. Focused engine/speed tests passed
+(38 tests, then four production tests after adding exact-piece/support cases).
+The independent verifier's six known-answer checks passed after correcting its
+test-only script import. Required analysis gates passed: lock check, formatting
+(after correcting one formatting issue), lint, strict source mypy, **417 tests**
+in 93.79 seconds, and sdist/wheel build. No web build was run.
 The current branch began this continuation at author-confirmed `de6408c`.
 The input identities and resource controls below remain authoritative for runs;
 production command syntax is in `analysis/README.md`. Owner documents now
@@ -46,6 +54,25 @@ retain the state at their recorded time.
 
 Exposure calculation belongs to M6 and is out of scope. Nothing has been pushed
 or merged.
+
+### Active production execution
+
+Launched from `analysis/` on 2026-09-05, after a clean implementation commit.
+Terminal session `63282`; target PID `7156` when checked. Do not start a repeat
+beside it. Preflight passed; no cache was cleared. The exact invocation is:
+
+```powershell
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.vessel_input_cli --output ../data/interim/m3-production-vessel-first/profile.json --label m3-production-vessel-first --disk-root ../data/derived/m3-production-vessel-first --spill-root ../data/interim/m3-production-vessel-first/spill --minimum-free-memory-gib 2 --minimum-free-disk-gib 20 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 12 --runtime-maximum-application-rss-gib 1.75 --runtime-maximum-spill-gib 12 -- --manifest ../data/interim/m3-accessais-july-month-gate/run/period.json --grid-input C:/Users/teche/socal-whale-vessel-risk-analytical-domain/data/interim/m2-domain-evidence/noaa-whale-footprint-water-grid.parquet --expected-grid-sha256 7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031 --output-dir ../data/derived/m3-production-vessel-first --memory-limit 1GB --threads 1 --batch-size 50000 --temp-directory ../data/interim/m3-production-vessel-first/spill
+```
+
+After successful first/repeat execution, use
+`analysis/scripts/verify_production_vessel_input.py` with both fresh bundles,
+the exact water grid, and retained
+`data/derived/m3-full-period-matrix/g300-s30-first/vessel-grid.parquet`
+(SHA-256 `be3dc74d1c07525ef2a74cba1d0062abd97496b4043b3dd26847f9c3a65ec860`).
+This independently reconstructs production identity and checks every activity
+column against the selected candidate, target geometry, lineage, counts, units,
+speed categories and null/zero semantics. It does not replace QGIS inspection.
 
 ## Execution plan
 
