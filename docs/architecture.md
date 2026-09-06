@@ -33,18 +33,22 @@
 > 2026-09-04, two profiled executions against that ready 153-date manifest
 > reproduced exact deterministic evidence bytes. Those non-spatial executions
 > did not compare candidate effects in individual grid cells, and no rule has
-> been accepted. Publisher-side transfer
+> been accepted. The later full-period spatial matrix has now been repeated,
+> compared and inspected; ADR 0018 selects production rules pending final
+> validation. The production/speed boundary below is implemented, with real
+> generation and verification still pending. Publisher-side transfer
 > and observational completeness remain unverified. Network retrieval remains
 > unimplemented, and a complete cleaned-input period is not a vessel grid or an
 > exposure result. Final period-wide vessel aggregation,
 > exposure analysis, final public representations for project-derived layers,
-> VSR service integration, and deployment also remain unfinished.
+> and deployment also remain unfinished. Publisher-hosted VSR display is
+> implemented and locally verified in the web application.
 > See the [roadmap](roadmap.md) for milestone status.
 
 The analytical and statistical domain is accepted in
 [ADR 0002](decisions/0002-southern-california-study-area-extent.md), and the VSR
 display route is accepted in ADR 0019. Python uses the immutable ignored local
-VSR snapshot for analysis; the browser will display `FID = 126` directly from
+VSR snapshot for analysis; the browser displays `FID = 126` directly from
 the publisher's public Feature Service. The project will not commit or publish
 a copy or derivative of that geometry. Permission to redistribute remains
 unconfirmed; Version 1 avoids redistribution rather than treating public access
@@ -233,17 +237,21 @@ non-spatial: they do not establish how the four candidates change individual
 grid cells, accept a rule, create a production vessel grid, or perform exposure
 analysis.
 
-A separate candidate vessel-grid boundary is implemented and synthetically
-tested. It requires explicit maximum-gap, implied-speed, readiness, edge, and
-support treatments; streams whole-period consecutive pairs from the verified
-relation; allocates retained EPSG:3310 segment distance to the exact water grid;
-and writes deterministic candidate GeoParquet and quality-report artifacts plus
-time-bearing lineage. The documented four-parameter matrix was exercised and
-repeated on the real 15--16 July input. This bounded execution does not select
-accepted thresholds, establish period-wide completeness or scaling safety, or
-show period-wide per-cell sensitivity among the four candidates. A whole-period
-spatial candidate comparison and the final production vessel-activity input
-therefore remain unfinished.
+The candidate vessel-grid boundary streams whole-period pairs with explicit
+rules, allocates exact water-support distance, and writes deterministic
+GeoParquet/quality plus time-bearing lineage. All four full-period candidates
+were generated, repeated, compared over six pairs and inspected in QGIS.
+ADR 0018 selects 300 seconds / 30 knots, pending final production validation.
+
+The distinct `production_vessel_input_v1` boundary now reuses that aggregation
+engine with the selected configuration and a required ready period. An allocation
+observer computes separate distance-weighted movement-speed descriptors from
+the same pieces; it does not alter activity or repeat intersections. The
+production writer reuses spatial serialization but defines its own contract,
+identity and lineage. It consumes no candidate artifact, permits no overwrite,
+and preserves failed temporary evidence. Speed semantics belong to ADR 0006.
+Real production generation, reproduction and QGIS validation remain pending;
+exposure and reporting-domain statistics remain M6 work.
 
 Python owns or is planned to own:
 

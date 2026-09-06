@@ -2,19 +2,24 @@
 
 A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
 
-> **Status: in development.**
-> The web application shell and Python processing foundation exist. The Python package validates the inspected input contracts, verifies and manifests one explicitly supplied local AIS delivery, partitions an author-supplied multi-date AccessAIS CSV or safe ZIP into deterministic daily inputs through a bounded local intake, sequentially cleans and resumably records those inputs under explicit verified DuckDB resources, can clean one single-UTC-date NOAA AIS CSV extract into a local Parquet/report/lineage bundle, and has produced the deterministic projected water grid. The seven-day operational gate, the authorized July 1--31 monthly gate, and the authorized August 1--31, September 1--30, October 1--31, and November 1--30 monthly accumulations passed within every resource limit; the July run reconciled 17,998,955 rows, the August run 18,284,354 rows, the September run 15,638,516 rows, the October run 16,355,292 rows, and the November run 14,342,365 rows, each across exactly its own requested dates, and each identical retry reused every date without regeneration. The shared period manifest now holds all 153 dates and 15,458,567 cleaned commercial observations with no conflicts and no missing date. Publisher-side independent byte completeness and observational completeness remain `unverified`; local checksum verification is not publisher-side transfer completeness. ADR 0017 accepts AccessAIS as the preferred route and authorized the sequential author-submitted August--November monthly extracts under the existing resource controls, which are now complete. A complete cleaned-input period is not the final vessel grid or an exposure result. QGIS 4.2.1 visually verified the exact local grid. A vessel-activity evidence harness has been exercised on the real bounded 15 July bundle and exact grid. A separate candidate vessel-grid aggregation boundary is implemented and synthetically tested; all four documented parameter combinations were exercised on the real 15--16 July input, repeated deterministically, and inspected in corrected QGIS views with the accepted-domain and VSR outlines visible above the candidate grids. These are candidate results, not a final period-wide or production vessel grid. No exposure layer or public project layer exists, and nothing in this repository is an exposure result yet.
-> The deterministic whale-grid transfer is also implemented and tested; two
-> clean runs produced byte-identical output, and QGIS 4.2.1 visually verified
-> the exact derived GeoParquet. Automated network AIS retrieval,
-> final period-wide vessel aggregation, accepted vessel thresholds, a production
-> vessel input, exposure analysis, publication, and deployment remain unfinished.
-> Data discovery (M2) is complete. Its final publication question was resolved
-> through a conservative no-copy VSR architecture, not by claiming
-> redistribution permission: analysis retains the immutable ignored local
-> snapshot, while the web map now displays the publisher-hosted `FID = 126`
-> feature directly. The VSR slice has been verified locally at the three required
-> responsive viewports; project-derived web layers remain unfinished.
+> **Status: in development.** M1 through M3 are complete; M4 and M5 are in progress.
+> The ready AIS period contains all 153 dates and 15,458,567 cleaned commercial
+> observations. The exact water grid and modeled-whale transfer are reproducible
+> and visually verified. All four full-period candidate vessel grids were
+> generated, repeated, compared and inspected in QGIS.
+>
+> ADR 0018 is **Accepted**: it selects 300 seconds / 30 knots with explicit
+> limitations. A production vessel-input command reuses the tested aggregation
+> engine and adds separate descriptive movement-speed fields. The final
+> period-wide vessel grid and speed summaries were generated, reproduced
+> byte-identically, independently verified and inspected in QGIS on 2026-09-05.
+> Acceptance does not claim the thresholds are scientifically validated, and
+> publisher-transfer and observational completeness remain unverified.
+>
+> The web shell displays the publisher-hosted VSR boundary directly; project
+> copies of VSR geometry are prohibited. Exposure analysis, project-derived web
+> layers, publication and deployment remain unfinished. See the
+> [roadmap](docs/roadmap.md) and [M3 handoff](docs/m3-completion-handoff.md).
 
 ## Why
 
@@ -50,7 +55,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Architecture | Accepted and refined; Python/QGIS/Esri responsibilities and the publisher-hosted VSR display exception are recorded |
 | Data sources | **M2 complete** — downloaded and inspected; properties, licensing, limits, and public-use/publication postures recorded with a reproducible provenance manifest. VSR redistribution permission remains unconfirmed, so project-hosted copies are prohibited |
 | Study area | **Accepted with separate roles** — the map/context extent, modeled-whale-support water geometry, and scope-reduced `receivers_50_nautical_miles` analytical domain are distinct; see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) |
-| Processing workflow | **In progress** — locked Python package, DuckDB engine, contracts, validators, and a bounded local multi-date AccessAIS intake with resumable resource-controlled daily cleaning exercised through one-day, two-day, seven-day, July monthly, August monthly, September monthly, October monthly, and November monthly deliveries; the July run reconciled 17,998,955 rows, the August run 18,284,354 rows, the September run 15,638,516 rows, the October run 16,355,292 rows, and the November run 14,342,365 rows, each across exactly its own requested dates, and each retry reused every date, giving all 153 compatible dates and 15,458,567 cleaned commercial observations with no conflicts and a `ready` period manifest; ADR 0017 accepted sequential author-submitted August--November monthly AccessAIS extracts under the same controls and all four are processed, while publisher-side byte completeness and observational completeness remain `unverified`; deterministic projected water-grid generation, deterministic tested whale-grid transfer with byte-identical reruns, and implemented/synthetically tested candidate vessel-grid aggregation exercised across the real two-day parameter matrix with deterministic repeats and corrected QGIS inspection; accepted vessel thresholds, final period-wide vessel aggregation, the production vessel input, and exposure processing remain unfinished |
+| Processing workflow | **In progress** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; selected vessel rules and implemented production/speed boundary; final production verification pending. See [analysis](analysis/README.md). |
 | Analysis and derived layers | **In progress** — the projected per-cell water grid and whale-grid output are generated, programmatically verified, reproducible, and visually verified in QGIS 4.2.1; exposure and later analytical layers remain unfinished |
 | Web application | **M4 foundation and one M5 slice built** — Next.js and TypeScript with an ArcGIS map shell over Southern California. Local keyed oceans-basemap rendering, pan/zoom, attribution handoff, and direct publisher-hosted display of the filtered 2026 California VSR boundary are verified at the required responsive viewports. VSR visibility, source/use disclosure, and isolated failure behavior are implemented; deployment, account capabilities, project-derived layers, and analysis remain unfinished |
 | Deployment | Not started |

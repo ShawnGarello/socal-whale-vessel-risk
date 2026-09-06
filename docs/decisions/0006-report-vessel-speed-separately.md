@@ -32,6 +32,68 @@ This record does **not** define the exposure formula, the normalization, or the 
 
 ## Consequences
 
+### M3 descriptive summary semantics, 2026-09-05
+
+The processing boundary implements a narrow **distance-weighted movement-speed
+summary** per exact water cell and passenger/cargo/tanker/all-commercial group.
+It uses the positive-length segments retained by ADR 0018's selected
+300-second/30-knot rules. Each unambiguous allocated piece supplies its projected
+length as weight. Reported speed is the arithmetic mean of both endpoint SOG
+values, in knots. The cell mean is the sum of piece km times that endpoint mean,
+divided by the km with usable SOG. Group totals combine these sufficient
+statistics; they never average group means. A separately named segment-implied
+speed mean uses all allocated movement km and never substitutes for reported SOG.
+
+If either endpoint is null or explicitly 102.3, reported SOG is unavailable;
+there is no imputation from one endpoint or implied speed. A reported endpoint
+mean differing from segment-implied speed by **more than 5 knots** is excluded
+from the reported summary and its distance is reported as inconsistent. This
+is a labelled exploratory consistency-screen choice, motivated by the retained
+SOG/jump diagnostics. The bounded-day p95 difference was 0.4333 knots after a
+50-knot implied-speed screen; 5 knots is deliberately broad enough to retain
+ordinary endpoint/interval variation while excluding large discordance. It is
+not a calibrated error bound. The diagnostic 2-knot alternative is stricter
+and may also discard legitimate acceleration/turning variation; neither band is
+independently validated. Full-period exclusion amounts must be reviewed before
+claiming the summary usable. Agreement may reflect shared GPS errors, and a
+mean can conceal endpoint variation. No confidence or compliance claim follows.
+
+Every cell carries available, unavailable and inconsistent SOG km, which must
+sum to its unchanged vessel km. SOG handling never excludes movement from the
+activity input. Rejected segments, outside-support pieces, ambiguous boundary
+pieces and invalid intersections contribute no cell speed weight. Zero-length
+segments also have zero weight: a stationary-only or no-movement cell has null
+speed means, even if its distinct-vessel count is positive. A reported mean of
+zero with positive usable distance is a real stored zero, not missing data.
+
+This is not an observation-, vessel-, transit-, or time-weighted average; faster
+movement receives more weight per unit time, and stationary presence is absent.
+It describes the retained movement proxy only. It is not the illustrative
+transit distribution or inside/outside comparison mentioned above; those would
+need separate methods and are not M3 requirements. No speed term enters exposure.
+Source-transfer and observational completeness remain unverified, and receiver
+domain restrictions apply to any later headline summary. Implementation and
+real-data validation status are recorded in the analysis README and roadmap.
+
+**Real-data validation, 2026-09-05.** The summary ran over the full 153-date
+production input `vessel-input-5e590ff3d85ee7acb16e2fd1`. Speed distance
+conserved exactly against unchanged activity: 2,031,132.165 km available plus
+52,948.904 km inconsistent plus 421.427 km unavailable equals the 2,084,502.496 km
+allocated, in every vessel group. Reported endpoint-mean SOG spans 1.96–23.03
+knots and segment-implied speed 2.21–22.68 knots, with movement-weighted
+all-commercial means of 11.396 and 11.563 knots respectively; the two remain
+separately named and neither substitutes for the other. Means are null in exactly
+the 140 cells with no usable SOG distance, and null-versus-zero equivalence holds
+for every row, so no cell reports a fabricated zero. The exploratory 5-knot
+screen excluded 124,436 of 14,946,183 retained segments, about 0.83%, carrying
+52,948.904 km, about 2.54% of allocated distance; that exclusion is reported, not
+removed from activity. QGIS inspection showed a speed field structurally distinct
+from the activity field, lighter in port approaches and darker offshore, which is
+the expected behaviour of an intensive mean rather than a copy of the extensive
+sum. The screen remains a labelled exploratory choice and is still not an
+independently calibrated error bound; no compliance or inside/outside claim
+follows.
+
 - The exposure index keeps a statement of meaning that the method actually supports: **where modeled whale density and commercial vessel activity coincide.** Nothing in it has to be defended as a lethality assumption.
 - Speed becomes a **more** visible part of the deliverable, not a less visible one. It is the quantity the VSR program actually asks about, and a descriptive speed result answers a question a reader will have — are ships slowing down in the zone? — that a composite index would bury.
 - The speed result is descriptive and must be worded as such. Observing speeds inside and outside the zone is not a measurement of program compliance: the program's own map states that vessels under a licensed pilot are exempt, and the analysis cannot identify which vessels are enrolled in the program. **Any comparison is between waters, not between participants.**

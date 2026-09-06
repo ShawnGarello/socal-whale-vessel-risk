@@ -775,3 +775,88 @@ def test_failed_publication_leaves_no_output_or_temporary_bundle(
         assert list(derived.glob(".failed.temporary-*")) == []
     finally:
         context.__exit__(None, None, None)
+
+
+def test_conservation_failure_reports_the_measured_quantities() -> None:
+    """A conservation failure must carry the numbers needed to diagnose it.
+
+    The check is unchanged; only its message is. Values are chosen so every
+    reported quantity is known by construction and distinguishable.
+    """
+    accumulator = cast(Any, vessel_grid._Accumulator.__new__(vessel_grid._Accumulator))
+    accumulator.retained_counts = {"passenger": 11, "cargo": 5, "tanker": 3}
+    accumulator.status_counts = {
+        "invalid_intersection_geometry": 2,
+        "positive_length_ambiguous_boundary": 7,
+    }
+    accumulator.maximum_segment_conservation_difference_m = 1.5e-9
+    values = {
+        "parent_m": 1000.0,
+        "allocated_m": 600.0,
+        "outside_support_m": 300.0,
+        "ambiguous_boundary_m": 75.0,
+        "invalid_geometry_m": 20.0,
+    }
+
+    message = accumulator._conservation_failure_message("passenger", values, 5.0, 1e-06)
+
+    assert message.startswith("retained distance is not conserved for passenger: ")
+    assert "difference_m=5.0" in message
+    assert "tolerance_m=1e-06" in message
+    assert "parent_m=1000.0" in message
+    assert "allocated_m=600.0" in message
+    assert "outside_support_m=300.0" in message
+    assert "ambiguous_boundary_m=75.0" in message
+    assert "invalid_geometry_m=20.0" in message
+    assert "retained_segments=11" in message
+    assert "maximum_segment_difference_m=1.5e-09" in message
+    assert "invalid_intersection_geometry=2" in message
+    assert "positive_length_ambiguous_boundary=7" in message
+
+    combined = accumulator._conservation_failure_message(
+        vessel_grid.ALL_COMMERCIAL, values, -0.25, 2e-06
+    )
+    assert "retained_segments=19" in combined
+    assert "difference_m=-0.25" in combined
+
+
+def test_compensated_total_holds_conservation_where_naive_summation_fails() -> None:
+    """Whole-period distance accounting needs the compensated running sum.
+
+    The addends reproduce the measured passenger population's shape: a total
+    near 8.06e8 metres reached in 6.2 million steps. A naive running sum drifts
+    past the 1e-12 relative conservation tolerance; the compensated sum does
+    not. The tolerance itself is unchanged.
+    """
+    steps = 6_191_714
+    addend = 805_571_909.6036832 / steps
+
+    naive = 0.0
+    compensated = vessel_grid._CompensatedTotal()
+    for _ in range(steps):
+        naive += addend
+        compensated.add(addend)
+
+    exact = math.fsum([addend] * steps)
+    tolerance = max(
+        vessel_grid.LENGTH_TOLERANCE_M,
+        exact * vessel_grid.CONSERVATION_RELATIVE_TOLERANCE,
+    )
+
+    assert abs(naive - exact) > tolerance
+    assert abs(compensated.total - exact) <= tolerance
+
+
+def test_compensated_total_matches_exact_summation_on_known_values() -> None:
+    """Known-by-construction values, including a catastrophic cancellation."""
+    total = vessel_grid._CompensatedTotal()
+    assert total.total == 0.0
+
+    for value in (1.0, 1e100, 1.0, -1e100):
+        total.add(value)
+    assert total.total == 2.0
+
+    ordered = vessel_grid._CompensatedTotal()
+    for value in (0.0, 0.1, 0.2, 0.3):
+        ordered.add(value)
+    assert ordered.total == math.fsum((0.0, 0.1, 0.2, 0.3))

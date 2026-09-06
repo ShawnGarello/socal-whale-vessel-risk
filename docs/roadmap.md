@@ -12,7 +12,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 |---|-----------|--------|
 | M1 | Project foundation | Complete |
 | M2 | Data discovery and validation | Complete |
-| M3 | Processing workflow | In progress |
+| M3 | Processing workflow | Complete |
 | M4 | GIS application foundation | In progress |
 | M5 | Core input layers | In progress |
 | M6 | Whale–vessel exposure analysis | Not started |
@@ -74,7 +74,7 @@ Obtain and inspect the actual candidate datasets, and determine what analysis th
 | A decision on the analytical period | **Done** ([0005](decisions/0005-analytical-period.md)) |
 | A decision on whether vessel speed can be derived reliably from the available AIS records | **Done, with its evidentiary limits stated** ([0006](decisions/0006-report-vessel-speed-separately.md)). `SOG` is present, documented, and appears usable in the inspected sample; that is not the same as established across the period |
 | Updated source register with verification status replacing every resolved "to be verified" entry | **Done**, with a provenance manifest and a utility that re-checks it |
-| Architecture decision records for choices that constrain later work | **Done.** ADRs 0002 and 0019 are accepted; the separate AIS retrieval and vessel-activity method records remain Proposed M3 decisions |
+| Architecture decision records for choices that constrain later work | **Done.** ADRs 0002 and 0019 were accepted at M2; the separate AIS retrieval (0017) and vessel-activity method (0018) records were Proposed M3 decisions then and have since been accepted |
 
 **Completion criteria**
 
@@ -159,7 +159,7 @@ Detail is in [data-sources.md](data-sources.md); this is the summary that change
 
 ## M3 — Processing workflow
 
-**Status:** In progress
+**Status:** Complete
 
 **Objective**
 Turn raw source data into validated, derived geospatial datasets through an ordered, repeatable process.
@@ -273,8 +273,8 @@ non-spatial rule evidence exercised with the real ready 153-date input**
   AccessAIS order submission, email/application automation, network retrieval,
   segment construction, or vessel aggregation.
 - [ADR 0018](decisions/0018-use-vessel-kilometres-for-grid-activity.md)
-  records the **Proposed** vessel-activity aggregation design.
-  Vessel-kilometres is the proposed primary additive grid metric. Group-specific
+  records the vessel-activity aggregation design, **Accepted** on 2026-09-05.
+  Vessel-kilometres is the primary additive grid metric. Group-specific
   distinct MMSI and MMSI-date counts remain descriptive; their all-commercial
   values must be recomputed as unique MMSIs and MMSI-date pairs from the union
   of retained commercial points rather than summed across passenger, cargo, and
@@ -282,7 +282,8 @@ non-spatial rule evidence exercised with the real ready 153-date input**
   support, not an authoritative shoreline, general water mask, or AIS
   observability boundary. A candidate segment/grid processing foundation
   is now implemented, but the gap, implied-speed, edge-support, and vessel-
-  length choices remain unresolved and ADR 0018 remains Proposed.
+  length choices remain unresolved and ADR 0018 remains Proposed. *(History: all
+  four were resolved and ADR 0018 was accepted on 2026-09-05.)*
 - An isolated, read-only vessel-activity evidence harness now validates one
   explicit current cleaner bundle and constructs deterministic consecutive
   pairs for diagnostics. It reports group and commercial-union observation and
@@ -782,6 +783,41 @@ non-spatial rule evidence exercised with the real ready 153-date input**
   analytical period, and neither transfer nor observational completeness was
   established.
 
+**Final vessel-activity input and descriptive speed summaries, 2026-09-05**
+
+- The production vessel input was generated from the ready 153-date manifest
+  `multiday-ais-17e982f999f7093945193378` on the exact water grid
+  `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031` under the
+  ADR 0018 configuration, giving input identity
+  `vessel-input-5e590ff3d85ee7acb16e2fd1`, `vessel-grid.parquet`
+  `5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0` and
+  `quality-report.json`
+  `4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7`.
+  An independent repeat in a separate location reproduced both bytes exactly;
+  only `run-metadata.json` differed, carrying real execution timestamps as the
+  contract intends.
+- 4,516 cells; 14,946,183 retained segments; 510,916 excluded (461,769 gap,
+  49,147 implied speed); observations 15,458,567 matching the period manifest.
+  Distance conservation passed at 0.0 m per group. All-commercial activity is
+  2,084,502.496 km, exactly equal in every group to the retained 300/30
+  candidate, so the production boundary reuses the tested engine rather than
+  duplicating or relabelling it.
+- `scripts/verify_production_vessel_input.py` independently reconstructed
+  identity, units, speed invariants, lineage and candidate parity across both
+  bundles and returned `passed: true`.
+- Per-cell water area comes from actual intersected geometry: 431 distinct
+  partial areas from 0.002163 to 25 km², 4,085 full-water cells, none above the
+  nominal maximum. Speed nulls occur in exactly the 140 cells with no usable SOG
+  distance, and that equivalence holds for every row.
+- QGIS 4.2.1 inspected the exact checksums across full-context, corridor and
+  northern-edge views for activity and a corridor view for reported SOG. It
+  confirmed correct placement, islands as holes, peak values at the Los
+  Angeles/Long Beach approach, coherent corridors, a speed field structurally
+  distinct from activity, and the expected censoring effect at the boundary.
+- The first attempt aborted on the profiler's `minimum_available_memory` guard
+  with no output; the gate was not relaxed and its evidence is retained. See the
+  [M3 completion handoff](m3-completion-handoff.md).
+
 **Not implemented**
 
 - Network AIS transfer and range-resume. The local
@@ -797,7 +833,8 @@ non-spatial rule evidence exercised with the real ready 153-date input**
   and process the August--November calendar-month extracts sequentially under
   the existing controls. Assembling every accepted date is a cleaned-input
   result, not an analytical result.
-- The final vessel-activity input proposed in ADR 0018. Candidate period segment
+- Historical route to the final vessel-activity input of ADR 0018, retained
+  because it records how the candidates were exercised. Candidate period segment
   construction, explicit filtering, exact grid allocation, per-cell vessel-
   kilometres, union-recomputed distinct counts, quality metadata, and lineage
   are implemented, synthetically verified, and exercised across the four
@@ -806,13 +843,24 @@ non-spatial rule evidence exercised with the real ready 153-date input**
   now-`ready` accumulation-gate manifest. The separate non-spatial period-rule
   evidence command has now run twice on the real 153-date state and reproduced
   exact deterministic evidence bytes, while transfer and observational
-  completeness remain `unverified`. No production threshold was selected;
-  accepted maximum-gap and implied-speed rules, alternative edge support,
-  vessel-length population treatment, interpretation of the flagged daily and
-  vessel-group variation, observational completeness, final period-wide spatial
-  aggregation, and final speed summaries remain unresolved. The implemented
-  spatial output therefore remains a candidate result, no
-  exposure analysis has been performed, and ADR 0018 remains Proposed.
+  completeness remain `unverified`.
+  On 2026-09-05 the same four-candidate matrix was executed against the ready
+  153-date manifest on the exact water grid. Eight sequential profiled runs
+  completed with no resource abort; each candidate reproduced its GeoParquet and
+  quality-report bytes exactly on an independent repeat; all six candidate pairs
+  were compared per cell and by vessel group; and the four checksum-bound
+  outputs were inspected in QGIS 4.2.1. A distance-accumulation defect found by
+  that run was corrected, raising the candidate processing version to `1.1.0`,
+  so identities recorded under `1.0.0` no longer reproduce byte-for-byte. The
+  edge-support treatment, the type-only vessel-length population, and the
+  interpretation of the flagged daily and vessel-group variation are now
+  resolved in the [method review](m3-vessel-method-review.md).
+  ADR 0018 selected 300 seconds / 30 knots for production, with type-only
+  population, cleaned-extent censoring and exact-support treatment. **That final
+  production-validation criterion was completed on 2026-09-05 and ADR 0018 is now
+  Accepted**; see "Final vessel-activity input" in Progress above. Observational
+  and publisher-transfer completeness remain `unverified`, and no exposure
+  analysis has been performed, which belongs to M6.
 - Normalization of whale or vessel values. Both grid-aligned candidate inputs
   preserve physical or source units; normalization remains part of the deferred
   exposure-method decision.
@@ -844,6 +892,32 @@ non-spatial rule evidence exercised with the real ready 153-date input**
 - Every filtering and aggregation choice is documented with its rationale.
 - Per-cell water areas are computed from actual intersected geometry, not from a nominal cell size.
 - Intermediate outputs have been inspected visually, not only programmatically.
+
+### Completion criteria status, 2026-09-05
+
+| Criterion | State |
+|---|---|
+| Each derived dataset regenerable from raw inputs by the documented process | **Satisfied.** Documented commands exist for the projected water grid, the whale-density transfer and the production vessel input; the vessel input was regenerated from the ready period and exact grid on 2026-09-05. |
+| Rerunning on unchanged inputs produces equivalent outputs | **Satisfied.** All three reproduce byte-identically: water grid `7229098c…`, whale grid `421dc7bf…` across two clean runs, and the vessel input's Parquet and quality bytes across an independent repeat. Only timestamp-bearing lineage differs, by contract. |
+| Every filtering and aggregation choice documented with rationale | **Satisfied.** ADR 0013 covers conflicting-key removal, ADR 0018 the gap, speed, population, censoring and support choices, ADR 0006 the speed-summary semantics, with limitations recorded rather than resolved away. |
+| Per-cell water areas from actual intersected geometry | **Satisfied.** 431 distinct partial areas from 0.002163 to 25 km², 4,085 full-water cells, none above the nominal maximum; verified directly against the output. |
+| Intermediate outputs inspected visually, not only programmatically | **Satisfied.** Water and whale grids in QGIS 4.2.1 on 2026-08-27; the production vessel activity and speed fields on 2026-09-05, each bound to the exact output checksum. Rendering was not treated as inspection. |
+
+All five criteria are satisfied on the evidence above, and **M3 is Complete as
+of 2026-09-05**.
+
+Two follow-ups remain explicitly tracked and are **not** M3 completion criteria.
+They did not gate this milestone and are now carried forward to named owners so
+completing M3 does not drop them:
+
+- a formal reusable verification record with append-only or versioned lineage,
+  carried to **M8**; and
+- the unverified GDAL/Pyogrio read-back, so publication compatibility with
+  ArcGIS is still unestablished, carried to **M5**.
+
+Publisher-side transfer completeness and observational completeness remain
+`unverified` and are limitations of the source, not criteria. Exposure
+calculation is M6 and is not an M3 criterion.
 
 **Risks and open questions**
 - Raster–vector alignment and resampling choices can materially change results; the chosen approach must be justified.
@@ -1158,6 +1232,11 @@ input layers remain unfinished**
 - Study area, whale density, and vessel activity prepared in a selected public
   representation based on measured output size, browser performance,
   redistribution terms, and real account capabilities.
+- **Carried forward from M3:** establish publication compatibility for the
+  derived GeoParquet outputs. A GDAL/Pyogrio read-back on this machine failed
+  when its driver could not load `duckdb.dll`; PyArrow read-back and GeoParquet
+  metadata validation passed, so ArcGIS compatibility is unverified rather than
+  known bad. This did not gate M3.
 - The VSR boundary loaded inside the project map directly from the publisher's
   public `WhaleAtlas_2026` Feature Service using `FID = 126`, with Danielle
   Alvarez, CMSF, and BWBS attribution and the publisher's non-navigational
@@ -1294,6 +1373,10 @@ Confirm that the results are correct, that the process can be rerun, and that th
 - Automated checks over analytical logic where it exists as code.
 - A documentation audit against the implemented behavior, correcting anything described as built that is not, and anything built that is not described.
 - Recorded source retrieval dates and dataset versions used for the published results.
+- **Carried forward from M3:** a formal reusable verification record or command,
+  plus append-only or versioned lineage. Generation-time lineage is written once
+  and must not be hand-edited, so a later verification currently lives only in
+  documentation tied to an output checksum. This did not gate M3.
 
 **Completion criteria**
 - A rerun reproduces the derived outputs behind the public layer

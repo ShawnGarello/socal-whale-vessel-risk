@@ -25,8 +25,12 @@ all four ADR 0018 candidate combinations without spatial allocation. That
 boundary is implemented, synthetically tested, and exercised twice on the
 ready 153-date input with byte-identical deterministic evidence. It does not
 submit AccessAIS orders, download AIS,
-process a season implicitly, accept final vessel rules, calculate relative
-exposure, or report inside-versus-outside statistics.
+process a season implicitly, calculate relative
+exposure, or report inside-versus-outside statistics. A distinct production
+vessel-input command uses the accepted ADR 0018 rules and the shared allocation
+engine with separate descriptive speed fields. Its real production generation,
+byte-identical repetition, independent verification and QGIS validation passed
+on 2026-09-05, as recorded below.
 
 Run all commands below from this directory.
 
@@ -1778,11 +1782,201 @@ unexpected artifact remained.
 
 No candidate rule has been accepted, no production vessel grid exists, and no
 exposure analysis has begun. Publisher-side transfer completeness and AIS
-observational completeness remain `unverified`. The upstream map-extent
-censoring/edge-support choice and a defensible threshold rationale still need
-decision evidence. ADR 0018 remains Proposed.
+observational completeness remain `unverified`. The [method review](../docs/m3-vessel-method-review.md)
+has since selected the common cleaned-extent censoring and exact-support
+treatment and the type-only population, and the full-period matrix below
+supplies the per-cell threshold sensitivity evidence. ADR 0018 has since
+selected 300 seconds / 30 knots and was **Accepted** on 2026-09-05.
+
+## Production vessel input and descriptive movement speed
+
+Implemented under `production_vessel_input_v1` / processing version `1.0.0`.
+Real production generation, byte-identical repetition, independent verification
+and QGIS validation passed on 2026-09-05; **ADR 0018 is Accepted**. Identities
+are recorded in "Real production execution" below.
+
+From `analysis/`, through the resource profiler and gates recorded in the
+[current M3 handoff](../docs/m3-completion-handoff.md):
+
+```text
+python -m whale_vessel_analysis.vessel_input_cli --manifest <ready-period.json> --grid-input <exact-water-grid.parquet> --expected-grid-sha256 <sha256> --output-dir ../data/derived/<fresh-production-bundle> --memory-limit 1GB --threads 1 --batch-size 50000 --temp-directory ../data/interim/<fresh-run>/spill
+```
+
+The command uses the packaged spatial configuration, requires all exact accepted
+dates and an expected water-grid checksum, and exposes no rule, incomplete-period
+or overwrite override. It revalidates the manifest, cleaned partition checksums
+and row/date alignment through the existing bounded relation. It freshly runs
+the tested aggregation engine with 300 seconds / 30 knots, type-only commercial
+population, cleaned-extent censoring and exact water support. It consumes no
+candidate artifact and makes no new data retrieval. Candidate contracts and
+their historical identities remain separate and unchanged.
+
+The atomic bundle contains `vessel-grid.parquet`, `quality-report.json` and
+`run-metadata.json` under production input, quality and lineage contracts.
+The shared engine supplies vessel km, km per actual water km² and union-recomputed
+distinct MMSI/MMSI-date fields, exact target WKB and row order, exclusions and
+the unchanged distance-conservation gates. Speed observes the same allocated
+pieces; it never changes vessel km or repeats spatial intersection.
+
+For each group, additional fields are `reported_sog_mean_knots`,
+`implied_speed_mean_knots`, `sog_available_km`, `sog_unavailable_km` and
+`sog_inconsistent_km`. [ADR 0006](../docs/decisions/0006-report-vessel-speed-separately.md)
+owns the exact population, endpoint averaging, allocated-distance weighting and
+explicit exploratory 5-knot consistency screen. Either unavailable endpoint
+means unavailable SOG. The three SOG distance categories conserve vessel km;
+zero denominator means null, while a usable zero reported value stays zero.
+These describe movement, excluding stationary presence; they are not transit
+counts, time averages, compliance, exposure weighting or inside/outside results.
+The quality report records retained-segment SOG classifications (including
+zero-length/outside-support parents) separately from allocated-cell km categories.
+
+Production identity binds the stable ready-period and cleaned-partition
+identities, exact grid checksum, configuration, selected method, engine version,
+speed contract/version, cell values and deterministic quality. Execution paths,
+manifest retry bytes, clocks and resource settings stay in time-bearing lineage.
+Unchanged inputs must reproduce identical Parquet and quality bytes; lineage
+timestamps differ. Generation lineage leaves visual inspection `not_completed`;
+later inspection is recorded separately against the output checksum.
+
+The writer refuses existing or unsafe destinations, raw/output/input overlap,
+and the CLI refuses output/spill overlap before processing. It writes to a
+fresh sibling temporary directory, verifies exact Parquet read-back, and renames
+the complete bundle. On failure the temporary evidence is retained, with its
+location in the error; existing artifacts are never silently replaced.
+
+The independent `scripts/verify_production_vessel_input.py` command accepts
+`--first <bundle> --repeat <bundle> --grid <water-grid.parquet>`
+`--expected-grid-sha256 <hash> --candidate <retained-selected-candidate.parquet>`
+`--expected-candidate-sha256 <hash> --output <fresh-interim-report.json>`.
+It recomputes identity, physical-unit and speed invariants, checks lineage and
+candidate parity, and compares repeat hashes without rerunning the aggregation.
+Its report remains separate from the required QGIS visual evidence.
+
+### Real production execution, 2026-09-05
+
+Generated from the ready period `multiday-ais-17e982f999f7093945193378` on the
+exact water grid `7229098c…`, giving input identity
+`vessel-input-5e590ff3d85ee7acb16e2fd1`.
+
+| Artifact | SHA-256 |
+|---|---|
+| `vessel-grid.parquet` | `5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0` |
+| `quality-report.json` | `4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7` |
+
+An independent repeat reproduced both bytes exactly; `run-metadata.json`
+differed (`799bc9c9…` first, `150dc573…` repeat) because lineage carries real
+execution timestamps.
+
+4,516 cells; 14,946,183 retained segments; 510,916 excluded (461,769 gap,
+49,147 implied speed); 15,458,567 observations matching the manifest. Distance
+conservation passed at 0.0 m per group, and speed distance conserved: available
+2,031,132.165 km plus inconsistent 52,948.904 km plus unavailable 421.427 km
+equals the 2,084,502.496 km allocated. All four groups match the retained 300/30
+candidate exactly. Reported SOG spans 1.96–23.03 knots, segment-implied
+2.21–22.68 knots; the movement-weighted all-commercial means are 11.396 and
+11.563 knots. Speed means are null in exactly the 140 cells with no usable SOG
+distance, and that equivalence holds for every row.
+
+`verify_production_vessel_input.py` returned `passed: true` across both bundles.
+QGIS 4.2.1 inspected the exact checksums; evidence and image checksums are in the
+[M3 completion handoff](../docs/m3-completion-handoff.md).
+
+The first attempt aborted on the profiler's `minimum_available_memory` guard and
+wrote no bundle. The gate was not relaxed and the evidence is retained.
 
 ## Candidate multi-day vessel-grid aggregation
+
+The [M3 method review](../docs/m3-vessel-method-review.md) records the subsequent
+ready-period cleaner, hourly, length and SOG diagnostics. The session tool
+`scripts/m3_completion_diagnostics.py` runs through the existing resource
+profiler with its exact command and resource results in the
+[handoff](../docs/m3-completion-handoff.md). A synthetic known-distance check
+covers its diagnostic arithmetic and missing/zero populations.
+`scripts/qgis_inspect_vessel_grid.py` is separate QGIS inspection tooling;
+rendering alone never constitutes visual verification.
+`scripts/compare_vessel_candidates.py` re-verifies repeated candidate bytes,
+lineage, per-cell physical units and conservation, and compares the four
+candidates by cell and by vessel group.
+
+### Full-period candidate matrix, 2026-09-05
+
+The documented 300/1,800-second by 30/50-knot matrix has now been executed
+against the ready 153-date period `multiday-ais-17e982f999f7093945193378` on the
+exact water grid, with `require-ready`, `censor-at-cleaned-extent`,
+`exact-water-geometry-exclude-and-report`, no length filter, a `1GB` DuckDB
+limit, one thread, and a fresh ignored output/profile/spill path per run. The
+eight runs were strictly sequential. Each candidate was run twice and reproduced
+**both** its GeoParquet and quality-report bytes exactly:
+
+| Gap (s) / speed (kn) | GeoParquet SHA-256 | Quality-report SHA-256 |
+|---|---|---|
+| 300 / 30 | `be3dc74d1c07525ef2a74cba1d0062abd97496b4043b3dd26847f9c3a65ec860` | `05260f8991e31fd1677b0f7b248dd0e96b97adbfabbd5d9240926d09aeac6faa` |
+| 300 / 50 | `30209bb2b7195a77dedfef7082214315275c15f6d219d39d2f726d5c8d24c3b2` | `aefd2a939be61d97aa3ddc67493fbfb449d1b902e6d3b99a1dbd0ff2e1159cbb` |
+| 1,800 / 30 | `6e17b8b109e07e35a24c00531528bc8cce106055528212debc7b3578606e0aeb` | `be05a406f1536fee62a1105b1d2ce70c64d61fa7b08241ff1cf1676c72c105ac` |
+| 1,800 / 50 | `5759fa1a22a4f7c5ecd2ea46c226a3c2bc5d6642f1780e3f56c25e12277c42ea` | `ad28904d0fc82963e529d86c33603e11498e9b4e121dd9b05230cd3742352ca4` |
+
+The 300/30 candidate retained 14,946,183 of 15,457,099 structural segments and
+allocated 2,084,502.496 vessel-km, with 173,324.279 km of retained parent
+distance outside modeled-whale support. All 510,916 exclusions were
+`maximum_gap` (461,769) or `implied_speed` (49,147); `invalid_coordinate_transform`,
+`non_increasing_time` and `vessel_group_change` were zero. Per-group distance
+conservation passed with a difference of exactly `0.0` and a maximum
+single-segment difference of `1e-12` metres.
+
+Comparing candidates, no cell ever loses distance when a rule is relaxed and the
+ten highest cells are identical and identically ordered in all four candidates.
+Across **all six** candidate pairs the tie-corrected rank correlation is at
+least `0.999122`, its minimum between 300/30 and 1800/50, the two extremes.
+Ranks use mean ranks for tied cells; many cells share a value, including every
+cell holding exactly zero, and ordinal ranks broken by cell index would invent
+an ordering the data does not contain. Individual cells still move materially:
+up to 330.09% for the gap change and 66.62% for the ceiling change. Grouping cells by their 300/30 baseline, the gap
+relaxation adds 7.58% in the sparsest quintile against 4.13% in the busiest,
+while the ceiling relaxation is flat at 0.75-1.16% and falls mainly on passenger.
+`distinct_mmsi` and `distinct_mmsi_dates` are candidate-invariant.
+
+The four exact checksum-bound GeoParquet outputs were rendered in QGIS 4.2.1 and
+**inspected**, at the full domain, the shipping corridors, and the northern and
+southern support edges, using common physical-unit class breaks. Geography,
+EPSG:3310 cell alignment, land and island exclusion, and corridor structure were
+correct, with no projection shift, geometry gap, unexplained clipping or sliver.
+Straight east-west banding was investigated numerically rather than accepted at
+face value: no grid row exceeds 1.8 times its neighbours' mean, and only three
+short high-contrast runs of 5 to 10 cells exist. Their projected coordinates
+place the strongest in the Santa Barbara Channel and the others on the
+approaches south of the Channel Islands. Established traffic separation in
+those waters runs broadly east-west, so a traffic explanation is **plausible**,
+but coordinate agreement is not proof of cause; the bands were not checked
+against published traffic-separation geometry, and no comparison against an
+independent traffic product was made. The northern and southern margins render
+paler than the interior, which is **consistent with** `censor-at-cleaned-extent`
+removing entry and exit distance at the map boundary, but genuinely lower
+offshore and boundary traffic would look similar and these images do not
+separate the two. Neither reading is established here, and neither is evidence
+about coverage.
+
+This is candidate sensitivity evidence. It selected no rule by itself; ADR 0018
+subsequently selected 300 seconds / 30 knots and was **Accepted** on 2026-09-05
+after production validation, and the final vessel-activity input now exists.
+Transfer and observational completeness remain `unverified`.
+
+### Distance accumulation correction
+
+The first full-period attempt completed its work and then failed its own
+per-group distance-conservation check for passenger, with a residual of
+`-1.28e-3` metres against a `8.06e-4`-metre tolerance over 6,191,714 retained
+segments totalling 805,571,909.6 metres. The measurement excluded the geometry:
+ambiguous-boundary and invalid-geometry distance were both exactly zero and the
+largest single-segment residual was `9.09e-13` metres, so all retained segments
+together could contribute at most about `5.6e-6` metres, roughly 229 times too
+little. The residual came from rounding in five naive running totals.
+
+Those accumulators now use a Neumaier compensated sum. The conservation
+criterion and its tolerance are unchanged; the tolerance was deliberately not
+widened to admit a known numerical error. Because `processing_version` and
+`quality` both enter the candidate identity, `VESSEL_GRID_PROCESSING_VERSION` is
+now `1.1.0`, and the two-day candidate identities recorded below were produced
+under `1.0.0` and do not reproduce byte-for-byte under `1.1.0`.
 
 The focused `vessel_grid_cli` promotes the reusable consecutive-pair,
 plausibility-filter, exact-intersection, conservation, and distinct-union logic
@@ -1978,6 +2172,9 @@ spill directory, and no vessel-length filter:
 python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --manifest ..\data\interim\m3-two-day-vessel-candidate-evidence\period\period-manifest.json --grid-input <water-grid.parquet> --expected-grid-sha256 7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031 --output-dir ..\data\derived\m3-two-day-vessel-candidate-evidence\<candidate-run> --maximum-gap-seconds <300|1800> --implied-speed-ceiling-knots <30|50> --period-readiness-treatment allow-incomplete-candidate --edge-treatment censor-at-cleaned-extent --support-treatment exact-water-geometry-exclude-and-report --memory-limit 2GB --temp-directory ..\data\interim\m3-two-day-vessel-candidate-evidence\<candidate-spill> --threads 4 --batch-size 50000
 ```
 
+These two-day identities were produced under processing version `1.0.0`; see
+the accumulation correction above for why they no longer reproduce byte-for-byte.
+
 | Gap (s) / speed (kn) | Candidate ID | GeoParquet SHA-256 | Quality-report SHA-256 |
 |---|---|---|---|
 | 300 / 30 | `candidate-vessel-grid-38a2981d2ffe9800a19c9128` | `93e7b3ce9266e9440ce353918b836851a9049c8c956f587e206d761dd79daef4` | `0f9c5d612396fef6a3eac90a4f7684eb50697497a96ae8c25d99918de8054008` |
@@ -2060,7 +2257,8 @@ candidate-processing safety, alternative edge support, accepted thresholds,
 and a final vessel-activity input remain unverified. No production maximum-gap
 or implied-speed threshold was selected, no absent traffic outside the
 qualified receiver domain was interpreted as zero, and no exposure analysis
-was performed. ADR 0018 remains Proposed.
+was performed. *(History: this records the two-day exercise's state. ADR 0018
+was accepted and the final vessel input produced on 2026-09-05.)*
 
 ## Projected water-grid command
 

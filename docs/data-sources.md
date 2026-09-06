@@ -475,7 +475,11 @@ Whether speed enters the exposure index or is reported separately is settled in 
 | Tanker | Tanker | 80–89 |
 | Passenger (incl. cruise, new for 2026) | Passenger | 60–69 |
 
-**The 300 GT threshold has no direct equivalent and must be approximated.** `Length` is the only size attribute available. Among the 153 distinct commercial MMSI carrying a length in the 15 July retained window, the distribution is strongly bimodal:
+**The 300 GT threshold has no direct equivalent in this input.** ADR 0018
+selects type-only commercial groups without a length approximation; this is
+not program eligibility. `Length` is the only size attribute available.
+Among the 153 distinct commercial MMSI carrying a length in the 15 July
+retained window, the distribution is strongly bimodal:
 
 | Length band (m) | Distinct MMSI |
 |---|---|

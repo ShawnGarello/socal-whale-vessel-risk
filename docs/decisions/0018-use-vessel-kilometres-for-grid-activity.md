@@ -1,7 +1,112 @@
 # 0018 — Use vessel-kilometres as the primary grid activity measure
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-08-27
+**Accepted:** 2026-09-05, when criterion 5's production generation, byte-identical
+repetition, independent verification and checksum-bound QGIS inspection passed.
+Acceptance adopts this project configuration and its recorded limitations. It
+does **not** claim the thresholds are scientifically validated, nor upgrade
+publisher-transfer or observational completeness, which remain `unverified`.
+
+## Selected production configuration, 2026-09-05
+
+Select **300 seconds maximum gap and 30 knots maximum projected implied
+speed**, inclusive, for the censored observed-commercial-movement input.
+This is a project choice supported by the combined diagnostic and spatial
+review, not a scientifically validated universal threshold. Criterion 5's final
+production generation and checksum-bound spatial validation passed on
+2026-09-05, recorded under "Production validation" below, so this record is now
+**Accepted**. Selection alone did not satisfy that criterion.
+
+The 300-second gap limits straight-line inference through unobserved movement.
+The 1,800-second alternative adds 77,424.728 allocated km at 30 knots, with
+proportionally larger additions in sparse cells; recovering more distance does
+not establish those paths. Reject 1,800 seconds for this production input,
+while retaining its sensitivity artifacts. The 30-knot ceiling rejects many
+discordant jumps: among the short-gap 30–50-knot additions, only 103 passenger
+segments and no cargo or tanker segments agree with endpoint mean SOG within
+the diagnostic 5-knot band. Reject 50 knots for this production input. Some
+passenger movement over 30 knots may be credible and is knowingly omitted;
+neither SOG agreement nor high grid-rank correlation supplies independent
+scientific validation. The four candidates' stable highest cells do not erase
+material changes in individual cells or prove the chosen configuration correct.
+
+Retain passenger types 60–69, cargo 70–79 and tanker 80–89 without a length
+filter. This population is not program participation, eligibility, or a
+300-GT proxy. Keep `censor-at-cleaned-extent`: pair the whole period by MMSI,
+including midnight crossings, without extrapolating missing entry/exit paths
+or reconstructing unobserved excursions. Their omitted distance is unknown.
+Use `exact-water-geometry-exclude-and-report`: allocate only exact projected
+water-support pieces, report outside/ambiguous/invalid distance separately,
+and give zero-length movement zero vessel-km. The receiver domain remains a
+separate downstream statistical boundary. Do not remove or reweight flagged
+dates, or upgrade publisher-transfer or observational completeness.
+
+The [method review](../m3-vessel-method-review.md) owns supporting interpretation;
+the [current handoff](../m3-completion-handoff.md) locates exact retained
+diagnostic and six-pair comparison artifacts. Their recorded diagnostic,
+period-evidence and water-grid checksums were reverified on 2026-09-05.
+NOAA's FAQ and USCG's Class A report documentation were reopened that day;
+the Track Builder PDF failed to reopen, so its prior default finding is not
+claimed as newly verified. No candidate grids were regenerated for selection.
+
+## Production validation, 2026-09-05
+
+Criterion 5 is satisfied. The production boundary generated the final
+period-wide vessel input from the ready 153-date manifest
+`multiday-ais-17e982f999f7093945193378` on the exact water grid
+`7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`, using the
+selected 300-second/30-knot configuration. Production input identity is
+`vessel-input-5e590ff3d85ee7acb16e2fd1`.
+
+| Artifact | SHA-256 |
+|---|---|
+| `vessel-grid.parquet` | `5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0` |
+| `quality-report.json` | `4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7` |
+
+An independent repeat in a separate location reproduced both bytes exactly.
+`run-metadata.json` differed (`799bc9c9…` first, `150dc573…` repeat), which is
+the intended contract: lineage carries real execution timestamps.
+
+Measured results: 4,516 cells; 14,946,183 retained segments from 15,457,099
+candidates; 510,916 excluded, being 461,769 on maximum gap and 49,147 on implied
+speed. Distance conservation passed with a per-group difference of 0.0 m and a
+maximum segment difference of 1e-12 m. All-commercial allocated activity is
+2,084,502.496 km, which equals the retained 300/30 candidate
+`be3dc74d1c07525ef2a74cba1d0062abd97496b4043b3dd26847f9c3a65ec860` **exactly**
+in every vessel group, confirming the production boundary reuses the tested
+aggregation engine rather than duplicating or relabelling it. Observation count
+15,458,567 matches the period manifest.
+
+`scripts/verify_production_vessel_input.py` independently reconstructed identity,
+physical units, speed invariants, lineage and candidate parity across both
+bundles and returned `passed: true`; its report is retained at
+`data/interim/m3-production-vessel-verification/report.json`.
+
+Per-cell water area is computed from actual intersected geometry: 431 distinct
+partial areas between 0.002163 and 25 km², 4,085 fully-water cells at exactly
+25 km², and no cell above the nominal maximum.
+
+QGIS 4.2.1 inspection of the exact checksums above covered the full context,
+shipping corridors, and northern edge for `vessel_km_all_commercial`, plus the
+corridors view for `reported_sog_mean_knots_all_commercial`. It confirmed
+correct Southern California placement, islands as excluded holes, the highest
+values at the Los Angeles/Long Beach approach, coherent traffic-separation
+corridors, a speed field structurally distinct from the activity field, and the
+expected lower boundary-cell values from cleaned-extent censoring. Offshore
+one-cell-tall streaks are consistent with individual east–west transits, since
+at 300 s and 30 knots a single segment spans at most about 4.6 km, less than one
+5 km cell, so no single inferred segment can cross several cells. Rendering
+alone was not treated as inspection.
+
+Limitations are unchanged by acceptance. The thresholds remain project choices;
+high rank correlation among candidates was not treated as validation; omitted
+entry/exit distance under censoring remains unknown; the type-only population is
+not program participation or a 300-GT proxy; and publisher-transfer and
+observational completeness remain `unverified`.
+
+Historical sections below retain the evidence and open states at their dates;
+this section supersedes their statements that no threshold has been selected.
 
 ## Context
 
@@ -721,6 +826,36 @@ analysis was produced. The two-day matrix is candidate sensitivity evidence and
 is not sufficient to settle this Proposed decision.
 
 ## Remaining decision evidence
+
+The [2026-09-04 method review](../m3-vessel-method-review.md) now records
+checksum-verified cleaner-report accounting, flagged-date hourly diagnostics,
+reported-SOG cross-checks, and length-population sensitivity. It selects common
+cleaned-extent censoring and exact-support allocation for the whole-period
+spatial matrix, with unknown omitted entry/exit distance explicitly retained.
+The selected population is type-only passenger/cargo/tanker, with no length
+proxy for 300 GT. A support-ring retrieval is unnecessary for the censored
+observed-movement comparison; it would be required to evaluate uncensored
+boundary movement. The historical one-day ring comparison above was not run.
+Maximum-gap and implied-speed choices remain open.
+
+**Criterion 3 was satisfied on 2026-09-05.** The four candidates ran against the
+ready 153-date period on the exact grid with common support and edge treatment;
+each reproduced its GeoParquet and quality-report bytes exactly on an
+independent repeat; all six candidate pairs were compared per cell and by vessel
+group; and the four checksum-bound outputs were inspected in QGIS. No cell loses
+distance when a rule is relaxed, the ten highest cells are identical and
+identically ordered in every candidate, and the lowest tie-corrected rank
+correlation across the six pairs is 0.999122, between 300/30 and 1800/50.
+Individual cells still move by up to 330%, and the gap relaxation adds
+proportionally about 1.8 times more distance in the sparsest cells than the
+busiest, while the ceiling relaxation is spatially flat.
+
+Criteria 1, 2 and 4 are satisfied by the method review and the retained
+`unverified` completeness states. **Criterion 5 was satisfied on 2026-09-05**:
+the selection at the top of this record resolved its threshold decision, and the
+"Production validation" section records the final period-wide vessel grid, its
+byte-identical repetition, independent verification and checksum-bound QGIS
+inspection. This record is therefore **Accepted**.
 
 The implemented period-rule boundary supports the remaining research by
 identifying dates, vessel groups, and exclusion reasons that need closer review.
