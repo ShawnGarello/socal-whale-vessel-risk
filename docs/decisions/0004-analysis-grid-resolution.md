@@ -83,10 +83,15 @@ The first half is implemented: the analysis package constructs the exact grid,
 intersects it with an explicitly supplied water mask, omits dry cells, and
 tests full, half, coastline-like, containment, and aggregate-area-conservation
 cases with known answers. [ADR 0014](0014-select-the-grid-water-mask.md) selects
-the real grid mask. The second half remains planned for M6: no VSR intersection,
-inside/outside fraction, exposure split, or boundary statistic exists yet.
+the real grid mask. The second half is now implemented in M6: `exposure_geometry`
+performs the exact water/domain/VSR intersections and splits a caller-supplied
+full-water integrated total by the resulting area fractions, and the cases below
+pass as synthetic tests. The exposure calculation that supplies those totals is
+[ADR 0020](0020-propose-area-integrated-relative-exposure.md), accepted for
+exploratory execution only; its results are not reviewed or accepted, so no
+boundary statistic here is a final headline.
 
-The cases below remain the contract for that later fractional-boundary slice.
+The cases below are the contract for that fractional-boundary slice.
 They are written in EPSG:3310 metres with answers known by construction; the
 implemented generic water tests already cover the water-area and dry-cell
 premises they depend on.

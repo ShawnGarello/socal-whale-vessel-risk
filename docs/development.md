@@ -37,12 +37,24 @@
 
 **M3 update, 2026-09-05:** the full-period candidate matrix was generated,
 repeated, compared and visually inspected. ADR 0018 selects 300 seconds /
-30 knots pending final production validation. The new
+30 knots and was accepted after real production generation, byte-identical
+repetition, independent verification and checksum-bound QGIS validation. The
 `whale_vessel_analysis.vessel_input_cli` reuses the shared aggregation engine
 and writes a distinct production contract with separate descriptive speed
-fields. Its command, safeguards and pending real-data verification are in
+fields. Its command, safeguards and real-data verification are in
 the [analysis README](../analysis/README.md#production-vessel-input-and-descriptive-movement-speed).
 Historical candidate-run sections below retain their original scope.
+
+**M6 update, 2026-09-06:** the ADR 0020 exposure method is implemented as
+`exposure_geometry`, `exposure_inputs`, `exposure.py` and `exposure_run`, and was
+run locally to produce a deterministic, byte-identically repeated exploratory
+bundle that was then rendered against its exact checksums in QGIS. The guarded
+profiler invocation, the checksum-bound rendering route and the test command are
+in the [analysis README](../analysis/README.md#exploratory-relative-exposure-foundation).
+The ADR is accepted for exploratory execution only: the results still need
+independent review and owner acceptance, no exposure statistics, layer or
+publication contract exists, and M6 remains in progress. Status lives in the
+[roadmap](roadmap.md#m6--whalevessel-exposure-analysis).
 
 ## Documentation sources of truth
 
@@ -239,9 +251,11 @@ evidence harness, a versioned multi-day cleaned-input manifest with a bounded
 DuckDB period relation, a bounded period vessel-rule evidence command, a
 parameterized candidate vessel-grid aggregation, a production vessel-input
 boundary with separate movement-speed summaries, a deterministic
-public-display export of the validated whale grid, and synthetic tests. Final
-real production verification remains pending. It does **not** submit orders,
-download AIS, or produce exposure datasets or statistics. Run every command
+public-display export of the validated whale grid, a guarded exploratory
+relative-exposure boundary with its checksum-bound QGIS inspection script, and
+synthetic tests. It does **not** submit orders, download AIS, or publish any
+artifact, and the exposure bundle it writes is ignored local evidence rather
+than an accepted result or an application-results contract. Run every command
 below from `analysis/`.
 
 **Prerequisites**
@@ -1445,7 +1459,7 @@ the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 529 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 593 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -1499,6 +1513,12 @@ control-bearing, blank, mistyped, non-finite and non-checksum rejection,
 generation-run-identifier validation, non-finite JSON refusal, output-destination
 allowlisting including other checkouts and raw/Git locations, atomic export
 publication and restoration after a failed publish,
+exact water/domain/VSR intersection and difference with the ADR 0004 fractional
+cases, area and abundance conservation, area-weighted quantiles with zero and
+tie handling, invariance under global positive scaling, 10 km coarsening
+conservation, method comparison and rank behavior, and exposure-input lineage
+admission covering regenerated upstream bundles, inconsistent provenance and
+equal analytical identity under distinct source lineage,
 and all CLI boundaries.
 Tests create temporary CSVs and geometry or use data in memory; the ignored M2
 artifacts are not test prerequisites. Third-party libraries are not themselves

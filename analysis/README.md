@@ -2559,6 +2559,98 @@ The renders and reports remain ignored local evidence. The application-side
 verification is recorded in [`../web/README.md`](../web/README.md) and
 [`../docs/m5-whale-display-handoff.md`](../docs/m5-whale-display-handoff.md).
 
+## Exploratory relative-exposure foundation
+
+Implemented under `exploratory_relative_exposure_v1` / method version `1.0.0`,
+following [ADR 0020](../docs/decisions/0020-propose-area-integrated-relative-exposure.md).
+The ADR is **accepted for bounded exploratory execution only**: the method may
+be run locally, but its results still need independent review and owner
+acceptance, and must not be quoted as headline findings. The run identity and
+artifact hashes recorded in the handoff are historical: they predate the
+correction that removed execution lineage from run identity, so a fresh bundle
+reproduces the numbers but not those identifiers. There is no exposure
+publication route and no application-results contract; the bundle is ignored
+local evidence.
+
+Four modules make up the boundary.
+
+| Module | Owns |
+|---|---|
+| `exposure_geometry` | Exact EPSG:3310 water / domain / VSR intersection and difference, 0.01° VSR densification, checksum verification of the retained domain and VSR bytes, and fractional splitting of a caller-supplied **full-water integrated total** under the labelled uniform-within-water-cell assumption |
+| `exposure_inputs` | The exact retained M3 water, whale and vessel join, with lineage validated against verified dataset metadata rather than historical paths |
+| `exposure.py` | Intensities, area-weighted quantile thresholds, maximum-scaled display normalization, 10 km coarsening, method comparison and per-grid summaries |
+| `exposure_run` | The full run: both grids, the threshold family, sensitivity comparisons, the deterministic bundle, and a read-back re-verification of what it wrote |
+
+**Two different areas are involved, and confusing them is the easiest way to get
+this wrong.**
+
+- *Per-cell intensity* divides by the cell's **full water area**. Both terms use
+  it: modeled whale density is that cell's abundance over its whole water
+  geometry, and vessel traffic is its period vessel-kilometres over the same
+  whole water geometry. The analytical domain does **not** enter this
+  denominator, so a cell that is only partly qualified still has its intensity
+  computed over all of its water. Dividing by qualified area here would inflate
+  intensity for partly qualified cells and silently change the result.
+- *Integration* then multiplies that intensity by **qualified** area, and by the
+  qualified area's exact intersection with and difference from the immutable
+  local VSR snapshot, which partition it. This is where the domain and the zone
+  boundary apply, under the labelled uniform-within-water-cell assumption.
+
+So intensity is a full-water quantity and only the integration weights are
+qualified; `exposure.py` computes the first and `exposure_geometry` supplies the
+areas for the second. Speed is not part of either
+([ADR 0006](../docs/decisions/0006-report-vessel-speed-separately.md)).
+
+### Running it
+
+There is no convenience CLI, and the module must not be invoked bare. Run it
+through the resource profiler with the established M3 gate values, a fresh
+ignored output name, and a fresh profile directory for every run:
+
+```text
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.exposure_run --output ../data/interim/<profile-name>/profile.json --label <profile-name> --disk-root ../data/derived/<output-name> --minimum-free-memory-gib 2 --minimum-free-disk-gib 20 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 12 --runtime-maximum-application-rss-gib 1.75 -- --water <water-grid.parquet> --whale <blue-whale-density-grid-a.parquet> --vessel <vessel-grid.parquet> --domain <domain-candidate-masks.parquet> --vsr <bwbs_ca_vsr_zone_2026.geojson> --output ../data/derived/<output-name>
+```
+
+All six `exposure_run` paths are required. The command processes only the small
+retained grid tables: it regenerates no AIS, clears no cache, overwrites no
+existing bundle, and writes only beneath ignored `data/derived/`. Stop at a
+failed gate and preserve the failed profile and console output. The exact input
+paths and checksums used for the recorded runs are in the
+[M6 handoff](../docs/m6-exposure-foundation-handoff.md).
+
+Outputs are `exposure-5km.parquet`, `exposure-10km.parquet`,
+`sensitivity-report.json` — all three deterministic and byte-identical across
+repeated runs — plus a `run-metadata.json` whose timestamps, paths and
+`input_lineage_sha256` differ truthfully between runs. Execution lineage is
+deliberately excluded from run identity, layer metadata and the deterministic
+report, so a regenerated upstream bundle does not change analytical identity.
+
+### Visual verification
+
+Rendering is a separate, checksum-bound step and is not satisfied by the
+generation lineage:
+
+```text
+QT_QPA_PLATFORM=offscreen <qgis-python> scripts/qgis_inspect_exposure.py --bundle <bundle-dir> --expected-5km <sha256> --expected-10km <sha256> --domain <domain-candidate-masks.parquet> --vsr <bwbs_ca_vsr_zone_2026.geojson> --font C:/Windows/Fonts/arial.ttf --output <fresh-ignored-dir>
+```
+
+The expected checksums are required, so a sheet can never be produced from an
+unidentified bundle. The font is registered by path and not copied. Four sheets
+are produced — methods and boundary/corridor details for each grid — with a
+`render-report.json` recording their checksums. No VSR-derived geometry or image
+may be committed or publicly exported.
+
+### Tests
+
+```text
+python -m uv run pytest tests/test_exposure.py tests/test_exposure_geometry.py
+```
+
+64 synthetic cases, including the ADR 0004 fractional-boundary cases whose
+answers are known by construction, area and abundance conservation, threshold
+tie and zero handling, scaling invariance, coarsening conservation, and
+regenerated, inconsistent and equal-identity lineage behavior.
+
 ## Re-running the large-tabular benchmark
 
 The benchmark supporting the primary-engine decision is parameterized; no
