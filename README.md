@@ -2,7 +2,7 @@
 
 A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
 
-> **Status: in development.** M2 is complete; M3 remains In progress.
+> **Status: in development.** M1 through M3 are complete; M4 and M5 are in progress.
 > The ready AIS period contains all 153 dates and 15,458,567 cleaned commercial
 > observations. The exact water grid and modeled-whale transfer are reproducible
 > and visually verified. All four full-period candidate vessel grids were
