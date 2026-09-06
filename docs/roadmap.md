@@ -903,15 +903,22 @@ non-spatial rule evidence exercised with the real ready 153-date input**
 | Per-cell water areas from actual intersected geometry | **Satisfied.** 431 distinct partial areas from 0.002163 to 25 km², 4,085 full-water cells, none above the nominal maximum; verified directly against the output. |
 | Intermediate outputs inspected visually, not only programmatically | **Satisfied.** Water and whale grids in QGIS 4.2.1 on 2026-08-27; the production vessel activity and speed fields on 2026-09-05, each bound to the exact output checksum. Rendering was not treated as inspection. |
 
-The five stated criteria are met. Two items recorded elsewhere in this section
-are **not** completion criteria and remain open: a formal reusable verification
-record with append-only or versioned lineage, previously labelled M3/M8
-follow-up work; and the unverified GDAL/Pyogrio read-back, so ArcGIS
-compatibility is still unestablished. Publisher-side transfer completeness and
-observational completeness remain `unverified` and are limitations of the
-source, not criteria. **The milestone flag stays In progress pending the
-author's decision on whether those residual items belong to M3 or move to a
-later milestone.** Exposure calculation is M6 and is not an M3 criterion.
+This assessment records the evidence for each criterion. It is **not** a
+completion declaration: **the milestone flag stays In progress pending an
+independent audit of this work.** Marking M3 complete is a separate step that
+follows that audit.
+
+Two follow-ups remain explicitly tracked and are **not** M3 completion criteria;
+recording them here does not add a criterion:
+
+- a formal reusable verification record with append-only or versioned lineage,
+  previously labelled M3/M8 follow-up work; and
+- the unverified GDAL/Pyogrio read-back, so publication compatibility with
+  ArcGIS is still unestablished.
+
+Publisher-side transfer completeness and observational completeness remain
+`unverified` and are limitations of the source, not criteria. Exposure
+calculation is M6 and is not an M3 criterion.
 
 **Risks and open questions**
 - Raster–vector alignment and resampling choices can materially change results; the chosen approach must be justified.

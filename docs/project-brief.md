@@ -4,9 +4,11 @@
 
 **Status:** Version 1 is defined and partially implemented. The application and
 processing foundations exist, and the deterministic whale-grid transfer is
-implemented, tested, reproducible, and visually verified. Version 1 remains
-incomplete: cleaned AIS inputs now cover the whole accepted period, but vessel
-aggregation, exposure analysis, publication, and deployment are unfinished.
+implemented, tested, reproducible, and visually verified. Cleaned AIS inputs
+cover the whole accepted period, and the production vessel-activity input and
+its separate descriptive speed summaries are implemented, reproducible and
+visually verified under the accepted ADR 0018 method. Version 1 remains
+incomplete: exposure analysis, publication, and deployment are unfinished.
 
 ---
 
@@ -50,10 +52,10 @@ Version 1 is complete when the research question above has a defensible, documen
 ## Version 1 functional scope
 
 Version 1 must ultimately include all of the following. Supporting foundations
-and the grid-aligned whale input are implemented, but the complete functional
-scope is not: the accepted period's cleaned AIS inputs are assembled, but
-vessel aggregation, exposure analysis, publication, and deployment remain
-unfinished.
+and both grid-aligned inputs are implemented, but the complete functional scope
+is not: the accepted period's cleaned AIS inputs are assembled and aggregated
+into the verified production vessel input, but exposure analysis, publication,
+and deployment remain unfinished.
 
 **Analytical inputs**
 

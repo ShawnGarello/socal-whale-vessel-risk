@@ -10,9 +10,9 @@ This document is append-ordered execution history. Later sections supersede
 earlier ones; the "Outstanding / next action" section below is **stale history
 from the first session** and is retained only as a record of what was true then.
 
-**ADR 0018 is Accepted as of 2026-09-05. M3's five completion criteria are all
-satisfied; the milestone flag stays In progress pending an author decision on
-residual non-criterion items.** The 300-second/30-knot configuration is selected
+**ADR 0018 is Accepted as of 2026-09-05. The evidence for M3's five completion
+criteria is recorded in the [roadmap](roadmap.md); the milestone flag stays In
+progress pending an independent audit of this work. M3 is not complete.** The 300-second/30-knot configuration is selected
 with explicit limitations, and its final validation criterion completed through
 production generation, byte-identical repetition, independent verification and
 checksum-bound QGIS inspection. Acceptance does not claim the thresholds are
@@ -44,11 +44,13 @@ evidence. The remaining decision is the milestone flag itself.
    were verified independently, and the exact activity and speed fields were
    inspected in QGIS with image checksums recorded.
 3. Done. Owner documents are reconciled and the M3 criteria are assessed in the
-   [roadmap](roadmap.md). **Next action for the author:** decide whether the two
-   residual non-criterion items - a reusable verification record with
+   [roadmap](roadmap.md). **Next action: independent audit of this branch.** M3
+   stays In progress until that audit reports; do not set the milestone flag on
+   this session's assessment alone. Two follow-ups stay explicitly tracked and
+   are not M3 completion criteria: a reusable verification record with
    append-only/versioned lineage, and the unverified GDAL/Pyogrio read-back for
-   ArcGIS compatibility - belong to M3 or move to a later milestone, then set the
-   milestone flag. Exposure calculation is M6 and out of scope.
+   publication compatibility with ArcGIS. Exposure calculation is M6 and out of
+   scope.
 
 Documentation correction commit: `cf7439b`. Method selection: `5a8ae54`.
 Production/speed implementation: `c977ed9`. Focused engine/speed tests passed
