@@ -6,6 +6,55 @@ This handoff accompanies the exposure branch; use
 `git log -1 --format=%H` in this worktree to identify its exact committed head.
 It is navigation and execution evidence, not the owner of milestone status.
 
+## Reproducibility correction — lineage admission
+
+The follow-up fix accepts regenerated whale/vessel generation lineage while
+retaining exact water, whale, vessel and deterministic quality-report checksums.
+Lineage is checked against verified dataset metadata: contract, configuration,
+vessel method/version/identity, exact dated cleaned inputs, whale dataset/source,
+output artifact IDs/digests, successful required validations, processing-step
+presence and ordered UTC execution timestamps. Missing or inconsistent references
+fail. Locators need not match historical paths. A regenerated period manifest can
+have a different digest while all daily analytical inputs remain identical; its
+digest remains recorded by the source lineage.
+
+Actual execution-specific lineage hashes are returned by the loader and written
+to M6 `run-metadata.json` under `input_lineage_sha256`. They no longer enter run
+identity, layer metadata or the deterministic report. Regression tests exercise
+regenerated whale/vessel lineage, inconsistent provenance and the runner's equal
+analytical identities/output hashes with distinct source-lineage provenance.
+This supersedes the historical first-execution restriction below.
+
+Read-only verification loaded all 4,516 cells from both retained M3 bundles:
+`C:/Users/teche/socal-whale-vessel-risk-accessais-july-month/data/derived/` plus
+`m3-production-vessel-first-attempt2/vessel-grid.parquet` and
+`m3-production-vessel-repeat-attempt2/vessel-grid.parquet`. Both retained vessel
+digest `5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0`
+and quality digest `4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7`.
+First lineage: `799bc9c989fbdd4d06e5e675eb148c6cc422fae5461634ea36ae445503658fcb`;
+repeat lineage: `150dc573eca914ec14cc46cd2a37900d91c33ea1155e37b262b83cf722807626`.
+Water/whale paths and hashes remain those in the inventory below. Reproduce by
+calling `load_exposure_inputs(water_path, whale_path, vessel_path)` for each
+vessel path; no AIS processing is needed.
+
+Existing numerical results and immutable generation artifacts remain valid and
+unchanged. Future bundles have different metadata/run identities because the
+identity definition excludes execution lineage; historical output hashes below
+are not expected hashes for the corrected writer. No production recalculation
+or new spatial layer was required. Independent audit and owner review remain
+open; M6 is incomplete. Shared-owner files remain untouched; integration owners
+should document the corrected analytical identity/provenance separation.
+
+Validation: 64 focused exposure tests passed; full suite 481 passed in 98.85 s,
+with no skips. The final whale-parameter refinement also passed all 41 tests in
+`test_exposure.py` and both real-input loads. Lockfile check, Ruff format/check,
+strict mypy (41 source files) and build passed. No web gates or new map inspection
+were run because no web code, formula or spatial outputs changed. Initial focused
+commands supplied repository-relative paths to `uv --directory analysis`, finding
+no files and running no tests; corrected analysis-relative commands passed.
+A documentation edit initially failed on the Windows default text encoding;
+no file was written by that failed edit. Documentation was then patched explicitly.
+
 ## Current continuation — exploratory production authorized
 
 The owner authorized the ADR 0020 method and documented sensitivity checks for

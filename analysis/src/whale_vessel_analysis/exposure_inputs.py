@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -22,14 +24,8 @@ from whale_vessel_analysis.whale_grid import TargetGridInspection, load_target_g
 WATER_SHA256 = "7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031"
 WHALE_SHA256 = "421dc7bf837de1b328328d61944bfb7fa0c7e3c77ac0489ab47506a060520c62"
 VESSEL_SHA256 = "5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0"
-WHALE_LINEAGE_SHA256 = (
-    "a6584e612d1b185cbfc936322876078661dd0d01bd5aa74a342748dfd635a4d8"
-)
 VESSEL_QUALITY_SHA256 = (
     "4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7"
-)
-VESSEL_LINEAGE_SHA256 = (
-    "799bc9c989fbdd4d06e5e675eb148c6cc422fae5461634ea36ae445503658fcb"
 )
 PERIOD_ID = "multiday-ais-17e982f999f7093945193378"
 INPUT_ID = "vessel-input-5e590ff3d85ee7acb16e2fd1"
@@ -173,10 +169,11 @@ def _metadata(table: pa.Table, contract: str) -> dict[str, Any]:
 def load_exposure_inputs(
     water_path: Path, whale_path: Path, vessel_path: Path
 ) -> tuple[tuple[ExposureInputCell, ...], dict[str, str]]:
-    """Require the exact retained first-run bundles, including immutable sidecars.
+    """Require accepted analytical bytes and consistent regenerated lineage.
 
-    Deliberately not a generic artifact importer. Changed/repeated sidecars or
-    future source vintages require a reviewed input-contract update.
+    Deliberately not a generic artifact importer. Future analytical source vintages
+    require a reviewed contract update.
+    Execution-specific lineage digests are returned as provenance only.
     """
     paths = {
         "water": (water_path, WATER_SHA256),
@@ -184,7 +181,7 @@ def load_exposure_inputs(
         "vessel": (vessel_path, VESSEL_SHA256),
         "whale_lineage": (
             Path(str(whale_path) + ".lineage.json"),
-            WHALE_LINEAGE_SHA256,
+            None,
         ),
         "vessel_quality": (
             vessel_path.parent / "quality-report.json",
@@ -192,12 +189,12 @@ def load_exposure_inputs(
         ),
         "vessel_lineage": (
             vessel_path.parent / "run-metadata.json",
-            VESSEL_LINEAGE_SHA256,
+            None,
         ),
     }
     for label, (path, checksum) in paths.items():
         require(
-            path.is_file() and sha256_file(path) == checksum,
+            path.is_file() and (checksum is None or sha256_file(path) == checksum),
             f"{label}: retained checksum mismatch",
         )
     grid = load_target_grid(
@@ -233,19 +230,155 @@ def load_exposure_inputs(
         == list(accepted_utc_dates()),
         "exact accepted UTC dates differ",
     )
-    for label, expected in (
-        ("whale_lineage", [WHALE_SHA256]),
-        ("vessel_lineage", [VESSEL_SHA256, VESSEL_QUALITY_SHA256]),
-    ):
-        doc = json.loads(paths[label][0].read_bytes())
-        require(
-            [item["sha256"] for item in doc["run"]["outputs"]] == expected,
-            "lineage output digests differ",
-        )
+    validate_generation_lineage(
+        json.loads(paths["whale_lineage"][0].read_bytes()), wm, "whale"
+    )
+    validate_generation_lineage(
+        json.loads(paths["vessel_lineage"][0].read_bytes()), vm, "vessel"
+    )
     quality = json.loads(paths["vessel_quality"][0].read_bytes())
     require(
         quality["output"]["sha256"] == VESSEL_SHA256, "quality output digest differs"
     )
     return join_inputs(grid, whale, vessel), {
-        label: checksum for label, (_, checksum) in paths.items()
+        label: sha256_file(path) for label, (path, _) in paths.items()
     }
+
+
+def validate_generation_lineage(
+    doc: dict[str, Any], metadata: dict[str, Any], kind: str
+) -> None:
+    """Reconcile source/output references with checksum-verified dataset metadata.
+
+    Clocks, locators, software and resource settings describe an execution.
+    The period manifest itself may be regenerated; its daily analytical inputs
+    must still match every accepted partition. No historical paths are opened.
+    """
+    try:
+        require(kind in ("whale", "vessel"), "unknown lineage kind")
+        whale = kind == "whale"
+        contract = (
+            "blue_whale_grid_transfer_lineage_v1"
+            if whale
+            else "production_vessel_input_lineage_v1"
+        )
+        require(doc["contract"] == contract, "lineage contract differs")
+        run = doc["run"]
+        for field in ("started_at", "completed_at"):
+            stamp = datetime.fromisoformat(run[field])
+            require(stamp.utcoffset() == UTC.utcoffset(stamp), "lineage clock not UTC")
+        require(
+            datetime.fromisoformat(run["completed_at"])
+            >= datetime.fromisoformat(run["started_at"]),
+            "lineage clocks reversed",
+        )
+        require(bool(run["run_id"].strip()), "lineage run ID missing")
+        inputs = metadata["inputs" if whale else "input"]
+        require(
+            run["configuration"]
+            == {"sha256": inputs["configuration_sha256"], "version": 1},
+            "lineage configuration differs",
+        )
+        references = {}
+        for direction in ("inputs", "outputs"):
+            refs = run[direction]
+            require(bool(refs), "lineage references missing")
+            require(
+                len({r["artifact_id"] for r in refs}) == len(refs),
+                "duplicate lineage references",
+            )
+            for ref in refs:
+                require(bool(ref["locator"].strip()), "lineage locator missing")
+                require(
+                    bool(re.fullmatch(r"[0-9a-f]{64}", ref["sha256"])),
+                    "invalid lineage digest",
+                )
+            references[direction] = {r["artifact_id"]: r["sha256"] for r in refs}
+        expected_inputs = {"projected-water-grid": WATER_SHA256}
+        if whale:
+            require(doc["dataset"] == metadata, "lineage whale dataset differs")
+            expected_parameters = {
+                key: metadata["method"][key]
+                for key in (
+                    "coverage_exact_tolerance_m2",
+                    "coverage_numerical_tolerance_m2",
+                    "source_overlap_area_tolerance_m2",
+                    "uncertainty_propagation",
+                )
+            }
+            expected_parameters["always_xy"] = metadata["transformation"]["always_xy"]
+            conservation = metadata["diagnostics"]["conservation"]
+            expected_parameters.update(
+                {
+                    "conservation_absolute_tolerance_animals": conservation[
+                        "absolute_tolerance_animals"
+                    ],
+                    "conservation_relative_tolerance": conservation[
+                        "relative_tolerance"
+                    ],
+                }
+            )
+            require(
+                doc["parameters"] == expected_parameters, "lineage whale method differs"
+            )
+            expected_inputs["noaa-swfsc-blue-whale-source"] = inputs[
+                "whale_source_sha256"
+            ]
+            expected_outputs = {"blue-whale-grid-transfer": WHALE_SHA256}
+            require(doc["output"]["sha256"] == WHALE_SHA256, "lineage output differs")
+            for name, key in (
+                ("target_grid", "target_grid_sha256"),
+                ("whale_source", "whale_source_sha256"),
+            ):
+                require(
+                    doc["inputs"][name]["sha256"] == inputs[key],
+                    "lineage source differs",
+                )
+            validations = {
+                "whale-source-contract",
+                "target-grid-contract",
+                "source-polygon-overlap",
+                "modeled-abundance-conservation",
+            }
+        else:
+            require(run["run_id"] == metadata["grid_id"], "lineage vessel ID differs")
+            require(
+                doc["parameters"] == metadata["parameters"], "lineage method differs"
+            )
+            require(
+                doc["processing_version"] == metadata["processing_version"],
+                "lineage processing version differs",
+            )
+            expected_inputs.update(
+                {
+                    "cleaned-ais-" + p["utc_date"]: p["cleaned_parquet_sha256"]
+                    for p in inputs["partitions"]
+                }
+            )
+            manifest = references["inputs"].pop("multi-day-cleaned-ais-manifest")
+            require(bool(manifest), "lineage period manifest missing")
+            expected_outputs = {
+                "production-vessel-input": VESSEL_SHA256,
+                "production-vessel-input-quality": VESSEL_QUALITY_SHA256,
+            }
+            validations = {"candidate-segment-accounting", "distance-conservation"}
+        require(
+            references["inputs"] == expected_inputs, "lineage analytical inputs differ"
+        )
+        require(
+            references["outputs"] == expected_outputs, "lineage output digests differ"
+        )
+        records = run["validations"]
+        require(
+            {r["name"] for r in records} == validations
+            and len(records) == len(validations)
+            and all(r["passed"] is True for r in records),
+            "lineage validations missing or failed",
+        )
+        require(
+            bool(run["steps"])
+            and all(s["name"].strip() and s["version"].strip() for s in run["steps"]),
+            "lineage processing steps missing",
+        )
+    except (KeyError, TypeError, AttributeError) as exc:
+        raise ValueError(f"{kind} lineage malformed: {exc}") from exc

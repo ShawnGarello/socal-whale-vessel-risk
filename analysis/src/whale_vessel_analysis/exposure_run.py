@@ -333,6 +333,7 @@ def write_bundle(
     identity: dict[str, Any],
     started: datetime,
     paths: dict[str, str],
+    input_lineage_sha256: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Fresh atomic directory; failed temporary evidence is preserved."""
     target = validate_destination(destination, [Path(p) for p in paths.values()])
@@ -373,6 +374,7 @@ def write_bundle(
             "started_at_utc": started.isoformat(),
             "completed_at_utc": datetime.now(UTC).isoformat(),
             "input_paths": paths,
+            "input_lineage_sha256": input_lineage_sha256 or {},
             "input_sha256": identity["input_sha256"],
             "output_sha256": outputs,
             "visual_inspection_status": "not_completed_by_generation",
@@ -408,6 +410,8 @@ def run(
     }
     validate_destination(output, [Path(p) for p in paths.values()])
     cells, hashes = load_exposure_inputs(water, whale, vessel)
+    lineage_hashes = {k: v for k, v in hashes.items() if k.endswith("_lineage")}
+    hashes = {k: v for k, v in hashes.items() if k not in lineage_hashes}
     boundaries = load_local_boundaries(domain, vsr)
     identity: dict[str, Any] = {
         "method": method_contract(),
@@ -443,7 +447,9 @@ def run(
             ),
             "qualified area does not match independent union",
         )
-    return write_bundle(output, {"5km": fine, "10km": coarse}, identity, started, paths)
+    return write_bundle(
+        output, {"5km": fine, "10km": coarse}, identity, started, paths, lineage_hashes
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:

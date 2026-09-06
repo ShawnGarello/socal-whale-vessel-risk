@@ -245,13 +245,19 @@ integration or public-export contract is selected here.
 
 ## Execution contracts
 
-`exposure_inputs.py` deliberately accepts only the retained exact first-run M3
-artifacts and sidecars identified in the handoff; it does not discover or promote
-candidate files. The join enforces complete row identity/order/geometry/bounds,
+`exposure_inputs.py` accepts the exact M3 analytical artifacts and deterministic
+quality report identified in the handoff. Regenerated generation lineage is
+accepted when its contract, configuration, method, source/output references and
+successful validation records reconcile with checksum-verified dataset metadata.
+The join enforces complete row identity/order/geometry/bounds,
 water areas, complete whale support, finite nonnegative physical inputs, units,
 group-distance reconciliation, metadata contracts, accepted period and method,
-and sidecar links. A different source vintage or sidecar requires a reviewed
-contract update. Synthetic tests exercise bad support and join cases independently
+and sidecar links. Different analytical source bytes require a reviewed contract
+update. Execution clocks and locators may vary; the period manifest may regenerate
+while every dated cleaned partition remains identical. Actual whale/vessel
+lineage hashes are retained in execution `input_lineage_sha256`, excluded from
+analytical identity, layer metadata and deterministic sensitivity reports.
+Synthetic tests exercise bad support and join cases independently
 of the real checksums.
 
 `exposure_run.py` writes a fresh ignored atomic local bundle under

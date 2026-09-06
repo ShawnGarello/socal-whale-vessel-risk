@@ -1,5 +1,7 @@
 """Known-answer tests for the authorized exploratory method, not real inputs."""
 
+import copy
+import json
 from dataclasses import replace
 from datetime import UTC, datetime
 
@@ -310,3 +312,233 @@ def test_partial_bundle_failure_retains_evidence(tmp_path, monkeypatch):
         )
     assert not target.exists()
     assert len(list(target.parent.glob(".failure.temporary-*"))) == 1
+
+
+def lineage_example():
+    from whale_vessel_analysis.exposure_inputs import (
+        INPUT_ID,
+        VESSEL_QUALITY_SHA256,
+        VESSEL_SHA256,
+        WATER_SHA256,
+    )
+
+    metadata = {
+        "grid_id": INPUT_ID,
+        "processing_version": "1.0.0",
+        "parameters": {"maximum_gap_seconds": 300},
+        "input": {
+            "configuration_sha256": "a" * 64,
+            "partitions": [
+                {"utc_date": "2024-07-01", "cleaned_parquet_sha256": "b" * 64}
+            ],
+        },
+    }
+
+    def ref(name, digest):
+        return {"artifact_id": name, "sha256": digest, "locator": "original/file"}
+
+    doc = {
+        "contract": "production_vessel_input_lineage_v1",
+        "parameters": metadata["parameters"].copy(),
+        "processing_version": "1.0.0",
+        "run": {
+            "run_id": INPUT_ID,
+            "started_at": "2026-01-01T00:00:00Z",
+            "completed_at": "2026-01-01T00:01:00Z",
+            "configuration": {"sha256": "a" * 64, "version": 1},
+            "inputs": [
+                ref("projected-water-grid", WATER_SHA256),
+                ref("multi-day-cleaned-ais-manifest", "c" * 64),
+                ref("cleaned-ais-2024-07-01", "b" * 64),
+            ],
+            "outputs": [
+                ref("production-vessel-input", VESSEL_SHA256),
+                ref("production-vessel-input-quality", VESSEL_QUALITY_SHA256),
+            ],
+            "steps": [{"name": "aggregate", "version": "1.0.0"}],
+            "validations": [
+                {"name": n, "passed": True}
+                for n in ("candidate-segment-accounting", "distance-conservation")
+            ],
+        },
+    }
+    return doc, metadata
+
+
+def test_regenerated_lineage_preserves_analytical_identity(tmp_path, monkeypatch):
+    from whale_vessel_analysis.exposure_inputs import validate_generation_lineage
+
+    doc, metadata = lineage_example()
+    repeat = copy.deepcopy(doc)
+    repeat["run"]["started_at"] = "2026-01-02T00:00:00Z"
+    repeat["run"]["completed_at"] = "2026-01-02T00:01:00Z"
+    for ref in repeat["run"]["inputs"] + repeat["run"]["outputs"]:
+        ref["locator"] = "relocated/file"
+    repeat["run"]["inputs"][1]["sha256"] = "d" * 64  # regenerated manifest
+    for lineage in (doc, repeat):
+        validate_generation_lineage(lineage, metadata, "vessel")
+    monkeypatch.setattr(exposure_run, "ROOT", tmp_path)
+    cells = prepared()
+    # Exercise run(), including the identity/provenance split, with synthetic grids.
+    monkeypatch.setattr(
+        exposure_run,
+        "load_local_boundaries",
+        lambda *a: ExposureBoundaries(
+            box(0, 0, 2000, 1000), box(0, 0, 500, 1000), "EPSG:3310"
+        ),
+    )
+    monkeypatch.setattr(exposure_run, "prepare_cells", lambda *a: cells)
+    monkeypatch.setattr(exposure_run, "coarsen_10km", lambda c: c)
+    results = []
+    for i, lineage in enumerate((doc, repeat)):
+        import hashlib
+
+        digest = hashlib.sha256(json.dumps(lineage).encode()).hexdigest()
+        monkeypatch.setattr(
+            exposure_run,
+            "load_exposure_inputs",
+            lambda *a, digest=digest: (
+                tuple(c.source for c in cells),
+                {"vessel": "e" * 64, "vessel_lineage": digest},
+            ),
+        )
+        output = tmp_path / f"data/derived/repeat-{i}"
+        result = exposure_run.run(
+            *(tmp_path / n for n in ("water", "whale", "vessel", "domain", "vsr")),
+            output,
+        )
+        stored = json.loads((output / "run-metadata.json").read_text())
+        assert stored["input_lineage_sha256"] == {"vessel_lineage": digest}
+        assert "vessel_lineage" not in stored["input_sha256"]
+        results.append(result)
+    assert results[0]["run_id"] == results[1]["run_id"]
+    assert results[0]["output_sha256"] == results[1]["output_sha256"]
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "output",
+        "quality",
+        "input",
+        "period",
+        "configuration",
+        "method",
+        "version",
+        "contract",
+        "validation",
+        "missing",
+        "duplicate",
+        "clock",
+    ],
+)
+def test_inconsistent_regenerated_lineage_fails(mutation):
+    from whale_vessel_analysis.exposure_inputs import validate_generation_lineage
+
+    doc, metadata = lineage_example()
+    run = doc["run"]
+    if mutation in ("output", "quality"):
+        run["outputs"][mutation == "quality"]["sha256"] = "f" * 64
+    elif mutation == "input":
+        run["inputs"][2]["sha256"] = "f" * 64
+    elif mutation == "period":
+        run["inputs"][2]["artifact_id"] = "cleaned-ais-2024-07-02"
+    elif mutation == "configuration":
+        run["configuration"]["sha256"] = "f" * 64
+    elif mutation == "method":
+        doc["parameters"]["maximum_gap_seconds"] = 600
+    elif mutation == "version":
+        doc["processing_version"] = "2.0.0"
+    elif mutation == "contract":
+        doc["contract"] = "unknown"
+    elif mutation == "validation":
+        run["validations"][0]["passed"] = False
+    elif mutation == "missing":
+        del run["inputs"]
+    elif mutation == "duplicate":
+        run["outputs"].append(run["outputs"][0])
+    elif mutation == "clock":
+        run["completed_at"] = "2025-01-01T00:00:00Z"
+    with pytest.raises(ValueError):
+        validate_generation_lineage(doc, metadata, "vessel")
+
+
+def test_whale_regenerated_lineage_and_inconsistent_dataset():
+    from whale_vessel_analysis.exposure_inputs import (
+        WATER_SHA256,
+        WHALE_SHA256,
+        validate_generation_lineage,
+    )
+
+    doc, _ = lineage_example()
+    metadata = {
+        "inputs": {
+            "configuration_sha256": "a" * 64,
+            "target_grid_sha256": WATER_SHA256,
+            "whale_source_sha256": "b" * 64,
+        }
+    }
+    metadata.update(
+        {
+            "method": {
+                "coverage_exact_tolerance_m2": 1e-6,
+                "coverage_numerical_tolerance_m2": 0.1,
+                "source_overlap_area_tolerance_m2": 1.0,
+                "uncertainty_propagation": "not_performed",
+            },
+            "transformation": {"always_xy": True},
+            "diagnostics": {
+                "conservation": {
+                    "absolute_tolerance_animals": 1e-9,
+                    "relative_tolerance": 1e-10,
+                }
+            },
+        }
+    )
+    doc["parameters"] = {
+        **metadata["method"],
+        "always_xy": True,
+        "conservation_absolute_tolerance_animals": 1e-9,
+        "conservation_relative_tolerance": 1e-10,
+    }
+    doc["contract"] = "blue_whale_grid_transfer_lineage_v1"
+    doc["dataset"] = copy.deepcopy(metadata)
+    doc["inputs"] = {
+        "target_grid": {"sha256": WATER_SHA256},
+        "whale_source": {"sha256": "b" * 64},
+    }
+    doc["output"] = {"sha256": WHALE_SHA256}
+    doc["run"]["inputs"] = [
+        doc["run"]["inputs"][0],
+        {
+            "artifact_id": "noaa-swfsc-blue-whale-source",
+            "sha256": "b" * 64,
+            "locator": "regenerated/source",
+        },
+    ]
+    doc["run"]["outputs"] = [
+        {
+            "artifact_id": "blue-whale-grid-transfer",
+            "sha256": WHALE_SHA256,
+            "locator": "repeat/whale",
+        }
+    ]
+    doc["run"]["validations"] = [
+        {"name": name, "passed": True}
+        for name in (
+            "whale-source-contract",
+            "target-grid-contract",
+            "source-polygon-overlap",
+            "modeled-abundance-conservation",
+        )
+    ]
+    doc["run"]["started_at"] = "2026-02-01T00:00:00Z"
+    doc["run"]["completed_at"] = "2026-02-01T00:01:00Z"
+    validate_generation_lineage(doc, metadata, "whale")
+    doc["parameters"]["always_xy"] = False
+    with pytest.raises(ValueError, match="method"):
+        validate_generation_lineage(doc, metadata, "whale")
+    doc["parameters"]["always_xy"] = True
+    doc["dataset"]["inputs"]["whale_source_sha256"] = "f" * 64
+    with pytest.raises(ValueError, match="dataset"):
+        validate_generation_lineage(doc, metadata, "whale")
