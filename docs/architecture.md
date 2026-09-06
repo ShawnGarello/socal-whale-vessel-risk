@@ -34,14 +34,14 @@
 > reproduced exact deterministic evidence bytes. Those non-spatial executions
 > did not compare candidate effects in individual grid cells, and no rule has
 > been accepted. The later full-period spatial matrix has now been repeated,
-> compared and inspected; ADR 0018 selects production rules pending final
-> validation. The production/speed boundary below is implemented, with real
-> generation and verification still pending. Publisher-side transfer
+> compared and inspected, and ADR 0018's selected production rules were accepted
+> after real generation, repetition and QGIS validation. Publisher-side transfer
 > and observational completeness remain unverified. Network retrieval remains
-> unimplemented, and a complete cleaned-input period is not a vessel grid or an
-> exposure result. Final period-wide vessel aggregation,
-> exposure analysis, final public representations for project-derived layers,
-> and deployment also remain unfinished. Publisher-hosted VSR display is
+> unimplemented. The ADR 0020 exposure method is implemented and has been run
+> locally for exploratory results, which are unaudited and unaccepted; exposure
+> statistics, layer and publication contracts, final public representations for
+> project-derived layers, and deployment remain unfinished.
+> Publisher-hosted VSR display is
 > implemented and locally verified in the web application.
 > See the [roadmap](roadmap.md) for milestone status.
 
@@ -198,8 +198,9 @@ current decision authority. The accepted downstream analytical/reporting domain
 is instead a separate schema-1 contract. That contract assigns distinct stable
 roles to the map/context extent, modeled-whale-support water geometry, and
 `receivers_50_nautical_miles` system-performance-qualified AIS domain. It is
-not an input to upstream artifact identity. Applying that domain to exposure
-and headline statistics remains future M6 work.
+not an input to upstream artifact identity. The M6 exposure boundary applies
+that domain's exact qualified geometry; selecting any of its outputs as a
+headline statistic remains open.
 
 A further implemented boundary assembles explicitly supplied one-date cleaner
 bundles into a versioned multi-day period-input manifest. It keeps expected
@@ -245,7 +246,9 @@ The candidate vessel-grid boundary streams whole-period pairs with explicit
 rules, allocates exact water-support distance, and writes deterministic
 GeoParquet/quality plus time-bearing lineage. All four full-period candidates
 were generated, repeated, compared over six pairs and inspected in QGIS.
-ADR 0018 selects 300 seconds / 30 knots, pending final production validation.
+ADR 0018 selects 300 seconds / 30 knots; it was accepted on 2026-09-05 after
+final production generation, byte-identical repetition, independent verification
+and checksum-bound QGIS validation.
 
 The distinct `production_vessel_input_v1` boundary now reuses that aggregation
 engine with the selected configuration and a required ready period. An allocation
@@ -254,8 +257,37 @@ the same pieces; it does not alter activity or repeat intersections. The
 production writer reuses spatial serialization but defines its own contract,
 identity and lineage. It consumes no candidate artifact, permits no overwrite,
 and preserves failed temporary evidence. Speed semantics belong to ADR 0006.
-Real production generation, reproduction and QGIS validation remain pending;
-exposure and reporting-domain statistics remain M6 work.
+Its real production generation, reproduction and QGIS validation completed with
+M3; the exposure boundary below now consumes that output.
+
+A distinct `exploratory_relative_exposure_v1` boundary implements the
+[ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) method
+across three modules. `exposure_geometry` performs exact water/domain/VSR
+intersection and difference in EPSG:3310, applies the established 0.01°
+densification, verifies the retained domain and VSR bytes by checksum, and
+splits a caller-supplied full-water integrated total by area fraction under the
+labelled uniform-within-water-cell assumption. `exposure_inputs` joins the exact
+retained M3 water, whale and vessel tables; it checks lineage against verified
+dataset metadata — contract, configuration, vessel method and identity, dated
+cleaned inputs, whale source, artifact digests, required validations and ordered
+UTC steps — rather than against historical paths, so a regenerated upstream
+bundle is admissible while analytical identity stays unchanged. Execution-specific
+lineage hashes are recorded in run metadata only; they are deliberately excluded
+from run identity, layer metadata and the deterministic report, which keeps
+analytical identity separate from execution provenance. `exposure_run` computes
+both grids, the threshold family and the sensitivity comparisons, then writes a
+deterministic bundle and reads it back to re-verify formula, integration,
+geometry, nulls, indices, flags and summaries.
+
+That bundle — two GeoParquet layers, a sensitivity report and time-bearing run
+metadata — is narrow ignored local evidence beneath `data/derived/`. It is not a
+publication artifact and not an application-results contract: no exposure
+statistics contract, layer contract or public export exists, and the format,
+fields, denominators and host for a released exposure layer remain deferred
+decisions to settle with M5. The module is invoked through the existing resource
+profiler and writes only to ignored locations. Visual verification runs
+separately through `analysis/scripts/qgis_inspect_exposure.py`, which binds
+rendering to the exact output checksums rather than to generation lineage.
 
 Python owns or is planned to own:
 
@@ -758,8 +790,8 @@ No implementation directory is scaffolded before its milestone needs it.
 
 | Decision | Deferred until | Selection basis |
 |---|---|---|
-| Exposure formula, normalization, and weighting | Both final grid-aligned inputs are ready | Input units/distributions, scientific support, and sensitivity within the accepted `receivers_50_nautical_miles` domain. |
-| High-exposure threshold | Exposure surface exists | Real value distribution and sensitivity analysis. |
+| Exposure formula, normalization, and weighting | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not audited or accepted, and final headline messaging is still open. |
+| High-exposure threshold | **Resolved for exploratory use** in ADR 0020 | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits audit and owner review. |
 | Final public representation and host for project-derived whale, vessel, and exposure layers | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, performance in a clean browser session, required interactions, the access model a visitor needs (token-free or keyed), legal constraints, usage limits, and supported service types. The whale layer's static same-origin GeoJSON is implemented and locally verified but not accepted; no format or provider is selected. The publisher-hosted VSR exception is already selected in ADR 0019. |
 | ArcGIS Location Platform publication route | Author completes the authenticated portion of the Location Platform capability check | Official documentation confirms a limited single-user organization, feature/vector-tile/map-tile support, and current monthly free tiers. Rechecked 2026-09-06: Location Platform hosted data services are **not** shared publicly; a scoped API key is required, so visitor access is keyed rather than anonymous. The real account's product identity, controls, usage, headroom, and billing status remain unverified. No pay-as-you-go activation or spending is authorized. |
 | ArcGIS Online publication route | Author completes the ArcGIS Online capability check | Organization privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |

@@ -27,6 +27,7 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | [0017](0017-prefer-accessais-with-guarded-bulk-fallback.md) | Prefer AccessAIS extracts with a guarded daily-bulk fallback | Accepted |
 | [0018](0018-use-vessel-kilometres-for-grid-activity.md) | Use vessel-kilometres as the primary grid activity measure | Accepted |
 | [0019](0019-reference-the-publisher-hosted-vsr-service.md) | Reference the publisher-hosted VSR service | Accepted |
+| [0020](0020-propose-area-integrated-relative-exposure.md) | Propose area-integrated relative exposure | Accepted for exploratory execution |
 
 ADR 0018 was accepted on 2026-09-05, when its 300-second/30-knot production
 configuration completed final production generation, byte-identical repetition,
@@ -35,6 +36,16 @@ the configuration and its recorded limitations; it does not claim the thresholds
 are scientifically validated, and publisher-transfer and observational
 completeness remain `unverified`.
 ADR 0006 now defines the separate descriptive movement-speed summary.
+
+ADR 0020 was accepted on 2026-09-06 for bounded exploratory execution only: the
+owner authorized the method, its threshold family and its documented sensitivity
+checks, and local runs have produced deterministic results. That acceptance
+covers implementation and local computation. It does not adopt the resulting
+numbers as final headlines, assert scientific validation, or authorize public
+publication. Independent audit of the results and owner review of the sensitivity
+and maps remain open, and M6 remains incomplete; see the
+[roadmap](../roadmap.md#m6--whalevessel-exposure-analysis) and the
+[M6 handoff](../m6-exposure-foundation-handoff.md).
 
 ## Why these exist
 

@@ -15,7 +15,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 | M3 | Processing workflow | Complete |
 | M4 | GIS application foundation | In progress |
 | M5 | Core input layers | In progress |
-| M6 | Whale–vessel exposure analysis | Not started |
+| M6 | Whale–vessel exposure analysis | In progress |
 | M7 | Application integration | Not started |
 | M8 | Verification and reproducibility | Not started |
 | M9 | Public release | Not started |
@@ -1408,7 +1408,7 @@ verified from a deployed origin, so M5 stays in progress.
 
 ## M6 — Whale–vessel exposure analysis
 
-**Status:** Not started
+**Status:** In progress
 
 **Objective**
 Produce the project's own analytical result: a documented relative exposure layer, and the inside-versus-outside VSR statistics derived from it. This is the milestone that makes the project an analysis rather than a viewer.
@@ -1416,6 +1416,65 @@ Produce the project's own analytical result: a documented relative exposure laye
 **Dependencies**
 - M3 (validated, grid-aligned whale and vessel inputs).
 - M2 (understood value meanings and units for both inputs).
+
+### Progress
+
+**Method accepted for exploratory execution, computed and locally verified;
+independent audit, owner review and every downstream contract remain open**
+
+- [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md)
+  defines the calculation: modeled whale density multiplied by period vessel
+  distance per actual water area, integrated over exact qualified water, with
+  speed kept separate under
+  [ADR 0006](decisions/0006-report-vessel-speed-separately.md). Physical values
+  are used for calculation and a maximum-scaled index for display. High exposure
+  is the qualified-area-weighted 90th percentile, reported alongside 80 and 95,
+  a positive-only reference, a nonlinear traffic-scaling comparison and a 10 km
+  grid comparison. The owner authorized this method for bounded exploratory
+  execution on 2026-09-06; that authorization does not accept the results.
+- The fractional VSR accounting required by
+  [ADR 0004](decisions/0004-analysis-grid-resolution.md) is implemented in
+  `exposure_geometry` and passes the ADR's synthetic cases, including the cell
+  45% inside the zone that centroid and majority assignment both score as fully
+  outside. Area conservation and the uniform-within-water-cell assumption are
+  tested and labelled.
+- Exploratory production and repeat runs completed on 2026-09-06 against the
+  exact retained M3 water, whale and vessel inputs, under the established M3
+  resource gates, and produced byte-identical deterministic outputs. Run
+  identity `exposure-cc50a1e9fb06ca3ae5b5e395`. Qualified water area is
+  64,716.65982166734 km² at both resolutions; the 5 km layer has 4,516 rows
+  (2,793 qualified) and the 10 km layer 1,155 rows (738 qualified). The bundle
+  is ignored local evidence under `data/derived/`; nothing is published.
+- Primary 5 km product results: **92.2185%** of integrated exposure inside the
+  VSR zone, and 93.6947 / 98.5024 / 99.9401% of selected high-exposure water
+  area at the 80th, 90th and 95th percentiles. These are exploratory overlap
+  shares, not collision probabilities, predicted strikes or accepted headlines.
+- The sensitivity check is documented and one result is **not robust**:
+  log-compressing traffic moves the 5 km inside share down 17.2741 percentage
+  points, to 74.9444%. That is dependence on the chosen formula, not a
+  confidence interval, and its magnitude is in different units and cannot be
+  compared with the product magnitude. Coarsening to 10 km changes the product
+  integrated total by −0.006753% and its inside share by +0.027805 points, but
+  the p80 high-area share by about 4.15 points, so integrated stability does not
+  generalize to every statistic. Product/log cell-rank Spearman correlation is
+  0.959254 at 5 km, and the two methods' top-ten outside contributor lists share
+  only five cells.
+- Largest outside concentrations are recorded as contribution rankings, not
+  validated hotspot clusters: the product method's leading outside cells are
+  `r015_c079`, `r015_c078` and `r016_c054`, whose top ten contribute 9.4717% of
+  outside exposure.
+- QGIS 4.2.1 rendered the exact first-bundle checksums with the pinned local VSR
+  and domain. Coastline and island holes, curved receiver clipping, absence of
+  colored geometry outside qualification, and VSR boundaries crossing cells
+  without whole-cell assignment were all confirmed; both EPSG:3310 layers had
+  zero invalid nonempty geometries. No VSR-derived geometry or image was
+  committed or exported.
+- Not done: independent external audit of these results, owner review of the
+  results and maps, selection of final headline statements, uncertainty
+  propagation, and the downstream exposure statistics, layer and publication
+  contracts, which must be settled with M5. Execution and reproduction detail is
+  in the [M6 handoff](m6-exposure-foundation-handoff.md), which is navigation
+  and evidence, not the owner of this status.
 
 **Deliverables**
 - A written definition of the relative exposure calculation: inputs, normalization, weighting, combination method, and units.
@@ -1440,6 +1499,30 @@ Produce the project's own analytical result: a documented relative exposure laye
   not released while displaying the mismatched boundary: the analysis is rerun
   or reconciled so they match, or the remote boundary is omitted. A warning
   alone does not satisfy this release gate.
+
+**Completion criteria status, 2026-09-06**
+- Reproducible from the derived inputs: **met for the exploratory bundle** —
+  first and repeat runs produced byte-identical deterministic files from pinned,
+  checksum-verified retained inputs.
+- Every statistic states its basis and threshold: **met in the retained report** —
+  integrated shares are distinguished from high-exposure **water-area** shares,
+  and thresholds are qualified-area-weighted observed quantiles including zeros
+  and all ties. Not yet met in any public-facing text, because none exists.
+- Fractional boundary statistics with passing synthetic cases and a labelled
+  uniformity assumption: **met**.
+- Accepted analytical domain applied exactly: **met** — results use the
+  `receivers_50_nautical_miles` qualified geometry, and outside-domain cells are
+  excluded rather than reclassified.
+- Brief-compliant vocabulary with no risk or probability language: **met in the
+  handoff and this record**; unverified for release text.
+- Sensitivity documented, including non-robust conclusions: **met** — the
+  log-traffic result is recorded as materially non-robust.
+- Layer and statistics consistent, with the pre-release comparison of the
+  publisher-hosted display geometry against the local snapshot: **not met** —
+  no exposure layer is published and that release gate belongs to M9.
+
+Independent audit of the exact commit and artifacts, and owner review of the
+results, sensitivity and maps, are also outstanding, so M6 stays in progress.
 
 **Risks and open questions**
 - Combining a modeled density surface with an observed traffic measure implies choices about units and scaling that have no single correct answer; whatever is chosen must be justified and tested.
