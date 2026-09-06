@@ -2,11 +2,14 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_WHALE_LAYER_URL,
+  WhaleLayerChecksumError,
   WHALE_DENSITY_CLASSES,
   WHALE_SOURCE,
   assertExpectedWhaleFeatureCount,
   classifyDensity,
   resolveWhaleLayerUrl,
+  sha256Hex,
+  verifyWhaleLayerChecksum,
 } from "./whale-source";
 
 const mapFrameSource = readFileSync(
@@ -131,9 +134,9 @@ describe("whale layer map integration", () => {
   it("bounds the whale request and isolates its failure from the rest of the map", () => {
     expect(mapFrameSource).toContain("WHALE_LOAD_TIMEOUT_MS");
     expect(mapFrameSource).toContain("assertExpectedWhaleFeatureCount(featureCount)");
-    expect(mapFrameSource).toContain(
-      'dispatchWhale({ type: "load-failed", warning: WHALE_FAILURE_MESSAGE });',
-    );
+    expect(mapFrameSource).toContain("dispatchWhale({");
+    expect(mapFrameSource).toContain('type: "load-failed",');
+    expect(mapFrameSource).toContain("WHALE_FAILURE_MESSAGE,");
     expect(mapFrameSource).toContain(
       "releaseOwnedLayer(map, ownedLayer, whaleLayerRef);",
     );
@@ -154,5 +157,54 @@ describe("whale layer map integration", () => {
     expect(mapFrameSource).toContain(
       "definitionExpression: VSR_SOURCE.definitionExpression",
     );
+  });
+});
+
+describe("whale layer checksum binding", () => {
+  const bytes = (text: string) => new TextEncoder().encode(text).buffer;
+
+  // Known answer: SHA-256 of the three ASCII bytes "abc".
+  const ABC_SHA256 = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+
+  it("computes SHA-256 as lowercase hex", async () => {
+    await expect(sha256Hex(bytes("abc"))).resolves.toBe(ABC_SHA256);
+  });
+
+  it("reports honestly when the browser exposes no SubtleCrypto", async () => {
+    await expect(sha256Hex(bytes("abc"), null)).resolves.toBeNull();
+  });
+
+  it("accepts the checksum this build records", () => {
+    expect(verifyWhaleLayerChecksum(WHALE_SOURCE.exportSha256)).toBe(true);
+  });
+
+  it("rejects a different file that happens to be the right shape", () => {
+    // The defect this closes: a substituted file with 4,516 features would
+    // otherwise be displayed under this build's recorded checksum.
+    expect(() => verifyWhaleLayerChecksum(ABC_SHA256)).toThrow(WhaleLayerChecksumError);
+    expect(() => verifyWhaleLayerChecksum(ABC_SHA256)).toThrow(
+      new RegExp(WHALE_SOURCE.exportSha256),
+    );
+  });
+
+  it("does not claim verification when no checksum could be computed", () => {
+    expect(verifyWhaleLayerChecksum(null)).toBe(false);
+  });
+
+  it("hashes the bytes the layer will display, not the URL", () => {
+    // The layer is created from a blob built from the verified bytes, so the
+    // file that was hashed is necessarily the file that is rendered.
+    expect(mapFrameSource).toContain("const bytes = await response.arrayBuffer();");
+    expect(mapFrameSource).toContain(
+      "verifyWhaleLayerChecksum(await sha256Hex(bytes))",
+    );
+    expect(mapFrameSource).toContain("URL.createObjectURL(");
+    expect(mapFrameSource).toContain("url: objectUrl,");
+    expect(mapFrameSource).toContain("URL.revokeObjectURL(objectUrl);");
+  });
+
+  it("reports a checksum mismatch separately from an unreachable file", () => {
+    expect(mapFrameSource).toContain("WHALE_CHECKSUM_MESSAGE");
+    expect(mapFrameSource).toContain("error instanceof WhaleLayerChecksumError");
   });
 });

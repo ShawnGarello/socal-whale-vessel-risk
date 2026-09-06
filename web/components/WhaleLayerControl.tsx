@@ -4,6 +4,12 @@ import styles from "./MapLayerPanel.module.css";
 
 interface WhaleLayerControlProps {
   state: MapLayerState;
+  /**
+   * Whether the displayed file's bytes were hashed and matched this build's
+   * recorded checksum. `null` before a load attempt finishes, `false` when the
+   * browser exposes no SubtleCrypto to hash them with.
+   */
+  checksumVerified: boolean | null;
   onVisibilityChange: (visible: boolean) => void;
 }
 
@@ -21,6 +27,7 @@ function swatchColor(color: readonly [number, number, number, number]): string {
 
 export default function WhaleLayerControl({
   state,
+  checksumVerified,
   onVisibilityChange,
 }: WhaleLayerControlProps) {
   const interactionDisabled = state.status !== "ready";
@@ -87,9 +94,15 @@ export default function WhaleLayerControl({
             ))}
           </ul>
           <p>
-            Displayed export SHA-256{" "}
-            <span className={styles.identity}>{WHALE_SOURCE.exportSha256}</span>,
-            derived from validated analysis output{" "}
+            {checksumVerified === true
+              ? "Displayed export SHA-256, verified against the bytes this browser loaded:"
+              : checksumVerified === false
+                ? "Expected export SHA-256. This browser could not compute a checksum, so the displayed file's identity is unverified:"
+                : "Expected export SHA-256:"}{" "}
+            <span className={styles.identity}>{WHALE_SOURCE.exportSha256}</span>
+          </p>
+          <p>
+            Derived from validated analysis output{" "}
             <span className={styles.identity}>{WHALE_SOURCE.analysisSourceSha256}</span>
             .
           </p>

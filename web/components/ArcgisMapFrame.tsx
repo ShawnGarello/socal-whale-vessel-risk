@@ -27,8 +27,11 @@ import {
 } from "@/lib/vsr-source";
 import {
   WHALE_SOURCE,
+  WhaleLayerChecksumError,
   assertExpectedWhaleFeatureCount,
   resolveWhaleLayerUrl,
+  sha256Hex,
+  verifyWhaleLayerChecksum,
 } from "@/lib/whale-source";
 import MapLayerPanel from "./MapLayerPanel";
 import VsrLayerControl from "./VsrLayerControl";
@@ -92,6 +95,11 @@ const WHALE_LOAD_TIMEOUT_MS = 30_000;
 const WHALE_FAILURE_MESSAGE =
   "The modeled blue-whale density layer could not be loaded. The basemap and " +
   "the VSR boundary remain available.";
+
+const WHALE_CHECKSUM_MESSAGE =
+  "The modeled blue-whale density layer was not displayed because the file " +
+  "served does not match the checksum this build expects. The basemap and the " +
+  "VSR boundary remain available.";
 
 const WHALE_MAP_UNAVAILABLE_MESSAGE =
   "The modeled blue-whale density layer is unavailable because the map could " +
@@ -162,6 +170,11 @@ export default function ArcgisMapFrame({
   const [whaleState, dispatchWhale] = useReducer(
     mapLayerReducer,
     INITIAL_MAP_LAYER_STATE,
+  );
+  // `null` until a load attempt finishes: true when the bytes were hashed and
+  // matched, false when this browser exposes no SubtleCrypto to hash them.
+  const [whaleChecksumVerified, setWhaleChecksumVerified] = useState<boolean | null>(
+    null,
   );
   const mapRef = useRef<ArcgisMap | null>(null);
   const vsrLayerRef = useRef<FeatureLayer | null>(null);
@@ -244,6 +257,7 @@ export default function ArcgisMapFrame({
 
     let disposed = false;
     let ownedLayer: GeoJSONLayer | null = null;
+    let objectUrl: string | null = null;
     const abortController = new AbortController();
     const timeout = window.setTimeout(
       () => abortController.abort(),
@@ -252,6 +266,7 @@ export default function ArcgisMapFrame({
 
     const loadLayer = async () => {
       dispatchWhale({ type: "load-started" });
+      setWhaleChecksumVerified(null);
 
       try {
         const existingLayer = map.findLayerById(WHALE_SOURCE.layerId);
@@ -262,10 +277,29 @@ export default function ArcgisMapFrame({
         if (existingLayer) {
           layer = existingLayer;
         } else {
+          // Fetch the file here rather than handing the URL to the SDK, so the
+          // exact bytes that will be displayed are the bytes that get hashed.
+          // The layer then reads them back from a blob URL, so this is still a
+          // single download.
+          const response = await fetch(whaleLayerUrl, {
+            signal: abortController.signal,
+            cache: "no-store",
+          });
+          if (!response.ok) {
+            throw new Error(
+              `The whale layer request returned HTTP ${response.status}.`,
+            );
+          }
+          const bytes = await response.arrayBuffer();
+          setWhaleChecksumVerified(verifyWhaleLayerChecksum(await sha256Hex(bytes)));
+          objectUrl = URL.createObjectURL(
+            new Blob([bytes], { type: "application/geo+json" }),
+          );
+
           ownedLayer = new GeoJSONLayer({
             id: WHALE_SOURCE.layerId,
             title: WHALE_SOURCE.title,
-            url: whaleLayerUrl,
+            url: objectUrl,
             // Declared explicitly rather than inferred from the first feature,
             // so a truncated or altered export fails to load instead of
             // rendering with a silently different schema.
@@ -320,11 +354,24 @@ export default function ArcgisMapFrame({
         if (!disposed) {
           dispatchWhale({ type: "load-succeeded", featureCount });
         }
-      } catch {
+      } catch (error) {
         releaseOwnedLayer(map, ownedLayer, whaleLayerRef);
         ownedLayer = null;
+        // Nothing will read the blob now, so release it rather than holding a
+        // copy of the file until this component unmounts.
+        if (objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+          objectUrl = null;
+        }
         if (!disposed) {
-          dispatchWhale({ type: "load-failed", warning: WHALE_FAILURE_MESSAGE });
+          setWhaleChecksumVerified(null);
+          dispatchWhale({
+            type: "load-failed",
+            warning:
+              error instanceof WhaleLayerChecksumError
+                ? WHALE_CHECKSUM_MESSAGE
+                : WHALE_FAILURE_MESSAGE,
+          });
         }
       } finally {
         window.clearTimeout(timeout);
@@ -339,6 +386,10 @@ export default function ArcgisMapFrame({
       window.clearTimeout(timeout);
       releaseOwnedLayer(map, ownedLayer, whaleLayerRef);
       ownedLayer = null;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        objectUrl = null;
+      }
     };
   }, [mapIsReady]);
 
@@ -469,6 +520,7 @@ export default function ArcgisMapFrame({
       <MapLayerPanel>
         <WhaleLayerControl
           state={whaleState}
+          checksumVerified={whaleChecksumVerified}
           onVisibilityChange={handleWhaleVisibilityChange}
         />
         <VsrLayerControl

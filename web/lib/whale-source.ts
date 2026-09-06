@@ -197,6 +197,69 @@ export function resolveWhaleLayerUrl(configured: string | undefined): string {
   return trimmed.length > 0 ? trimmed : DEFAULT_WHALE_LAYER_URL;
 }
 
+/**
+ * Raised when the file served does not match the checksum this build expects.
+ *
+ * The layer URL is build-time configurable and a feature count is not an
+ * identity: a different file with the same number of features would otherwise
+ * be displayed under this build's recorded checksum. Verifying the bytes is
+ * what makes the identity shown in the interface true.
+ */
+export class WhaleLayerChecksumError extends Error {
+  constructor(
+    readonly expected: string,
+    readonly actual: string,
+  ) {
+    super(
+      `The modeled blue-whale density file does not match the checksum this ` +
+        `build expects. Expected ${expected}; received ${actual}.`,
+    );
+    this.name = "WhaleLayerChecksumError";
+  }
+}
+
+/** Minimal digest surface, so verification can be tested without a browser. */
+export interface DigestLike {
+  digest(algorithm: string, data: ArrayBuffer): Promise<ArrayBuffer>;
+}
+
+/**
+ * SHA-256 of the supplied bytes as lowercase hex, or `null` when the browser
+ * exposes no `SubtleCrypto`.
+ *
+ * `crypto.subtle` is only available in a secure context. HTTPS and localhost
+ * both qualify, so the deployed application and local development can verify;
+ * anything else reports honestly that it could not, rather than pretending.
+ */
+export async function sha256Hex(
+  bytes: ArrayBuffer,
+  subtle?: DigestLike | null,
+): Promise<string | null> {
+  // Resolved in the body rather than as a default argument, so passing `null`
+  // means "no digest available" instead of silently falling back to the
+  // platform's.
+  const digester = subtle === undefined ? globalThis.crypto?.subtle : subtle;
+  if (!digester) return null;
+  const digest = await digester.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/**
+ * Compares a computed checksum with the one this build records.
+ *
+ * Returns whether verification actually happened. A mismatch throws, so the
+ * layer fails rather than rendering unknown bytes under a known identity.
+ */
+export function verifyWhaleLayerChecksum(actual: string | null): boolean {
+  if (actual === null) return false;
+  if (actual !== WHALE_SOURCE.exportSha256) {
+    throw new WhaleLayerChecksumError(WHALE_SOURCE.exportSha256, actual);
+  }
+  return true;
+}
+
 /** Rejects a truncated, empty, or otherwise unexpected export before display. */
 export function assertExpectedWhaleFeatureCount(featureCount: number): void {
   if (featureCount !== WHALE_SOURCE.expectedFeatureCount) {

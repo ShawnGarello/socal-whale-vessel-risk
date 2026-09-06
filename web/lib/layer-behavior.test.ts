@@ -155,6 +155,7 @@ describe("whale layer control", () => {
     const markup = renderToStaticMarkup(
       createElement(WhaleLayerControl, {
         state: ready,
+        checksumVerified: true,
         onVisibilityChange: () => undefined,
       }),
     );
@@ -173,6 +174,7 @@ describe("whale layer control", () => {
     const markup = renderToStaticMarkup(
       createElement(WhaleLayerControl, {
         state: ready,
+        checksumVerified: true,
         onVisibilityChange: () => undefined,
       }),
     );
@@ -192,6 +194,7 @@ describe("whale layer control", () => {
     const markup = renderToStaticMarkup(
       createElement(WhaleLayerControl, {
         state: ready,
+        checksumVerified: true,
         onVisibilityChange: () => undefined,
       }),
     );
@@ -204,6 +207,7 @@ describe("whale layer control", () => {
     const markup = renderToStaticMarkup(
       createElement(WhaleLayerControl, {
         state: ready,
+        checksumVerified: true,
         onVisibilityChange: () => undefined,
       }),
     );
@@ -226,6 +230,7 @@ describe("whale layer control", () => {
     const markup = renderToStaticMarkup(
       createElement(WhaleLayerControl, {
         state: failed,
+        checksumVerified: null,
         onVisibilityChange: () => undefined,
       }),
     );
@@ -245,6 +250,7 @@ describe("whale layer control", () => {
     const markup = renderToStaticMarkup(
       createElement(WhaleLayerControl, {
         state: unavailable,
+        checksumVerified: null,
         onVisibilityChange: () => undefined,
       }),
     );
