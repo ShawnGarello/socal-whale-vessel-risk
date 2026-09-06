@@ -12,7 +12,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 |---|-----------|--------|
 | M1 | Project foundation | Complete |
 | M2 | Data discovery and validation | Complete |
-| M3 | Processing workflow | In progress |
+| M3 | Processing workflow | Complete |
 | M4 | GIS application foundation | In progress |
 | M5 | Core input layers | In progress |
 | M6 | Whale–vessel exposure analysis | Not started |
@@ -159,7 +159,7 @@ Detail is in [data-sources.md](data-sources.md); this is the summary that change
 
 ## M3 — Processing workflow
 
-**Status:** In progress
+**Status:** Complete
 
 **Objective**
 Turn raw source data into validated, derived geospatial datasets through an ordered, repeatable process.
@@ -903,18 +903,17 @@ non-spatial rule evidence exercised with the real ready 153-date input**
 | Per-cell water areas from actual intersected geometry | **Satisfied.** 431 distinct partial areas from 0.002163 to 25 km², 4,085 full-water cells, none above the nominal maximum; verified directly against the output. |
 | Intermediate outputs inspected visually, not only programmatically | **Satisfied.** Water and whale grids in QGIS 4.2.1 on 2026-08-27; the production vessel activity and speed fields on 2026-09-05, each bound to the exact output checksum. Rendering was not treated as inspection. |
 
-This assessment records the evidence for each criterion. It is **not** a
-completion declaration: **the milestone flag stays In progress pending an
-independent audit of this work.** Marking M3 complete is a separate step that
-follows that audit.
+All five criteria are satisfied on the evidence above, and **M3 is Complete as
+of 2026-09-05**.
 
-Two follow-ups remain explicitly tracked and are **not** M3 completion criteria;
-recording them here does not add a criterion:
+Two follow-ups remain explicitly tracked and are **not** M3 completion criteria.
+They did not gate this milestone and are now carried forward to named owners so
+completing M3 does not drop them:
 
 - a formal reusable verification record with append-only or versioned lineage,
-  previously labelled M3/M8 follow-up work; and
+  carried to **M8**; and
 - the unverified GDAL/Pyogrio read-back, so publication compatibility with
-  ArcGIS is still unestablished.
+  ArcGIS is still unestablished, carried to **M5**.
 
 Publisher-side transfer completeness and observational completeness remain
 `unverified` and are limitations of the source, not criteria. Exposure
@@ -1233,6 +1232,11 @@ input layers remain unfinished**
 - Study area, whale density, and vessel activity prepared in a selected public
   representation based on measured output size, browser performance,
   redistribution terms, and real account capabilities.
+- **Carried forward from M3:** establish publication compatibility for the
+  derived GeoParquet outputs. A GDAL/Pyogrio read-back on this machine failed
+  when its driver could not load `duckdb.dll`; PyArrow read-back and GeoParquet
+  metadata validation passed, so ArcGIS compatibility is unverified rather than
+  known bad. This did not gate M3.
 - The VSR boundary loaded inside the project map directly from the publisher's
   public `WhaleAtlas_2026` Feature Service using `FID = 126`, with Danielle
   Alvarez, CMSF, and BWBS attribution and the publisher's non-navigational
@@ -1369,6 +1373,10 @@ Confirm that the results are correct, that the process can be rerun, and that th
 - Automated checks over analytical logic where it exists as code.
 - A documentation audit against the implemented behavior, correcting anything described as built that is not, and anything built that is not described.
 - Recorded source retrieval dates and dataset versions used for the published results.
+- **Carried forward from M3:** a formal reusable verification record or command,
+  plus append-only or versioned lineage. Generation-time lineage is written once
+  and must not be hand-edited, so a later verification currently lives only in
+  documentation tied to an output checksum. This did not gate M3.
 
 **Completion criteria**
 - A rerun reproduces the derived outputs behind the public layer

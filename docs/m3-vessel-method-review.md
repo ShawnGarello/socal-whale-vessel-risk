@@ -133,7 +133,7 @@ the other gap/speed alternatives for this input, with the limitations above.
 The production boundary and separate descriptive speed summary are implemented,
 and their real-data generation, byte-identical reproduction, independent
 verification and checksum-bound spatial inspection passed on 2026-09-05.
-ADR 0006 defines the explicit speed choices. ADR 0018 is **Accepted**. The
-evidence for M3's five completion criteria is recorded in the roadmap; the
-milestone flag remains In progress pending an independent audit. M3 is not
-complete.
+ADR 0006 defines the explicit speed choices. ADR 0018 is **Accepted**, and
+**M3 is Complete** as of 2026-09-05 on the criteria evidence recorded in the
+roadmap. The verification-record and publication-compatibility follow-ups did
+not gate the milestone and are carried forward to M8 and M5.
