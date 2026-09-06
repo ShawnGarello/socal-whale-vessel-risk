@@ -2,9 +2,220 @@
 
 **Date:** 2026-09-06. **Branch:** `feat/m6-exposure-foundation`.
 **Worktree:** `C:/Users/teche/socal-whale-vessel-risk-exposure-foundation`.
-This handoff accompanies the foundation implementation commit; use
+This handoff accompanies the exposure branch; use
 `git log -1 --format=%H` in this worktree to identify its exact committed head.
 It is navigation and execution evidence, not the owner of milestone status.
+
+## Current continuation — exploratory production authorized
+
+The owner authorized the ADR 0020 method and documented sensitivity checks for
+exploratory execution on 2026-09-06. Results must return for audit/review before
+final headlines or M6 completion. Speed stays separate. M5 owns parallel
+integration documentation; shared roadmap/architecture/development/README/index
+files remain untouched. No push, merge or rebase is authorized.
+
+Implementation adds `exposure_inputs.py` (exact retained input join), `exposure.py`
+(formula, weighted thresholds, scaling controls and coarser-grid sensitivity),
+and `exposure_run.py` (fresh local deterministic bundle with read-back verification).
+Current focused suite: 50 tests passed, including the 23 foundation cases.
+Production and repeat runs completed, with byte-identical numerical outputs.
+The foundation-only statements below the history heading describe the earlier
+commit, not the current implementation. **M6 remains incomplete.**
+
+Predeclared run controls: process the small retained grid tables only, no AIS
+regeneration and no cache clearing. Sequential first/repeat execution through
+the existing resource profiler; preflight minimum 2 GiB available memory and
+20 GiB free disk, runtime minimum 0.5 GiB available memory and 12 GiB free disk,
+maximum application RSS 1.75 GiB. These retain the established M3 safeguard
+values rather than weakening them for this run. A read-only preflight observed
+2.56 GiB available RAM and 42.28 GiB free disk before execution. Stop at a failed
+gate; preserve any failed profile, console and temporary output. Fresh output
+names are `data/derived/m6-exposure-first` and `m6-exposure-repeat`, profiles under
+`data/interim/m6-exposure-first-profile` and `m6-exposure-repeat-profile`.
+
+The run is bounded grid-level work, not a memory-intensive five-month process.
+Only one of this session's analytical processes runs at a time. Visual inspection
+followed computation rather than running alongside it.
+
+### Production results returned for audit
+
+These are exploratory overlap results, not collision probabilities, predicted
+strikes, or final headlines. Product intensity is modeled whale density times
+period vessel distance per water area. Integration uses exact qualified water
+and its joint intersection/difference with the immutable VSR snapshot, assuming
+uniform intensity within each water cell. Speed is not part of either formula.
+
+| Grid / method | Integrated exposure inside VSR | High-area inside, p80 | p90 | p95 |
+| --- | ---: | ---: | ---: | ---: |
+| 5 km product (primary) | 92.2185% | 93.6947% | 98.5024% | 99.9401% |
+| 10 km product | 92.2463% | 97.8430% | 98.3551% | 99.8296% |
+| 5 km log traffic | 74.9444% | 83.8098% | 94.9461% | 96.9418% |
+| 10 km log traffic | 76.0494% | 87.2831% | 97.7780% | 99.8395% |
+
+The first numeric column is an integrated-exposure share, while the last three
+are fractions of selected high-exposure **water area**. Thresholds use the
+qualified-area-weighted observed quantile, include zeros in the reference and
+include all ties. They do not select an exact fixed percentage of cells or area.
+Qualified area is 64,716.65982166734 km² at both resolutions. The 5-km layer has
+4,516 rows: 2,793 qualified, 1,723 excluded and 137 qualified product zeros.
+The 10-km layer has 1,155 rows: 738 qualified, 417 excluded and 18 zeros.
+
+Primary integrated total is 6,536.657810883277 modeled animals·vessel-km/km²
+for the fixed period: inside 6,028.008180683845, outside 508.6496301994318.
+The 10-km product total is 6,536.21639950733, a change of -0.006753%; its inside
+share changes +0.027805 percentage points. Coarsening sums abundance, distance
+and water before recomputing intensity; it does not average fine-grid products.
+Water, abundance and distance conservation passed. Maximum area residual was
+1.258e-7 m², below declared tolerances.
+
+Log compression reduces the 5-km inside share by **17.2741 percentage points**.
+This is material dependence on the question/formula, not a confidence interval.
+Its integrated magnitude has different units and must not be compared with the
+product magnitude. Log-grid coarsening changes its total +6.0009% and inside share
++1.1050 points. Product integrated shares are stable to this grid comparison,
+but the p80 high-area share changes about 4.15 points; do not generalize the
+integrated stability to every statistic.
+
+Positive-only threshold references were also run at all three percentiles.
+For primary 5-km product, inside high-area shares become 94.4566%, 98.6146%,
+99.9384%; high areas are 12,485.0303, 6,249.9212, 3,132.1006 km² respectively.
+All-valid primary thresholds are 0.07199053772739933, 0.22859788468419606,
+0.4978252635376552 in physical intensity units; selected areas are
+12,959.502194504206, 6,473.820081391964, 3,254.939659778515 km². Threshold tie
+areas are 25, 12.39240714173421, 22.83904883768595 km². Full positive-only and
+all-valid results for every scenario, including cell membership, are retained
+in `sensitivity-report.json`.
+
+Both global positive scaling controls preserve every threshold membership and
+integrated share (largest floating share difference 2.22e-16). This is an
+algebraic check, not independent scientific robustness. Product/log cell-rank
+Spearman correlation is 0.959254 at 5 km and 0.957982 at 10 km, with maximum
+rank shifts 918 and 240. At 5 km their top-ten outside contributor lists share
+only five cells. Product's leading outside cells are `r015_c079`, `r015_c078`,
+`r016_c054`; together with the remaining seven the list contributes 9.4717% of
+outside exposure. Log's leaders are `r016_c054`, `r015_c054`, `r010_c055`; its
+top ten contribute 3.6375%. These are contribution rankings, not validated
+hotspot clusters. Origins and all contributions are in the retained report.
+
+### Exact outputs and reproducibility
+
+Paths below are relative to this worktree. Run identity:
+`exposure-cc50a1e9fb06ca3ae5b5e395`. First bundle:
+`data/derived/m6-exposure-first`; repeat: `data/derived/m6-exposure-repeat`.
+Both bundles have these identical SHA-256 values:
+
+| File | SHA-256 |
+| --- | --- |
+| `exposure-5km.parquet` | `5eb1c3ac085d80d27ac698258068be42e5f32d6533a752cf819269fcac81980c` |
+| `exposure-10km.parquet` | `2b9fbd9dd92c2157568acb35846eb6bb5212f4a6ea9e6e221de78befab80f602` |
+| `sensitivity-report.json` | `770cbf8a9f522d20745ebfe7e5ea36eb8715d09feaa9cedf6c846d4d41cceec9` |
+
+Generation `run-metadata.json` hashes differ as expected for timestamps/paths:
+first `5432605adaa6f8649c06c4b3688704587ef6b42e1b7d8840c61fde55d45114b9`,
+repeat `631b84c0b3efa537255849d3dcc09d695d50356872d231a04ca4d997505c1865`.
+Original input identities and their M3 verification are retained in the historical
+input inventory below and pinned by `exposure_inputs.py`. No inputs or
+generation-time sidecars were modified.
+
+Reproduction, from `analysis`, with a new output/profile name for each run:
+
+```powershell
+$domainData = 'C:/Users/teche/socal-whale-vessel-risk-analytical-domain/data'
+$whaleData = 'C:/Users/teche/socal-whale-vessel-risk-whale-grid-transfer/data/interim/m3-whale-grid-transfer'
+$vesselData = 'C:/Users/teche/socal-whale-vessel-risk-accessais-july-month/data/derived/m3-production-vessel-first-attempt2'
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.exposure_run --output ../data/interim/m6-exposure-first-profile/profile.json --label m6-exposure-first --disk-root ../data/derived/m6-exposure-first --minimum-free-memory-gib 2 --minimum-free-disk-gib 20 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 12 --runtime-maximum-application-rss-gib 1.75 -- --water "$domainData/interim/m2-domain-evidence/noaa-whale-footprint-water-grid.parquet" --whale "$whaleData/blue-whale-density-grid-a.parquet" --vessel "$vesselData/vessel-grid.parquet" --domain "$domainData/interim/m2-domain-evidence/domain-candidate-masks.parquet" --vsr "$domainData/raw/bwbs-vsr-2026/bwbs_ca_vsr_zone_2026.geojson" --output ../data/derived/m6-exposure-first
+```
+
+First/repeat profiles report exit 0, target completed and no threshold
+termination; elapsed 38.37/39.46 seconds, sampled application peak RSS
+159,821,824/163,233,792 bytes, minimum available memory
+2,702,569,472/2,698,735,616 bytes. Minimum free disk exceeded 44.86 billion bytes.
+Profile hashes: first
+`8055d083bb4b16e64e1b73f8e93036813d68a511bff0a8de9a29a1d484646754`,
+repeat `a373670c06c9c6a4197916d557b1195e735be59ac3d931606dc887aa6abebe39`.
+Serialized layers were read back and formula, integration, geometry, nulls,
+indices, flags and summaries checked again; both passed. The repeat comparison
+explicitly compared all three deterministic files byte-for-byte. These are
+implementation verification, not the required independent external audit.
+
+### Actual local spatial inspection
+
+QGIS 4.2.1 rendered the exact first-bundle checksums with the pinned local VSR
+and domain through `analysis/scripts/qgis_inspect_exposure.py`. All four corrected
+sheets were actually viewed: methods and boundary/corridor details for both grids.
+Local evidence: `data/interim/m6-exposure-qgis-font-corrected/render-report.json`.
+No VSR-derived geometry or images were committed or publicly exported.
+
+| Inspected sheet | SHA-256 |
+| --- | --- |
+| `5km-methods.png` | `6b8cfd9b2a7b760b11405869517a490cb78c9779d7f3277225d1b03e6d5dd08c` |
+| `5km-details.png` | `2c47a39d2de5ad0b5b110a1d21b29bd5bcd2437aa8b88d997c4de76eccb87ef2` |
+| `10km-methods.png` | `eb2e17d270d2ac0ae1ba5452682c9d0d554381ea9291d08a53ae6f3f1dc98e70` |
+| `10km-details.png` | `8fa234fa708159f092402f4bbf37b68655e179823bd509490c5cd04e661da14d` |
+
+Inspection found preserved coastline/island holes and exact curved receiver
+clipping, northern/southern edges without visible offsets, no colored geometry
+outside qualification, and VSR boundaries crossing cells without whole-cell
+assignment. Coarser blocks and stronger corridor concentrations are visible;
+log compression spreads relative intensity more broadly. Both EPSG:3310 layers
+had zero invalid nonempty geometries. Excluded null geometries were not rendered.
+Independent human scientific/cartographic review remains outstanding.
+
+A small coastal cell (`r017_c091`, water 0.4850893118493652 km²) sets primary
+maximum intensity 47.46002776351226, but contributes only 23.022352208153926
+integrated units. The largest integrated cell is instead `r016_c091`,
+164.90999158660753 units. Maximum scaling makes much of the 5-km map pale;
+each resolution's own maximum differs, so normalized colors alone cannot compare
+absolute intensities across grids. Raw panels use common physical breaks.
+
+Initial sheets in `data/interim/m6-exposure-qgis-first` had unreadable font glyphs
+and are preserved as failed visual evidence. The renderer was corrected to
+register the existing `C:/Windows/Fonts/arial.ttf` explicitly, without copying it.
+The corrected sheets have readable legends. Reproduce with QGIS's Python,
+`QT_QPA_PLATFORM=offscreen`, script arguments `--bundle`, `--expected-5km`,
+`--expected-10km`, `--domain`, `--vsr`, `--font` and a fresh ignored `--output`;
+use the exact paths/hashes above. This verification is separate from unchanged
+generation lineage.
+
+### Review boundary and proposed shared-owner updates
+
+Recommendation remains the proportional product as an exploratory overlap proxy,
+with log results prominently accompanying it. Owner authorization permits the
+chosen calculation; it does not settle final messaging. Independent audit must
+review units, uniform-within-water allocation, complete-support admission,
+fractional joint geometry, quantiles/ties, coarsening and retained source evidence.
+Owner review must decide whether any integrated/high-area/ranking statements are
+suitable final headlines given material formula sensitivity and temporal mismatch
+(multi-year modeled whales, July–November 2024 traffic, 2026 VSR boundary).
+Neither receiver qualification nor readiness establishes AIS completeness.
+Uncertainty propagation, contemporaneous whale observations, collision validation
+and speed-dependent risk remain absent; no scientific validation is inferred.
+
+Before M6 completion: independent audit of this exact commit and artifacts;
+owner review of results, sensitivity and maps; resolve findings with fresh
+versioned outputs if needed; select and validate the downstream exposure
+statistics/layer/publication contracts with M5, including nulls, units, labels,
+denominators, provenance and release visual checks. The internal review bundle
+does not authorize an application-results contract or VSR redistribution.
+
+Proposed updates for M5/integration owners (not edited here): roadmap records
+exploratory computation and sensitivity complete but audit/acceptance still open;
+architecture describes the narrow ignored exposure bundle and exact geometry
+accounting; development/analysis README add this guarded module invocation and
+QGIS verification route; ADR index marks 0020 accepted for exploratory execution,
+results pending review; public README must keep M6 incomplete and avoid adopting
+these values as final headlines. Existing source-register facts remain unchanged.
+
+### Current validation
+
+Focused exposure tests: 50 passed. `uv lock --check`, Ruff format/check,
+strict mypy (41 source files), and `uv build` passed. Full pytest: **467 passed
+in 59.47 seconds**, no skips. `git diff --check` passed. No web code changed,
+so web gates were not run.
+No public export, browser application check, deployment, push, merge, rebase,
+AIS regeneration or independent external audit was performed.
+
+## History — foundation commit 4c81af9
 
 ## Outcome and review boundary
 

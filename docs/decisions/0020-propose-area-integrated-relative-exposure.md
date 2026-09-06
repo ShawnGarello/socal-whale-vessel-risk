@@ -1,14 +1,29 @@
 # 0020 — Propose area-integrated relative exposure
 
-**Status:** Proposed — independent method review and owner acceptance required
+**Status:** Accepted for exploratory execution — results pending independent audit
+and owner review before final headlines
 **Date:** 2026-09-06
+
+## Owner authorization, 2026-09-06
+
+The owner authorized proceeding with this method as an exploratory overlap proxy,
+including its documented sensitivity checks, with speed separate and no collision
+probability claim. Production results and sensitivity findings must return for
+audit/review before final headlines or M6 completion. This authorizes implementation
+and local execution; it does not assert scientific validation or authorize public
+publication, pushing, merging, rebasing or shared-owner documentation edits.
+
+The choices below were proposed in the foundation commit and are now selected
+for that bounded exploratory execution. The threshold family is run as written;
+no cutoff is tuned to a preferred inside/outside result.
 
 ## Context and verified inputs
 
 M3 supplies two validated inputs on the same 4,516-cell EPSG:3310 water grid.
 Exact local paths, checksums, inspected contracts and checks are in the
-[foundation handoff](../m6-exposure-foundation-handoff.md). This proposal does
-not generate an exposure surface or accept a scientific conclusion.
+[foundation handoff](../m6-exposure-foundation-handoff.md). The subsequent
+implementation generates local exploratory layers and sensitivity reports;
+scientific conclusions remain subject to review.
 
 - `blue_whale_grid_transfer_v1`: `modeled_density_animals_per_km2` is modeled
   density, not occurrence probability. Its numerator is
@@ -155,8 +170,9 @@ Never apply both reductions twice or multiply separately calculated domain
 and VSR fractions. [ADR 0004](0004-analysis-grid-resolution.md) excludes
 centroid, majority and whole-cell assignment.
 
-The implementation provides only areas and splitting of a supplied full-water
-total; it chooses no formula. It checks area conservation with `rel_tol=1e-10`
+The geometry foundation provides areas and splitting of a supplied full-water
+total; the separate exposure module now implements this method. Geometry checks
+area conservation with `rel_tol=1e-10`
 and `abs_tol=1e-6 m²`, including nested-area comparisons. This is a numerical
 check, not a minimum included area: positive slivers are retained, and raw
 overlay residuals remain measurable. Fractions can differ from mathematical
@@ -169,7 +185,9 @@ It densifies source VSR edges to at most 0.01° before always-xy EPSG:3310
 projection, matching the retained evidence. It does not repair invalid geometry.
 [ADR 0019](0019-reference-the-publisher-hosted-vsr-service.md) requires all VSR
 geometry and derivatives to remain local. The browser service is never an
-analytical input. There is no spatial writer in this foundation.
+analytical input. The exposure writer stores only domain-qualified water geometry,
+never VSR intersection geometry. Wholly excluded cells retain rows with null
+geometry and exposure fields; they cannot render as low traffic.
 
 ## Proposed high-exposure definition and sensitivity
 
@@ -219,9 +237,42 @@ the 35°N context truncation constrain interpretation. Uniform allocation may be
 especially poor along shipping lanes and on small water slivers. Do not remove
 small cells or anomalous dates without a separately justified decision.
 
-Owner acceptance is needed for the product/intensity interpretation, proportional
-weighting, support admission rule, map scaling, log sensitivity, high-threshold
-family/reference population/ties, and 10-km comparison implementation. Independent
-review precedes that acceptance. No production headline results or application
-results contract are authorized by this **Proposed** record. M6 remains incomplete;
-the handoff lists the remaining contracts, reproducibility and visual gates.
+The owner's authorization above selects these choices for exploratory execution.
+Independent audit and owner review of the actual findings remain required before
+final headlines. M6 remains incomplete; the handoff records execution, exact
+output identities, validation, sensitivity and visual evidence. No application
+integration or public-export contract is selected here.
+
+## Execution contracts
+
+`exposure_inputs.py` deliberately accepts only the retained exact first-run M3
+artifacts and sidecars identified in the handoff; it does not discover or promote
+candidate files. The join enforces complete row identity/order/geometry/bounds,
+water areas, complete whale support, finite nonnegative physical inputs, units,
+group-distance reconciliation, metadata contracts, accepted period and method,
+and sidecar links. A different source vintage or sidecar requires a reviewed
+contract update. Synthetic tests exercise bad support and join cases independently
+of the real checksums.
+
+`exposure_run.py` writes a fresh ignored atomic local bundle under
+`exploratory_relative_exposure_v1`, method version `1.0.0`, containing 5-km and
+10-km GeoParquet, a deterministic sensitivity report and timestamp-bearing
+generation lineage. Both layers carry product/log intensity, maximum-scaled
+indices, qualified/inside/outside integrated values and all-valid p80/p90/p95
+flags. Full-water input scalars are retained for reproducibility; result geometry
+is exact qualified water, unrelated to VSR clipping. VSR areas are scalar
+accounting fields only. Metadata states units, period, vintages, qualification,
+assumptions and the review-pending status. Input checksums, method/reporting
+contracts and relevant software versions bind deterministic identity; paths and
+clocks stay in lineage. Failed temporary bundles are preserved; outputs are never
+overwritten. A separate read-back verifier checks serialized formula, integration,
+geometry area, exclusion, index, flags and summary consistency.
+
+Outside concentrations are reported conservatively as the ten cells contributing
+the most integrated exposure outside the zone, with their fraction of the outside
+total and parent-cell origin. Exact contribution ties are ordered by cell ID.
+This is a ranked contribution list, not a newly assumed connected hotspot cluster,
+and the cell origin is a locator, never a boundary assignment rule. The log
+comparison includes tie-aware Spearman cell-rank changes; grid-size sensitivity
+compares integrated shares and qualified high-area shares, without pretending
+that 5-km and 10-km cells are the same ranking population.
