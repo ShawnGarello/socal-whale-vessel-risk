@@ -9,9 +9,11 @@ export default function Home() {
           Southern California whale–vessel spatial overlap
         </h1>
         <p className={styles.subtitle}>
-          The map references the publisher-hosted 2026 California Vessel Speed Reduction
-          boundary. No project-derived layers have been published yet, and nothing shown
-          here is an analytical result.
+          The map shows this project&rsquo;s modeled blue-whale density grid, derived
+          from the NOAA/SWFSC 2020b summer&ndash;fall model, together with the
+          publisher-hosted 2026 California Vessel Speed Reduction boundary. The
+          whale&ndash;vessel exposure analysis is not finished: nothing shown here is an
+          exposure, risk, or strike result.
         </p>
       </header>
       <main className={styles.main}>

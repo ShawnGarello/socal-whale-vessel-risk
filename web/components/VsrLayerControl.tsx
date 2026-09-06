@@ -1,9 +1,9 @@
+import type { MapLayerState } from "@/lib/map-layer-state";
 import { VSR_SOURCE } from "@/lib/vsr-source";
-import type { VsrLayerState } from "@/lib/vsr-layer-state";
-import styles from "./VsrLayerControl.module.css";
+import styles from "./MapLayerPanel.module.css";
 
 interface VsrLayerControlProps {
-  state: VsrLayerState;
+  state: MapLayerState;
   onVisibilityChange: (visible: boolean) => void;
 }
 
@@ -21,7 +21,7 @@ export default function VsrLayerControl({
   const interactionDisabled = state.status !== "ready";
 
   return (
-    <section className={styles.control} aria-label="Map layers">
+    <div className={styles.section}>
       <label className={styles.visibilityRow}>
         <input
           className={styles.checkbox}
@@ -38,9 +38,11 @@ export default function VsrLayerControl({
         </span>
       </label>
 
-      <div className={styles.legend} aria-label="Legend">
-        <span className={styles.legendLine} aria-hidden="true" />
-        <span>VSR boundary</span>
+      <div className={styles.legend}>
+        <div className={styles.legendLine}>
+          <span className={styles.legendStroke} aria-hidden="true" />
+          <span>VSR boundary</span>
+        </div>
       </div>
 
       {state.warning && (
@@ -59,6 +61,6 @@ export default function VsrLayerControl({
           </a>
         </div>
       </details>
-    </section>
+    </div>
   );
 }

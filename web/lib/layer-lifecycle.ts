@@ -17,7 +17,7 @@ export interface LayerRefLike<Layer> {
  * A stale async completion must not consult the ref to choose what to destroy:
  * a newer effect may already have installed its replacement there.
  */
-export function releaseOwnedVsrLayer<Layer extends DestroyableLayer>(
+export function releaseOwnedLayer<Layer extends DestroyableLayer>(
   map: LayerMapLike<Layer>,
   ownedLayer: Layer | null,
   layerRef: LayerRefLike<Layer>,

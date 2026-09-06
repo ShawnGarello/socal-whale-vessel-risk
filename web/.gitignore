@@ -40,3 +40,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated map layers
+# The display exporter stages its GeoJSON here so `next dev` and `next build`
+# can serve it from the same origin. Generated layer data is never committed;
+# see docs/development.md and the exporter's own destination safeguards.
+/public/layers/
