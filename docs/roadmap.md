@@ -1042,8 +1042,22 @@ Built on the `feat/web-foundation` branch. The application is in
 - Current official Esri documentation was checked on 2026-08-31. Location
   Platform is documented as a limited single-user organization that can create
   hosted feature, vector-tile, and map-tile services, but not hosted image or
-  scene services. `Everyone` sharing is documented to allow anonymous access,
-  without requiring a separate ArcGIS Online organization.
+  scene services.
+- **Corrected on 2026-09-06.** The 2026-08-31 inventory recorded that
+  `Everyone` sharing gives Location Platform hosted services anonymous access.
+  That was wrong; it applied cross-product sharing guidance to Location
+  Platform. Esri's product-specific
+  [data sharing and access guide](https://location.arcgis.com/help/data-sharing-and-access/)
+  states that hosted data services in ArcGIS Location Platform are not shared
+  publicly, and directs public-facing applications to authenticated access with
+  developer credentials such as an API key. The
+  [feature-service sharing and security guide](https://developers.arcgis.com/documentation/portal-and-data-services/data-services/feature-services/sharing-and-security/)
+  lists `Owner (private)` as the only Location Platform sharing level, requiring
+  a scoped API key, while ArcGIS Online additionally offers Organization,
+  Group, and `Everyone (public)`. A visitor who never signs in is not the same
+  as a token-free service request: a scoped browser key can serve visitors
+  without a sign-in, but the service is not anonymous and the account owner
+  carries the usage.
 - The current documented monthly free tiers relevant here are 2,000,000 basemap
   tiles or 1,000 basemap sessions; 250 MB of feature storage; 250 MB of
   tiles/files/attachments storage; 125 MB each of feature-query and feature-edit
@@ -1119,7 +1133,8 @@ tooling rather than reading about it, and constrain later work.
 | npm | 10.9.2 — the only package manager present |
 | Next.js | 16.3.3 |
 | React | 19.2.8 |
-| ArcGIS Maps SDK for JavaScript | 5.1.20 (`@arcgis/core`, `@arcgis/map-components`, `@esri/calcite-components`) |
+| ArcGIS Maps SDK for JavaScript | 5.1.20 (`@arcgis/core` and `@arcgis/map-components`) |
+| Calcite components | 5.1.2 (`@esri/calcite-components`) — versioned separately from the Maps SDK |
 | Vitest | 4.1.11 |
 
 **The SDK's widgets are deprecated as of 5.0**, and its web components are the
@@ -1168,11 +1183,14 @@ this repository's own. Disabled with `agentRules: false`.
 **Risks and open questions**
 - **The Location Platform product boundary is documented, but the real account
   remains unverified and constrains publication.** Official documentation
-  supports feature, vector-tile, and map-tile services plus public anonymous
-  sharing and identifies the current free tiers. Actual service controls,
-  usage, headroom, and billing state still require the author's private check.
-  If that account does not fit, ArcGIS Online and then a non-Esri public route
-  remain candidates. **Partly resolved from documentation only.**
+  supports feature, vector-tile, and map-tile services and identifies the
+  current free tiers. Rechecked on 2026-09-06, it also says those hosted
+  services are **not** shared publicly and require a scoped API key, so any
+  Location Platform route would give visitors keyed rather than anonymous
+  access. Actual service controls, sharing levels, usage, headroom, and billing
+  state still require the author's private check. If that account does not fit,
+  ArcGIS Online and then a non-Esri public route remain candidates.
+  **Partly resolved from documentation only.**
 - Location Platform storage/bandwidth usage and ArcGIS Online credit/storage
   consumption could constrain iteration. The project does not enable
   pay-as-you-go or authorize spending. **Still open.**
@@ -1225,8 +1243,80 @@ input layers remain unfinished**
   removed the failed layer, and retained a ready, non-updating oceans basemap,
   zoom controls, and SDK attribution without an indefinite loading state or
   sign-in prompt.
-- Project-derived study-area, whale, and vessel layer publication is not
-  implemented. M5 remains in progress, and its completion criteria are not met.
+**Whale display representation implemented and locally verified; not published**
+
+- A versioned `blue_whale_display_export_v1` boundary in `analysis/` turns the
+  validated `blue_whale_grid_transfer_v1` GeoParquet into RFC 7946 WGS 84
+  GeoJSON plus a sanitized, publishable manifest. It requires the source
+  checksum, validates the source contract before transforming anything, and
+  changes representation only: no value is recomputed, rescaled, rounded, or
+  simplified, and no geometry is densified. Destinations are an allowlist of
+  this checkout's Git-ignored output roots, and generated layer data is not
+  committed. The commands are in
+  [development.md](development.md); the contract is in
+  [`../analysis/README.md`](../analysis/README.md).
+- The export from source
+  `421dc7bf837de1b328328d61944bfb7fa0c7e3c77ac0489ab47506a060520c62` is
+  3,277,329 bytes with SHA-256
+  `831a5412e9f414d5e4c7011d1b1687a89b8089826f8925f31e737b974662e154`: 4,516
+  features, 4,561 polygon parts, 35 interior rings, 44,773 positions, modeled
+  density 0.00083394 to 0.007648247 animals/km², conserving 344.1406562623342
+  modeled animals. Two exports from separately generated source copies were
+  byte-identical.
+- The manifest publishes seven fields and records the reason each of twelve
+  source columns is withheld. It is rebuilt field by field from a named
+  allowlist, so no filesystem path, credential, raw input, private lineage, or
+  VSR-derived value can reach a public artifact.
+- **QGIS 4.2.1 with GDAL 3.13.2 verified the exact published file on
+  2026-09-06**, opened directly through OGR and bound to its output checksum.
+  Counts, rings, positions, extent and value range all matched the manifest.
+  Five checksum-recorded renders showed correct Southern California placement
+  and axis order, clean 35° N and southern clipping, correct island holes, and
+  cell-scale detail with no unexplained gap, sliver, displacement, or
+  projection artifact.
+- The application draws the layer with an ArcGIS `GeoJSONLayer` whose geometry
+  type, spatial reference, object-id field and field schema are declared
+  explicitly, added beneath the VSR outline, bounded to 30 seconds, asserting
+  the expected 4,516 cells, and failing in isolation. It carries a density
+  legend in animals/km², per-cell popups, a visibility control, and an
+  accessible source-and-method disclosure with the NOAA/SWFSC credit, the
+  requested citations, the method, and the artifact checksums. The browser
+  hashes the fetched bytes and refuses a file that does not match the checksum
+  this build records, so the identity shown is verified rather than asserted.
+- **Browser verification on 2026-09-06** in headless Chrome, from the
+  authorized localhost origin, at exact 390 × 844, 820 × 1180 and 1440 × 900:
+  the layer loaded with 4,516 features at every size, exactly one whale layer
+  and one VSR layer were present with the whale layer beneath, the legend and
+  all five class labels were readable, the visibility control worked, keyboard
+  traversal gave a visible focus outline, and a popup reported values matching
+  the export exactly at the declared precision. Blocking the layer left the
+  basemap and VSR usable with an accessible warning; serving a different file
+  with the same feature count was refused on the checksum.
+- Symbology is five equal 0.001 animals/km² classes with an open lowest and
+  highest class, **recorded as a display choice and stated as one in the
+  interface**, holding 1,103 / 1,388 / 765 / 527 / 733 of the 4,516 cells.
+- Measured locally: 3.13 MiB uncompressed, 0.55 MiB gzipped, 0.38 MiB Brotli;
+  complete static export 30.75 MiB across 895 files; layer usable roughly 1.9 s
+  after navigation cold and 1.0 s warm over loopback without compression or
+  throttling. These are local observations of this project's own asset, not a
+  benchmark of ArcGIS services and not evidence about a deployed origin.
+
+**What this does not establish**
+
+- **Nothing has been deployed or published.** There is no public URL, and no
+  anonymous end-to-end access, deployed-origin service access, real compression
+  or cache behaviour, or clean-browser verification exists. Static same-origin
+  delivery is implemented and locally verified; it is **not** an accepted
+  hosting decision, and the host is unselected. Vercel is the author's
+  preference and its documented constraints are recorded in
+  [development.md](development.md), including an unresolved Hobby-plan
+  eligibility question and an untested prebuilt-deploy path.
+- Project-derived study-area and vessel layer publication is not implemented,
+  and the exposure layer belongs to M6 and M7. The vessel artifact was
+  inspected read-only for scoping only.
+- The authenticated ArcGIS account capability checks M4 requires are still
+  outstanding.
+- M5 remains in progress, and its completion criteria are not met.
 
 **Deliverables**
 - Study area, whale density, and vessel activity prepared in a selected public
@@ -1241,31 +1331,49 @@ input layers remain unfinished**
   public `WhaleAtlas_2026` Feature Service using `FID = 126`, with Danielle
   Alvarez, CMSF, and BWBS attribution and the publisher's non-navigational
   disclaimer. No VSR geometry is copied into project-controlled hosting.
-- ArcGIS Location Platform feature/vector-tile/map-tile services when its
-  verified free-tier capacity and service support fit; ArcGIS Online hosted
-  layers and a web map when verified organization capabilities fit; or a
-  documented non-Esri public route selected later when neither does. No
-  project-derived-layer route is implemented yet.
+- A public representation for the project-derived layers. **One is implemented
+  for the whale layer:** a deterministic WGS 84 GeoJSON export served as a
+  static same-origin file, verified locally but not published, and not an
+  accepted hosting decision. The route for the remaining layers, and the host
+  for all of them, are still open. ArcGIS Location Platform
+  feature/vector-tile/map-tile services remain a candidate where verified
+  free-tier capacity and service support fit — noting that its hosted services
+  are documented as not shared publicly, so visitor access would be keyed —
+  alongside ArcGIS Online hosted layers where verified organization
+  capabilities fit, and a documented non-Esri route.
 - The ArcGIS Maps SDK application assembling the public layers with symbology
   chosen for legibility, not decoration.
 - Layer visibility control and legends in the application.
 - Popups or panels that state what each layer's values mean, including units.
 - Recorded mapping from each project-derived public layer representation back to the validated
   derived dataset, output checksum, visual-verification evidence, and
-  processing/export steps that produced it.
+  processing/export steps that produced it. **Recorded for the whale layer**
+  in this milestone's progress notes above and in
+  [`../docs/m5-whale-display-handoff.md`](m5-whale-display-handoff.md).
 - Recorded VSR item, service, feature filter, attribution, disclaimer, and
   comparison with the analytical snapshot.
 
 **Completion criteria**
 - Each layer renders at the study-area scale within an acceptable load time.
+  **Whale layer: met locally only**, on one machine over loopback without
+  compression or throttling; deployed load time is unmeasured.
 - Anonymous access works end to end from the application. When neither Esri
   hosting route is suitable, this criterion is verified later against the
-  selected non-Esri fallback rather than waived.
+  selected non-Esri fallback rather than waived. **Not met for any
+  project-derived layer: nothing is deployed and there is no public URL.**
 - Every layer's legend states its units and the meaning of its values.
+  **Met for the whale layer.**
 - Every layer names its source and its retrieval or processing date somewhere the user can reach.
+  **Met for the whale layer**, through the map's source-and-method disclosure.
 - Layer geometry visually aligns across layers; no projection mismatch is visible.
+  **Observed for the whale layer against the VSR boundary and the basemap in
+  the local browser check**; it must be re-observed once the vessel layer
+  exists.
 - The VSR feature loads anonymously from the publisher's service and is not a
-  project-hosted copy.
+  project-hosted copy. **Met locally.**
+
+None of the above is satisfied for the study-area or vessel layers, and none is
+verified from a deployed origin, so M5 stays in progress.
 
 **Risks and open questions**
 - Layer size, feature-count limits, or browser performance may force a different

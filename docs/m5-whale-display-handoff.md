@@ -720,21 +720,22 @@ session did not touch.
 
 ---
 
-## Proposed changes to owner documents, not made here
+## Owner-document integration, completed 2026-09-06
 
-These were not made because this session does not own those documents. Each
-needs coordination with whoever holds them.
+A later pass on this branch was authorized to carry these changes into the
+owning documents. What was done:
 
-| Document | Proposed change |
+| Document | Change |
 |---|---|
-| `docs/development.md` | Add the display-export command and its arguments to the analysis command table; add a "Reviewing the exact display export in QGIS" procedure alongside the existing GeoParquet one; record that `web/public/layers/` is an ignored staging destination; add the Vercel requirements and the prebuilt-deploy path to **Deploying the application**. |
-| `docs/roadmap.md` | Record under M5 that the whale input layer now has a verified public representation and local rendering, with the identities and dates above, while leaving M4 and M5 status unchanged and the remaining criteria explicitly open. |
-| `docs/architecture.md` | Record the display-export boundary as the implemented project-derived publication path, and reconcile the "no route is implemented" wording. Also carries a stale description of the VSR integration as unimplemented, and its toolchain inventory should distinguish Calcite 5.1.2 from Maps SDK 5.1.20 — both carried over from the delivery assessment. |
-| `analysis/README.md` | Add a "Modeled blue-whale display export" section documenting the contract, the command, the published and withheld fields, the destination safeguards, and the verified run and QGIS results recorded above. |
-| `docs/decisions/` | A narrow ADR for the static same-origin GeoJSON display route once there is enough evidence to accept it, and a separate host decision. This session recommends the route but does not accept it. |
-| `docs/development.md`, `docs/roadmap.md`, `docs/architecture.md`, `README.md`, `AGENTS.md` | The delivery assessment's correction still stands: current product-specific documentation says Location Platform hosted services are not shared publicly, which contradicts the 2026-08-31 inventory's `Everyone` claim. Owners should reconcile that and distinguish a token-free service from a visitor using a scoped browser key. |
-| `docs/data-sources.md` | The delivery assessment noted the live NOAA AIS FAQ now identifies itself as a June 2026 revision where the register describes May 2026. Owner review, without replacing the retained source evidence. |
-| `analysis/pyproject.toml` | Optionally add a `whale-vessel-whale-display-export` console script alongside the existing entries. Not added here: it is shared package configuration. |
+| `docs/development.md` | **Done.** Display-export CLI added to the analysis command table and to the package description; new "Modeled blue-whale display export" and "Reviewing the exact display export in QGIS" procedures; `NEXT_PUBLIC_WHALE_LAYER_URL` added to the web environment table; `web/public/layers/` recorded as the ignored staging destination; **Deploying the application** extended with the measured output size, the generated-layer constraint, the Vercel plan, its documented Hobby limits, the prebuilt-deploy path, the eligibility question, and the release-staging steps; Location Platform capability row and author checklist corrected; test counts updated to 529 and 63. |
+| `docs/roadmap.md` | **Done.** M5 progress records the implemented and locally verified whale display representation with its identities, QGIS and browser evidence, symbology rationale and measurements, followed by an explicit "what this does not establish". Deliverables and completion criteria annotated per criterion. M4's Location Platform sharing claim corrected. Calcite separated from the Maps SDK in the toolchain inventory. **M4 and M5 both remain In progress.** |
+| `docs/architecture.md` | **Done.** Publication boundary records the implemented display-export route while keeping the host and the remaining layers open; VSR wording corrected from future to present tense; Location Platform sharing corrected with the rechecked sources; deferred-decisions row corrected; performance section records the measured evidence and its limits; testing boundaries record that a public display artifact needs its own checksum-bound inspection; repository structure and large-data handling name the ignored staging destination. |
+| `analysis/README.md` | **Done.** New "Modeled blue-whale display export" section covering the contract, command, validation, transformation and its extent tolerance, published and withheld fields, the sanitized manifest, destination rules, and the verified 2026-09-06 run with its QGIS result. |
+| `README.md` | **Done.** Status block and publication paragraph record the whale layer as implemented and locally verified, state plainly that nothing is deployed or published, and carry the corrected Location Platform sharing position. |
+| `docs/data-sources.md` | **Done, as an open owner review.** The NOAA AIS FAQ revision difference is recorded as an unverified report against the retained May 2026 evidence, with nothing replaced and no processing rule changed. |
+| `docs/decisions/` | **Not done, deliberately.** A narrow ADR for the static same-origin display route, and a separate host decision, still belong to a session with authority to accept them. This branch implements and recommends the route; it does not accept it. |
+| `analysis/pyproject.toml` | **Not done.** Adding a `whale-vessel-whale-display-export` console script remains optional and is shared package configuration rather than documentation. |
+| `docs/decisions/README.md` | **Not touched.** ADR 0020 belongs to the parallel M6 session, which owns registering it. |
 
 ---
 

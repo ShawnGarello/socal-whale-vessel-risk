@@ -52,6 +52,19 @@ used or required for any of them.**
 | 3 | VSR zone geometry | `https://services5.arcgis.com/4biRnCjZju47bNvA/arcgis/rest/services/WhaleAtlas_2026/FeatureServer/0/query` | `GET` with `where=FID=126`, `outFields=*`, `returnGeometry=true`, `outSR=4326`, `f=geojson` | 2026-08-25 |
 | 4 | 2026 VSR zone map | `https://bluewhalesblueskies.org/wp-content/uploads/2026-VSR-Zone-Map_July-2026.pdf` | `GET` with a browser `User-Agent`; the site returns HTTP 403 to a default `curl` agent | 2026-08-25 |
 | 5 | Marine Cadastre AIS FAQ (May 2026) | `https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf` | `GET`, no parameters | 2026-08-25 |
+
+> **Open owner review, recorded 2026-09-06.** The
+> M4/M5 delivery assessment on the unmerged `research/m4-m5-delivery-assessment`
+> branch reported that the live FAQ
+> at that URL identified itself as a **June 2026** revision when inspected on
+> 2026-09-04, where this register records the May 2026 revision retrieved on
+> 2026-08-25. That report has **not** been re-verified here, and nothing about
+> the retained May 2026 evidence, the recorded field semantics, or any
+> processing rule has been changed on the strength of it. The FAQ is a living
+> document at a stable URL, so a revision is expected and does not invalidate
+> the retrieved copy. The owner should compare the current revision against the
+> retained one and record any changed use terms or field semantics as a dated
+> entry, rather than replacing the retained provenance.
 | 6 | AIS Vessel Type and Group Codes | `https://coast.noaa.gov/data/marinecadastre/ais/VesselTypeCodes2018.pdf` | `GET`, no parameters | 2026-08-25 |
 | 7 | AIS daily prefixes, five dates | `https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/AIS_<date>.zip` | `GET` with header `Range: bytes=0-8388607`, returning HTTP 206. **Only the first 8 MiB of each file was transferred.** Dates: `2024_07_15`, `2024_08_15`, `2024_09_16`, `2024_10_15`, `2024_11_15` | 2026-08-25 (`2024_07_15`), 2026-08-26 (the other four) |
 | 8 | NOAA NGS CUSP West shoreline | `https://geodesy.noaa.gov/dist_shoreline/West.zip` | `GET`, no parameters. Current West-region archive linked by the NOAA Shoreline Data Explorer; HTTP `Last-Modified` was `Wed, 05 Aug 2026 16:46:26 GMT` | 2026-08-28 |

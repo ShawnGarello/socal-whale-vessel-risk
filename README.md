@@ -16,10 +16,20 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > Acceptance does not claim the thresholds are scientifically validated, and
 > publisher-transfer and observational completeness remain unverified.
 >
-> The web shell displays the publisher-hosted VSR boundary directly; project
-> copies of VSR geometry are prohibited. Exposure analysis, project-derived web
-> layers, publication and deployment remain unfinished. See the
-> [roadmap](docs/roadmap.md) and [M3 handoff](docs/m3-completion-handoff.md).
+> The web application displays the publisher-hosted VSR boundary directly;
+> project copies of VSR geometry are prohibited. It also displays this
+> project's own modeled blue-whale density grid, exported deterministically to
+> WGS 84 GeoJSON and verified on 2026-09-06 in QGIS and in a browser at the
+> three documented viewports. That layer is served as a static same-origin file
+> and its identity is checked against its checksum in the browser.
+>
+> **Nothing has been deployed or published.** There is no public URL, no
+> project-derived layer is hosted anywhere, and the host is unselected. Local
+> rendering is not deployed verification. Exposure analysis, the vessel and
+> study-area display layers, publication and deployment remain unfinished. See
+> the [roadmap](docs/roadmap.md), the
+> [M5 whale display handoff](docs/m5-whale-display-handoff.md), and the
+> [M3 handoff](docs/m3-completion-handoff.md).
 
 ## Why
 
@@ -62,7 +72,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 
 ## Technology direction
 
-The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. Three publication candidates remain open for the project-derived whale, vessel, and exposure layers: limited ArcGIS Location Platform feature/vector-tile/map-tile services within verified free-tier capacity, ArcGIS Online organization-hosted layers when account capabilities support them, and a non-Esri public fallback if neither fits. Current official documentation confirms Location Platform's limited service types, anonymous public sharing, and published free tiers; the author's actual account controls, billing state, usage, and headroom remain unverified. Local ArcGIS basemap and publisher-hosted VSR access through the static client are verified, while deployed-origin access and project-derived-layer hosting are not. No project-derived layer has been published, and the project does not authorize paid usage.
+The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. The whale layer is delivered as a deterministic WGS 84 GeoJSON export served as a static same-origin file beside the application: an implemented, locally verified route, not an accepted hosting decision. The representation for the vessel and exposure layers, and the public host for all of them, remain open. Candidates are static same-origin files, limited ArcGIS Location Platform feature/vector-tile/map-tile services within verified free-tier capacity, ArcGIS Online organization-hosted layers when account capabilities support them, and a non-Esri route. Current official documentation confirms Location Platform's limited service types and published free tiers; rechecked on 2026-09-06, it also states that Location Platform hosted data services are **not** shared publicly and require a scoped API key, so visitor access on that route would be keyed rather than anonymous. The author's actual account controls, billing state, usage, and headroom remain unverified. Local ArcGIS basemap, publisher-hosted VSR, and whale-layer rendering through the static client are verified; deployed-origin access is not. No project-derived layer has been published, and the project does not authorize paid usage.
 
 Python produces the analysis and lineage; QGIS does not replace that production path. The browser displays and filters public results but does not compute exposure. ArcGIS Pro is optional and unnecessary for Version 1. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md) and [ADR 0015](docs/decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md).
 

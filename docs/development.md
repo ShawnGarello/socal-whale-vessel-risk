@@ -167,6 +167,7 @@ size limits against this before choosing one.
 |---|---|---|
 | `NEXT_PUBLIC_ARCGIS_API_KEY` | Yes, for the map to render | Access token the browser sends to the ArcGIS basemap styles service. |
 | `NEXT_PUBLIC_ARCGIS_BASEMAP` | No | Basemap style id. Defaults to `arcgis/oceans`. |
+| `NEXT_PUBLIC_WHALE_LAYER_URL` | No | Where the browser fetches the modeled blue-whale density GeoJSON. Defaults to `/layers/blue-whale-density.geojson`, the same-origin path the display exporter stages into. Set it for a release that publishes a checksum-addressed filename. |
 
 Names and their constraints are documented in
 [`../web/.env.example`](../web/.env.example). Copy it to `web/.env.local` — which
@@ -237,7 +238,8 @@ modeled blue-whale density to that grid, a read-only one-bundle vessel-measure
 evidence harness, a versioned multi-day cleaned-input manifest with a bounded
 DuckDB period relation, a bounded period vessel-rule evidence command, a
 parameterized candidate vessel-grid aggregation, a production vessel-input
-boundary with separate movement-speed summaries, and synthetic tests. Final
+boundary with separate movement-speed summaries, a deterministic
+public-display export of the validated whale grid, and synthetic tests. Final
 real production verification remains pending. It does **not** submit orders,
 download AIS, or produce exposure datasets or statistics. Run every command
 below from `analysis/`.
@@ -276,6 +278,7 @@ re-run; the built package declares only runtime requirements.
 | `python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --help` | Proves the candidate multi-day vessel-grid aggregation boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.vessel_input_cli --help` | Proves the selected production vessel-input boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help` | Proves the separate whale-grid transfer boundary loads. |
+| `python -m uv run python -m whale_vessel_analysis.whale_display_export_cli --help` | Proves the separate public-display export boundary loads. |
 
 The toolchain decision is [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md).
 
@@ -863,6 +866,67 @@ visible. This passed evidence is tied to output SHA-256
 `421dc7bf837de1b328328d61944bfb7fa0c7e3c77ac0489ab47506a060520c62`.
 The renders, report, and rendering script remain ignored local evidence.
 
+**Modeled blue-whale display export**
+
+The display-export command turns a validated whale-grid artifact into the WGS 84
+GeoJSON the application draws, plus a sanitized manifest that is safe to publish
+beside it:
+
+```text
+python -m uv run python -m whale_vessel_analysis.whale_display_export_cli --source <whale-grid.parquet> --expected-source-sha256 <sha256> --output <name.geojson> [--overwrite]
+```
+
+`--expected-source-sha256` is **required**, so a public artifact can never be
+produced from an unidentified input. This is a presentation boundary: it changes
+representation and nothing else. No value is recomputed, rescaled, normalized,
+rounded, or simplified, and no geometry is densified — the manifest records each
+of those as `not_performed`. The exact contract, units, published and withheld
+fields, and destination rules are in
+[`../analysis/README.md`](../analysis/README.md).
+
+Destinations are an allowlist anchored to the current checkout: `data/derived/`,
+`data/interim/`, and `web/public/layers/`. All three are Git-ignored, so a
+generated layer cannot be staged for a commit by accident. Everything else is
+refused, including another worktree's directories, and any `data/raw` or `.git`
+directory is refused by shape wherever it appears. An existing output pair is
+refused unless `--overwrite` authorizes replacing both files.
+
+`web/public/layers/` is the staging destination the application reads: both
+`next dev` and `next build` serve it from the same origin, so the browser can
+load a generated layer that is never committed. The exact run used on
+2026-09-06 was:
+
+```text
+python -m uv run python -m whale_vessel_analysis.whale_display_export_cli --source "C:\Users\teche\socal-whale-vessel-risk-analytical-domain\data\interim\m2-domain-evidence\blue-whale-density-grid.parquet" --expected-source-sha256 421dc7bf837de1b328328d61944bfb7fa0c7e3c77ac0489ab47506a060520c62 --output "..\web\public\layers\blue-whale-density.geojson"
+```
+
+It produced 3,277,329 bytes with SHA-256
+`831a5412e9f414d5e4c7011d1b1687a89b8089826f8925f31e737b974662e154`. Two exports
+from separately generated but byte-identical source copies produced identical
+GeoJSON; only the manifest's `exported_at` and `generation_lineage_sha256`
+differ between runs, and both differences are truthful.
+
+**Reviewing the exact display export in QGIS**
+
+The published GeoJSON is a derived spatial layer and needs its own visual
+inspection — changing representation for the browser is exactly where an axis
+order, a dropped hole, or a clipped boundary can go wrong. Inspect the published
+file itself, not a converted copy, using QGIS's own interpreter with
+`QT_QPA_PLATFORM=offscreen`:
+
+```text
+"C:\Program Files\QGIS 4.2.1\bin\python-qgis.bat" scripts\qgis_inspect_whale_display_export.py --export <name.geojson> --sha256 <sha256> --output-dir <fresh ignored interim directory>
+```
+
+The command refuses to run if the file's checksum, or the checksum its manifest
+declares, disagrees with the one supplied, and it refuses an output directory
+outside the ignored interim root or one that already exists. It opens the file
+through OGR, compares CRS, counts, geometry and values against the manifest, and
+renders five views using the same class breaks and ramp the application uses, so
+the QGIS and browser views are directly comparable. Rendering images is not
+itself verification: a person must inspect the renders and record the result
+against the exact output checksum, as with any other derived layer.
+
 **Large-tabular evidence benchmark**
 
 The parameterized command supporting [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md)
@@ -917,10 +981,79 @@ open decision in [architecture.md](architecture.md).
 - Node.js `>=20.9.0` available in the build environment.
 - Build-time environment variables, because `NEXT_PUBLIC_` values are inlined
   during the build and cannot be injected afterwards.
-- Tolerates roughly 30 MB and several hundred files of build output.
+- Tolerates the measured build output: **30.75 MiB across 895 files** as of
+  2026-09-06, whose largest single file is the 3.28 MB whale GeoJSON.
 - Serves `out/<route>/index.html` for directory URLs. The build sets
   `trailingSlash: true` so this works on hosts that do not rewrite
   extensionless paths.
+- Serves `.geojson` with a JSON media type and compresses it. The whale layer
+  is 3,277,329 bytes uncompressed, 574,907 gzipped and 396,852 with Brotli, so
+  compression is what makes the transfer reasonable.
+- **Carries the generated layer files.** They are Git-ignored by design, so a
+  host that builds from the Git repository alone would deploy an application
+  with no whale layer. See the Vercel path below.
+
+**Vercel, the author's preferred host**
+
+Vercel is the author's preference and the plan below is written for it. Nothing
+has been deployed, no account has been inspected or created, and no billing or
+paid resource is authorized. Official documentation was checked on 2026-09-06
+against pages carrying their own `last_updated` labels of 2026-09-03 (limits),
+2026-08-31 (Hobby plan), 2026-07-29 (fair use), and 2026-08-25 (project
+configuration); recheck before release, because live pages change.
+
+Documented Hobby-plan limits and how this project compares:
+
+| Documented Hobby limit | This project as measured |
+|---|---|
+| CLI static-file upload 100 MB | 30.75 MiB |
+| 15,000 source files per CLI deployment | 895 files |
+| Build time 45 minutes per deployment | local `next build` is far under it |
+| 100 deployments per day, 100 builds per hour, 1 concurrent | ample |
+| Typical monthly Fast Data Transfer guideline up to 100 GB | roughly 0.4 MB Brotli per whale-layer load, plus the SDK chunks a page actually fetches |
+
+**The deployment must carry locally generated data.** Two documented paths do.
+The recommended one is `vercel build` followed by `vercel deploy --prebuilt`,
+which uploads the local `.vercel/output` rather than the source, so ignored
+generated files reach the deployment without entering Git. The alternative is
+uploading the finished `out/` directory as a static deployment with
+`outputDirectory` set and no build command. **Neither has been executed**, so
+whether `vercel build` produces the expected static output for this
+`output: "export"` project is unverified and needs one author-run trial.
+
+**An eligibility question the author must settle.** Vercel documents the Hobby
+plan as restricted to non-commercial personal use, defining commercial usage as
+"any Deployment that is used for the purpose of financial gain of anyone
+involved in any part of the production of the project, including a paid
+employee or consultant writing the code." The enumerated examples — collecting
+payment, advertising a product or service for sale, being paid to create or
+host the site, affiliate linking as the site's primary purpose, advertisements,
+and soliciting donations — do **not** apply to this project. The broad
+"financial gain" clause is the open question for a portfolio piece aimed at
+internship reviewers, and Vercel's own guidance is to ask their support team
+when unsure. This is the author's decision. If it resolves unfavourably, the
+choice between a paid plan and another host needs a decision record; neither is
+authorized here. Vercel also documents that exceeding a Hobby usage limit
+generally pauses the feature for 30 days rather than billing, and that a Hobby
+team cannot connect to a Git repository owned by a Git organization — not a
+constraint here, since the repository is under a personal account.
+
+`vercel.json` supports `outputDirectory`, `buildCommand`, `framework`,
+`cleanUrls`, `trailingSlash`, and `headers` if overrides prove necessary. None
+is known to be necessary yet.
+
+**Proposed release staging**
+
+1. Regenerate the export from the exact validated source with its checksum.
+2. Assemble an isolated, ignored release directory: the static export plus the
+   checksum-addressed layer file and its manifest.
+3. Verify that directory — file count, total size, no source data, no VSR
+   geometry, no private lineage, no credential — and record the application
+   commit together with every data checksum.
+4. Author runs the build and the deploy, then verifies the public URL in a
+   clean browser with no session.
+5. Keep the previous complete release available for rollback, and never replace
+   different bytes at an immutable URL.
 
 **Before calling a deployment done**
 
@@ -928,6 +1061,11 @@ A deployment is not proven by a successful build. Open the public URL in a
 browser with no existing session — a private window, or a different device —
 and confirm the map renders and the console is clean. Until that has been done,
 the deployment is unverified and must be described that way.
+
+For a release that carries project-derived layers, also confirm that the fetched
+bytes match the pinned checksum, that compression and cache headers behave as
+expected, that the layer's source metadata is reachable, and that the deployed
+application commit is the intended one. A local check proves none of these.
 
 ### Release-time VSR service and version check
 
@@ -1007,7 +1145,7 @@ Sources are Esri's [portal and data-services FAQ](https://developers.arcgis.com/
 |---|---|
 | Account and portal | A Location Platform subscription supplies a limited single-user organization and portal. It is not an ArcGIS Online organization subscription. |
 | Hosted service types | The limited organization supports creating hosted feature, vector-tile, and map-tile services. Hosted image and scene service creation is not supported. |
-| Public access | A hosted layer can be shared with `Everyone`; Esri states that anyone, including anonymous users, can then view the item and access its data service. Public Location Platform sharing therefore does not require a separate ArcGIS Online organization. The account owner remains responsible for resulting usage. |
+| Public access | **Corrected 2026-09-06.** The 2026-08-31 entry recorded that a Location Platform hosted layer can be shared with `Everyone` for anonymous access. That was wrong; it applied cross-product sharing guidance to Location Platform. Esri's product-specific [data sharing and access guide](https://location.arcgis.com/help/data-sharing-and-access/) states that "Hosted data services in ArcGIS Location Platform are not shared publicly," citing anonymous-traffic and billing risk, and directs public-facing applications to authenticated access with developer credentials such as an API key. The [feature-service sharing and security guide](https://developers.arcgis.com/documentation/portal-and-data-services/data-services/feature-services/sharing-and-security/) lists `Owner (private)` as the only Location Platform sharing level and states that a scoped API key is required; ArcGIS Online additionally offers Organization, Group, and `Everyone (public)`. A visitor who never signs in is therefore **not** the same as a token-free service request: a scoped, origin-restricted browser key can serve visitors without a sign-in, but the service is not anonymous, the key is public once shipped, and the account owner remains responsible for the usage. |
 | Billing model | Location Platform uses monthly free tiers and optional pay-as-you-go, not ArcGIS Online credits. Esri states that pay-as-you-go is off by default for new accounts, but this account's actual setting is unverified. With pay-as-you-go off, service access stops when an applicable free tier is exhausted; storage overage can also prevent publishing. |
 | Browser API keys | Location Platform accounts have API-key-management privileges by default. Credentials can define service privileges, access to selected items, referrer restrictions, and expiration dates, and can issue up to two keys. Keys are valid for at most one year. Referrer restrictions are a misuse-reduction control, not a secret boundary; browser keys remain public. Changing privileges or item access requires regeneration, and a referrer change requires manual regeneration. |
 
@@ -1049,23 +1187,27 @@ session:
    Do not record usage-resource or subscription identifiers.
 4. Open **My portal** and confirm, without starting an import, whether the
    account presents creation/publishing paths for feature, vector-tile, and
-   map-tile services and whether public `Everyone` sharing is available.
+   map-tile services, and which sharing levels the account actually offers for
+   a hosted layer. Current documentation says Location Platform offers only
+   `Owner (private)`; record what the account shows rather than assuming
+   either way.
 5. Report only the outcomes above. Do not open the existing credential, inspect
    its privileges/referrers, reveal either key, generate a replacement, or
    change its settings.
 
 Until those five checks are returned, billing, actual service-creation access,
-public-sharing availability, current storage/bandwidth usage, and no-cost
-headroom are `unverified`. Credits and ArcGIS Online organization privileges are
-`unavailable/not applicable` to the reported Location Platform branch, not
-missing prerequisites for its documented public sharing.
+available sharing levels, current storage/bandwidth usage, and no-cost headroom
+are `unverified`. Credits and ArcGIS Online organization privileges are
+`unavailable/not applicable` to the reported Location Platform branch.
 
 A later throwaway hosted-feature test appears permissible under the documented
-product model because feature hosting and public sharing have free tiers. It is
-not yet authorized by the evidence: first confirm pay-as-you-go is off, the
-creation and `Everyone` controls are present, and current feature storage and
-feature-query bandwidth leave ample headroom. The test remains prohibited on
-this branch.
+product model because feature hosting has free tiers. It is not yet authorized
+by the evidence: first confirm pay-as-you-go is off, that the creation controls
+are present, which sharing levels the account offers, and that current feature
+storage and feature-query bandwidth leave ample headroom. **Any such test must
+be designed for keyed access, not anonymous access**, because current
+documentation says Location Platform hosted services are not shared publicly.
+The test remains prohibited on this branch.
 
 ### 1. Identify the account type
 
@@ -1087,7 +1229,8 @@ For a Location Platform account, record only the capability outcomes:
 
 - whether hosted feature, vector-tile, and map-tile service creation is
   available to the account;
-- whether the intended service can be shared for anonymous public access;
+- which sharing levels the account offers for the intended service, and
+  therefore whether visitor access would be keyed or anonymous;
 - current storage and bandwidth usage, the applicable monthly free-tier limits,
   and enough remaining headroom for a minimal test and the likely project
   representation; and
@@ -1190,13 +1333,19 @@ credits.
 
 - Derived datasets are generated by the processing path, not hand-edited. If a derived file needs changing, change the process that produces it.
 - Validated derived datasets cross the provider-neutral publication boundary to
-  the evidence-selected public delivery route. ArcGIS Location Platform limited
-  data services and ArcGIS Online organization-hosted layers are separate Esri
-  candidates; a non-Esri public representation must be selected and verified if
-  neither is suitable. No route is selected or implemented yet for the
-  project-derived whale, vessel, and exposure layers.
+  the evidence-selected public delivery route. **One representation is
+  implemented, for the whale layer:** the `blue_whale_display_export_v1`
+  boundary produces WGS 84 GeoJSON that the application reads as a static
+  same-origin file. It is locally verified and **not** an accepted hosting
+  decision; nothing has been published and the host is unselected. The
+  representation for the vessel and exposure layers is still open, with static
+  files, ArcGIS Location Platform limited data services, ArcGIS Online
+  organization-hosted layers, and a non-Esri route as candidates.
+- Generated display layers are never committed. The exporter stages them into
+  Git-ignored `web/public/layers/`, and refuses any destination outside this
+  checkout's ignored output roots.
 - The VSR boundary is the exception: analysis uses the immutable ignored local
-  snapshot, while the application will display `FID = 126` directly from the
+  snapshot, while the application displays `FID = 126` directly from the
   publisher's service. No project-hosted copy or derived VSR geometry may cross
   the publication boundary; see
   [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md).
@@ -1240,16 +1389,18 @@ In practice:
   tool/version, inspected views/checks, result, and relevant observations.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
-**Application (TypeScript).** `npm test` in `web/` runs Vitest once;
+**Application (TypeScript).** `npm test` in `web/` runs Vitest once (63 tests);
 `npm run test:watch` watches. The suite covers configuration logic in
 `web/lib/`, how the map component's reported load failures become interface
-text, and the source-level application boundary that keeps fallback attribution
-present until a ready SDK map assumes attribution responsibility. Rendering,
+text, the source-level application boundary that keeps fallback attribution
+present until a ready SDK map assumes attribution responsibility, the whale
+layer's artifact binding and class breaks, and the checksum verification that
+ties the identity shown in the interface to the bytes the browser loaded. Rendering,
 the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 417 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 529 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -1293,7 +1444,17 @@ zero-geodesic relative-difference handling, all-four-candidate parity with the
 grid evaluator, period-evidence atomic output and CLI behavior,
 normalized-memory verification, deterministic resource-threshold evaluation,
 mocked runtime abort and process cleanup, profiler CLI/output safeguards and
-version reporting, and all CLI boundaries.
+version reporting,
+display-export source-contract enforcement, longitude/latitude axis order
+anchored to the projection's own central meridian, polygon-with-hole and
+MultiPolygon preservation with RFC 7946 ring orientation, exact value and
+identifier preservation, byte-identical export repetition, configured-extent
+rejection, public-metadata allowlisting with location-shaped, over-long,
+control-bearing, blank, mistyped, non-finite and non-checksum rejection,
+generation-run-identifier validation, non-finite JSON refusal, output-destination
+allowlisting including other checkouts and raw/Git locations, atomic export
+publication and restoration after a failed publish,
+and all CLI boundaries.
 Tests create temporary CSVs and geometry or use data in memory; the ignored M2
 artifacts are not test prerequisites. Third-party libraries are not themselves
 unit-tested.

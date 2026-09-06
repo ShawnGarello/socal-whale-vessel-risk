@@ -316,30 +316,49 @@ among:
 - any export or tiling parameters; and
 - the public layer or file the application consumes.
 
-The final representation for project-derived whale, vessel, and exposure layers
-is deliberately open. Candidate routes are ArcGIS Location Platform limited
-data services, ArcGIS Online organization-hosted layers, and a non-Esri public
-fallback if neither is suitable. Selection depends on measured output size,
-feature count or raster characteristics, geometry complexity, browser
-load/render performance, redistribution terms, anonymous-access requirements,
-and verified account or hosting capabilities. GeoJSON, vector tiles, hosted
-feature layers, hosted tile/imagery layers, and other supported representations
-are candidates, not decisions.
+**One representation is implemented for the whale input layer.** The
+`blue_whale_display_export_v1` boundary in `analysis/` turns a validated
+`blue_whale_grid_transfer_v1` GeoParquet artifact into RFC 7946 WGS 84 GeoJSON
+plus a sanitized, publishable manifest, and the application reads that file from
+its own origin. The exporter requires the source checksum, validates the source
+contract before transforming anything, changes representation only — no value is
+recomputed, rescaled, rounded, or simplified — and writes only to Git-ignored
+output roots inside this checkout. The manifest is rebuilt field by field from a
+named allowlist, so no filesystem path, credential, raw input, private lineage,
+or VSR-derived value can reach a public artifact. The browser verifies the
+file's checksum against the bytes it loaded before displaying it, so the
+identity the interface shows is checked rather than merely recorded.
+
+This is an implemented and locally verified route, **not an accepted hosting
+decision and not a deployment**. Nothing has been published. The public host,
+and whether a hosted Esri service is preferable to static files for the
+remaining layers, are still open and need a decision record.
+
+The final representation for the vessel and exposure layers remains open, and
+the whale route may still be revised when they are measured. Candidate routes
+are static same-origin files, ArcGIS Location Platform limited data services,
+ArcGIS Online organization-hosted layers, and a non-Esri public route.
+Selection depends on measured output size, feature count or raster
+characteristics, geometry complexity, browser load/render performance,
+redistribution terms, access requirements, and verified account or hosting
+capabilities. GeoJSON, vector tiles, hosted feature layers, hosted tile/imagery
+layers, and other supported representations remain candidates for those layers.
 
 ### Publisher-hosted VSR display exception
 
 [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md)
 selects one narrow Version 1 exception. Python uses the exact immutable local
 snapshot under ignored `data/raw/` for fractional inside-versus-outside
-analysis. The public application will instead load `FID = 126` directly from
+analysis. The public application instead loads `FID = 126` directly from
 the publisher's public `WhaleAtlas_2026` Feature Service:
 
 `https://services5.arcgis.com/4biRnCjZju47bNvA/arcgis/rest/services/WhaleAtlas_2026/FeatureServer/0`
 
-The application will show that remote layer inside its own map, not redirect
-the visitor. It must attribute Danielle Alvarez, CMSF, and BWBS according to
-ArcGIS item `b400c7f418b04dc5a9d7ce5015adae32` and preserve the publisher's
-non-navigational disclaimer. The project must not commit or publish the local
+The application shows that remote layer inside its own map and does not
+redirect the visitor. This is implemented and locally verified; it has not been
+served from a deployed origin. It must attribute Danielle Alvarez, CMSF, and
+BWBS according to ArcGIS item `b400c7f418b04dc5a9d7ce5015adae32` and preserve
+the publisher's non-navigational disclaimer. The project must not commit or publish the local
 snapshot or any copied, clipped, simplified, converted, or derived VSR
 geometry.
 
@@ -393,13 +412,30 @@ include hosted imagery or scene services. See Esri's
 [portal and data services FAQ](https://developers.arcgis.com/documentation/portal-and-data-services/faq/).
 
 Location Platform storage and data-service bandwidth use monthly free tiers
-with optional pay-as-you-go billing. Current official documentation was checked
-on 2026-08-31 and also confirms `Everyone` sharing gives anonymous access; a
-separate ArcGIS Online organization is not required for that Location Platform
-path. See Esri's [sharing and security guide](https://developers.arcgis.com/documentation/portal-and-data-services/data-services/feature-services/sharing-and-security/),
-[billing guide](https://location.arcgis.com/help/billing/), and
+with optional pay-as-you-go billing.
+
+**Correction, rechecked 2026-09-06.** An earlier 2026-08-31 note in this project
+recorded that `Everyone` sharing gives Location Platform hosted services
+anonymous access. That is wrong, and it appears to have applied cross-product
+sharing guidance to Location Platform. Esri's product-specific
+[Location Platform data sharing and access guide](https://location.arcgis.com/help/data-sharing-and-access/)
+states that "Hosted data services in ArcGIS Location Platform are not shared
+publicly," and directs public-facing applications to use authenticated access
+with developer credentials such as an API key. The
+[feature-service sharing and security guide](https://developers.arcgis.com/documentation/portal-and-data-services/data-services/feature-services/sharing-and-security/)
+lists `Owner (private)` as the only Location Platform sharing level, requiring a
+scoped API key, while ArcGIS Online additionally offers Organization, Group, and
+`Everyone (public)`.
+
+**A visitor who never signs in is not the same as a token-free service
+request.** A scoped, origin-restricted browser key can let visitors read a
+private Location Platform layer without signing in, but the service itself is
+not anonymous, the key is public once shipped, and the account owner carries the
+resulting usage. Any Location Platform route for project-derived layers must be
+designed on that basis. See also Esri's
+[billing guide](https://location.arcgis.com/help/billing/) and
 [current pricing](https://location.arcgis.com/pricing/). The documented free
-tiers relevant to public project data are 250 MB each
+tiers relevant to project data are 250 MB each
 for feature storage and tiles/files/attachments storage, 125 MB each for
 feature-query and feature-edit bandwidth, 25 GB each for vector-tile and
 map-tile bandwidth, and 25,000 generated tiles. Basemaps have separate monthly
@@ -529,6 +565,11 @@ project layers, and matching precomputed results.
 - Local interim and derived artifacts remain ignored. Small results the static
   application reads may be committed when their contract is implemented and
   their provenance is recorded.
+- Generated display layers are **not** committed. The display exporter stages
+  them into Git-ignored `web/public/layers/`, which `next dev` and `next build`
+  serve from the same origin, so the application can read a generated layer
+  without it entering version control. The exporter refuses every destination
+  outside this checkout's ignored output roots.
 - Public project-derived layers cross the publication boundary to the selected host;
   ArcGIS Location Platform and ArcGIS Online are separate conditional Esri
   destinations, with a non-Esri public route retained if neither is suitable.
@@ -608,6 +649,15 @@ on 2026-08-27 in QGIS 4.2.1. A formal reusable verification record or command
 is not implemented. That follow-up belongs to the processing/reproducibility
 workflow, not to this documentation-only architecture change.
 
+**A public display artifact is a derived spatial layer and needs the same
+treatment.** Changing representation for the browser can introduce exactly the
+errors visual inspection exists to catch — a wrong axis order, a dropped hole, a
+clipped boundary. The whale display export was therefore inspected in QGIS in
+its published form, opened directly through OGR rather than converted, with the
+inspection bound to the exact output checksum and refusing to run on a
+mismatch. `analysis/scripts/qgis_inspect_whale_display_export.py` performs that
+check.
+
 ## Reproducibility and lineage
 
 Reproducibility rests on four linked practices:
@@ -646,11 +696,27 @@ including:
   free-tier/billing status; ArcGIS Online privileges, credits, and storage; or
   alternative-host capability and operating constraints.
 
-The ArcGIS SDK's installed payload and local shell build have been measured,
-but those measurements do not select a project-layer representation. Hosted
-feature layers, hosted tiles/imagery, vector tiles, GeoJSON, and other formats
-remain candidates until the real outputs exist and browser tests distinguish
-them.
+The whale layer has now been measured, locally. Its GeoJSON export is
+3,277,329 bytes uncompressed, 574,907 gzipped and 396,852 with Brotli; geometry
+and feature ids are 67.9 % of it and each published property costs roughly
+150 KB. The complete static export is 30.75 MiB across 895 files. On the
+author's machine, over loopback, with no HTTP compression and no throttling, the
+layer was usable about 1.9 s after navigation cold and about 1.0 s warm, and
+pan/zoom settled in well under a second. That is enough to justify displaying it
+without tiling or geometry simplification, and it is what the implemented route
+rests on.
+
+Those numbers are a local functional observation of this project's own static
+asset. They are **not** a benchmark of ArcGIS platform services, no ArcGIS
+service timing is reported, and they establish nothing about deployed load time,
+slow connections, low-end devices, or the combined cost once the vessel and
+exposure layers exist. The Location Platform agreement's benchmarking and
+benchmark-publication clauses remain unresolved and must be settled before any
+timing exercise that measures ArcGIS services.
+
+Hosted feature layers, hosted tiles/imagery, vector tiles, and other formats
+remain candidates for the vessel and exposure layers until those outputs are
+measured the same way.
 
 ## Version 1 architectural constraints
 
@@ -675,6 +741,7 @@ socal-whale-vessel-risk/
 │   ├── interim/           # intermediate and verification artifacts
 │   └── derived/           # validated local outputs before publication
 ├── web/                   # static Next.js application (exists)
+│   └── public/layers/     # Git-ignored staging for generated display layers
 └── results/               # small versioned application results [deferred]
 ```
 
@@ -689,7 +756,7 @@ No implementation directory is scaffolded before its milestone needs it.
 | Exposure formula, normalization, and weighting | Both final grid-aligned inputs are ready | Input units/distributions, scientific support, and sensitivity within the accepted `receivers_50_nautical_miles` domain. |
 | High-exposure threshold | Exposure surface exists | Real value distribution and sensitivity analysis. |
 | Final public representation and host for project-derived whale, vessel, and exposure layers | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, anonymous browser performance, required interactions, legal constraints, usage limits, and supported service types. No format or provider is preselected. The publisher-hosted VSR exception is already selected in ADR 0019. |
-| ArcGIS Location Platform publication route | Author completes the authenticated portion of the Location Platform capability check | Official documentation confirms a limited single-user organization, feature/vector-tile/map-tile support, and public anonymous sharing with current monthly free tiers. The real account's product identity, controls, usage, headroom, and billing status remain unverified. No pay-as-you-go activation or spending is authorized. |
+| ArcGIS Location Platform publication route | Author completes the authenticated portion of the Location Platform capability check | Official documentation confirms a limited single-user organization, feature/vector-tile/map-tile support, and current monthly free tiers. Rechecked 2026-09-06: Location Platform hosted data services are **not** shared publicly; a scoped API key is required, so visitor access is keyed rather than anonymous. The real account's product identity, controls, usage, headroom, and billing status remain unverified. No pay-as-you-go activation or spending is authorized. |
 | ArcGIS Online publication route | Author completes the ArcGIS Online capability check | Organization privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |
 | Non-Esri public delivery route, if needed | Both Esri routes are unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |
 | Static application host | Deployment milestone | HTTPS, stable origin, static-export limits, build-time environment values, and clean-browser verification. |

@@ -2436,6 +2436,129 @@ water grid read-only. Generated artifacts remain under ignored
 | Determinism | Two clean output paths produced byte-identical GeoParquet and the same SHA-256; lineage timestamps and checksums differed truthfully |
 | Visual inspection | **Passed 2026-08-27 in QGIS 4.2.1 (GDAL 3.13.2).** QGIS opened the exact `data/interim/m3-whale-grid-transfer/blue-whale-density-grid-a.parquet` directly through OGR as Parquet. Five ignored 2200×1400 renders showed correct Southern California placement and axis order, exact source/grid alignment, plausible coastline and island gaps, expected source-scale density blocks, clean context boundaries, and no unexplained holes, slivers, displacement, or projection artifacts. |
 
+## Modeled blue-whale display export
+
+Implemented under `blue_whale_display_export_v1` / processing version `1.0.0`.
+This is a **presentation boundary, not an analytical one**: it changes the
+representation of an already validated artifact so a browser can draw it, and
+changes nothing else.
+
+```text
+python -m uv run python -m whale_vessel_analysis.whale_display_export_cli --source <whale-grid.parquet> --expected-source-sha256 <sha256> --output <name.geojson> [--overwrite]
+```
+
+`--expected-source-sha256` is required, so a public artifact can never be
+produced from an unidentified input.
+
+### What it validates before transforming anything
+
+The exact `blue_whale_grid_transfer_v1` contract: dataset contract, schema
+version and declared analysis CRS; GeoParquet primary column, WKB encoding and
+EPSG:3310 geometry CRS; the exact 19-column schema with types and
+non-nullability; absence of nulls; unique `cell_id` values agreeing with their
+row and column indices; the contract row order; finite, non-negative values;
+positive water areas; coverage fractions inside [0, 1]; and Polygon or
+MultiPolygon geometry that is neither empty nor invalid.
+
+When the generation lineage sidecar is present it must declare the whale-grid
+lineage contract and the same output checksum. Only the run identifier and the
+sidecar's own checksum are taken from it, and the run identifier is itself
+validated, so no local path from that file can reach a public artifact.
+
+### Transformation
+
+EPSG:3310 to EPSG:4326 with `always_xy=true`, and rings oriented as RFC 7946
+requires — exterior counterclockwise, interior clockwise. **No geometry is
+simplified, densified, or rounded, and no value is recomputed**; the manifest
+records each as `not_performed`. Afterwards the exporter re-checks that geometry
+type, part count, hole count and vertex count are unchanged, that coordinates
+lie inside valid longitude/latitude ranges, and that the extent stays inside the
+configured map extent within an explicit `1e-06`-degree tolerance.
+
+That tolerance admits one known artifact of the accepted grid method and
+nothing larger. The grid is built by densifying the geographic extent to at most
+0.01°, projecting, and clipping in EPSG:3310, so a straight projected chord
+between two vertices on the 35° N parallel bulges about `1.08e-07` degrees
+(≈ 1.2 cm) north of it. Clipping that away in the exporter would silently change
+the analytical geometry.
+
+Serialization is canonical JSON — sorted keys, compact separators, UTF-8, LF,
+and no non-finite numbers — so repeated exports of the same source are
+byte-identical.
+
+### Published and withheld fields
+
+Feature identity is the analytical `cell_id`. `object_id` is display-only, the
+1-based position in the contract row order, derived deterministically because
+`GeoJSONLayer` needs a numeric object-id field.
+
+| Published field | Unit | Meaning |
+|---|---|---|
+| `object_id` | unitless integer | Display-only identifier; not an analytical value. |
+| `cell_id` | unitless identifier | Stable analysis-grid identity. |
+| `modeled_density_animals_per_km2` | animals/km² | Allocated modeled abundance divided by the cell's water area. Modeled, not observed. |
+| `modeled_abundance_allocation_animals` | animals | Modeled animals allocated by abundance-conserving area weighting. Modeled, not counted. |
+| `water_area_km2` | km² | Water area supporting the modeled value. |
+| `source_coverage_fraction` | unitless [0,1] | Share of the cell's water area covered by contributing source polygons. Source-model support, not survey or AIS completeness. |
+| `coverage_status` | unitless classification | `complete`, `within_numerical_tolerance`, or `incomplete`. |
+
+Twelve source columns are withheld, each with a recorded reason: `row_index` and
+`column_index` (redundant — `cell_id` encodes both); the four `cell_*_m`
+EPSG:3310 bounds (projected internals, while the published geometry is WGS 84);
+`water_area_m2` and the four `source_covered_*` / `uncovered_*` area columns
+(redundant with `water_area_km2` and `source_coverage_fraction`); and
+`source_polygon_count` (a generation diagnostic with no display meaning).
+
+### The sanitized manifest
+
+A sibling `<name>.geojson.manifest.json` is published with the layer and is
+safe to publish. It carries contract and version identifiers, the source
+checksum, run identifier and generation-lineage checksum, the NOAA/SWFSC source
+references and requested citations, transformation parameters, the published and
+withheld field lists with units and reasons, output identity and diagnostics,
+software versions, and the layer's scientific statements.
+
+Its contents are **rebuilt field by field from a named allowlist**, never copied
+from the source artifact's embedded metadata, because that metadata is
+producer-controlled. Unlisted keys are dropped; a listed key that is missing,
+mistyped, blank, over-long, control-bearing, non-finite, not a SHA-256 where one
+is required, or shaped like a path, UNC share or URL fails the export. No
+filesystem path, account identifier, credential, raw input, private lineage, or
+VSR-derived value can therefore reach a public artifact.
+
+### Destinations and publication
+
+Destinations are an allowlist anchored to the current checkout: `data/derived/`,
+`data/interim/`, and `web/public/layers/`, all Git-ignored. Everything else is
+refused, including another worktree's directories, and any `data/raw` or `.git`
+directory is refused by shape wherever it appears. The GeoJSON and manifest are
+written to temporary siblings and published together; an existing pair is
+refused unless `--overwrite` authorizes replacing both, and a failure partway
+through restores what was there before.
+
+`web/public/layers/` is what the application reads: `next dev` and `next build`
+both serve it from the same origin, so a generated layer reaches the browser
+without entering version control.
+
+### Verified real export, 2026-09-06
+
+| Check | Result |
+|---|---|
+| Source | `blue_whale_grid_transfer_v1`, 523,986 bytes, SHA-256 `421dc7bf837de1b328328d61944bfb7fa0c7e3c77ac0489ab47506a060520c62`, run `whale-grid-1d27df77bf1da01155fd` |
+| Output | 3,277,329 bytes; SHA-256 `831a5412e9f414d5e4c7011d1b1687a89b8089826f8925f31e737b974662e154` |
+| Features / unique cells | 4,516 / 4,516 |
+| Geometry | 4,561 polygon parts, 35 interior rings, 44,773 positions; Polygon and MultiPolygon; zero empty or invalid |
+| Extent | longitude −122.0 to −117.097556437; latitude 31.99999999999996 to 35.000000108282464 |
+| Values | modeled density 0.00083394–0.007648247 animals/km²; 344.1406562623342 modeled animals and 107,728.695924 km² water area conserved |
+| Round trip | maximum vertex round-trip 9.78 × 10⁻⁹ m; PROJ operation accuracy 4 m, which is a datum-transformation property rather than this export's precision |
+| Determinism | two exports from separately generated byte-identical source copies produced identical GeoJSON; only the manifest's `exported_at` and `generation_lineage_sha256` differ, truthfully |
+| Compression | 574,907 bytes gzip level 9; 396,852 bytes Brotli quality 11 |
+| Visual inspection | **Passed 2026-09-06 in QGIS 4.2.1 (GDAL 3.13.2)**, opened directly through OGR as GeoJSON and bound to the output checksum. Counts, rings, positions, extent and value range all matched the manifest. Five checksum-recorded 2200 × 1400 renders showed correct Southern California placement and axis order, clean 35° N and southern clipping, correct island holes, plausible coastline gaps, and cell-scale detail with no unexplained gap, sliver, displacement, or projection artifact. |
+
+The renders and reports remain ignored local evidence. The application-side
+verification is recorded in [`../web/README.md`](../web/README.md) and
+[`../docs/m5-whale-display-handoff.md`](../docs/m5-whale-display-handoff.md).
+
 ## Re-running the large-tabular benchmark
 
 The benchmark supporting the primary-engine decision is parameterized; no
