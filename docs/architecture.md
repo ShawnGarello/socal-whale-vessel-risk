@@ -54,12 +54,16 @@ a copy or derivative of that geometry. Permission to redistribute remains
 unconfirmed; Version 1 avoids redistribution rather than treating public access
 as a licence.
 
-The publication route for the project's derived whale, vessel, and exposure
-layers remains open. Official documentation confirms the Location Platform
-product supports feature, vector-tile, and map-tile services and public
-anonymous sharing under metered monthly free tiers. The author's actual account
-product identity, controls, usage, remaining headroom, and billing state are
-unverified because no authenticated session was available. ArcGIS Online
+The public host for the project's derived layers remains open, and one
+representation is implemented: the whale layer is exported as WGS 84 GeoJSON
+and read as a static same-origin file, which is locally verified but not an
+accepted hosting decision. Official documentation confirms the Location
+Platform product supports feature, vector-tile, and map-tile services under
+metered monthly free tiers, and — rechecked 2026-09-06 — that those hosted
+services are not shared publicly and require a scoped API key, so a visitor
+would reach them with a credential rather than anonymously. The author's actual
+account product identity, controls, usage, remaining headroom, and billing
+state are unverified because no authenticated session was available. ArcGIS Online
 organization access is not applicable to the reported Location Platform branch
 unless that product check fails. Account-specific evidence still constrains
 that publication route; it does not determine whether the analysis can exist.
@@ -689,8 +693,9 @@ including:
   applicable;
 - transfer size, time to first meaningful map, pan/zoom responsiveness, memory
   use, and behavior on a mid-range connection/device;
-- whether the representation supports required symbology, legends, popups,
-  attribution, and anonymous access;
+- whether the representation supports required symbology, legends, popups and
+  attribution, and what access a visitor needs — a token-free public file or
+  service, or one read with a scoped browser credential;
 - redistribution conditions for each source and derivative; and
 - actual ArcGIS Location Platform service support, storage, bandwidth,
   free-tier/billing status; ArcGIS Online privileges, credits, and storage; or
@@ -755,7 +760,7 @@ No implementation directory is scaffolded before its milestone needs it.
 |---|---|---|
 | Exposure formula, normalization, and weighting | Both final grid-aligned inputs are ready | Input units/distributions, scientific support, and sensitivity within the accepted `receivers_50_nautical_miles` domain. |
 | High-exposure threshold | Exposure surface exists | Real value distribution and sensitivity analysis. |
-| Final public representation and host for project-derived whale, vessel, and exposure layers | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, anonymous browser performance, required interactions, legal constraints, usage limits, and supported service types. No format or provider is preselected. The publisher-hosted VSR exception is already selected in ADR 0019. |
+| Final public representation and host for project-derived whale, vessel, and exposure layers | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, performance in a clean browser session, required interactions, the access model a visitor needs (token-free or keyed), legal constraints, usage limits, and supported service types. The whale layer's static same-origin GeoJSON is implemented and locally verified but not accepted; no format or provider is selected. The publisher-hosted VSR exception is already selected in ADR 0019. |
 | ArcGIS Location Platform publication route | Author completes the authenticated portion of the Location Platform capability check | Official documentation confirms a limited single-user organization, feature/vector-tile/map-tile support, and current monthly free tiers. Rechecked 2026-09-06: Location Platform hosted data services are **not** shared publicly; a scoped API key is required, so visitor access is keyed rather than anonymous. The real account's product identity, controls, usage, headroom, and billing status remain unverified. No pay-as-you-go activation or spending is authorized. |
 | ArcGIS Online publication route | Author completes the ArcGIS Online capability check | Organization privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |
 | Non-Esri public delivery route, if needed | Both Esri routes are unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |

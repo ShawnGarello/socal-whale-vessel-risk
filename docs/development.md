@@ -1108,6 +1108,17 @@ different organization, privilege, credit, and storage model. See Esri's
 [current Location Platform pricing](https://location.arcgis.com/pricing/), and
 [API-key authentication documentation](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/).
 
+**The two account types differ in how a visitor reaches a hosted layer, so the
+checks below are account-specific.** Location Platform hosted data services are
+documented as not shared publicly and require a scoped API key; ArcGIS Online
+additionally offers `Everyone (public)`. Keep two claims apart throughout: a
+**visitor who never signs in**, which both routes can support, and a **request
+carrying no credential**, which only a publicly shared service provides. A
+scoped, origin-restricted browser key travels with the request and is public
+once shipped, so keyed access is not anonymous access even though the visitor
+never sees a sign-in. The corrected capability details are in the inventory
+below.
+
 Everything involving an account is an **authenticated, author-run action**. An
 agent does not sign in, publish, change sharing, alter organization settings,
 enable billing, add a payment method, or spend money. A test is not attempted
@@ -1262,30 +1273,64 @@ publication candidates.
 ### 3. Conditionally test an Esri-hosted feature service
 
 Attempt a minimal hosted-feature-service test only when the applicable branch
-has already verified public sharing and enough no-cost capacity. Use throwaway
-data — **not** project data and nothing derived from a source whose
-redistribution terms remain unverified.
+has already verified the sharing level it can actually offer and enough no-cost
+capacity. Use throwaway data — **not** project data and nothing derived from a
+source whose redistribution terms remain unverified.
+
+**The two account types are not tested the same way**, because they do not
+offer the same sharing levels. Follow the branch that applies:
 
 1. Create a CSV with a handful of arbitrary Southern California Bight points.
 2. Publish it as a hosted feature service through the applicable Location
    Platform or ArcGIS Online portal workflow.
 3. Mark it clearly as a disposable, dated capability test.
-4. Share it with everyone.
-5. Record whether publication and public sharing succeeded, which account-type
-   branch was tested, and whether storage, bandwidth, or credits changed. Keep
-   the item id privately only until cleanup; do not commit it.
+4. Set the sharing level the account actually supports for that item:
+   - **ArcGIS Location Platform:** leave it `Owner (private)`, which current
+     documentation says is the only level offered, and note the scoped API key
+     the service requires. Do not attempt to share it publicly.
+   - **ArcGIS Online:** share it with `Everyone` if the organization policy
+     permits, and record any restriction that prevents it.
+5. Record which account-type branch was tested, whether publication succeeded,
+   the sharing level actually available, and whether storage, bandwidth, or
+   credits changed. Keep the item id privately only until cleanup; do not
+   commit it.
 
 If a prerequisite is missing, the portal refuses a step, or the operation could
 incur a charge, stop. Record the outcome and do not work around account or
 billing policy.
 
-### 4. Verify anonymous access
+### 4. Verify the access the application would actually use
 
-When a test service exists, copy its service URL and request its JSON metadata
-from a private browser session with no ArcGIS sign-in. Confirm the response is
-available without an interactive token, then load the service in the
-application. If no safe test was possible, record this check as not attempted
-and why.
+The point of this step is to prove the application can read the service the way
+a visitor would, **not** to prove the service is reachable without any
+credential. Those are different claims, and only one of them applies to each
+account type.
+
+Distinguish them explicitly when recording the result:
+
+- **A visitor who never signs in** is the ordinary case for this project. It
+  says nothing about whether the request carried a credential — a scoped,
+  origin-restricted browser key travels with the request and the visitor never
+  sees it.
+- **A request carrying no credential at all** is a stronger property. Only a
+  service shared publicly has it.
+
+Test accordingly:
+
+- **ArcGIS Location Platform:** the service is private, so an unauthenticated
+  request is *expected* to be refused, and that refusal is the correct result
+  rather than a failure. Verify instead that a scoped browser API key with read
+  access to that item lets the application load the service from the authorized
+  origin, with no interactive sign-in and no ArcGIS identity prompt. Record that
+  the route is keyed, and that the key is public once shipped and its usage is
+  billable to the account owner.
+- **ArcGIS Online, when shared with `Everyone`:** request the service's JSON
+  metadata from a private browser session with no ArcGIS sign-in and confirm the
+  response arrives without any token, then load the service in the application.
+
+In both cases confirm no ArcGIS username/password dialog appears; the
+application disables identity prompts deliberately. If no safe test was
+possible, record this check as not attempted and why.
 
 ### 5. Configure and verify the browser API key
 

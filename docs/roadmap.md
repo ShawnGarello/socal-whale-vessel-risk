@@ -945,16 +945,21 @@ path — before there is analytical content to put in it.
 - A working map view of the study area using the ArcGIS Maps SDK for JavaScript.
 - Environment-variable and credential handling in place, with nothing secret committed.
 - **A verified account-type capability check.** For ArcGIS Location Platform,
-  record limited feature/vector-tile/map-tile service support, public access,
-  storage, bandwidth, monthly free-tier headroom, and billing status. For
+  record limited feature/vector-tile/map-tile service support, the sharing
+  levels the account actually offers, storage, bandwidth, monthly free-tier
+  headroom, and billing status. For
   ArcGIS Online, record organization access, publishing/public-sharing
   privileges, hosted feature/tile/imagery support, credits, and storage. The
   check does not enable pay-as-you-go or authorize spending.
-- **When either Esri account type safely supports public hosted-feature
-  publishing without paid usage**, a minimal test item published, shared
-  publicly, and loaded from the application to prove that candidate route end
-  to end. If neither does, the outcome is recorded and the public-layer
-  end-to-end test waits for the selected non-Esri fallback route.
+- **When either Esri account type safely supports hosted-feature publishing
+  without paid usage**, a minimal test item published at the sharing level that
+  account actually offers, and loaded from the application to prove that
+  candidate route end to end. The two branches differ: an ArcGIS Online item can
+  be shared with `Everyone` and read with no credential, whereas a Location
+  Platform item stays private and is read with a scoped API key, so its test
+  proves keyed visitor access rather than token-free access. If neither account
+  supports the test, the outcome is recorded and the end-to-end test waits for
+  the selected non-Esri route.
 - A working deployment of the empty shell.
 - Formatting, linting, and type-checking configured.
 
@@ -964,13 +969,19 @@ path — before there is analytical content to put in it.
 - No API keys or credentials appear in the repository or in committed build output.
 - The deployment is reachable and reflects the current main branch state.
 - **The applicable account-type checks are complete and recorded.** Location
-  Platform's limited data-service, storage, bandwidth, free-tier, and billing
-  status and ArcGIS Online's organization privileges, public sharing, service
-  types, credits, and storage are each confirmed or confirmed unavailable.
-- If either Esri-hosted route safely supports the test, anonymous loading of the
-  temporary hosted item is verified. Otherwise the outcome is carried into M5
-  as evidence requiring a non-Esri publication-route decision; M4 does not
-  invent or verify that fallback.
+  Platform's limited data-service support, available sharing levels, storage,
+  bandwidth, free-tier, and billing status, and ArcGIS Online's organization
+  privileges, public sharing, service types, credits, and storage, are each
+  confirmed or confirmed unavailable.
+- If either Esri-hosted route safely supports the test, the application is
+  verified loading the temporary hosted item **the way a visitor would reach
+  it on that account type**, with no interactive sign-in and no ArcGIS identity
+  prompt: token-free loading for an ArcGIS Online item shared with `Everyone`,
+  or loading with a scoped browser API key for a private Location Platform
+  item. The record must say which of the two was demonstrated, because they are
+  different claims. Otherwise the outcome is carried into M5 as evidence
+  requiring a non-Esri publication-route decision; M4 does not invent or verify
+  that fallback.
 
 ### Progress
 
@@ -1071,13 +1082,15 @@ Built on the `feat/web-foundation` branch. The application is in
 - The author reports creating a Location Platform account and a restricted
   browser API key. The key was absent and was not inspected. No authenticated
   account session was available, so the product identity, service-creation and
-  public-sharing controls, billing mode, usage, and free-tier headroom have not
+  available sharing levels, billing mode, usage, and free-tier headroom have not
   been verified from the real account. The short private author checklist is in
   [development.md](development.md#read-only-capability-inventory-2026-08-31).
-- On documentation alone, a later minimal public hosted-feature test appears
-  capable of remaining inside the free tiers. It is not yet permitted by the
-  evidence: actual pay-as-you-go status, controls, usage, and headroom must be
-  confirmed first. No item was created or published on this branch.
+- On documentation alone, a later minimal hosted-feature test appears capable
+  of remaining inside the free tiers. It is not yet permitted by the evidence:
+  actual pay-as-you-go status, controls, available sharing levels, usage, and
+  headroom must be confirmed first. On the Location Platform branch such a test
+  would be a keyed-access test, since those hosted services are documented as
+  not shared publicly. No item was created or published on this branch.
 
 **Not done**
 
@@ -1109,13 +1122,15 @@ The ordered steps for all of the above are in
 | No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored. |
 | Deployment reachable and reflecting main | **Unverified.** No deployment exists; main has not been deployed or verified. |
 | Account-type capability checks complete and recorded | **Partial.** Current Location Platform documentation and allowances are recorded. The author reports a Location Platform account, but no authenticated session was available; actual product identity, billing, usage, controls, and headroom remain unverified. |
-| Conditional Esri-hosted publish-and-serve test | **Not attempted.** Documentation indicates a minimal public feature service can fit the free tiers, but the test waits for actual pay-as-you-go, control, usage, and headroom checks. |
+| Conditional Esri-hosted publish-and-serve test | **Not attempted.** Documentation indicates a minimal feature service can fit the free tiers, but the test waits for actual pay-as-you-go, control, sharing-level, usage, and headroom checks. On the reported Location Platform branch the test would demonstrate keyed visitor access, not token-free access, because those hosted services are documented as not shared publicly. |
 | Unavailable capabilities recorded as constraints for M5 | **Partial.** Location Platform hosted image and scene creation are documentation-only unavailable; ArcGIS Online credits/privileges are not applicable to the reported branch. Actual account constraints remain unverified. |
 
 M4 is not complete and must not be marked complete until the deployed
 application and the real account-type capability checks are verified. An
 Esri-hosted publish-and-serve test is also
-required when either account type safely supports it without paid usage. Any
+required when either account type safely supports it without paid usage, and
+its record must state whether it demonstrated token-free access or keyed
+visitor access. Any
 unavailable capabilities must be recorded as publication constraints for M5;
 selection and end-to-end testing of a non-Esri route happen in later milestones
 after real layers exist.
@@ -1357,10 +1372,15 @@ input layers remain unfinished**
 - Each layer renders at the study-area scale within an acceptable load time.
   **Whale layer: met locally only**, on one machine over loopback without
   compression or throttling; deployed load time is unmeasured.
-- Anonymous access works end to end from the application. When neither Esri
-  hosting route is suitable, this criterion is verified later against the
-  selected non-Esri fallback rather than waived. **Not met for any
-  project-derived layer: nothing is deployed and there is no public URL.**
+- Public access works end to end from the application: a visitor reaches every
+  layer from the deployed origin without an interactive sign-in, and the record
+  states for each layer whether that access is token-free or carried by a
+  scoped browser credential, since those are different claims. When neither
+  Esri hosting route is suitable, this criterion is verified later against the
+  selected route rather than waived. **Not met for any project-derived layer:
+  nothing is deployed and there is no public URL.** The implemented whale route
+  would be token-free, because a static same-origin file needs no credential,
+  but that is unverified from a deployed origin.
 - Every layer's legend states its units and the meaning of its values.
   **Met for the whale layer.**
 - Every layer names its source and its retrieval or processing date somewhere the user can reach.
