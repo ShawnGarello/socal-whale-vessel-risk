@@ -2564,11 +2564,15 @@ verification is recorded in [`../web/README.md`](../web/README.md) and
 Implemented under `exploratory_relative_exposure_v1` / method version `1.0.0`,
 following [ADR 0020](../docs/decisions/0020-propose-area-integrated-relative-exposure.md).
 The ADR is **accepted for bounded exploratory execution only**: the method may
-be run locally, but its results are unaudited, unaccepted and must not be quoted
-as headline findings. There is no exposure publication route and no
-application-results contract; the bundle is ignored local evidence.
+be run locally, but its results still need independent review and owner
+acceptance, and must not be quoted as headline findings. The run identity and
+artifact hashes recorded in the handoff are historical: they predate the
+correction that removed execution lineage from run identity, so a fresh bundle
+reproduces the numbers but not those identifiers. There is no exposure
+publication route and no application-results contract; the bundle is ignored
+local evidence.
 
-Three modules make up the boundary.
+Four modules make up the boundary.
 
 | Module | Owns |
 |---|---|
@@ -2577,10 +2581,25 @@ Three modules make up the boundary.
 | `exposure.py` | Intensities, area-weighted quantile thresholds, maximum-scaled display normalization, 10 km coarsening, method comparison and per-grid summaries |
 | `exposure_run` | The full run: both grids, the threshold family, sensitivity comparisons, the deterministic bundle, and a read-back re-verification of what it wrote |
 
-The denominator is the exact qualified **water** area, not cell area, and speed
-is not part of any formula ([ADR 0006](../docs/decisions/0006-report-vessel-speed-separately.md)).
-Integration is over exact qualified water and its joint intersection and
-difference with the immutable local VSR snapshot.
+**Two different areas are involved, and confusing them is the easiest way to get
+this wrong.**
+
+- *Per-cell intensity* divides by the cell's **full water area**. Both terms use
+  it: modeled whale density is that cell's abundance over its whole water
+  geometry, and vessel traffic is its period vessel-kilometres over the same
+  whole water geometry. The analytical domain does **not** enter this
+  denominator, so a cell that is only partly qualified still has its intensity
+  computed over all of its water. Dividing by qualified area here would inflate
+  intensity for partly qualified cells and silently change the result.
+- *Integration* then multiplies that intensity by **qualified** area, and by the
+  qualified area's exact intersection with and difference from the immutable
+  local VSR snapshot, which partition it. This is where the domain and the zone
+  boundary apply, under the labelled uniform-within-water-cell assumption.
+
+So intensity is a full-water quantity and only the integration weights are
+qualified; `exposure.py` computes the first and `exposure_geometry` supplies the
+areas for the second. Speed is not part of either
+([ADR 0006](../docs/decisions/0006-report-vessel-speed-separately.md)).
 
 ### Running it
 

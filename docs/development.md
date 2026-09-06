@@ -51,9 +51,9 @@ run locally to produce a deterministic, byte-identically repeated exploratory
 bundle that was then rendered against its exact checksums in QGIS. The guarded
 profiler invocation, the checksum-bound rendering route and the test command are
 in the [analysis README](../analysis/README.md#exploratory-relative-exposure-foundation).
-The ADR is accepted for exploratory execution only: results are unaudited and
-unaccepted, no exposure statistics, layer or publication contract exists, and
-M6 remains in progress. Status lives in the
+The ADR is accepted for exploratory execution only: the results still need
+independent review and owner acceptance, no exposure statistics, layer or
+publication contract exists, and M6 remains in progress. Status lives in the
 [roadmap](roadmap.md#m6--whalevessel-exposure-analysis).
 
 ## Documentation sources of truth

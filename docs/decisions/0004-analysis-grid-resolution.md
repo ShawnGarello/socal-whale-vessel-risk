@@ -88,7 +88,7 @@ performs the exact water/domain/VSR intersections and splits a caller-supplied
 full-water integrated total by the resulting area fractions, and the cases below
 pass as synthetic tests. The exposure calculation that supplies those totals is
 [ADR 0020](0020-propose-area-integrated-relative-exposure.md), accepted for
-exploratory execution only; its results are not audited or accepted, so no
+exploratory execution only; its results are not reviewed or accepted, so no
 boundary statistic here is a final headline.
 
 The cases below are the contract for that fractional-boundary slice.

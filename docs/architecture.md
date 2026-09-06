@@ -38,7 +38,7 @@
 > after real generation, repetition and QGIS validation. Publisher-side transfer
 > and observational completeness remain unverified. Network retrieval remains
 > unimplemented. The ADR 0020 exposure method is implemented and has been run
-> locally for exploratory results, which are unaudited and unaccepted; exposure
+> locally for exploratory results, which are unreviewed and unaccepted; exposure
 > statistics, layer and publication contracts, final public representations for
 > project-derived layers, and deployment remain unfinished.
 > Publisher-hosted VSR display is
@@ -262,7 +262,7 @@ M3; the exposure boundary below now consumes that output.
 
 A distinct `exploratory_relative_exposure_v1` boundary implements the
 [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) method
-across three modules. `exposure_geometry` performs exact water/domain/VSR
+across four modules. `exposure_geometry` performs exact water/domain/VSR
 intersection and difference in EPSG:3310, applies the established 0.01°
 densification, verifies the retained domain and VSR bytes by checksum, and
 splits a caller-supplied full-water integrated total by area fraction under the
@@ -274,10 +274,17 @@ UTC steps — rather than against historical paths, so a regenerated upstream
 bundle is admissible while analytical identity stays unchanged. Execution-specific
 lineage hashes are recorded in run metadata only; they are deliberately excluded
 from run identity, layer metadata and the deterministic report, which keeps
-analytical identity separate from execution provenance. `exposure_run` computes
-both grids, the threshold family and the sensitivity comparisons, then writes a
-deterministic bundle and reads it back to re-verify formula, integration,
-geometry, nulls, indices, flags and summaries.
+analytical identity separate from execution provenance. `exposure.py` holds the
+calculation itself: per-cell intensity, the area-weighted quantile thresholds,
+maximum-scaled display normalization, 10 km coarsening and the method
+comparison. It keeps two areas deliberately distinct — intensity divides both
+the whale and vessel terms by the cell's **full** water area, while integration
+weights that intensity by **qualified** area and by its exact inside/outside VSR
+partition — so the domain constrains what is summed, not what is divided by.
+`exposure_run` composes the four: it computes both grids, the threshold family
+and the sensitivity comparisons, then writes a deterministic bundle and reads it
+back to re-verify formula, integration, geometry, nulls, indices, flags and
+summaries.
 
 That bundle — two GeoParquet layers, a sensitivity report and time-bearing run
 metadata — is narrow ignored local evidence beneath `data/derived/`. It is not a
@@ -790,8 +797,8 @@ No implementation directory is scaffolded before its milestone needs it.
 
 | Decision | Deferred until | Selection basis |
 |---|---|---|
-| Exposure formula, normalization, and weighting | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not audited or accepted, and final headline messaging is still open. |
-| High-exposure threshold | **Resolved for exploratory use** in ADR 0020 | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits audit and owner review. |
+| Exposure formula, normalization, and weighting | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not independently reviewed or accepted, and final headline messaging is still open. |
+| High-exposure threshold | **Resolved for exploratory use** in ADR 0020 | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits independent review and the owner. |
 | Final public representation and host for project-derived whale, vessel, and exposure layers | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, performance in a clean browser session, required interactions, the access model a visitor needs (token-free or keyed), legal constraints, usage limits, and supported service types. The whale layer's static same-origin GeoJSON is implemented and locally verified but not accepted; no format or provider is selected. The publisher-hosted VSR exception is already selected in ADR 0019. |
 | ArcGIS Location Platform publication route | Author completes the authenticated portion of the Location Platform capability check | Official documentation confirms a limited single-user organization, feature/vector-tile/map-tile support, and current monthly free tiers. Rechecked 2026-09-06: Location Platform hosted data services are **not** shared publicly; a scoped API key is required, so visitor access is keyed rather than anonymous. The real account's product identity, controls, usage, headroom, and billing status remain unverified. No pay-as-you-go activation or spending is authorized. |
 | ArcGIS Online publication route | Author completes the ArcGIS Online capability check | Organization privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |

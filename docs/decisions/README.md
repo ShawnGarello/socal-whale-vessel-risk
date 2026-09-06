@@ -42,8 +42,9 @@ owner authorized the method, its threshold family and its documented sensitivity
 checks, and local runs have produced deterministic results. That acceptance
 covers implementation and local computation. It does not adopt the resulting
 numbers as final headlines, assert scientific validation, or authorize public
-publication. Independent audit of the results and owner review of the sensitivity
-and maps remain open, and M6 remains incomplete; see the
+publication. Independent review of the implementation and results, and owner
+acceptance of the results, maps and final messaging, remain open, and M6 remains
+incomplete; see the
 [roadmap](../roadmap.md#m6--whalevessel-exposure-analysis) and the
 [M6 handoff](../m6-exposure-foundation-handoff.md).
 

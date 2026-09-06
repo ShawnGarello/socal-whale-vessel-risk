@@ -26,9 +26,10 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > **Nothing has been deployed or published.** There is no public URL, no
 > project-derived layer is hosted anywhere, and the host is unselected. Local
 > rendering is not deployed verification. The exposure method is now implemented
-> and has been run locally, but **its results are exploratory and unaudited, and
-> no number from it is a finding of this project yet.** The vessel and study-area
-> display layers, publication and deployment remain unfinished. See
+> and has been run locally, but **its results are exploratory and not yet
+> reviewed or accepted, and no number from it is a finding of this project
+> yet.** The vessel and study-area display layers, publication and deployment
+> remain unfinished. See
 > the [roadmap](docs/roadmap.md), the
 > [M5 whale display handoff](docs/m5-whale-display-handoff.md), the
 > [M6 exposure handoff](docs/m6-exposure-foundation-handoff.md), and the
@@ -69,7 +70,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Data sources | **M2 complete** — downloaded and inspected; properties, licensing, limits, and public-use/publication postures recorded with a reproducible provenance manifest. VSR redistribution permission remains unconfirmed, so project-hosted copies are prohibited |
 | Study area | **Accepted with separate roles** — the map/context extent, modeled-whale-support water geometry, and scope-reduced `receivers_50_nautical_miles` analytical domain are distinct; see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) |
 | Processing workflow | **M3 complete** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; the selected vessel rules of [ADR 0018](docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md) were accepted after real production generation, byte-identical repetition and QGIS validation. See [analysis](analysis/README.md). |
-| Analysis and derived layers | **In progress** — the water grid, whale grid and an exploratory relative-exposure bundle are generated, programmatically verified, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md), accepted for exploratory execution only; its results await independent audit and owner review, one sensitivity comparison is materially non-robust, and no exposure layer or statistic is published or adopted as a headline |
+| Analysis and derived layers | **In progress** — the water grid, whale grid and an exploratory relative-exposure bundle are generated, programmatically verified, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md), accepted for exploratory execution only; its results await independent review and owner acceptance, one sensitivity comparison is materially non-robust, and no exposure layer or statistic is published or adopted as a headline |
 | Web application | **M4 foundation and one M5 slice built** — Next.js and TypeScript with an ArcGIS map shell over Southern California. Local keyed oceans-basemap rendering, pan/zoom, attribution handoff, and direct publisher-hosted display of the filtered 2026 California VSR boundary are verified at the required responsive viewports. VSR visibility, source/use disclosure, and isolated failure behavior are implemented; deployment, account capabilities, project-derived layers, and analysis remain unfinished |
 | Deployment | Not started |
 

@@ -1420,12 +1420,13 @@ Produce the project's own analytical result: a documented relative exposure laye
 ### Progress
 
 **Method accepted for exploratory execution, computed and locally verified;
-independent audit, owner review and every downstream contract remain open**
+independent review, owner acceptance and every downstream contract remain open**
 
 - [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md)
-  defines the calculation: modeled whale density multiplied by period vessel
-  distance per actual water area, integrated over exact qualified water, with
-  speed kept separate under
+  defines the calculation: per cell, modeled whale density multiplied by period
+  vessel distance, both taken over that cell's **full** water area, and the
+  resulting intensity then integrated over its **qualified** water and that
+  water's exact inside/outside VSR split. Speed is kept separate under
   [ADR 0006](decisions/0006-report-vessel-speed-separately.md). Physical values
   are used for calculation and a maximum-scaled index for display. High exposure
   is the qualified-area-weighted 90th percentile, reported alongside 80 and 95,
@@ -1440,8 +1441,13 @@ independent audit, owner review and every downstream contract remain open**
   tested and labelled.
 - Exploratory production and repeat runs completed on 2026-09-06 against the
   exact retained M3 water, whale and vessel inputs, under the established M3
-  resource gates, and produced byte-identical deterministic outputs. Run
-  identity `exposure-cc50a1e9fb06ca3ae5b5e395`. Qualified water area is
+  resource gates, and produced byte-identical deterministic outputs. The
+  recorded run identity `exposure-cc50a1e9fb06ca3ae5b5e395` and the artifact
+  hashes in the handoff are **historical**: they predate the later correction
+  that removed execution lineage from run identity. The numerical evidence below
+  remains valid, but a newly generated bundle will carry a different identity
+  and different `run-metadata.json` hashes, so those values are a record of what
+  was run, not expected outputs to reproduce. Qualified water area is
   64,716.65982166734 km² at both resolutions; the 5 km layer has 4,516 rows
   (2,793 qualified) and the 10 km layer 1,155 rows (738 qualified). The bundle
   is ignored local evidence under `data/derived/`; nothing is published.
@@ -1469,12 +1475,29 @@ independent audit, owner review and every downstream contract remain open**
   without whole-cell assignment were all confirmed; both EPSG:3310 layers had
   zero invalid nonempty geometries. No VSR-derived geometry or image was
   committed or exported.
-- Not done: independent external audit of these results, owner review of the
-  results and maps, selection of final headline statements, uncertainty
-  propagation, and the downstream exposure statistics, layer and publication
-  contracts, which must be settled with M5. Execution and reproduction detail is
-  in the [M6 handoff](m6-exposure-foundation-handoff.md), which is navigation
-  and evidence, not the owner of this status.
+- Review status, stated separately because the two are easy to conflate:
+  - **Done.** The owner authorized the method, its threshold family and its
+    sensitivity checks for exploratory execution on 2026-09-06. In-session
+    implementation verification is complete: the synthetic suites pass, the
+    first and repeat runs are byte-identical, `exposure_run` reads its own
+    output back and re-checks formula, integration, geometry, nulls, indices,
+    flags and summaries, and the bundle was rendered in QGIS against its exact
+    checksums.
+  - **Pending.** Independent review of the implementation and the results by
+    another session, per the
+    [review workflow](development.md#pull-request-and-continuous-integration-workflow),
+    covering units, the full-water-intensity versus qualified-integration
+    split, complete-support admission, fractional joint geometry, quantiles and
+    ties, coarsening and retained source evidence. Then owner acceptance of the
+    results and of the final messaging — the 2026-09-06 authorization permits
+    the calculation, it does not settle which statements, if any, become
+    headline findings. Human scientific and cartographic review of the maps is
+    also outstanding.
+- Also not done: uncertainty propagation, and the downstream exposure
+  statistics, layer and publication contracts, which must be settled with M5.
+  Execution and reproduction detail is in the
+  [M6 handoff](m6-exposure-foundation-handoff.md), which is navigation and
+  evidence, not the owner of this status.
 
 **Deliverables**
 - A written definition of the relative exposure calculation: inputs, normalization, weighting, combination method, and units.
@@ -1521,8 +1544,9 @@ independent audit, owner review and every downstream contract remain open**
   publisher-hosted display geometry against the local snapshot: **not met** —
   no exposure layer is published and that release gate belongs to M9.
 
-Independent audit of the exact commit and artifacts, and owner review of the
-results, sensitivity and maps, are also outstanding, so M6 stays in progress.
+Independent review of the exact commit and artifacts, and owner acceptance of
+the results, sensitivity, maps and final messaging, are also outstanding, so M6
+stays in progress.
 
 **Risks and open questions**
 - Combining a modeled density surface with an observed traffic measure implies choices about units and scaling that have no single correct answer; whatever is chosen must be justified and tested.
