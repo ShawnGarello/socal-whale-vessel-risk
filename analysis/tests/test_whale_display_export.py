@@ -560,7 +560,7 @@ def test_writes_the_geojson_and_manifest_together(tmp_path: Path) -> None:
     export = build_export(load_source(source_path, expected_sha256=digest))
     output = tmp_path / "out" / "blue-whale-density.geojson"
 
-    result = write_display_export(export, output)
+    result = write_display_export(export, output, approved_roots=[tmp_path])
 
     assert output.read_bytes() == export.geojson
     assert result.output_sha256 == export.sha256
@@ -581,20 +581,29 @@ def test_refuses_to_replace_an_existing_export_without_authorization(
     source_path, digest = _prepare(tmp_path, [_cell(0, 0)])
     export = build_export(load_source(source_path, expected_sha256=digest))
     output = tmp_path / "out" / "blue-whale-density.geojson"
-    write_display_export(export, output)
+    write_display_export(export, output, approved_roots=[tmp_path])
 
     with pytest.raises(WhaleDisplayExportOutputError, match="already exists"):
-        write_display_export(export, output)
+        write_display_export(export, output, approved_roots=[tmp_path])
 
 
 def test_authorized_overwrite_replaces_both_files(tmp_path: Path) -> None:
     source_path, digest = _prepare(tmp_path, [_cell(0, 0)])
     export = build_export(load_source(source_path, expected_sha256=digest))
     output = tmp_path / "out" / "blue-whale-density.geojson"
-    write_display_export(export, output, exported_at=datetime(2026, 9, 1, tzinfo=UTC))
+    write_display_export(
+        export,
+        output,
+        exported_at=datetime(2026, 9, 1, tzinfo=UTC),
+        approved_roots=[tmp_path],
+    )
 
     result = write_display_export(
-        export, output, exported_at=datetime(2026, 9, 2, tzinfo=UTC), overwrite=True
+        export,
+        output,
+        exported_at=datetime(2026, 9, 2, tzinfo=UTC),
+        overwrite=True,
+        approved_roots=[tmp_path],
     )
 
     assert output.read_bytes() == export.geojson
@@ -640,7 +649,10 @@ def test_a_failed_manifest_write_leaves_an_existing_export_intact(
     export = build_export(load_source(source_path, expected_sha256=digest))
     output = tmp_path / "out" / "blue-whale-density.geojson"
     first = write_display_export(
-        export, output, exported_at=datetime(2026, 9, 1, tzinfo=UTC)
+        export,
+        output,
+        exported_at=datetime(2026, 9, 1, tzinfo=UTC),
+        approved_roots=[tmp_path],
     )
     original = output.read_bytes()
     original_manifest = first.manifest_path.read_bytes()
@@ -660,7 +672,11 @@ def test_a_failed_manifest_write_leaves_an_existing_export_intact(
     )
     with pytest.raises(WhaleDisplayExportOutputError, match="could not write"):
         write_display_export(
-            export, output, exported_at=datetime(2026, 9, 2, tzinfo=UTC), overwrite=True
+            export,
+            output,
+            exported_at=datetime(2026, 9, 2, tzinfo=UTC),
+            overwrite=True,
+            approved_roots=[tmp_path],
         )
 
     assert output.read_bytes() == original

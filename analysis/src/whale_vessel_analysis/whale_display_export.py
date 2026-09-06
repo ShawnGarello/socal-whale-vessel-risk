@@ -20,6 +20,7 @@ import json
 import math
 import os
 import platform
+import re
 import sys
 import uuid
 from collections.abc import Mapping, Sequence
@@ -85,13 +86,21 @@ LATITUDE_BOUNDS: Final = (-90.0, 90.0)
 MAP_EXTENT_DISPLAY_TOLERANCE_DEGREES: Final = 1e-6
 
 _PROJECT_ROOT: Final = Path(__file__).resolve().parents[3]
-_RAW_ROOT: Final = (_PROJECT_ROOT / "data" / "raw").resolve()
 
-#: Destinations an export may be written to when it lands inside the repository.
-#: Everything here is Git-ignored, so a generated layer cannot be staged for a
-#: commit by accident. `web/public/layers` is the local static-serving location
-#: the application reads during development and during `next build`.
-_ALLOWED_REPOSITORY_OUTPUT_ROOTS: Final = (
+#: The only destinations an export may be written to.
+#:
+#: This is an allowlist, not a denylist, and it is anchored to *this* checkout.
+#: Sibling worktrees share the repository's directory layout, so a denylist
+#: would have to enumerate every one of them; an allowlist rejects them all,
+#: along with every other location on the machine, without knowing they exist.
+#: Everything listed here is Git-ignored, so a generated layer cannot be staged
+#: for a commit by accident, and `web/public/layers` is the local
+#: static-serving location the application reads during development and during
+#: `next build`.
+#:
+#: If `_PROJECT_ROOT` were ever wrong — an installed wheel rather than this
+#: source tree — every destination fails closed rather than opening up.
+APPROVED_OUTPUT_ROOTS: Final = (
     (_PROJECT_ROOT / "data" / "derived").resolve(),
     (_PROJECT_ROOT / "data" / "interim").resolve(),
     (_PROJECT_ROOT / "web" / "public" / "layers").resolve(),
@@ -269,6 +278,36 @@ DISPLAY_STATEMENTS: Final[tuple[str, ...]] = (
 )
 
 
+#: Source metadata copied into the public manifest.
+#:
+#: The source artifact's embedded metadata is producer-controlled, so nothing
+#: from it reaches a public artifact unless it is named here and passes the
+#: validation below. Unlisted keys are dropped rather than copied, and a listed
+#: key that is missing or malformed fails the export.
+PUBLIC_METHOD_TEXT_FIELDS: Final = (
+    "name",
+    "contribution",
+    "target_density",
+    "uncertainty_propagation",
+    "resolution_limit",
+)
+PUBLIC_METHOD_NUMBER_FIELDS: Final = (
+    "source_overlap_area_tolerance_m2",
+    "coverage_exact_tolerance_m2",
+    "coverage_numerical_tolerance_m2",
+)
+PUBLIC_INPUT_CHECKSUM_FIELDS: Final = (
+    "whale_source_sha256",
+    "target_grid_sha256",
+    "configuration_sha256",
+)
+
+MAX_PUBLIC_TEXT_LENGTH: Final = 400
+
+_SHA256_PATTERN: Final = re.compile(r"^[0-9a-f]{64}$")
+_RUN_ID_PATTERN: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
+
+
 class WhaleDisplayExportError(ValueError):
     """Raised when display-export input, transformation, or output is invalid."""
 
@@ -384,7 +423,18 @@ class DisplayExportResult:
 
 
 def _canonical_json(value: Mapping[str, object]) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    """Serialize deterministically, refusing NaN and Infinity.
+
+    `allow_nan=False` matters here: JSON has no non-finite numbers, so emitting
+    them would produce a public artifact that strict parsers reject.
+    """
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
 
 
 def _sha256_file(path: Path) -> str:
@@ -423,6 +473,117 @@ def _require_finite(values: Sequence[float], column: str) -> None:
             )
 
 
+def _reject_location_like(value: str, field: str) -> None:
+    """Reject text shaped like a filesystem path, UNC share, or URL.
+
+    Public metadata describes a method; it never needs to name a location. A
+    value that looks like one is either a mistake or an attempt to smuggle a
+    local path into a published artifact, and both should stop the export.
+    """
+    if "\\" in value:
+        raise WhaleDisplayExportInputError(
+            f"source metadata {field} contains a backslash path separator"
+        )
+    if len(value) >= 2 and value[1] == ":" and value[0].isalpha():
+        raise WhaleDisplayExportInputError(
+            f"source metadata {field} looks like a drive-letter path"
+        )
+    if "://" in value or value.startswith(("/", "~/", "file:")):
+        raise WhaleDisplayExportInputError(
+            f"source metadata {field} looks like a URL or absolute path"
+        )
+
+
+def _public_text(value: object, field: str) -> str:
+    """Validate one producer-supplied string before it becomes public."""
+    if not isinstance(value, str):
+        raise WhaleDisplayExportInputError(
+            f"source metadata {field} must be a string; found {type(value).__name__}"
+        )
+    if not value.strip():
+        raise WhaleDisplayExportInputError(f"source metadata {field} is blank")
+    if len(value) > MAX_PUBLIC_TEXT_LENGTH:
+        raise WhaleDisplayExportInputError(
+            f"source metadata {field} exceeds {MAX_PUBLIC_TEXT_LENGTH} characters"
+        )
+    if any(character < " " or character == "" for character in value):
+        raise WhaleDisplayExportInputError(
+            f"source metadata {field} contains a control character"
+        )
+    _reject_location_like(value, field)
+    return value
+
+
+def _public_number(value: object, field: str) -> float:
+    """Validate one producer-supplied number before it becomes public."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise WhaleDisplayExportInputError(
+            f"source metadata {field} must be a number; found {type(value).__name__}"
+        )
+    number = float(value)
+    if not math.isfinite(number):
+        raise WhaleDisplayExportInputError(f"source metadata {field} is not finite")
+    return number
+
+
+def _public_sha256(value: object, field: str) -> str:
+    """Validate one producer-supplied checksum before it becomes public."""
+    if not isinstance(value, str) or not _SHA256_PATTERN.fullmatch(value):
+        raise WhaleDisplayExportInputError(
+            f"source metadata {field} must be 64 lowercase hexadecimal characters"
+        )
+    return value
+
+
+def _public_run_id(value: object) -> str:
+    """Validate the generation run identifier before it becomes public."""
+    if not isinstance(value, str) or not _RUN_ID_PATTERN.fullmatch(value):
+        raise WhaleDisplayExportInputError(
+            "source lineage run_id must be 1-64 characters of letters, digits, "
+            "'.', '_' or '-', starting with a letter or digit"
+        )
+    return value
+
+
+def _sanitized_source_metadata(dataset: Mapping[str, object]) -> dict[str, object]:
+    """Rebuild the publishable subset of source metadata, field by field.
+
+    Nothing is copied wholesale. Each field below is named, located, and
+    validated, so an unlisted or malformed key cannot reach a public artifact
+    however the source artifact was produced.
+    """
+    method = dataset.get("method")
+    if not isinstance(method, dict):
+        raise WhaleDisplayExportInputError("source metadata method must be an object")
+    inputs = dataset.get("inputs")
+    if not isinstance(inputs, dict):
+        raise WhaleDisplayExportInputError("source metadata inputs must be an object")
+
+    public_method: dict[str, object] = {}
+    for name in PUBLIC_METHOD_TEXT_FIELDS:
+        if name not in method:
+            raise WhaleDisplayExportInputError(
+                f"source metadata method.{name} is absent"
+            )
+        public_method[name] = _public_text(method[name], f"method.{name}")
+    for name in PUBLIC_METHOD_NUMBER_FIELDS:
+        if name not in method:
+            raise WhaleDisplayExportInputError(
+                f"source metadata method.{name} is absent"
+            )
+        public_method[name] = _public_number(method[name], f"method.{name}")
+
+    public_inputs: dict[str, object] = {}
+    for name in PUBLIC_INPUT_CHECKSUM_FIELDS:
+        if name not in inputs:
+            raise WhaleDisplayExportInputError(
+                f"source metadata inputs.{name} is absent"
+            )
+        public_inputs[name] = _public_sha256(inputs[name], f"inputs.{name}")
+
+    return {"method": public_method, "inputs": public_inputs}
+
+
 def _read_source_lineage(
     lineage_path: Path, source_sha256: str
 ) -> tuple[str | None, str | None]:
@@ -458,7 +619,7 @@ def _read_source_lineage(
     run = document.get("run")
     run_id = run.get("run_id") if isinstance(run, dict) else None
     return (
-        run_id if isinstance(run_id, str) else None,
+        None if run_id is None else _public_run_id(run_id),
         _sha256_file(lineage_path),
     )
 
@@ -518,7 +679,9 @@ def _validate_dataset_metadata(table: pa.Table) -> Mapping[str, object]:
             f"source analysis CRS must be {SOURCE_CRS}; "
             f"found {dataset.get('analysis_crs')!r}"
         )
-    return cast(Mapping[str, object], dataset)
+    # Only the sanitized subset leaves this function, so nothing downstream can
+    # copy an unvalidated field into a public artifact.
+    return _sanitized_source_metadata(cast(Mapping[str, object], dataset))
 
 
 def _validate_schema(table: pa.Table) -> None:
@@ -884,8 +1047,8 @@ def build_manifest(
             "generation_lineage_sha256": export.source.lineage_sha256,
             "analysis_crs": SOURCE_CRS,
             "row_order": ROW_ORDER,
-            "method": export.source.dataset_metadata.get("method"),
-            "inputs": export.source.dataset_metadata.get("inputs"),
+            "method": export.source.dataset_metadata["method"],
+            "inputs": export.source.dataset_metadata["inputs"],
             "visual_verification": {
                 "status": "recorded_separately",
                 "bound_to_sha256": export.source.sha256,
@@ -931,30 +1094,56 @@ def build_manifest(
     }
 
 
-def validate_output_target(output_path: Path) -> None:
-    """Refuse raw-data, tracked, and otherwise unsafe export destinations."""
+def reject_protected_location(resolved: Path) -> None:
+    """Refuse raw-source and version-control locations, in any checkout.
+
+    The allowlist below already excludes these, so this is defence in depth: it
+    keeps the most damaging destinations refused, with a message that names why,
+    even if the allowlist is ever widened. It matches by directory shape rather
+    than by absolute path, so a sibling worktree's `data/raw` is refused exactly
+    like this one's.
+    """
+    parts = resolved.parts
+    for index in range(1, len(parts)):
+        if parts[index] == "raw" and parts[index - 1] == "data":
+            raise WhaleDisplayExportOutputError(
+                f"display-export output cannot be written under raw data: {resolved}"
+            )
+    if ".git" in parts:
+        raise WhaleDisplayExportOutputError(
+            f"display-export output cannot be written under Git metadata: {resolved}"
+        )
+
+
+def validate_output_target(
+    output_path: Path, approved_roots: Sequence[Path] | None = None
+) -> None:
+    """Refuse every destination outside the approved output roots.
+
+    `approved_roots` exists so tests can exercise publication against their own
+    temporary directory. It is a widening seam, so `reject_protected_location`
+    runs first and unconditionally: no supplied root can authorize a raw-data or
+    Git-metadata destination. The CLI never passes it, so the shipped behaviour
+    is always `APPROVED_OUTPUT_ROOTS`.
+    """
     if output_path.suffix.lower() != GEOJSON_SUFFIX:
         raise WhaleDisplayExportOutputError(
             f"display-export output path must end in {GEOJSON_SUFFIX}"
         )
     resolved = output_path.resolve()
-    if resolved == _RAW_ROOT or resolved.is_relative_to(_RAW_ROOT):
-        raise WhaleDisplayExportOutputError(
-            f"display-export output cannot be written under raw data: {resolved}"
-        )
-    if not resolved.is_relative_to(_PROJECT_ROOT):
+    reject_protected_location(resolved)
+    roots = (
+        APPROVED_OUTPUT_ROOTS
+        if approved_roots is None
+        else tuple(root.resolve() for root in approved_roots)
+    )
+    if any(resolved.is_relative_to(root) for root in roots):
         return
-    if not any(
-        resolved.is_relative_to(root) for root in _ALLOWED_REPOSITORY_OUTPUT_ROOTS
-    ):
-        allowed = ", ".join(
-            root.relative_to(_PROJECT_ROOT).as_posix()
-            for root in _ALLOWED_REPOSITORY_OUTPUT_ROOTS
-        )
-        raise WhaleDisplayExportOutputError(
-            f"display-export output inside the repository must be under one of "
-            f"{allowed}; refused {resolved}"
-        )
+    approved = ", ".join(root.as_posix() for root in roots)
+    raise WhaleDisplayExportOutputError(
+        f"display-export output must be under one of the approved roots "
+        f"({approved}); refused {resolved}"
+    )
 
 
 def _write_bytes(path: Path, payload: bytes) -> None:
@@ -1007,9 +1196,10 @@ def write_display_export(
     *,
     exported_at: datetime | None = None,
     overwrite: bool = False,
+    approved_roots: Sequence[Path] | None = None,
 ) -> DisplayExportResult:
     """Atomically publish the GeoJSON and its sanitized export manifest."""
-    validate_output_target(output_path)
+    validate_output_target(output_path, approved_roots)
     manifest_path = output_path.with_name(output_path.name + MANIFEST_SUFFIX)
     if not overwrite and (output_path.exists() or manifest_path.exists()):
         raise WhaleDisplayExportOutputError(

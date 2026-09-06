@@ -31,6 +31,9 @@ from whale_vessel_analysis.whale_grid import (
 # exactly zero must come back as longitude -120 whatever the implementation
 # does internally. The cells below straddle that meridian for that reason, and
 # they sit inside the configured map extent (-122, 32, -117, 35).
+#: Sentinel meaning "delete this metadata key" in `metadata_overrides`.
+REMOVE = object()
+
 CENTRAL_MERIDIAN_LONGITUDE = -120.0
 CELL_SIZE_M = 5_000
 BASE_X = 0
@@ -89,6 +92,7 @@ def _table(
     drop_column: str | None = None,
     retype: tuple[str, pa.DataType] | None = None,
     omit_geo_metadata: bool = False,
+    metadata_overrides: dict[str, object] | None = None,
 ) -> pa.Table:
     fields = []
     for name, kind in SOURCE_SCHEMA:
@@ -101,7 +105,26 @@ def _table(
         "contract": contract,
         "schema_version": schema_version,
         "analysis_crs": analysis_crs,
-        "method": {"name": "abundance-conserving area-weighted polygon transfer"},
+        # The complete method block the real `blue_whale_grid_transfer_v1`
+        # writer emits, so the exporter's public-field validation is exercised
+        # against the shape it will actually meet.
+        "method": {
+            "name": "abundance-conserving area-weighted polygon transfer",
+            "contribution": (
+                "source modeled density (animals/km²) multiplied by overlap area (km²)"
+            ),
+            "target_density": (
+                "modeled abundance allocation (animals) / cell water area (km²)"
+            ),
+            "source_overlap_area_tolerance_m2": 1.0,
+            "coverage_exact_tolerance_m2": 1e-06,
+            "coverage_numerical_tolerance_m2": 0.1,
+            "uncertainty_propagation": "not_performed",
+            "resolution_limit": (
+                "5 km reporting grid; biological precision remains limited to the "
+                "approximately 0.1-degree source model"
+            ),
+        },
         "units": {"modeled_density_animals_per_km2": "animals/km\u00b2"},
         "inputs": {
             "whale_source_sha256": "0" * 64,
@@ -109,6 +132,19 @@ def _table(
             "configuration_sha256": "2" * 64,
         },
     }
+    if metadata_overrides is not None:
+        for path, value in metadata_overrides.items():
+            section, _, key = path.partition(".")
+            block = dataset_metadata.get(section)
+            if key and isinstance(block, dict):
+                if value is REMOVE:
+                    block.pop(key, None)
+                else:
+                    block[key] = value
+            elif value is REMOVE:
+                dataset_metadata.pop(section, None)
+            else:
+                dataset_metadata[section] = value
     metadata = {
         b"whale_vessel_analysis": json.dumps(
             dataset_metadata, sort_keys=True, separators=(",", ":")
