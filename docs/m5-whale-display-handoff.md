@@ -26,7 +26,8 @@ its rendering in the existing ArcGIS application, verified locally.
    legend in stated units, per-cell popups, a visibility control, and an
    accessible source-and-method disclosure.
 3. Checksum-bound QGIS inspection of the exact exported file, and browser
-   verification at the three documented viewports plus a failed-request case.
+   verification at the three documented viewports plus a failed-request case
+   and a substituted-file case.
 4. Measured local delivery size and loading behaviour.
 5. A Vercel-oriented release-staging and deployment plan, with the constraints
    the author must resolve.
@@ -63,7 +64,7 @@ checksum is recorded in `analysis/README.md`.
 | Artifact | Bytes | SHA-256 |
 |---|---:|---|
 | `blue-whale-density.geojson` | 3,277,329 | `831a5412e9f414d5e4c7011d1b1687a89b8089826f8925f31e737b974662e154` |
-| `blue-whale-density.geojson.manifest.json` | 7,244 | recomputed per run; the manifest's `exported_at` and `generation_lineage_sha256` are the only fields that vary |
+| `blue-whale-density.geojson.manifest.json` | 7,244 | `a0d964a22450d2ed6c1764f624a64c50fe483a0668cbeb0ef842a732ffdb3847` for the run recorded here; `exported_at` and `generation_lineage_sha256` are the only fields that vary between runs |
 
 Both remain under the ignored local data root and under ignored
 `web/public/layers/`. **No generated layer data is committed.**
@@ -105,8 +106,9 @@ EPSG:3310 grid bounds (projected internals; the published geometry is WGS 84),
 | `analysis/src/whale_vessel_analysis/whale_display_export.py` | The `blue_whale_display_export_v1` boundary. |
 | `analysis/src/whale_vessel_analysis/whale_display_export_cli.py` | Its CLI. |
 | `analysis/tests/whale_display_fixtures.py` | Source fixtures built from scratch. |
-| `analysis/tests/test_whale_display_export.py` | 52 known-answer tests. |
-| `analysis/tests/test_whale_display_export_cli.py` | 6 CLI boundary tests. |
+| `analysis/tests/test_whale_display_export.py` | Known-answer contract, transformation and output tests. |
+| `analysis/tests/test_whale_display_export_sanitation.py` | Regression tests for the public-metadata and destination boundaries. |
+| `analysis/tests/test_whale_display_export_cli.py` | CLI boundary tests. |
 | `analysis/scripts/qgis_inspect_whale_display_export.py` | Checksum-bound QGIS inspection, following the existing `qgis_inspect_vessel_grid.py` pattern. |
 
 The command, run from `analysis/`:
@@ -243,7 +245,7 @@ against the configured map extent and rejects anything larger.
 
 ### Tests
 
-`analysis`: **475 passing** (up from 417; 58 new). New coverage includes
+`analysis`: **529 passing** (up from 417; 112 new). New coverage includes
 longitude/latitude axis order anchored to EPSG:3310's own −120° central
 meridian, eastward/northward cell placement, a polygon-with-a-hole fixture with
 RFC 7946 signed-area orientation checks, MultiPolygon part preservation, exact
@@ -258,7 +260,7 @@ type, and invalid or empty geometry. Output-safety tests cover atomic
 publication, refusal without `--overwrite`, refusal of raw-data and tracked
 destinations, and restoration of the prior pair when publication fails partway.
 
-`web`: **56 passing** (up from 23). New coverage includes the artifact binding,
+`web`: **63 passing** (up from 23). New coverage includes the artifact binding,
 URL resolution and release override, feature-count rejection, unit and
 precision declarations, the assertion that no withheld field name appears in
 the layer configuration or the map component, class-break continuity and
@@ -268,10 +270,10 @@ ordering beneath the VSR outline, the bounded and isolated failure path, the
 explicit schema declaration, the attribution credit, and the whale control's
 legend, units, disclosure, and scientific statements.
 
-Gates run at handoff: `uv lock --check`, `ruff format --check` (83 files),
-`ruff check`, `mypy` over 39 source files in strict mode, `pytest` (475 in
-142.95 s), `uv build`; and for `web`, `prettier --check`, `eslint`,
-`tsc --noEmit`, `vitest` (56), and `next build`.
+Gates run at handoff: `uv lock --check`, `ruff format --check` (85 files),
+`ruff check`, `mypy` over 39 source files in strict mode, `pytest` (529 in
+138.51 s), `uv build`; and for `web`, `prettier --check`, `eslint`,
+`tsc --noEmit`, `vitest` (63), and `next build`.
 
 ### QGIS — visual verification of the exact export
 
@@ -335,9 +337,9 @@ substance:
 application removed the failed layer, showed its accessible warning naming the
 basemap and VSR boundary as still available, kept the VSR layer loaded and the
 map ready, and produced no indefinite loading state and no sign-in prompt. The
-only console output was the blocked request and the two expected ArcGIS SDK
-errors identifying `GeoJSONLayer` load and LayerView creation failure — the same
-shape as the VSR failure evidence recorded for the earlier slice.
+only console output was the blocked request itself; see "Review findings
+addressed after the first pass" below for why the SDK no longer reports a layer
+load failure in this case.
 
 Two behaviours were found and handled during this check rather than left
 implicit:
@@ -549,6 +551,104 @@ installation, no account change, no publishing, no billing, no paid service, no
 credential value displayed or committed, no VSR snapshot or derived VSR geometry
 copied into any public asset, no heavy analytical processing, and no change to
 the analytical grid, the whale-transfer method, or the vessel engine.
+
+---
+
+## Review findings addressed after the first pass
+
+Three defects were reported against this branch and are fixed here. The export
+bytes did not change — SHA-256
+`831a5412e9f414d5e4c7011d1b1687a89b8089826f8925f31e737b974662e154` is unchanged,
+so the QGIS evidence recorded below remains bound to the artifact it inspected.
+The manifest changed, because it now carries less.
+
+### 1. The public manifest copied unvalidated source metadata
+
+`build_manifest` copied the source artifact's `method` and `inputs` objects
+wholesale. That metadata is producer-controlled, so a source carrying extra keys
+put them straight into the supposedly sanitized public manifest. Reproduced with
+private-path and fake-token sentinel values before the fix; **no real credential
+was involved and nothing was published.**
+
+The manifest is now rebuilt field by field from a named allowlist —
+`PUBLIC_METHOD_TEXT_FIELDS`, `PUBLIC_METHOD_NUMBER_FIELDS` and
+`PUBLIC_INPUT_CHECKSUM_FIELDS` — and the allowlist is applied inside
+`load_source`, so `SourceInspection.dataset_metadata` never holds anything
+unvalidated for a later caller to copy. Unlisted keys are dropped; a listed key
+that is missing, mistyped, blank, over-long, control-bearing, non-finite, not a
+SHA-256 where one is required, or shaped like a path, UNC share or URL fails the
+export. The `run_id` lifted out of producer-written generation lineage is
+validated the same way, and canonical JSON now uses `allow_nan=False` so a
+non-finite number cannot reach a public artifact.
+
+The published `method` block is now exactly `name`, `contribution`,
+`target_density`, `uncertainty_propagation`, `resolution_limit` and the three
+tolerance numbers; `inputs` is exactly the three source checksums.
+
+### 2. The destination guard did not cover other checkouts
+
+`validate_output_target` protected this worktree's `data/raw` and then returned
+early for any path outside this worktree's root — so the main worktree's
+`data/raw` was accepted. Confirmed by calling the validator; **nothing was
+written there.**
+
+Destinations are now an allowlist, `APPROVED_OUTPUT_ROOTS`, anchored to this
+checkout: `data/derived`, `data/interim`, `web/public/layers`. Sibling worktrees
+share the repository layout, so a denylist would have to enumerate them; an
+allowlist rejects them all without knowing they exist, and fails closed if the
+project root were ever resolved wrongly. `reject_protected_location` runs first
+and unconditionally, refusing any `data/raw` directory and any `.git` directory
+by shape wherever it appears, so those stay refused even if the allowlist is
+later widened. `write_display_export` and `validate_output_target` accept an
+explicit `approved_roots` argument so tests can publish into their own temporary
+directory; the CLI never passes it, so the shipped behaviour is always the
+strict allowlist, and no supplied root can authorize a raw-data or Git
+destination.
+
+### 3. The displayed checksum was not bound to the loaded file
+
+`web/lib/whale-source.ts` recorded the export checksum and the interface
+displayed it, but the layer URL is build-time configurable and loading checked
+only the feature count. A different file containing 4,516 features would have
+been displayed under this build's recorded identity.
+
+The application now fetches the file itself, hashes the bytes with
+`SubtleCrypto`, and builds the layer from a blob made of those exact bytes — one
+download, and the bytes that were hashed are necessarily the bytes that are
+drawn. A mismatch raises `WhaleLayerChecksumError` and fails the layer with its
+own distinct message rather than rendering unknown bytes. `SubtleCrypto`
+requires a secure context, which HTTPS and localhost both satisfy; where it is
+absent the interface states that the identity is unverified instead of implying
+otherwise. The disclosure now reads "verified against the bytes this browser
+loaded", "could not compute a checksum … unverified", or "expected", according
+to what actually happened.
+
+### Verification after the fixes
+
+- Both reproductions were re-run and now fail to reproduce: no sentinel value
+  reaches the manifest, and the main worktree's `data/raw` is refused.
+- `analysis`: **529 tests passing**, up from 475. The 54 new tests are in
+  `analysis/tests/test_whale_display_export_sanitation.py` and cover unlisted-key
+  dropping, the exact published field sets, location-shaped and over-long and
+  control-bearing and blank values, missing and mistyped fields, non-finite and
+  mistyped tolerances, non-SHA-256 checksums, non-object blocks, unsafe run ids,
+  non-finite JSON refusal, the approved-root list, another checkout's raw and
+  non-raw directories, this checkout's tracked directories, and the
+  unconditional raw/Git refusal even with a caller-supplied root. Two CLI tests
+  cover an out-of-allowlist destination and a sibling checkout's `data/raw`.
+- `web`: **63 tests passing**, up from 56, including a known-answer SHA-256, the
+  honest `null` when no digest is available, acceptance of the recorded
+  checksum, rejection of a different file, and the source-level assertions that
+  the bytes are hashed and the layer is built from them.
+- Browser: **5 checks passing**, up from 4. The new case serves a modified file
+  with 4,516 features and confirms the layer is refused with its own message,
+  the VSR boundary and basemap stay usable, and no verified identity is claimed.
+  The blocked-request case now produces a single console error rather than
+  three, because the application fails on its own fetch before the SDK ever
+  attempts a layer load.
+- Export determinism was re-checked after the fixes: two exports from separately
+  generated source copies remain byte-identical, and the staged and built files
+  match the recorded checksum.
 
 ---
 

@@ -47,6 +47,17 @@ derived from analysis output
 `421dc7bf837de1b328328d61944bfb7fa0c7e3c77ac0489ab47506a060520c62`. If the
 export changes, that file changes with it in the same release.
 
+**That identity is verified, not merely recorded.** The layer URL is build-time
+configurable and a feature count is not an identity, so a different file with
+4,516 features would otherwise be displayed under this build's checksum. The
+application therefore fetches the file itself, hashes the bytes with
+`SubtleCrypto`, and creates the layer from a blob built from those exact bytes
+— one download, and the file that was hashed is necessarily the file that is
+drawn. A mismatch fails the layer with its own message rather than rendering
+unknown bytes. `SubtleCrypto` needs a secure context, which HTTPS and localhost
+both provide; anywhere else the interface says the identity is unverified
+instead of claiming otherwise.
+
 **Symbology is a stated display choice, not a result.** Five equal
 0.001 animals/km² classes with an open lowest and highest class, on a
 single-hue purple ramp kept clear of the blue basemap and the orange VSR
@@ -77,11 +88,13 @@ map held exactly one whale layer and one VSR layer, whale at index 0 and VSR at
 index 1; the density legend, its unit, and all five class labels were readable
 without opening anything; the visibility control hid and restored the layer;
 keyboard traversal gave the control a visible three-pixel focus outline; the
-source-and-method disclosure was reachable; and a map click opened a popup whose
+source-and-method disclosure was reachable; a map click opened a popup whose
 displayed values matched the exported analytical values exactly at the declared
-precision. Neither the document nor the body overflowed horizontally, the SDK
-attribution stayed visible and inside the viewport, and the sanitized console
-recorded no console error, page error, HTTP error, or request failure.
+precision; and the disclosure reported the export checksum as verified against
+the bytes the browser had loaded. Neither the document nor the body overflowed
+horizontally, the SDK attribution stayed visible and inside the viewport, and
+the sanitized console recorded no console error, page error, HTTP error, or
+request failure.
 
 The SDK's dynamic attribution carried the whale layer's own credit alongside
 the Esri and basemap provider credits. It appears once the layer view is
@@ -91,9 +104,15 @@ A separate 820 × 1180 check blocked only the whale GeoJSON request. The
 application removed the failed layer, showed its concise accessible warning
 naming the basemap and VSR boundary as still available, kept the VSR layer
 loaded and the map ready, and produced no indefinite loading state and no
-sign-in prompt. The blocked request produced the expected network failure and
-the two expected ArcGIS SDK console errors identifying GeoJSONLayer load and
-LayerView creation failure.
+sign-in prompt. The only console output was the blocked request itself: because
+the application fetches and verifies the file before creating the layer, the
+SDK never attempts a load that could fail.
+
+A further 1440 × 900 check served a _different_ file that still contained 4,516
+features. The checksum did not match, so the layer was refused with its own
+distinct message, the VSR boundary and basemap stayed usable, and the interface
+did not claim a verified identity. The console was clean — the refusal is
+deliberate, not an error.
 
 Verification screenshots, browser evidence, and QGIS renders remain under the
 ignored local data root and are not committed.
