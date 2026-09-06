@@ -33,6 +33,13 @@ export const VSR_SOURCE: VsrSourceConfig = {
     "to Be Avoided (ATBA), or Traffic Separation Scheme (TSS).",
 };
 
+export const VSR_MAP_UNAVAILABLE_MESSAGE =
+  "The 2026 California VSR zone is unavailable because the map could not be initialized.";
+
+export const VSR_FAILURE_MESSAGE =
+  "The 2026 California VSR zone could not be loaded from the publisher's " +
+  "service. The basemap remains available.";
+
 /** Rejects a changed or empty filtered source before it can be called ready. */
 export function assertExpectedVsrFeatureCount(featureCount: number): void {
   if (featureCount !== VSR_SOURCE.expectedFeatureCount) {
