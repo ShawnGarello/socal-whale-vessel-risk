@@ -39,8 +39,9 @@
 > and observational completeness remain unverified. Network retrieval remains
 > unimplemented. The ADR 0020 exposure method is implemented and has been run
 > locally for exploratory results, which are unreviewed and unaccepted; exposure
-> statistics, layer and publication contracts, final public representations for
-> project-derived layers, and deployment remain unfinished.
+> display/results contracts are implemented and locally verified. Final
+> delivery-route selection, application integration, and deployment remain
+> unfinished.
 > Publisher-hosted VSR display is
 > implemented and locally verified in the web application. Deterministic
 > presentation exports and checksum-bound same-origin display are also
@@ -292,14 +293,26 @@ back to re-verify formula, integration, geometry, nulls, indices, flags and
 summaries.
 
 That bundle — two GeoParquet layers, a sensitivity report and time-bearing run
-metadata — is narrow ignored local evidence beneath `data/derived/`. It is not a
-publication artifact and not an application-results contract: no exposure
-statistics contract, layer contract or public export exists, and the format,
-fields, denominators and host for a released exposure layer remain deferred
-decisions to settle with M5. The module is invoked through the existing resource
-profiler and writes only to ignored locations. Visual verification runs
+metadata — is narrow ignored local evidence beneath `data/derived/`; it is not
+itself a publication artifact. A separate `exposure_delivery` boundary consumes
+all three deterministic files only when their expected checksums are supplied.
+It re-verifies both tables, reconstructs the accepted calculations from their
+serialized rows, and reconciles the complete report rather than treating a
+matching report checksum as evidence of numerical correctness. It then creates
+distinct `relative_exposure_display_v1` and
+`relative_exposure_application_results_v1` public contracts. The analytical
+module is invoked through the existing resource profiler and writes only to
+ignored locations. Visual verification runs
 separately through `analysis/scripts/qgis_inspect_exposure.py`, which binds
 rendering to the exact output checksums rather than to generation lineage.
+
+The delivery boundary builds every public nested object through an explicit
+typed allowlist, validates controlled text and enumeration fields, and rejects
+unexpected shapes. Private paths, credentials, debug metadata, execution clocks,
+and upstream generation-lineage digests cannot propagate. The application
+results identity is derived from deterministic analytical/result content and is
+independent of the permitted delivery timestamp. This preserves the distinction
+between analytical identity and truthful time-bearing generation provenance.
 
 Python owns or is planned to own:
 
@@ -393,10 +406,22 @@ decision and not a deployment**. Nothing has been published. The public host,
 and whether a hosted Esri service is preferable to static files for the
 final project-derived layers, are still open and need a decision record.
 
-The final representation for the exposure layer remains open, and the locally
-implemented input-layer route may still be revised before release. Candidate
-routes are static same-origin files, ArcGIS Location Platform limited data
-services, ArcGIS Online organization-hosted layers, and a non-Esri public route.
+**A static exposure representation is also implemented and measured as local
+delivery evidence.** The provider-neutral boundary emits qualified-water-only
+RFC 7946 GeoJSON plus a sanitized manifest, and a separate small committed JSON
+artifact carries exact summaries, units, denominators, null/exclusion meanings,
+thresholds, sensitivity, source vintages, and generated presentation rounding.
+The manifest binds the exact display checksum to the results checksum and
+results ID. It carries neither VSR geometry nor per-cell VSR splits; excluded
+cells are absent, never low or zero. The public properties preserve the primary
+product and required log-traffic sensitivity while keeping speed separate.
+
+This representation passed programmatic reconciliation, deterministic repeat,
+and checksum-bound QGIS inspection. It is **not** an accepted publication route,
+application integration, or deployment. The locally implemented input-layer
+and exposure routes may still be revised before release. Candidate routes are
+static same-origin files, ArcGIS Location Platform limited data services,
+ArcGIS Online organization-hosted layers, and a non-Esri public route.
 Selection depends on measured output size, feature count or raster
 characteristics, geometry complexity, browser load/render performance,
 redistribution terms, access requirements, and verified account or hosting
@@ -719,6 +744,14 @@ output checksums and refusing to run on a mismatch.
 `analysis/scripts/qgis_inspect_vessel_domain_display.py` checks the vessel and
 domain pair together.
 
+The exposure display received the same separate treatment through
+`analysis/scripts/qgis_inspect_exposure_display.py`. QGIS 4.2.1 / GDAL 3.13.2
+opened display SHA-256
+`1ccb605cad9640f42ca5eb2cb1ac3543b3a1341a3375f6e78166dd0fd16e92cb`
+directly as EPSG:4326 GeoJSON and confirmed 2,793 nonempty valid features plus
+the manifest's counts, parts, holes, vertices, area, extent, and threshold
+flags. The local VSR snapshot was inspection context only and was not exported.
+
 ## Reproducibility and lineage
 
 Reproducibility rests on four linked practices:
@@ -769,17 +802,23 @@ three layers remained usable through visibility changes at all required
 viewports. That is enough to continue evaluating the same-origin route
 without tiling or geometry simplification.
 
-These numbers are local functional observations of this project's own static
-assets. They are **not** a benchmark of ArcGIS platform services, no ArcGIS
+The exposure display has also been measured locally: 2,542,744 bytes raw,
+528,235 bytes at gzip level 9, and 375,238 bytes at Brotli quality 11 for 2,793
+features. Its paired manifest is 6,803 bytes and the small application-results
+artifact is 31,381 bytes. These sizes make same-origin static delivery a
+credible candidate for M7; browser load/render behavior, combined-layer cost,
+and the release route remain unverified.
+
+These numbers are local observations of this project's own static assets. They
+are **not** a benchmark of ArcGIS platform services, no ArcGIS
 service timing is reported, and they establish nothing about deployed load time,
 slow connections, low-end devices, or the combined cost once the exposure layer
-exists. The Location Platform agreement's benchmarking and
+is integrated with the three input layers. The Location Platform agreement's benchmarking and
 benchmark-publication clauses remain unresolved and must be settled before any
 timing exercise that measures ArcGIS services.
 
 Hosted feature layers, hosted tiles/imagery, vector tiles, and other formats
-remain candidates until the final route is selected and the exposure output is
-measured the same way.
+remain candidates until route review and browser evidence support a decision.
 
 ## Version 1 architectural constraints
 
@@ -805,12 +844,13 @@ socal-whale-vessel-risk/
 │   └── derived/           # validated local outputs before publication
 ├── web/                   # static Next.js application (exists)
 │   └── public/layers/     # Git-ignored staging for generated display layers
-└── results/               # small versioned application results [deferred]
+└── results/               # small versioned application results (exists)
 ```
 
-Whether `results/` is distinct enough from `data/derived/` remains deferred
-until the reporting-domain-dependent application-results contract is allowed.
-No implementation directory is scaffolded before its milestone needs it.
+`results/` contains the versioned M6 application-results contract, distinct from
+ignored analytical bundles in `data/derived/` and ignored display staging in
+`web/public/layers/`. No other implementation directory is scaffolded before
+its milestone needs it.
 
 ## Explicitly deferred decisions
 
@@ -818,7 +858,7 @@ No implementation directory is scaffolded before its milestone needs it.
 |---|---|---|
 | Exposure formula, normalization, and weighting | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not independently reviewed or accepted, and final headline messaging is still open. |
 | High-exposure threshold | **Resolved for exploratory use** in ADR 0020 | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits independent review and the owner. |
-| Final public representation and host for project-derived whale, vessel, and exposure layers | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, performance in a clean browser session, required interactions, the access model a visitor needs (token-free or keyed), legal constraints, usage limits, and supported service types. Static same-origin GeoJSON is implemented and locally verified for the whale, vessel-activity, and analytical-domain inputs but not accepted as the final route; the exposure representation and every public host remain open. The publisher-hosted VSR exception is already selected in ADR 0019. |
+| Final public representation and host for project-derived whale, vessel, and exposure layers | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, performance in a clean browser session, required interactions, the access model a visitor needs (token-free or keyed), legal constraints, usage limits, and supported service types. Static same-origin GeoJSON is implemented and locally verified for the whale, vessel-activity, and analytical-domain inputs; the exposure display/results pair is implemented, reconciled, measured, and QGIS-verified. Neither route is accepted as final, exposure browser integration remains open, and no public host is selected. The publisher-hosted VSR exception is already selected in ADR 0019. |
 | ArcGIS Location Platform publication route | Author completes the authenticated portion of the Location Platform capability check | Official documentation confirms a limited single-user organization, feature/vector-tile/map-tile support, and current monthly free tiers. Rechecked 2026-09-06: Location Platform hosted data services are **not** shared publicly; a scoped API key is required, so visitor access is keyed rather than anonymous. The real account's product identity, controls, usage, headroom, and billing status remain unverified. No pay-as-you-go activation or spending is authorized. |
 | ArcGIS Online publication route | Author completes the ArcGIS Online capability check | Organization privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |
 | Non-Esri public delivery route, if needed | Both Esri routes are unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |

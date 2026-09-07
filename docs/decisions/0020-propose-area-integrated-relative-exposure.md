@@ -241,7 +241,37 @@ The owner's authorization above selects these choices for exploratory execution.
 Independent audit and owner review of the actual findings remain required before
 final headlines. M6 remains incomplete; the handoff records execution, exact
 output identities, validation, sensitivity and visual evidence. No application
-integration or public-export contract is selected here.
+integration, publication route, deployment, or final headline is selected here.
+
+## Downstream delivery implementation, 2026-09-06
+
+Subsequent implementation adds distinct
+`relative_exposure_display_v1` and
+`relative_exposure_application_results_v1` contracts without changing this
+method. The exporter consumes an exact checksum-pinned current-code analytical
+bundle, re-verifies both spatial tables, recomputes the accepted summaries from
+their serialized values, and reconciles every consumed report field. A supplied
+report checksum establishes byte identity only; it does not substitute for
+numerical verification.
+
+Public nested structures are constructed through explicit typed allowlists.
+Unexpected mappings, invalid controlled text or enumeration values, private
+paths, credentials, debug metadata, execution clocks, and private upstream
+generation lineage are rejected or excluded. The display contains qualified
+domain-water geometry only and omits VSR geometry, per-cell VSR splits, and
+wholly excluded cells. Its paired manifest binds the display checksum to the
+small results checksum and deterministic results ID.
+
+Fresh first/repeat bundles preserve run ID
+`exposure-6dd927974fae959765c9b5c3` and deterministic analytical bytes despite
+different timestamp-bearing upstream lineage. Canonical and repeat exports also
+reproduce exact bytes. The 2,793-feature display is 2,542,744 bytes raw,
+528,235 bytes gzip, and 375,238 bytes Brotli and passed checksum-bound QGIS
+inspection. This makes static same-origin delivery a measured candidate; it does
+not accept that publication route, publish an artifact, integrate M7, approve a
+headline, or complete M6. Exact identities, validation, and remaining gates are
+recorded in the
+[exposure-results delivery handoff](../m6-exposure-results-delivery-handoff.md).
 
 ## Execution contracts
 
