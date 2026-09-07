@@ -39,8 +39,9 @@
 > and observational completeness remain unverified. Network retrieval remains
 > unimplemented. The ADR 0020 exposure method is implemented and has been run
 > locally for exploratory results, which are unreviewed and unaccepted; exposure
-> statistics, layer and publication contracts, final public representations for
-> project-derived layers, and deployment remain unfinished.
+> display/results contracts are implemented and locally verified. Final
+> delivery-route selection, application integration, and deployment remain
+> unfinished.
 > Publisher-hosted VSR display is
 > implemented and locally verified in the web application. Deterministic
 > presentation exports and checksum-bound same-origin display are also

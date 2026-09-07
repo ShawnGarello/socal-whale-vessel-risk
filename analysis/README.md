@@ -2650,7 +2650,8 @@ the [delivery handoff](../docs/m6-exposure-results-delivery-handoff.md). The
 analytical bundle remains ignored local evidence; a public route is not yet
 accepted and nothing has been published.
 
-Four modules make up the boundary.
+Four analytical modules make up the exploratory analysis boundary. The
+downstream `exposure_delivery` module is a separate delivery boundary.
 
 | Module | Owns |
 |---|---|
