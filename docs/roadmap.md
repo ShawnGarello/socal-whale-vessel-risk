@@ -1069,7 +1069,7 @@ Built on the `feat/web-foundation` branch. The application is in
   allowances, not this account's verified balances.
 - Location Platform is documented to use free tiers plus optional pay-as-you-go,
   not ArcGIS Online credits. Pay-as-you-go is documented as off by default for
-  new accounts, but the author's actual billing state is unverified.
+  new accounts, and the author confirmed it disabled on 2026-09-07.
 - The author reports creating a Location Platform account and a restricted
   browser API key. The key was absent and was not inspected. No authenticated
   account session was available, so the product identity, service-creation and
@@ -1086,9 +1086,10 @@ Built on the `feat/web-foundation` branch. The application is in
 - **The static-shell deployment.** This can proceed independently of an ArcGIS
   account. The application has never been deployed anywhere, and there is no
   public URL.
-- The route-specific account checks. Actual Vercel Hobby plan and personal-use
-  eligibility, and the basemap account's product, pay-as-you-go-disabled state,
-  current basemap headroom, browser-key scope and exact referrers are unverified.
+- The remaining route-specific account checks. The author confirmed Vercel
+  Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07. Hobby personal-use
+  eligibility, the basemap account's product and current headroom, and
+  browser-key validity, scope and exact referrers remain unverified.
 - The Vercel deploy-and-serve test. No public project exists and the staged
   rehearsal is deliberately keyless and ineligible for deployment.
 
@@ -1123,13 +1124,14 @@ with pinned public manifests, isolated committed-source builds and full upload
 inventories. [ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md)
 was accepted by the author on 2026-09-07. It selects free Vercel Hobby static
 delivery and route-specific checks; an Esri hosted-data test is not applicable
-unless a later accepted decision selects that route. No account
-session was accessed, no project or service was created, and there is no
+unless a later accepted decision selects that route. The author confirmed
+Vercel Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07; no account session
+was accessed, no project or service was created, and there is no
 deployment approval or public URL. The historical key's later `Token Invalid`
 result remains a release-key blocker; earlier local success is not current
-credential verification. Actual account product, billing, usage/headroom,
-Hobby plan/eligibility and production key restrictions await
-author evidence. Development owns staging and the deployment checkpoint.
+credential verification. Actual account product, usage/headroom, Hobby
+eligibility and production key restrictions await author evidence. Development
+owns staging and the deployment checkpoint.
 
 The keyless isolated rehearsal at implementation commit `4f9b2c2` passed locked
 installation, formatting, lint, generated-type checking, all 79 tests and static
@@ -1151,7 +1153,7 @@ artifact locations, failures and the next approval checkpoint.
 | Map renders, pans, and zooms | **Verified locally.** The keyed static export rendered `arcgis/oceans`, panned, zoomed, and completed the ready-map attribution handoff in Chrome at all three required viewports. The deployed-origin path remains unverified. |
 | No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored. |
 | Deployment reachable and reflecting main | **Unverified.** No deployment exists; main has not been deployed or verified. |
-| Route-specific account checks complete and recorded | **Unverified.** Vercel Hobby plan/eligibility and the basemap account's product, pay-as-you-go-disabled state, current basemap headroom, browser-key scope and exact referrers have not been checked. |
+| Route-specific account checks complete and recorded | **Partial.** The author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07. Hobby eligibility, the basemap account's product and current headroom, and browser-key validity, scope and exact referrers remain unverified. |
 | Selected static publish-and-serve test | **Not attempted.** The exact files are staged and locally verified, but no Vercel project or public deployment exists. An Esri hosted-data test is not applicable under ADR 0021. |
 | Unselected Esri hosted-data capabilities | **Not applicable to M4 and unverified.** Static project files need no Esri hosted-data service. Documentation-only product facts remain background; actual service creation, storage, sharing and ArcGIS Online privileges were not checked. |
 
@@ -1227,13 +1229,15 @@ this repository's own. Disabled with `agentRules: false`.
   static files on free Vercel Hobby. Esri hosted-data product facts remain
   documented background; actual publishing capabilities are unverified and do
   not constrain M4 while those routes remain unselected.
-- Actual Vercel Hobby plan and eligibility and ArcGIS basemap account state are
-  still unverified. A failed free-capacity check stops deployment; no paid
+- Vercel Hobby and ArcGIS pay-as-you-go disabled are author-confirmed as of
+  2026-09-07. Hobby eligibility and the remaining ArcGIS basemap account checks
+  are still unverified. A failed free-capacity check stops deployment; no paid
   fallback is authorized. **Still open.**
 - ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Partly resolved:** a browser-delivered, origin-restricted API key is required for the basemap, Location Platform accounts have API-key privileges by default, the requirements for scoping a browser key are recorded in [development.md](development.md), and local service access succeeded from the authorized localhost origin. The real account capabilities and deployed-origin service access remain unverified.
 - Bundle size and initial load time of the SDK need an early look rather than a late one. **Resolved for size** — see the findings above. Load time still needs measuring on a real deployment.
-- Vercel Hobby is selected conditionally on the still-unverified free-plan,
-  personal-use and account checks. No project has been created or deployed.
+- Vercel Hobby is selected and author-confirmed, conditional on the
+  still-unverified personal-use eligibility and remaining account checks. No
+  project has been created or deployed.
 
 ---
 
@@ -1466,9 +1470,9 @@ verified; not published**
   project-hosted copy. **Met locally.**
 
 The local display, legend, provenance, and alignment evidence now covers every
-core input layer. Public delivery, the final route/host decision, authenticated
-account-capability evidence, and deployed-origin verification remain open, so
-M5 stays in progress.
+core input layer. Static delivery is selected by ADR 0021; deployment, remaining
+route-specific account evidence, and deployed-origin verification remain
+unfinished, so M5 stays in progress.
 
 **Risks and open questions**
 - Deployed transfer behavior, low-end-device performance, or host limits may
@@ -1542,9 +1546,9 @@ M7 integration, and release remain open**
   qualified-water 5 km features and is 2,542,744 bytes raw, 528,235 gzip, and
   375,238 Brotli; the small tracked results artifact is 31,381 bytes. The
   manifest binds the exact display checksum to results ID
-  `exposure-results-8a0bf6c27e00fb40a13d6870` and its checksum. These local
-  artifacts make static same-origin delivery a credible candidate, not an
-  accepted route, publication, application integration, or deployment.
+  `exposure-results-8a0bf6c27e00fb40a13d6870` and its checksum. Static
+  same-origin delivery is selected by ADR 0021; publication, application
+  integration, deployment and deployed verification remain unfinished.
 - The exporter verifies pinned source bytes, re-verifies both analytical tables,
   recomputes the accepted summaries from their serialized rows, and reconciles
   the complete supplied report. A matching checksum identifies report bytes but
@@ -1621,8 +1625,8 @@ M7 integration, and release remain open**
     headline findings. Human scientific and cartographic review of the maps is
     also outstanding.
 - Also not done: independent audit, owner conclusion/map review, propagation of
-  native whale uncertainty, selection of the exposure publication route, M7
-  application consumption and browser verification, and the M9 release-time VSR
+  native whale uncertainty, M7 application consumption through the static route
+  selected by ADR 0021, browser verification, and the M9 release-time VSR
   comparison. Analytical execution detail is in the
   [M6 foundation handoff](m6-exposure-foundation-handoff.md); downstream contract,
   artifact, resource, repeat, and final QGIS evidence is in the
@@ -1812,10 +1816,10 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 
 **Risks and open questions**
 - **Public delivery depends on verifying the selected route.** ADR 0021 selects
-  checksum-addressed static files on free Vercel Hobby. Actual plan and
-  personal-use eligibility, free capacity, and deployed-browser behavior remain
-  unverified. A failed free check stops deployment; no paid fallback is
-  authorized.
+  checksum-addressed static files on free Vercel Hobby, which the author
+  confirmed on 2026-09-07. Personal-use eligibility, free capacity, and
+  deployed-browser behavior remain unverified. A failed free check stops
+  deployment; no paid fallback is authorized.
 - Esri hosted-data services are unselected. Choosing one later requires a
   superseding decision and route-specific evidence; their current account
   capabilities are not M4 prerequisites.

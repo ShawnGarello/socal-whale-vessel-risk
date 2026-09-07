@@ -10,8 +10,9 @@
 > selects direct use of the publisher-hosted VSR Feature Service as a narrow
 > Version 1 exception to the project-derived-layer publication boundary.
 > [ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md) selects
-> checksum-addressed static project files on free Vercel Hobby, conditional on
-> the still-unverified plan, eligibility, account and basemap checks.
+> checksum-addressed static project files on free Vercel Hobby. The plan is
+> author-confirmed; eligibility, remaining account and basemap checks are
+> unverified.
 >
 > The Next.js application shell, Python processing foundation, deterministic
 > one-extract AIS cleaning, projected water-grid construction, and deterministic
@@ -42,15 +43,15 @@
 > and observational completeness remain unverified. Network retrieval remains
 > unimplemented. The ADR 0020 exposure method is implemented and has been run
 > locally for exploratory results, which are unreviewed and unaccepted; exposure
-> display/results contracts are implemented and locally verified. Final
-> delivery-route selection, application integration, and deployment remain
-> unfinished.
+> display/results contracts are implemented and locally verified. Static
+> delivery is selected by ADR 0021; application integration, deployment, and
+> deployed verification remain unfinished.
 > Publisher-hosted VSR display is
 > implemented and locally verified in the web application. Deterministic
 > presentation exports and checksum-bound same-origin display are also
 > implemented and locally verified for the whale, vessel-activity, and accepted
-> analytical-domain layers. Vercel Hobby is selected, but the account checks,
-> public project and deployment remain unfinished.
+> analytical-domain layers. Vercel Hobby is selected; remaining account checks,
+> the public project, deployment and deployed verification remain unfinished.
 > See the [roadmap](roadmap.md) for milestone status.
 
 The analytical and statistical domain is accepted in
@@ -67,9 +68,10 @@ files. The whale,
 vessel-activity, and accepted analytical-domain layers are exported as WGS 84
 GeoJSON and read as static same-origin files, which is implemented and locally
 verified. The exposure delivery contract uses the same selected route when M7
-integrates it. Actual Vercel Hobby plan and personal-use eligibility remain
-unverified. The ArcGIS account serves the basemap only; its product, billing,
-current basemap headroom and browser-key restrictions also remain unverified.
+integrates it. The author confirmed Vercel Hobby on 2026-09-07; personal-use
+eligibility remains unverified. The ArcGIS account serves the basemap only; the
+author confirmed pay-as-you-go disabled on 2026-09-07, while its product,
+current basemap headroom and browser-key restrictions remain unverified.
 Location Platform hosted-data services and ArcGIS Online organization hosting
 are unselected, so their actual publishing capabilities remain unverified and
 are not M4 prerequisites. A later choice to use them requires a superseding
@@ -594,7 +596,8 @@ it belongs in the reproducible Python path.
 author's preferred Vercel Hobby route for the existing input-layer application.
 Local release staging is implemented to package committed source and exactly
 three pinned GeoJSON/manifest pairs as static Build Output API v3 output.
-The plan, personal-use eligibility, account and basemap checks remain
+The author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on
+2026-09-07. Personal-use eligibility, remaining account and basemap checks remain
 unverified; no project is created or deployed, and exposure integration remains
 outside this initial deployment. The entire project must remain within free
 capacity. Paid plans, trials, add-ons, pay-as-you-go and other charged usage are
@@ -778,7 +781,7 @@ still requires evidence from the real outputs, including:
   attribution, and what access a visitor needs — a token-free public file or
   service, or one read with a scoped browser credential;
 - redistribution conditions for each source and derivative; and
-- actual Vercel Hobby plan, personal-use eligibility and free capacity, plus the
+- author-confirmed Vercel Hobby, personal-use eligibility and free capacity, plus the
   separate ArcGIS basemap account's free-tier/billing status.
 
 All three M5 input layers have now been measured locally. The whale GeoJSON is
@@ -795,9 +798,9 @@ without tiling or geometry simplification.
 The exposure display has also been measured locally: 2,542,744 bytes raw,
 528,235 bytes at gzip level 9, and 375,238 bytes at Brotli quality 11 for 2,793
 features. Its paired manifest is 6,803 bytes and the small application-results
-artifact is 31,381 bytes. These sizes make same-origin static delivery a
-credible candidate for M7; browser load/render behavior, combined-layer cost,
-and the release route remain unverified.
+artifact is 31,381 bytes. Static same-origin delivery is selected by ADR 0021;
+M7 integration, browser load/render behavior, combined-layer cost, deployment
+and deployed verification remain unfinished.
 
 These numbers are local observations of this project's own static assets. They
 are **not** a benchmark of ArcGIS platform services, no ArcGIS
@@ -851,7 +854,7 @@ its milestone needs it.
 | Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021** | Checksum-addressed static files beside the application on free Vercel Hobby. Input files are integrated and locally verified; exposure integration remains M7 work. Account and deployed-browser evidence remain open. |
 | ArcGIS Location Platform publication route | Unselected by ADR 0021 | Actual hosted-data creation, storage and sharing capabilities remain unverified. The account used for the basemap still needs its narrower route-specific check. |
 | ArcGIS Online publication route | Unselected by ADR 0021 | Actual organization and publishing capabilities remain unverified. |
-| Static application host | **Resolved by ADR 0021, verification open** | Free Vercel Hobby, conditional on actual plan and personal-use eligibility, HTTPS, stable origin, static-export limits, and clean-browser verification. No paid fallback is authorized. |
+| Static application host | **Resolved by ADR 0021, verification open** | Free Vercel Hobby, author-confirmed 2026-09-07 and conditional on personal-use eligibility, HTTPS, stable origin, static-export limits, and clean-browser verification. No paid fallback is authorized. |
 | General visual-verification record across spatial outputs | M8 reproducibility work | Layer-specific checksum-bound commands now exist for the three project input displays and exposure evidence. A general record must cover every spatial output's checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage. |
 [ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts
 `receivers_50_nautical_miles` as the scope-reduced,

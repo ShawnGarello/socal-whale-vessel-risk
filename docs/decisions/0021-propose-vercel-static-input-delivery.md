@@ -14,7 +14,7 @@ part of this decision.
 
 ## Decision
 
-Use Vercel Hobby, conditional on verifying the author's actual plan and
+Use the author-confirmed Vercel Hobby plan, conditional on verifying
 personal-use eligibility, for the static application and its project-derived
 static layers. Build
 committed source locally with locked npm dependencies, include only the pinned
@@ -43,10 +43,11 @@ free-tier headroom, browser-key scope and exact origin restrictions. ArcGIS
 hosted-data creation, storage, sharing and ArcGIS Online organization privileges
 are outside M4 unless a later accepted decision selects them.
 
-Acceptance does not authorize deployment or any account change. Actual account
-state, Hobby eligibility, basemap capacity, key scope, referrers, release-key
-access and production-origin verification remain unverified. Development owns
-provider references and operational steps.
+Acceptance does not authorize deployment or any account change. The author
+confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07. Hobby
+eligibility, basemap product and capacity, key validity, scope and referrers,
+release-key access and production-origin verification remain unverified.
+Development owns provider references and operational steps.
 
 ## Consequences and alternatives
 

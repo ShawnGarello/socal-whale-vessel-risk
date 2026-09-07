@@ -1357,8 +1357,9 @@ not an automatic synchronization or continuous-monitoring requirement.
 ## Selected-route account and service checks
 
 ADR 0021 selects free Vercel Hobby for the application and static project files.
-M4 therefore checks the actual Vercel Hobby plan and personal-use eligibility,
-then the ArcGIS account and browser key used for the basemap. It does not test
+The author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on
+2026-09-07. M4 therefore checks personal-use eligibility, then the remaining
+ArcGIS account and browser-key properties used for the basemap. It does not test
 Esri hosted-data publishing, storage or sharing. Those capabilities remain
 unverified and require a later superseding decision before use.
 
@@ -1421,7 +1422,7 @@ Sources are Esri's [portal and data-services FAQ](https://developers.arcgis.com/
 | Account and portal | A Location Platform subscription supplies a limited single-user organization and portal. It is not an ArcGIS Online organization subscription. |
 | Hosted service types | The limited organization supports creating hosted feature, vector-tile, and map-tile services. Hosted image and scene service creation is not supported. |
 | Public access | **Corrected 2026-09-06.** The 2026-08-31 entry recorded that a Location Platform hosted layer can be shared with `Everyone` for anonymous access. That was wrong; it applied cross-product sharing guidance to Location Platform. Esri's product-specific [data sharing and access guide](https://location.arcgis.com/help/data-sharing-and-access/) states that "Hosted data services in ArcGIS Location Platform are not shared publicly," citing anonymous-traffic and billing risk, and directs public-facing applications to authenticated access with developer credentials such as an API key. The [feature-service sharing and security guide](https://developers.arcgis.com/documentation/portal-and-data-services/data-services/feature-services/sharing-and-security/) lists `Owner (private)` as the only Location Platform sharing level and states that a scoped API key is required; ArcGIS Online additionally offers Organization, Group, and `Everyone (public)`. A visitor who never signs in is therefore **not** the same as a token-free service request: a scoped, origin-restricted browser key can serve visitors without a sign-in, but the service is not anonymous, the key is public once shipped, and the account owner remains responsible for the usage. |
-| Billing model | Location Platform uses monthly free tiers and optional pay-as-you-go, not ArcGIS Online credits. Esri states that pay-as-you-go is off by default for new accounts, but this account's actual setting is unverified. With pay-as-you-go off, service access stops when an applicable free tier is exhausted; storage overage can also prevent publishing. |
+| Billing model | Location Platform uses monthly free tiers and optional pay-as-you-go, not ArcGIS Online credits. Esri states that pay-as-you-go is off by default for new accounts; the author confirmed it disabled for this account on 2026-09-07. With pay-as-you-go off, service access stops when an applicable free tier is exhausted; storage overage can also prevent publishing. |
 | Browser API keys | Location Platform accounts have API-key-management privileges by default. Credentials can define service privileges, access to selected items, referrer restrictions, and expiration dates, and can issue up to two keys. Keys are valid for at most one year. Referrer restrictions are a misuse-reduction control, not a secret boundary; browser keys remain public. Changing privileges or item access requires regeneration, and a referrer change requires manual regeneration. |
 
 Current published monthly allowances relevant to this project are:
@@ -1468,10 +1469,11 @@ session:
 6. Report only those outcomes. If any free-plan, eligibility, billing, capacity
    or key-scope check fails, stop; there is no paid fallback.
 
-Until these checks are returned, account identity, billing, current basemap
-usage/headroom, credential scope/referrers, Vercel plan and Hobby eligibility
-are `unverified`. Actual Esri hosted-data and ArcGIS Online organization
-capabilities are also unverified but are not M4 requirements under ADR 0021.
+The author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on
+2026-09-07. Account product, current basemap usage/headroom, credential validity,
+scope/referrers, and Hobby eligibility remain `unverified`. Actual Esri
+hosted-data and ArcGIS Online organization capabilities are also unverified but
+are not M4 requirements under ADR 0021.
 
 ### Historical Esri hosted-data route checks
 
@@ -1649,9 +1651,10 @@ credits.
   files. The separate M6 exposure delivery boundary produces a
   measured, locally verified display/manifest pair and a small results
   contract, which uses the same selected static route after M7 integrates it.
-  Nothing has been published; Vercel plan/eligibility, account and deployed
-  behavior remain unverified. Esri hosted-data capabilities remain unselected
-  and unverified.
+  Nothing has been published. Vercel Hobby and ArcGIS pay-as-you-go disabled are
+  author-confirmed as of 2026-09-07; Hobby eligibility, remaining account checks
+  and deployed behavior remain unverified. Esri hosted-data capabilities remain
+  unselected and unverified.
 - Generated display layers are never committed. The exporters stage them into
   Git-ignored `web/public/layers/`, and refuse any destination outside this
   checkout's ignored output roots.

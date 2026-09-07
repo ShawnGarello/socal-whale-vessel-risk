@@ -13,19 +13,18 @@ during the 2026-09-06 vessel/domain check, so the current integration check used
 the unkeyed public `topo-vector` basemap and retained the application's visible
 missing-key warning. Deployed-origin access remains unverified, and neither
 local result establishes account or project-layer hosting capabilities. The
-author's real basemap account product, billing state, usage, free-tier headroom,
-and browser-key restrictions
-remain unverified because no authenticated session was available for the
-read-only inventory. Esri hosted-data capabilities are unselected and remain
-unverified. Paid plans, trials, add-ons, pay-as-you-go and other charged usage
-are prohibited.
+author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07.
+The basemap account product, usage, free-tier headroom, browser-key validity and
+restrictions, and Hobby eligibility remain unverified. Esri hosted-data
+capabilities are unselected and remain unverified. Paid plans, trials, add-ons,
+pay-as-you-go and other charged usage are prohibited.
 
 Project-derived layers are delivered here as static same-origin files served
 alongside the export, so they need no layer credential and no hosted service.
 That is what this application implements and what has been verified locally.
-ADR 0021 selects free Vercel Hobby for these files. Actual plan and personal-use
-eligibility, account state and deployed behavior remain unverified; no public
-project or deployment exists.
+ADR 0021 selects free Vercel Hobby for these files. The plan is author-confirmed;
+personal-use eligibility, remaining account checks and deployed behavior remain
+unverified. No public project or deployment exists.
 
 ## Modeled blue-whale density layer
 

@@ -55,9 +55,9 @@ headline. See the
 [exposure-results delivery handoff](../m6-exposure-results-delivery-handoff.md).
 
 [ADR 0021](0021-propose-vercel-static-input-delivery.md) selects free Vercel
-Hobby static delivery and route-specific M4 checks. Account state, Hobby
-eligibility and basemap capability remain unverified; acceptance does not
-authorize deployment.
+Hobby static delivery and route-specific M4 checks. The author confirmed Vercel
+Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07; Hobby eligibility and the
+remaining basemap checks are unverified. Acceptance does not authorize deployment.
 
 ## Why these exist
 

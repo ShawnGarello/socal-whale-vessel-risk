@@ -103,12 +103,13 @@ No Python code changed and no analytical run was required. Both `analysis` and
 
 M4 is **in progress, not complete**. No deployment URL exists. Nothing was
 pushed or merged. The author accepted ADR 0021's free static Vercel Hobby
-direction and route-specific checks, but supplied no account findings and
-explicitly withheld deployment approval.
+direction and route-specific checks, confirmed Vercel Hobby and ArcGIS
+pay-as-you-go disabled on 2026-09-07, and explicitly withheld deployment
+approval. Hobby eligibility and all other account/key checks remain unverified.
 
-1. Author privately confirms actual Vercel Hobby plan and personal-use
-   eligibility, basemap account product, pay-as-you-go off, available basemap
-   capacity, and the browser key's minimum privileges and exact referrers. Never
+1. Author privately confirms personal-use eligibility, basemap account product,
+   available basemap capacity, and the browser key's validity, minimum
+   privileges and exact referrers. Never
    send credentials or account identifiers to chat. Esri hosted-data and ArcGIS
    Online publishing capabilities remain unverified but are not M4 checks under
    the selected static route.

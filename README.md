@@ -30,8 +30,9 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 >
 > **Nothing has been deployed or published.** There is no public URL, no
 > project-derived layer is hosted anywhere. ADR 0021 selects free Vercel Hobby
-> static delivery; release staging is implemented, while account and eligibility
-> verification, review and deployment approval remain open.
+> static delivery; release staging is implemented. Vercel Hobby and ArcGIS
+> pay-as-you-go disabled are author-confirmed, while remaining account and
+> eligibility verification, review and deployment approval remain open.
 > Local rendering is not deployed verification. The exposure method and its distinct
 > display/results delivery contracts are implemented and locally verified, but
 > **the results are exploratory and not yet independently reviewed or accepted,
@@ -86,7 +87,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 
 ## Technology direction
 
-The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. [ADR 0021](docs/decisions/0021-propose-vercel-static-input-delivery.md) selects checksum-addressed static same-origin files on free Vercel Hobby for project-derived layers. The whale, vessel-activity, and analytical-domain files are implemented and locally verified; the exposure export and results artifact are implemented and verified as local M7 delivery evidence but are not yet integrated. Actual Vercel plan and personal-use eligibility, the ArcGIS basemap account and key restrictions, and deployed-origin behavior remain unverified. Esri hosted-data capabilities are unselected and remain unverified. No project-derived layer has been published. Paid plans, trials, add-ons, pay-as-you-go, and other charged usage are prohibited.
+The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. [ADR 0021](docs/decisions/0021-propose-vercel-static-input-delivery.md) selects checksum-addressed static same-origin files on free Vercel Hobby for project-derived layers. The whale, vessel-activity, and analytical-domain files are implemented and locally verified; the exposure export and results artifact are implemented and verified as local M7 delivery evidence but are not yet integrated. The author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07. Hobby eligibility, the remaining ArcGIS basemap account and key checks, and deployed-origin behavior remain unverified. Esri hosted-data capabilities are unselected and remain unverified. No project-derived layer has been published. Paid plans, trials, add-ons, pay-as-you-go, and other charged usage are prohibited.
 
 Python produces the analysis and lineage; QGIS does not replace that production path. The browser displays and filters public results but does not compute exposure. ArcGIS Pro is optional and unnecessary for Version 1. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md) and [ADR 0015](docs/decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md).
 
