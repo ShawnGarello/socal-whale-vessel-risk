@@ -2559,6 +2559,83 @@ The renders and reports remain ignored local evidence. The application-side
 verification is recorded in [`../web/README.md`](../web/README.md) and
 [`../docs/m5-whale-display-handoff.md`](../docs/m5-whale-display-handoff.md).
 
+## Commercial-vessel and analytical-domain display export
+
+Implemented under `commercial_vessel_display_export_v1` and
+`analytical_domain_display_export_v1`, both at processing version `1.0.0`.
+This is a presentation boundary, not an analytical calculation: it creates the
+browser-facing vessel-activity surface and exact accepted-domain outline from
+already validated artifacts and does not calculate exposure or change the
+accepted vessel rules.
+
+```text
+python -m uv run python -m whale_vessel_analysis.vessel_domain_display_export_cli --vessel-source <vessel-grid.parquet> --expected-vessel-sha256 <sha256> --vessel-quality-report <quality-report.json> --expected-vessel-quality-report-sha256 <sha256> --domain-source <domain-candidate-masks.parquet> --expected-domain-sha256 <sha256> --domain-report <domain-evidence-report.json> --expected-domain-report-sha256 <sha256> --output-directory <ignored-output-directory> [--overwrite]
+```
+
+All four paths and expected checksums are required. Before transformation, the
+exporter verifies the complete `production_vessel_input_v1` schema and embedded
+metadata, the separately retained quality report and its accounting, the
+analytical-domain masks/report pair, the shared target grid, and the accepted
+`receivers_50_nautical_miles` default-reporting-domain contract. The quality
+checks include the selected 300-second gap, 30-knot implied-speed ceiling,
+type-only commercial-vessel population, 153 ready dates, explicit unverified
+observational completeness, exclusion precedence, allocation statuses, and
+distance conservation.
+
+Vessel source-cell water geometry is intersected with the exact accepted domain
+in EPSG:3310 before both outputs are transformed to WGS 84. Partial boundary
+features retain the complete source-cell activity and support-water values;
+`analytical_domain_area_km2`, `analytical_domain_fraction`, and
+`analytical_domain_overlap` describe the displayed part rather than rescaling
+the value. No geometry is simplified, rounded, or densified. Speed,
+distinct-MMSI descriptors, redundant grid internals, and private processing
+lineage are withheld from the public files. The sanitized manifests are rebuilt
+from allowlists, and the two GeoJSON/manifest pairs are written atomically or
+the prior complete bundle is restored.
+
+The command writes fixed names beneath the requested ignored directory:
+`commercial-vessel-activity.geojson` and
+`accepted-analytical-domain.geojson`, each with a sibling
+`.geojson.manifest.json`. Destinations use the same checkout-anchored allowlist
+as the whale display export. Existing outputs are refused unless `--overwrite`
+is explicit.
+
+### Accepted inputs and verified outputs, 2026-09-06
+
+| Artifact | Exact retained path or fixed output name | SHA-256 |
+|---|---|---|
+| Production vessel grid, 4,516 rows | `C:\Users\teche\socal-whale-vessel-risk-accessais-july-month\data\derived\m3-production-vessel-repeat-attempt2\vessel-grid.parquet` | `5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0` |
+| Production vessel quality report | `C:\Users\teche\socal-whale-vessel-risk-accessais-july-month\data\derived\m3-production-vessel-repeat-attempt2\quality-report.json` | `4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7` |
+| Analytical-domain candidate masks | `C:\Users\teche\socal-whale-vessel-risk-analytical-domain\data\interim\m2-domain-evidence\domain-candidate-masks.parquet` | `4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77` |
+| Analytical-domain evidence report | `C:\Users\teche\socal-whale-vessel-risk-analytical-domain\data\interim\m2-domain-evidence\domain-evidence-report.json` | `eb7963f6ccf625b1547d01ae768dadabfb3f47207d29c24fa5df47e387df5d98` |
+| Vessel GeoJSON, 2,793 features and 2,720,788 bytes | `commercial-vessel-activity.geojson` | `3a7f2deeaa1899ac8fc5ecec7e7f522dd058adce667333ba33f8d32d930d3288` |
+| Vessel manifest | `commercial-vessel-activity.geojson.manifest.json` | `6d18aaf3e74038db0165884c0daaf99b5acf400dd42f5cccccb42da848ff995d` |
+| Domain GeoJSON, one feature and 867,910 bytes | `accepted-analytical-domain.geojson` | `7020ca8dfa27953a24a9db4ad2b0a25fb321c4edbecd383a01c62efb4b3bc7bf` |
+| Domain manifest | `accepted-analytical-domain.geojson.manifest.json` | `d340dc2703f3a891a62d4735dc442a7545a6330e9e3322b95f742f502b3b0de6` |
+
+A fresh export reproduced both GeoJSON files byte-identically. The manifests'
+`exported_at` values changed truthfully, so their repeat hashes differ. The
+vessel output contains 2,641 full and 152 partial cells, 137 with zero retained
+movement, and no geometry outside the one-feature accepted domain.
+
+### QGIS verification
+
+Inspect the two exact browser-facing files together, without conversion:
+
+```text
+"C:\Program Files\QGIS 4.2.1\bin\python-qgis.bat" scripts\qgis_inspect_vessel_domain_display.py --vessel <commercial-vessel-activity.geojson> --vessel-sha256 3a7f2deeaa1899ac8fc5ecec7e7f522dd058adce667333ba33f8d32d930d3288 --domain <accepted-analytical-domain.geojson> --domain-sha256 7020ca8dfa27953a24a9db4ad2b0a25fb321c4edbecd383a01c62efb4b3bc7bf --output-dir <fresh-ignored-interim-directory>
+```
+
+The script checksum-gates the GeoJSON and manifests, opens the files directly
+through QGIS/OGR, validates CRS, geometry, counts, values, and domain
+containment, and renders five fixed views. A person must inspect those renders;
+generation and rendering alone are not visual verification. The accepted QGIS
+4.2.1/GDAL 3.13.2 report is `inspection-report.json`, SHA-256
+`2cfca5ca98e5de69b5feead7db6e5d8b9e3d276a6076f1a9c55e43bdce55a140`.
+Exact paths, geometry metrics, render hashes, browser evidence, and limitations
+are retained in the
+[M5 vessel/domain display handoff](../docs/m5-vessel-domain-display-handoff.md).
+
 ## Exploratory relative-exposure foundation
 
 Implemented under `exploratory_relative_exposure_v1` / method version `1.0.0`,

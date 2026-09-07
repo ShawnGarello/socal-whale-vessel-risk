@@ -1229,8 +1229,8 @@ in the application through the evidence-selected publication route.
 
 ### Progress
 
-**Publisher-hosted VSR display implemented and locally verified; project-derived
-input layers remain unfinished**
+**All core input-layer displays implemented and locally verified; public
+delivery remains unfinished**
 
 - The static client creates an ArcGIS `FeatureLayer` from the publisher's exact
   `WhaleAtlas_2026/FeatureServer/0` URL and applies `FID = 126`. Source identity,
@@ -1258,6 +1258,7 @@ input layers remain unfinished**
   removed the failed layer, and retained a ready, non-updating oceans basemap,
   zoom controls, and SDK attribution without an indefinite loading state or
   sign-in prompt.
+
 **Whale display representation implemented and locally verified; not published**
 
 - A versioned `blue_whale_display_export_v1` boundary in `analysis/` turns the
@@ -1282,7 +1283,7 @@ input layers remain unfinished**
   source columns is withheld. It is rebuilt field by field from a named
   allowlist, so no filesystem path, credential, raw input, private lineage, or
   VSR-derived value can reach a public artifact.
-- **QGIS 4.2.1 with GDAL 3.13.2 verified the exact published file on
+- **QGIS 4.2.1 with GDAL 3.13.2 verified the exact browser-facing file on
   2026-09-06**, opened directly through OGR and bound to its output checksum.
   Counts, rings, positions, extent and value range all matched the manifest.
   Five checksum-recorded renders showed correct Southern California placement
@@ -1310,11 +1311,62 @@ input layers remain unfinished**
 - Symbology is five equal 0.001 animals/km² classes with an open lowest and
   highest class, **recorded as a display choice and stated as one in the
   interface**, holding 1,103 / 1,388 / 765 / 527 / 733 of the 4,516 cells.
-- Measured locally: 3.13 MiB uncompressed, 0.55 MiB gzipped, 0.38 MiB Brotli;
-  complete static export 30.75 MiB across 895 files; layer usable roughly 1.9 s
-  after navigation cold and 1.0 s warm over loopback without compression or
-  throttling. These are local observations of this project's own asset, not a
-  benchmark of ArcGIS services and not evidence about a deployed origin.
+- The earlier whale-only stage measured 3.13 MiB uncompressed, 0.55 MiB
+  gzipped, and 0.38 MiB Brotli; its contemporaneous static export was 30.75 MiB
+  across 895 files. The layer was usable roughly 1.9 s after navigation cold and
+  1.0 s warm over loopback without compression or throttling. These are local
+  observations of this project's own asset, not a benchmark of ArcGIS services
+  and not evidence about a deployed origin.
+
+**Vessel-activity and analytical-domain displays implemented and locally
+verified; not published**
+
+- `commercial_vessel_display_export_v1` and
+  `analytical_domain_display_export_v1` checksum-verify the accepted production
+  vessel grid, its quality report, the analytical-domain mask, and its evidence
+  report before exporting two deterministic RFC 7946 WGS 84 GeoJSON files with
+  sanitized manifests. The vessel export clips source-cell water geometry to
+  the exact `receivers_50_nautical_miles` domain in EPSG:3310 but preserves each
+  complete source-cell vessel value; no speed, distinct-vessel descriptor, value
+  rescaling, simplification, rounding, densification, or VSR geometry enters
+  either display artifact.
+- The vessel export has 2,793 features: 2,641 full cells and 152 partial cells,
+  including 137 cells with zero retained movement. Its SHA-256 is
+  `3a7f2deeaa1899ac8fc5ecec7e7f522dd058adce667333ba33f8d32d930d3288`.
+  The one-feature domain export has SHA-256
+  `7020ca8dfa27953a24a9db4ad2b0a25fb321c4edbecd383a01c62efb4b3bc7bf`.
+  A separate repeat reproduced both GeoJSON files byte-identically.
+- **QGIS 4.2.1 with GDAL 3.13.2 verified both exact files on 2026-09-06.**
+  Counts and geometry diagnostics matched the manifests; neither layer had an
+  empty or invalid geometry, no vessel geometry lay outside the domain, and
+  five checksum-recorded views showed coherent receiver-boundary clipping,
+  holes/islands, and traffic corridors without visible displacement, sliver,
+  or unexpected gap.
+- The client checksum-verifies all project GeoJSON bytes before creating an
+  ArcGIS layer. Each invocation has independent fetch, load, count, timeout,
+  failure, cleanup, and stale-execution protection, so an old completion or
+  rejection cannot overwrite or remove a replacement or another input layer.
+  Deterministic order keeps whale and vessel fills below the analytical-domain
+  and publisher VSR outlines. Whale and domain start visible; vessel starts
+  hidden so the two analytical fills do not obscure each other initially.
+- The vessel legend uses a neutral zero-retained-movement class and fixed
+  intervals over 0–1, 1–5, 5–20, 20–100, and over 100
+  vessel-km/km² of modeled-whale-support water. These are stated display
+  intervals, not analytical categories. The domain legend says that outside
+  water is excluded, not low activity, and the disclosures retain the
+  unverified-observational-completeness limitation.
+- **Browser verification on 2026-09-06** in headless Chrome 152 at exact
+  390 × 844, 820 × 1180, and 1440 × 900 viewports loaded 4,516 whale cells,
+  2,793 vessel cells, one domain feature, and one publisher VSR feature exactly
+  once with the intended ordering. Controls, legends, disclosures, constrained
+  panel scrolling, keyboard focus, attribution, and responsive containment
+  passed. Missing, checksum-mismatched, and ArcGIS-malformed vessel files failed
+  in isolation while the other layers remained ready.
+- The new files measure 2,720,788 and 867,910 raw bytes, or 385,764 and 199,834
+  bytes with Brotli. All three project input files total 6,866,027 raw bytes
+  and 982,450 Brotli bytes. The completed local static export contains 899 files
+  and 35,862,761 bytes. These are local file and rendering measurements, not
+  deployed transfer claims or evidence of hosting access.
 
 **What this does not establish**
 
@@ -1326,9 +1378,9 @@ input layers remain unfinished**
   preference and its documented constraints are recorded in
   [development.md](development.md), including an unresolved Hobby-plan
   eligibility question and an untested prebuilt-deploy path.
-- Project-derived study-area and vessel layer publication is not implemented,
-  and the exposure layer belongs to M6 and M7. The vessel artifact was
-  inspected read-only for scoping only.
+- The final public representation and host are not selected or accepted. The
+  exposure layer belongs to M6 and M7 and has no display or publication
+  contract.
 - The authenticated ArcGIS account capability checks M4 requires are still
   outstanding.
 - M5 remains in progress, and its completion criteria are not met.
@@ -1346,11 +1398,12 @@ input layers remain unfinished**
   public `WhaleAtlas_2026` Feature Service using `FID = 126`, with Danielle
   Alvarez, CMSF, and BWBS attribution and the publisher's non-navigational
   disclaimer. No VSR geometry is copied into project-controlled hosting.
-- A public representation for the project-derived layers. **One is implemented
-  for the whale layer:** a deterministic WGS 84 GeoJSON export served as a
-  static same-origin file, verified locally but not published, and not an
-  accepted hosting decision. The route for the remaining layers, and the host
-  for all of them, are still open. ArcGIS Location Platform
+- A public representation for the project-derived layers. **Static same-origin
+  representations are implemented for the whale, vessel-activity, and accepted
+  analytical-domain layers:** deterministic WGS 84 GeoJSON exports verified
+  locally but not published, and not an accepted hosting decision. The exposure
+  representation, final route for all derived layers, and host are still open.
+  ArcGIS Location Platform
   feature/vector-tile/map-tile services remain a candidate where verified
   free-tier capacity and service support fit — noting that its hosted services
   are documented as not shared publicly, so visitor access would be keyed —
@@ -1362,16 +1415,17 @@ input layers remain unfinished**
 - Popups or panels that state what each layer's values mean, including units.
 - Recorded mapping from each project-derived public layer representation back to the validated
   derived dataset, output checksum, visual-verification evidence, and
-  processing/export steps that produced it. **Recorded for the whale layer**
-  in this milestone's progress notes above and in
-  [`../docs/m5-whale-display-handoff.md`](m5-whale-display-handoff.md).
+  processing/export steps that produced it. **Recorded for the whale,
+  vessel-activity, and analytical-domain layers** in this milestone's progress
+  notes and the [whale](m5-whale-display-handoff.md) and
+  [vessel/domain](m5-vessel-domain-display-handoff.md) handoffs.
 - Recorded VSR item, service, feature filter, attribution, disclaimer, and
   comparison with the analytical snapshot.
 
 **Completion criteria**
 - Each layer renders at the study-area scale within an acceptable load time.
-  **Whale layer: met locally only**, on one machine over loopback without
-  compression or throttling; deployed load time is unmeasured.
+  **Met locally only for all three project input layers**, on one machine over
+  loopback; deployed load time is unmeasured.
 - Public access works end to end from the application: a visitor reaches every
   layer from the deployed origin without an interactive sign-in, and the record
   states for each layer whether that access is token-free or carried by a
@@ -1380,24 +1434,30 @@ input layers remain unfinished**
   selected route rather than waived. **Not met for any project-derived layer:
   nothing is deployed and there is no public URL.** The implemented whale route
   would be token-free, because a static same-origin file needs no credential,
-  but that is unverified from a deployed origin.
+  but that is unverified from a deployed origin. The same is true of the
+  implemented vessel and domain routes.
 - Every layer's legend states its units and the meaning of its values.
-  **Met for the whale layer.**
+  **Met locally for the whale, vessel-activity, and analytical-domain layers.**
 - Every layer names its source and its retrieval or processing date somewhere the user can reach.
-  **Met for the whale layer**, through the map's source-and-method disclosure.
+  **Met for the whale layer; incomplete for vessel and domain.** The vessel
+  disclosure names its source and analytical period but not a retrieval or
+  processing date. The domain disclosure names its source inputs but not their
+  retrieval or processing date.
 - Layer geometry visually aligns across layers; no projection mismatch is visible.
-  **Observed for the whale layer against the VSR boundary and the basemap in
-  the local browser check**; it must be re-observed once the vessel layer
-  exists.
+  **Observed among the whale, vessel-activity, analytical-domain, publisher VSR,
+  and basemap layers in the local browser check**, with separate checksum-bound
+  QGIS inspection of all three project input files.
 - The VSR feature loads anonymously from the publisher's service and is not a
   project-hosted copy. **Met locally.**
 
-None of the above is satisfied for the study-area or vessel layers, and none is
-verified from a deployed origin, so M5 stays in progress.
+The local display, legend, provenance, and alignment evidence now covers every
+core input layer. Public delivery, the final route/host decision, authenticated
+account-capability evidence, and deployed-origin verification remain open, so
+M5 stays in progress.
 
 **Risks and open questions**
-- Layer size, feature-count limits, or browser performance may force a different
-  representation, aggregation, or generalization.
+- Deployed transfer behavior, low-end-device performance, or host limits may
+  still force a different representation, aggregation, or generalization.
 - Raster and vector outputs may need different public delivery methods.
 - Symbology for a continuous density surface needs a defensible classification, since the class breaks chosen will shape how the map is read.
 - The publisher can change, remove, rate-limit, or make the VSR service private.

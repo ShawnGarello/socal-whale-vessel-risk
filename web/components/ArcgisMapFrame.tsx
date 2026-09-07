@@ -8,6 +8,7 @@ import PopupTemplate from "@arcgis/core/PopupTemplate.js";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer.js";
 import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer.js";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol.js";
+import type Map from "@arcgis/core/Map.js";
 import "@arcgis/map-components/components/arcgis-map";
 import "@arcgis/map-components/components/arcgis-zoom";
 import type { ArcgisMap } from "@arcgis/map-components/components/arcgis-map";
@@ -19,6 +20,21 @@ import {
 } from "@/lib/arcgis-config";
 import { releaseOwnedLayer } from "@/lib/layer-lifecycle";
 import { INITIAL_MAP_LAYER_STATE, mapLayerReducer } from "@/lib/map-layer-state";
+import {
+  DOMAIN_SOURCE,
+  DomainLayerChecksumError,
+  assertExpectedDomainFeatureCount,
+  resolveDomainLayerUrl,
+  verifyDomainLayerBytes,
+} from "@/lib/domain-source";
+import { useVerifiedGeoJsonLayer } from "@/lib/use-verified-geojson-layer";
+import {
+  VESSEL_SOURCE,
+  VesselLayerChecksumError,
+  assertExpectedVesselFeatureCount,
+  resolveVesselLayerUrl,
+  verifyVesselLayerBytes,
+} from "@/lib/vessel-source";
 import {
   VSR_FAILURE_MESSAGE,
   VSR_MAP_UNAVAILABLE_MESSAGE,
@@ -34,6 +50,8 @@ import {
   verifyWhaleLayerChecksum,
 } from "@/lib/whale-source";
 import MapLayerPanel from "./MapLayerPanel";
+import DomainLayerControl from "./DomainLayerControl";
+import VesselLayerControl from "./VesselLayerControl";
 import VsrLayerControl from "./VsrLayerControl";
 import WhaleLayerControl from "./WhaleLayerControl";
 import styles from "./ArcgisMapFrame.module.css";
@@ -53,6 +71,8 @@ const config = resolveArcgisConfig({
 });
 
 const whaleLayerUrl = resolveWhaleLayerUrl(process.env.NEXT_PUBLIC_WHALE_LAYER_URL);
+const vesselLayerUrl = resolveVesselLayerUrl(process.env.NEXT_PUBLIC_VESSEL_LAYER_URL);
+const domainLayerUrl = resolveDomainLayerUrl(process.env.NEXT_PUBLIC_DOMAIN_LAYER_URL);
 
 // This is an anonymous public application: nobody signs in, and it reads only
 // publicly shared content. Left at its default, the SDK answers a rejected
@@ -105,6 +125,24 @@ const WHALE_MAP_UNAVAILABLE_MESSAGE =
   "The modeled blue-whale density layer is unavailable because the map could " +
   "not be initialized.";
 
+const VESSEL_FAILURE_MESSAGE =
+  "The commercial vessel activity layer could not be loaded. The basemap and " +
+  "other project layers remain available.";
+const VESSEL_CHECKSUM_MESSAGE =
+  "The commercial vessel activity layer was not displayed because its file " +
+  "does not match the checksum this build expects.";
+const VESSEL_MAP_UNAVAILABLE_MESSAGE =
+  "The commercial vessel activity layer is unavailable because the map could " +
+  "not be initialized.";
+const DOMAIN_FAILURE_MESSAGE =
+  "The accepted analytical-domain boundary could not be loaded. The basemap " +
+  "and other project layers remain available.";
+const DOMAIN_CHECKSUM_MESSAGE =
+  "The analytical-domain boundary was not displayed because its file does not " +
+  "match the checksum this build expects.";
+const DOMAIN_MAP_UNAVAILABLE_MESSAGE =
+  "The analytical-domain boundary is unavailable because the map could not be initialized.";
+
 /**
  * Symbology for the modeled density surface.
  *
@@ -153,6 +191,201 @@ function createWhalePopupTemplate(): PopupTemplate {
   });
 }
 
+function createWhaleLayer(objectUrl: string): GeoJSONLayer {
+  return new GeoJSONLayer({
+    id: WHALE_SOURCE.layerId,
+    title: WHALE_SOURCE.title,
+    url: objectUrl,
+    geometryType: "polygon",
+    spatialReference: { wkid: 4326 },
+    objectIdField: WHALE_SOURCE.objectIdField,
+    fields: [
+      { name: "object_id", alias: "Display id", type: "oid" },
+      { name: "cell_id", alias: "Grid cell", type: "string" },
+      {
+        name: "modeled_density_animals_per_km2",
+        alias: "Modeled density (animals/km²)",
+        type: "double",
+      },
+      {
+        name: "modeled_abundance_allocation_animals",
+        alias: "Modeled abundance allocation (animals)",
+        type: "double",
+      },
+      { name: "water_area_km2", alias: "Supporting water area (km²)", type: "double" },
+      {
+        name: "source_coverage_fraction",
+        alias: "Source-model support",
+        type: "double",
+      },
+      { name: "coverage_status", alias: "Source support status", type: "string" },
+    ],
+    copyright: WHALE_SOURCE.attribution,
+    renderer: createWhaleRenderer(),
+    popupTemplate: createWhalePopupTemplate(),
+  });
+}
+
+function createVesselRenderer(): ClassBreaksRenderer {
+  return new ClassBreaksRenderer({
+    field: VESSEL_SOURCE.valueField,
+    classBreakInfos: VESSEL_SOURCE.classes.map((entry) => ({
+      minValue: entry.min,
+      maxValue: entry.max ?? Number.MAX_VALUE,
+      label: entry.label,
+      symbol: new SimpleFillSymbol({
+        color: [...entry.color],
+        outline: { width: 0 },
+      }),
+    })),
+  });
+}
+
+function createVesselPopupTemplate(): PopupTemplate {
+  const fields = [
+    ["vessel_km_per_water_km2_all_commercial", "Activity density", 2],
+    ["vessel_km_all_commercial", "All commercial movement", 1],
+    ["vessel_km_passenger", "Passenger movement", 1],
+    ["vessel_km_cargo", "Cargo movement", 1],
+    ["vessel_km_tanker", "Tanker movement", 1],
+    ["water_area_km2", "Complete source-cell support water", 2],
+    ["analytical_domain_fraction", "Fraction inside analytical domain", 4],
+  ] as const;
+  return new PopupTemplate({
+    title: `${VESSEL_SOURCE.title} — cell {cell_id}`,
+    content: [
+      {
+        type: "fields",
+        fieldInfos: fields.map(([name, label, places]) => ({
+          fieldName: name,
+          label,
+          format: { places, digitSeparator: true },
+        })),
+      },
+      {
+        type: "text",
+        text:
+          "Activity density is vessel-km per km² modeled-whale-support water. " +
+          "A zero is not verified vessel absence; partial-cell values describe " +
+          "the complete source cell and are not rescaled.",
+      },
+    ],
+    outFields: ["cell_id", ...fields.map(([name]) => name)],
+  });
+}
+
+function createVesselLayer(objectUrl: string): GeoJSONLayer {
+  return new GeoJSONLayer({
+    id: VESSEL_SOURCE.layerId,
+    title: VESSEL_SOURCE.title,
+    url: objectUrl,
+    geometryType: "polygon",
+    spatialReference: { wkid: 4326 },
+    objectIdField: VESSEL_SOURCE.objectIdField,
+    fields: [
+      { name: "object_id", alias: "Display id", type: "oid" },
+      { name: "cell_id", alias: "Grid cell", type: "string" },
+      {
+        name: "vessel_km_per_water_km2_all_commercial",
+        alias: "Activity density",
+        type: "double",
+      },
+      {
+        name: "vessel_km_all_commercial",
+        alias: "All commercial vessel-km",
+        type: "double",
+      },
+      { name: "vessel_km_passenger", alias: "Passenger vessel-km", type: "double" },
+      { name: "vessel_km_cargo", alias: "Cargo vessel-km", type: "double" },
+      { name: "vessel_km_tanker", alias: "Tanker vessel-km", type: "double" },
+      {
+        name: "water_area_km2",
+        alias: "Source-cell support water (km²)",
+        type: "double",
+      },
+      {
+        name: "analytical_domain_area_km2",
+        alias: "Area inside domain (km²)",
+        type: "double",
+      },
+      {
+        name: "analytical_domain_fraction",
+        alias: "Fraction inside domain",
+        type: "double",
+      },
+      { name: "analytical_domain_overlap", alias: "Domain overlap", type: "string" },
+    ],
+    copyright: VESSEL_SOURCE.attribution,
+    renderer: createVesselRenderer(),
+    popupTemplate: createVesselPopupTemplate(),
+  });
+}
+
+function createDomainLayer(objectUrl: string): GeoJSONLayer {
+  return new GeoJSONLayer({
+    id: DOMAIN_SOURCE.layerId,
+    title: DOMAIN_SOURCE.title,
+    url: objectUrl,
+    geometryType: "polygon",
+    spatialReference: { wkid: 4326 },
+    objectIdField: DOMAIN_SOURCE.objectIdField,
+    fields: [
+      { name: "object_id", alias: "Display id", type: "oid" },
+      { name: "domain_id", alias: "Domain id", type: "string" },
+      { name: "qualification", alias: "Qualification", type: "string" },
+      {
+        name: "distance_nautical_miles",
+        alias: "Receiver distance (nmi)",
+        type: "integer",
+      },
+      { name: "distance_m", alias: "Receiver distance (m)", type: "integer" },
+      { name: "measured_from", alias: "Measured from", type: "string" },
+      {
+        name: "included_water_area_km2",
+        alias: "Included support water (km²)",
+        type: "double",
+      },
+      { name: "fully_inside_cell_count", alias: "Full cells", type: "integer" },
+      { name: "partly_inside_cell_count", alias: "Partial cells", type: "integer" },
+      { name: "wholly_outside_cell_count", alias: "Excluded cells", type: "integer" },
+    ],
+    copyright: DOMAIN_SOURCE.attribution,
+    popupEnabled: false,
+    renderer: new SimpleRenderer({
+      symbol: new SimpleFillSymbol({
+        color: [45, 205, 184, 0.035],
+        outline: {
+          color: [...DOMAIN_SOURCE.outlineColor],
+          width: 2,
+          style: "short-dash",
+        },
+      }),
+    }),
+  });
+}
+
+function reorderProjectLayers(map: Map): void {
+  let index = 0;
+  for (const layerId of [
+    WHALE_SOURCE.layerId,
+    VESSEL_SOURCE.layerId,
+    DOMAIN_SOURCE.layerId,
+    VSR_SOURCE.layerId,
+  ]) {
+    const layer = map.findLayerById(layerId);
+    if (layer) map.reorder(layer, index++);
+  }
+}
+
+const isWhaleChecksumError = (error: unknown) =>
+  error instanceof WhaleLayerChecksumError;
+const verifyWhaleLayerBytes = async (bytes: ArrayBuffer) =>
+  verifyWhaleLayerChecksum(await sha256Hex(bytes));
+const isVesselChecksumError = (error: unknown) =>
+  error instanceof VesselLayerChecksumError;
+const isDomainChecksumError = (error: unknown) =>
+  error instanceof DomainLayerChecksumError;
+
 type Status = "initializing" | "ready" | "error";
 
 interface ArcgisMapFrameProps {
@@ -171,9 +404,23 @@ export default function ArcgisMapFrame({
     mapLayerReducer,
     INITIAL_MAP_LAYER_STATE,
   );
+  const [vesselState, dispatchVessel] = useReducer(mapLayerReducer, {
+    ...INITIAL_MAP_LAYER_STATE,
+    visible: false,
+  });
+  const [domainState, dispatchDomain] = useReducer(
+    mapLayerReducer,
+    INITIAL_MAP_LAYER_STATE,
+  );
   // `null` until a load attempt finishes: true when the bytes were hashed and
   // matched, false when this browser exposes no SubtleCrypto to hash them.
   const [whaleChecksumVerified, setWhaleChecksumVerified] = useState<boolean | null>(
+    null,
+  );
+  const [vesselChecksumVerified, setVesselChecksumVerified] = useState<boolean | null>(
+    null,
+  );
+  const [domainChecksumVerified, setDomainChecksumVerified] = useState<boolean | null>(
     null,
   );
   const mapRef = useRef<ArcgisMap | null>(null);
@@ -181,6 +428,11 @@ export default function ArcgisMapFrame({
   const vsrVisibleRef = useRef(vsrState.visible);
   const whaleLayerRef = useRef<GeoJSONLayer | null>(null);
   const whaleVisibleRef = useRef(whaleState.visible);
+  const vesselLayerRef = useRef<GeoJSONLayer | null>(null);
+  const vesselVisibleRef = useRef(vesselState.visible);
+  const domainLayerRef = useRef<GeoJSONLayer | null>(null);
+  const domainVisibleRef = useRef(domainState.visible);
+  const getMap = useCallback(() => mapRef.current?.map, []);
 
   const handleReadyChange = useCallback(() => {
     const element = mapRef.current;
@@ -210,6 +462,14 @@ export default function ArcgisMapFrame({
       type: "map-unavailable",
       warning: WHALE_MAP_UNAVAILABLE_MESSAGE,
     });
+    dispatchVessel({
+      type: "map-unavailable",
+      warning: VESSEL_MAP_UNAVAILABLE_MESSAGE,
+    });
+    dispatchDomain({
+      type: "map-unavailable",
+      warning: DOMAIN_MAP_UNAVAILABLE_MESSAGE,
+    });
   }, [onSdkAttributionChange]);
 
   useEffect(() => {
@@ -229,169 +489,78 @@ export default function ArcgisMapFrame({
         type: "map-unavailable",
         warning: WHALE_MAP_UNAVAILABLE_MESSAGE,
       });
+      dispatchVessel({
+        type: "map-unavailable",
+        warning: VESSEL_MAP_UNAVAILABLE_MESSAGE,
+      });
+      dispatchDomain({
+        type: "map-unavailable",
+        warning: DOMAIN_MAP_UNAVAILABLE_MESSAGE,
+      });
     }, INITIALIZATION_TIMEOUT_MS);
     return () => window.clearTimeout(timer);
   }, [onSdkAttributionChange, status]);
 
-  /*
-   * The two layer effects below are deliberately parallel rather than shared.
-   * Each owns exactly the layer it created, bounds its own load, and reports
-   * its own failure, so neither the basemap nor the other layer is affected
-   * when one source is unreachable.
-   */
+  // Each project-owned GeoJSON layer has an independent fetch, checksum,
+  // timeout, error state, and owned-resource cleanup. A broken activity file
+  // cannot remove the whale surface, domain boundary, VSR, or basemap.
+  useVerifiedGeoJsonLayer({
+    mapIsReady,
+    getMap,
+    source: WHALE_SOURCE,
+    url: whaleLayerUrl,
+    visibleRef: whaleVisibleRef,
+    layerRef: whaleLayerRef,
+    dispatch: dispatchWhale,
+    setChecksumVerified: setWhaleChecksumVerified,
+    createLayer: createWhaleLayer,
+    verifyBytes: verifyWhaleLayerBytes,
+    assertFeatureCount: assertExpectedWhaleFeatureCount,
+    checksumError: isWhaleChecksumError,
+    failureMessage: WHALE_FAILURE_MESSAGE,
+    checksumMessage: WHALE_CHECKSUM_MESSAGE,
+    mapUnavailableMessage: WHALE_MAP_UNAVAILABLE_MESSAGE,
+    loadTimeoutMs: WHALE_LOAD_TIMEOUT_MS,
+    afterAdd: reorderProjectLayers,
+  });
 
-  // Project-derived whale layer. Added at index 0 so the publisher's VSR
-  // outline always draws above this fill, whichever layer finishes loading
-  // first.
-  useEffect(() => {
-    if (!mapIsReady) return;
+  useVerifiedGeoJsonLayer({
+    mapIsReady,
+    getMap,
+    source: VESSEL_SOURCE,
+    url: vesselLayerUrl,
+    visibleRef: vesselVisibleRef,
+    layerRef: vesselLayerRef,
+    dispatch: dispatchVessel,
+    setChecksumVerified: setVesselChecksumVerified,
+    createLayer: createVesselLayer,
+    verifyBytes: verifyVesselLayerBytes,
+    assertFeatureCount: assertExpectedVesselFeatureCount,
+    checksumError: isVesselChecksumError,
+    failureMessage: VESSEL_FAILURE_MESSAGE,
+    checksumMessage: VESSEL_CHECKSUM_MESSAGE,
+    mapUnavailableMessage: VESSEL_MAP_UNAVAILABLE_MESSAGE,
+    afterAdd: reorderProjectLayers,
+  });
 
-    const map = mapRef.current?.map;
-    if (!map) {
-      dispatchWhale({
-        type: "map-unavailable",
-        warning: WHALE_MAP_UNAVAILABLE_MESSAGE,
-      });
-      return;
-    }
-
-    let disposed = false;
-    let ownedLayer: GeoJSONLayer | null = null;
-    let objectUrl: string | null = null;
-    const abortController = new AbortController();
-    const timeout = window.setTimeout(
-      () => abortController.abort(),
-      WHALE_LOAD_TIMEOUT_MS,
-    );
-
-    const loadLayer = async () => {
-      dispatchWhale({ type: "load-started" });
-      setWhaleChecksumVerified(null);
-
-      try {
-        const existingLayer = map.findLayerById(WHALE_SOURCE.layerId);
-        if (existingLayer && !(existingLayer instanceof GeoJSONLayer)) {
-          throw new Error("The whale layer id is already used by another layer.");
-        }
-        let layer: GeoJSONLayer;
-        if (existingLayer) {
-          layer = existingLayer;
-        } else {
-          // Fetch the file here rather than handing the URL to the SDK, so the
-          // exact bytes that will be displayed are the bytes that get hashed.
-          // The layer then reads them back from a blob URL, so this is still a
-          // single download.
-          const response = await fetch(whaleLayerUrl, {
-            signal: abortController.signal,
-            cache: "no-store",
-          });
-          if (!response.ok) {
-            throw new Error(
-              `The whale layer request returned HTTP ${response.status}.`,
-            );
-          }
-          const bytes = await response.arrayBuffer();
-          setWhaleChecksumVerified(verifyWhaleLayerChecksum(await sha256Hex(bytes)));
-          objectUrl = URL.createObjectURL(
-            new Blob([bytes], { type: "application/geo+json" }),
-          );
-
-          ownedLayer = new GeoJSONLayer({
-            id: WHALE_SOURCE.layerId,
-            title: WHALE_SOURCE.title,
-            url: objectUrl,
-            // Declared explicitly rather than inferred from the first feature,
-            // so a truncated or altered export fails to load instead of
-            // rendering with a silently different schema.
-            geometryType: "polygon",
-            spatialReference: { wkid: 4326 },
-            objectIdField: WHALE_SOURCE.objectIdField,
-            fields: [
-              { name: "object_id", alias: "Display id", type: "oid" },
-              { name: "cell_id", alias: "Grid cell", type: "string" },
-              {
-                name: "modeled_density_animals_per_km2",
-                alias: "Modeled density (animals/km2)",
-                type: "double",
-              },
-              {
-                name: "modeled_abundance_allocation_animals",
-                alias: "Modeled abundance allocation (animals)",
-                type: "double",
-              },
-              {
-                name: "water_area_km2",
-                alias: "Supporting water area (km2)",
-                type: "double",
-              },
-              {
-                name: "source_coverage_fraction",
-                alias: "Source-model support",
-                type: "double",
-              },
-              {
-                name: "coverage_status",
-                alias: "Source support status",
-                type: "string",
-              },
-            ],
-            copyright: WHALE_SOURCE.attribution,
-            visible: whaleVisibleRef.current,
-            renderer: createWhaleRenderer(),
-            popupTemplate: createWhalePopupTemplate(),
-          });
-          layer = ownedLayer;
-          map.add(ownedLayer, 0);
-        }
-        whaleLayerRef.current = layer;
-
-        await layer.load({ signal: abortController.signal });
-        const featureCount = await layer.queryFeatureCount(undefined, {
-          signal: abortController.signal,
-        });
-
-        assertExpectedWhaleFeatureCount(featureCount);
-        if (!disposed) {
-          dispatchWhale({ type: "load-succeeded", featureCount });
-        }
-      } catch (error) {
-        releaseOwnedLayer(map, ownedLayer, whaleLayerRef);
-        ownedLayer = null;
-        // Nothing will read the blob now, so release it rather than holding a
-        // copy of the file until this component unmounts.
-        if (objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-          objectUrl = null;
-        }
-        if (!disposed) {
-          setWhaleChecksumVerified(null);
-          dispatchWhale({
-            type: "load-failed",
-            warning:
-              error instanceof WhaleLayerChecksumError
-                ? WHALE_CHECKSUM_MESSAGE
-                : WHALE_FAILURE_MESSAGE,
-          });
-        }
-      } finally {
-        window.clearTimeout(timeout);
-      }
-    };
-
-    void loadLayer();
-
-    return () => {
-      disposed = true;
-      abortController.abort();
-      window.clearTimeout(timeout);
-      releaseOwnedLayer(map, ownedLayer, whaleLayerRef);
-      ownedLayer = null;
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-        objectUrl = null;
-      }
-    };
-  }, [mapIsReady]);
+  useVerifiedGeoJsonLayer({
+    mapIsReady,
+    getMap,
+    source: DOMAIN_SOURCE,
+    url: domainLayerUrl,
+    visibleRef: domainVisibleRef,
+    layerRef: domainLayerRef,
+    dispatch: dispatchDomain,
+    setChecksumVerified: setDomainChecksumVerified,
+    createLayer: createDomainLayer,
+    verifyBytes: verifyDomainLayerBytes,
+    assertFeatureCount: assertExpectedDomainFeatureCount,
+    checksumError: isDomainChecksumError,
+    failureMessage: DOMAIN_FAILURE_MESSAGE,
+    checksumMessage: DOMAIN_CHECKSUM_MESSAGE,
+    mapUnavailableMessage: DOMAIN_MAP_UNAVAILABLE_MESSAGE,
+    afterAdd: reorderProjectLayers,
+  });
 
   // Publisher-hosted VSR boundary. No geometry from this service is stored,
   // transformed, or republished by this application.
@@ -447,6 +616,7 @@ export default function ArcgisMapFrame({
           });
           layer = ownedLayer;
           map.add(ownedLayer);
+          reorderProjectLayers(map);
         }
         vsrLayerRef.current = layer;
 
@@ -493,6 +663,18 @@ export default function ArcgisMapFrame({
     dispatchWhale({ type: "visibility-changed", visible });
   }, []);
 
+  const handleVesselVisibilityChange = useCallback((visible: boolean) => {
+    vesselVisibleRef.current = visible;
+    if (vesselLayerRef.current) vesselLayerRef.current.visible = visible;
+    dispatchVessel({ type: "visibility-changed", visible });
+  }, []);
+
+  const handleDomainVisibilityChange = useCallback((visible: boolean) => {
+    domainVisibleRef.current = visible;
+    if (domainLayerRef.current) domainLayerRef.current.visible = visible;
+    dispatchDomain({ type: "visibility-changed", visible });
+  }, []);
+
   const problems = [...config.warnings, ...failures];
 
   return (
@@ -518,10 +700,25 @@ export default function ArcgisMapFrame({
       </arcgis-map>
 
       <MapLayerPanel>
+        <p className={styles.layerHint}>
+          Toggle the two filled surfaces to compare them. The dashed boundary marks the
+          receiver-qualified analysis area; blank water beyond it is excluded, not low
+          activity.
+        </p>
         <WhaleLayerControl
           state={whaleState}
           checksumVerified={whaleChecksumVerified}
           onVisibilityChange={handleWhaleVisibilityChange}
+        />
+        <VesselLayerControl
+          state={vesselState}
+          checksumVerified={vesselChecksumVerified}
+          onVisibilityChange={handleVesselVisibilityChange}
+        />
+        <DomainLayerControl
+          state={domainState}
+          checksumVerified={domainChecksumVerified}
+          onVisibilityChange={handleDomainVisibilityChange}
         />
         <VsrLayerControl
           state={vsrState}

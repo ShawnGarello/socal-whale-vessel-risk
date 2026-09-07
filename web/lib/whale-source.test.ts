@@ -16,6 +16,14 @@ const mapFrameSource = readFileSync(
   new URL("../components/ArcgisMapFrame.tsx", import.meta.url),
   "utf8",
 );
+const verifiedLayerHookSource = readFileSync(
+  new URL("./use-verified-geojson-layer.ts", import.meta.url),
+  "utf8",
+);
+const verifiedLayerLifecycleSource = readFileSync(
+  new URL("./verified-geojson-layer-lifecycle.ts", import.meta.url),
+  "utf8",
+);
 
 describe("whale layer source configuration", () => {
   it("binds the build to one exact export and its validated analysis source", () => {
@@ -127,18 +135,24 @@ describe("whale density classification", () => {
 });
 
 describe("whale layer map integration", () => {
-  it("draws the whale fill beneath the publisher VSR outline", () => {
-    expect(mapFrameSource).toContain("map.add(ownedLayer, 0);");
+  it("draws the whale and vessel fills beneath domain and VSR outlines", () => {
+    expect(mapFrameSource).toContain("WHALE_SOURCE.layerId,");
+    expect(mapFrameSource).toContain("VESSEL_SOURCE.layerId,");
+    expect(mapFrameSource).toContain("DOMAIN_SOURCE.layerId,");
+    expect(mapFrameSource).toContain("VSR_SOURCE.layerId,");
+    expect(mapFrameSource).toContain("map.reorder(layer, index++)");
   });
 
   it("bounds the whale request and isolates its failure from the rest of the map", () => {
     expect(mapFrameSource).toContain("WHALE_LOAD_TIMEOUT_MS");
-    expect(mapFrameSource).toContain("assertExpectedWhaleFeatureCount(featureCount)");
-    expect(mapFrameSource).toContain("dispatchWhale({");
-    expect(mapFrameSource).toContain('type: "load-failed",');
-    expect(mapFrameSource).toContain("WHALE_FAILURE_MESSAGE,");
     expect(mapFrameSource).toContain(
-      "releaseOwnedLayer(map, ownedLayer, whaleLayerRef);",
+      "assertFeatureCount: assertExpectedWhaleFeatureCount",
+    );
+    expect(mapFrameSource).toContain("dispatch: dispatchWhale");
+    expect(mapFrameSource).toContain("failureMessage: WHALE_FAILURE_MESSAGE");
+    expect(verifiedLayerLifecycleSource).toContain('type: "load-failed"');
+    expect(verifiedLayerLifecycleSource).toContain(
+      "releaseOwnedLayer(map, ownedLayer, layerRef)",
     );
   });
 
@@ -194,13 +208,15 @@ describe("whale layer checksum binding", () => {
   it("hashes the bytes the layer will display, not the URL", () => {
     // The layer is created from a blob built from the verified bytes, so the
     // file that was hashed is necessarily the file that is rendered.
-    expect(mapFrameSource).toContain("const bytes = await response.arrayBuffer();");
+    expect(verifiedLayerLifecycleSource).toContain(
+      "const bytes = await response.arrayBuffer();",
+    );
     expect(mapFrameSource).toContain(
       "verifyWhaleLayerChecksum(await sha256Hex(bytes))",
     );
-    expect(mapFrameSource).toContain("URL.createObjectURL(");
+    expect(verifiedLayerHookSource).toContain("URL.createObjectURL(");
     expect(mapFrameSource).toContain("url: objectUrl,");
-    expect(mapFrameSource).toContain("URL.revokeObjectURL(objectUrl);");
+    expect(verifiedLayerHookSource).toContain("URL.revokeObjectURL(objectUrl)");
   });
 
   it("reports a checksum mismatch separately from an unreachable file", () => {
