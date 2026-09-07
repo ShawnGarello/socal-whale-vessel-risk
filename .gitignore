@@ -16,6 +16,9 @@ data/**
 !data/**/README.md
 !data/**/.gitkeep
 
+# Complete local release packages include copied source README files too.
+/data/interim/m4-releases/
+
 # Belt-and-braces: geospatial and tabular payloads are never committed from
 # anywhere in the tree, whatever directory they end up in.
 *.nc

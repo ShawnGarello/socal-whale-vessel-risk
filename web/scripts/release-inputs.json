@@ -1,0 +1,23 @@
+[
+  {
+    "name": "blue-whale-density.geojson",
+    "sha256": "831a5412e9f414d5e4c7011d1b1687a89b8089826f8925f31e737b974662e154",
+    "manifestSha256": "404c53356be7d743cbc5e4bc1b5741e4938c84e206caf1d53468954e368c8108",
+    "sourceModule": "whale",
+    "environment": "NEXT_PUBLIC_WHALE_LAYER_URL"
+  },
+  {
+    "name": "commercial-vessel-activity.geojson",
+    "sha256": "3a7f2deeaa1899ac8fc5ecec7e7f522dd058adce667333ba33f8d32d930d3288",
+    "manifestSha256": "6d18aaf3e74038db0165884c0daaf99b5acf400dd42f5cccccb42da848ff995d",
+    "sourceModule": "vessel",
+    "environment": "NEXT_PUBLIC_VESSEL_LAYER_URL"
+  },
+  {
+    "name": "accepted-analytical-domain.geojson",
+    "sha256": "7020ca8dfa27953a24a9db4ad2b0a25fb321c4edbecd383a01c62efb4b3bc7bf",
+    "manifestSha256": "d340dc2703f3a891a62d4735dc442a7545a6330e9e3322b95f742f502b3b0de6",
+    "sourceModule": "domain",
+    "environment": "NEXT_PUBLIC_DOMAIN_LAYER_URL"
+  }
+]

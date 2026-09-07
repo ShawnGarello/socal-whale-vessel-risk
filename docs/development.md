@@ -101,8 +101,8 @@ workflow sections below, not every historical run record by default.
   **Direct-process resource profiling** procedure, and the exact task's run
   settings and stop conditions in the analysis README or current run handoff.
 - For credentials, publishing, or deployment, read **Environment variables and
-  secrets**, **Deploying the application**, and **ArcGIS account-type capability
-  checks and service access**, plus applicable source-use decisions. These are
+  secrets**, **Deploying the application**, and **Selected-route account and
+  service checks**, plus applicable source-use decisions. These are
   not authorization to change an account or publish anything.
 
 Use headings and search to locate evidence. Read historical commands, hashes,
@@ -1142,14 +1142,12 @@ Documented Hobby-plan limits and how this project compares:
 | 100 deployments per day, 100 builds per hour, 1 concurrent | ample |
 | Typical monthly Fast Data Transfer guideline up to 100 GB | roughly 0.98 MB Brotli for all three project input layers, plus the SDK chunks a page actually fetches |
 
-**The deployment must carry locally generated data.** Two documented paths do.
-The recommended one is `vercel build` followed by `vercel deploy --prebuilt`,
-which uploads the local `.vercel/output` rather than the source, so ignored
-generated files reach the deployment without entering Git. The alternative is
-uploading the finished `out/` directory as a static deployment with
-`outputDirectory` set and no build command. **Neither has been executed**, so
-whether `vercel build` produces the expected static output for this
-`output: "export"` project is unverified and needs one author-run trial.
+**The deployment must carry locally generated data.** The implemented staging
+procedure below builds the static export and assembles Build Output API v3
+output for `vercel deploy --prebuilt`. It needs no Vercel account operation to
+prepare local files. The earlier framework-aware `vercel build` proposal and
+direct `out/` upload are not selected. Provider acceptance of the prepared
+static package remains unverified.
 
 **An eligibility question the author must settle.** Vercel documents the Hobby
 plan as restricted to non-commercial personal use, defining commercial usage as
@@ -1157,8 +1155,9 @@ plan as restricted to non-commercial personal use, defining commercial usage as
 involved in any part of the production of the project, including a paid
 employee or consultant writing the code." The enumerated examples — collecting
 payment, advertising a product or service for sale, being paid to create or
-host the site, affiliate linking as the site's primary purpose, advertisements,
-and soliciting donations — do **not** apply to this project. The broad
+host the site, affiliate linking as the site's primary purpose, and advertisements
+— do **not** apply to this project. The current guidelines explicitly exclude
+donation requests from commercial usage (rechecked 2026-09-07). The broad
 "financial gain" clause is the open question for a portfolio piece aimed at
 internship reviewers, and Vercel's own guidance is to ask their support team
 when unsure. This is the author's decision. If it resolves unfavourably, the
@@ -1174,17 +1173,11 @@ is known to be necessary yet.
 
 **Proposed release staging**
 
-1. Regenerate every display export from its exact validated sources and
-   checksums.
-2. Assemble an isolated, ignored release directory: the static export plus the
-   checksum-addressed layer files and their manifests.
-3. Verify that directory — file count, total size, no source data, no VSR
-   geometry, no private lineage, no credential — and record the application
-   commit together with every data checksum.
-4. Author runs the build and the deploy, then verifies the public URL in a
-   clean browser with no session.
-5. Keep the previous complete release available for rollback, and never replace
-   different bytes at an immutable URL.
+Use the implemented local procedure below. Reuse the exact validated retained
+display exports after hashing them; regeneration is needed only if those bytes
+are missing or invalid. Do not rerun AIS processing for deployment. A browser
+key is intentionally in the built JavaScript; it must be the explicitly scoped
+public basemap key, never a publication or account credential.
 
 **Before calling a deployment done**
 
@@ -1197,6 +1190,145 @@ For a release that carries project-derived layers, also confirm that the fetched
 bytes match the pinned checksum, that compression and cache headers behave as
 expected, that the layer's source metadata is reachable, and that the deployed
 application commit is the intended one. A local check proves none of these.
+
+### Initial M4 release staging and approval procedure
+
+The local tool is `web/scripts/stage-release.mjs`. Its committed input inventory
+is `web/scripts/release-inputs.json`; the three layer identities must also match
+the existing application source bindings. Manifest hashes select exact retained
+generation records and do not replace separate spatial-inspection evidence.
+The selected whale manifest is the September 7 UTC generation retained with
+the vessel/domain display work; its GeoJSON is identical to the inspected whale
+export. No generation manifest is edited.
+
+From a clean dedicated checkout's `web/` directory, for a local keyless rehearsal:
+
+```powershell
+node scripts/stage-release.mjs --rehearsal m4-rehearsal-01 C:/Users/teche/socal-whale-vessel-risk-vessel-domain-display/web/public/layers
+```
+
+The source directory argument is read-only. Only the six pinned files are read.
+The tool reads tracked `web/` files from the current commit, never from a dirty
+working copy, excludes environment files, and refuses unreviewed public assets
+other than the existing favicon. It creates a new ignored directory under
+`data/interim/m4-releases/<name>/`; existing and failed attempts are preserved.
+The isolated source build runs `npm run verify:clean`, including `npm ci`, all
+web checks and the static export. Public layer URLs are fixed to their SHA-256
+filenames. All inherited `NEXT_PUBLIC_` overrides are removed; the default
+`arcgis/oceans` basemap is explicitly selected. Rehearsals have no key and are
+labelled **not for deployment**.
+
+The output has three boundaries:
+
+- `source/`: isolated build and dependencies, private and never uploaded;
+- `deploy/.vercel/output/`: only `config.json` and static application assets,
+  six public input files, and `release.json`;
+- `receipt.json` and sanitized `verification.log`: local verification records,
+  outside the upload directory. The receipt inventories every uploaded file,
+  including the public release inventory and routing configuration.
+
+`release.json` records the application commit and hashes/lengths of all static
+files except itself. The local receipt binds that file without a circular hash.
+Generated files remain ignored. The tool refuses changed/missing inputs, stale
+application bindings, symlinks in output, unsupported export file types, extra
+layer files, known source-directory paths in output, and packages exceeding
+100,000,000 bytes or 15,000 files. Exact input hashes are the public-data
+allowlist; this is not a generalized secret detector. Review committed source
+and the actual inventory before approval. No raw data, private generation
+lineage, exposure results or VSR geometry is an input to staging.
+
+For a release candidate, first independently audit the implementation, obtain
+push/merge authorization, pass both `analysis` and `web` PR checks, merge through
+GitHub, fetch, and prepare a clean dedicated checkout at `origin/main`. Privately
+supply `NEXT_PUBLIC_ARCGIS_API_KEY` in the invoking process environment, then run
+the same command without `--rehearsal` and with a new name. The tool requires
+HEAD equal to `origin/main` and a nonempty key; it does not verify the key's
+validity, account rights or referrers. Never put its value on a command line or
+in chat. No deployment tool is invoked by staging.
+
+Before external actions, present the source commit, receipt hash, six artifact
+identities, actual Hobby/account findings, intended project/origin, key scope
+and referrers, requested permissions, source-use posture and rollback package.
+Get explicit author approval for project creation/linking, any key/referrer
+change and the exact upload. No GitHub integration is needed. Do not create a
+project, change deployment protection, or choose a paid plan/trial/add-on under
+the staging authorization.
+
+After approval and private CLI authentication, link only the `deploy/` directory
+to the approved Hobby project (author-reviewed `vercel link`, no automatic
+defaults). From that directory use `vercel deploy --prebuilt --prod`. Record
+the CLI version used and read the selected scope/project back before uploading.
+Only `.vercel/output` is the approved payload; never deploy `source/`, the
+checkout, or a Git-only build. Verify its inventory against `receipt.json`
+immediately before upload using, from the checkout's `web/` directory:
+
+```powershell
+node scripts/stage-release.mjs --verify <release-name> <approved-receipt-sha256>
+```
+
+This checks the complete upload file set, hashes and sizes, including added
+files. A matching rehearsal receipt remains ineligible for deployment.
+This direct Build Output API path is documented by
+[Vercel's static primitives](https://vercel.com/docs/build-output-api/primitives)
+and [output configuration](https://vercel.com/docs/build-output-api/configuration);
+the [CLI prebuilt option](https://vercel.com/docs/cli/deploy#prebuilt) uploads
+local output. Provider acceptance has not yet been tested. This supersedes the
+earlier preference for a framework-aware `vercel build` trial, not the approval
+or deployed-verification gates.
+
+Restrict the basemap key to the exact approved stable HTTPS production origin
+and authorized localhost origin; add a specific deployment hostname only if it
+will actually be tested. Do not allow all `*.vercel.app` tenants. Privileges
+must cover basemap access only, without publishing/account management or unused
+item grants. The author must verify expiry and any required regeneration
+privately. Referrer changes require a valid replacement build where applicable;
+the old locally successful key was later reported invalid.
+
+Verify in clean Chrome at 390 × 844, 820 × 1180 and 1440 × 900 CSS pixels:
+
+1. Public HTTPS with no host/ArcGIS visitor sign-in, and `release.json` plus
+   fetched application assets matching the approved receipt and main commit.
+2. Default oceans basemap ready, pan/zoom working, attribution visible before
+   and after readiness, and usable responsive controls with no overflow.
+3. Three input layers fetched from the deployed origin with matching decoded
+   SHA-256 bytes, counts 4,516 / 2,793 / 1, and readable citations, units,
+   source/use disclosures, legends, toggles and popups.
+4. Anonymous publisher item/layer availability and exactly `FID = 126`; visible
+   Danielle Alvarez/CMSF/BWBS credit and the non-navigational disclaimer.
+5. Sanitized console/network outcomes and one-at-a-time blocked layer requests:
+   only the failed layer is removed, its warning remains, and other layers and
+   map interaction continue. Never retain key-bearing URLs or raw HAR files.
+6. Actual GeoJSON `Content-Type`, `Content-Encoding`, cache headers and repeat
+   request behavior. The configuration requests year-long immutable caching
+   only for checksum-addressed layer/manifest URLs and no-store for release
+   identity. Test HTML freshness too. Record project-file transfer and usable
+   loading behavior; do not benchmark Esri services while that agreement
+   interpretation remains unresolved.
+
+The initial application presents no exposure statistics. Its anonymous VSR
+availability/identity check cannot satisfy the separate snapshot comparison
+below, which must occur before publicly presenting statistics against it.
+
+Rollback: retain each complete receipt and `deploy/.vercel/output` package.
+After author approval, re-upload the last verified package to the same approved
+project with `vercel deploy --prebuilt --prod`, then verify its original commit
+and hashes at the stable origin. This does not rely on a paid rollback feature.
+The embedded basemap key must still be valid for that origin; otherwise rebuild
+the reviewed prior application with an authorized replacement and approve its
+new receipt. For the first deployment there is no previous release: if it fails
+verification, report it as unverified and obtain author direction to remove the
+deployment or publish a reviewed correction. Never mark M4 complete on upload.
+
+Official provider sources were rechecked on 2026-09-07: [Hobby requirements](https://vercel.com/docs/plans/hobby),
+[limits](https://vercel.com/docs/limits), [fair use](https://vercel.com/docs/limits/fair-use-guidelines),
+[Esri SDK licensing/attribution](https://developers.arcgis.com/javascript/latest/licensing/),
+[Location Platform billing](https://location.arcgis.com/help/billing/),
+[pricing](https://location.arcgis.com/pricing/), [sharing](https://location.arcgis.com/help/data-sharing-and-access/),
+and [API-key credentials](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/api-key-credentials/location-platform/).
+Hobby is restricted to personal non-commercial use; account eligibility is
+unverified. Esri requires attribution and an appropriate account; SDK access
+does not prove free service capacity. Hosted Location Platform data is not
+publicly shared. These documented facts are not observed account findings.
 
 ### Release-time VSR service and version check
 
@@ -1222,14 +1354,14 @@ geometry that produced the statistics, or omit the mismatched remote boundary
 from the release. A warning alone does not satisfy this release gate. This is
 not an automatic synchronization or continuous-monitoring requirement.
 
-## ArcGIS account-type capability checks and service access
+## Selected-route account and service checks
 
-There are three publication candidates: ArcGIS Location Platform limited data
-services, ArcGIS Online organization-hosted layers, and a non-Esri public route
-if neither Esri option fits. The browser API-key check is related but separate:
-it proves access to the basemap, location services, and explicitly authorized
-items; it does not by itself prove that either account can host the project
-layers.
+ADR 0021 selects free Vercel Hobby for the application and static project files.
+The author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on
+2026-09-07. M4 therefore checks personal-use eligibility, then the remaining
+ArcGIS account and browser-key properties used for the basemap. It does not test
+Esri hosted-data publishing, storage or sharing. Those capabilities remain
+unverified and require a later superseding decision before use.
 
 Esri documents Location Platform as a limited single-user organization that can
 create feature, vector-tile, and map-tile services. Storage and bandwidth use a
@@ -1239,8 +1371,8 @@ different organization, privilege, credit, and storage model. See Esri's
 [current Location Platform pricing](https://location.arcgis.com/pricing/), and
 [API-key authentication documentation](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/).
 
-**The two account types differ in how a visitor reaches a hosted layer, so the
-checks below are account-specific.** Location Platform hosted data services are
+**The historical hosted-data candidates differ in how a visitor reaches a
+hosted layer.** Location Platform hosted data services are
 documented as not shared publicly and require a scoped API key; ArcGIS Online
 additionally offers `Everyone (public)`. Keep two claims apart throughout: a
 **visitor who never signs in**, which both routes can support, and a **request
@@ -1254,15 +1386,17 @@ Everything involving an account is an **authenticated, author-run action**. An
 agent does not sign in, publish, change sharing, alter organization settings,
 enable billing, add a payment method, or spend money. A test is not attempted
 if it could exceed an already available free tier or consume paid capacity.
+The project must remain free: do not select a paid plan or trial, install an
+add-on, enable pay-as-you-go, or accept any other charged usage.
 
-Record capability outcomes under M4 in [roadmap.md](roadmap.md). Record only the
-non-sensitive billing mode: `free-tier-only` or `pay-as-you-go already enabled`.
+Record selected-route outcomes under M4 in [roadmap.md](roadmap.md). Record only
+the non-sensitive billing mode: `free-tier-only` or `pay-as-you-go already enabled`.
 Never commit payment information, subscription identifiers, balances, invoices,
 or temporary capability-test item IDs. A future public production item ID or
 service URL may be committed when the application requires it; that public
-identifier is configuration and provenance, not a credential. Carry unavailable
-or unsuitable capabilities into M5 as evidence for the publication-format and
-route decision.
+identifier is configuration and provenance, not a credential. An already
+enabled pay-as-you-go state blocks this route until it is safely disabled by the
+author; it never authorizes spending.
 
 ### Read-only capability inventory, 2026-08-31
 
@@ -1288,7 +1422,7 @@ Sources are Esri's [portal and data-services FAQ](https://developers.arcgis.com/
 | Account and portal | A Location Platform subscription supplies a limited single-user organization and portal. It is not an ArcGIS Online organization subscription. |
 | Hosted service types | The limited organization supports creating hosted feature, vector-tile, and map-tile services. Hosted image and scene service creation is not supported. |
 | Public access | **Corrected 2026-09-06.** The 2026-08-31 entry recorded that a Location Platform hosted layer can be shared with `Everyone` for anonymous access. That was wrong; it applied cross-product sharing guidance to Location Platform. Esri's product-specific [data sharing and access guide](https://location.arcgis.com/help/data-sharing-and-access/) states that "Hosted data services in ArcGIS Location Platform are not shared publicly," citing anonymous-traffic and billing risk, and directs public-facing applications to authenticated access with developer credentials such as an API key. The [feature-service sharing and security guide](https://developers.arcgis.com/documentation/portal-and-data-services/data-services/feature-services/sharing-and-security/) lists `Owner (private)` as the only Location Platform sharing level and states that a scoped API key is required; ArcGIS Online additionally offers Organization, Group, and `Everyone (public)`. A visitor who never signs in is therefore **not** the same as a token-free service request: a scoped, origin-restricted browser key can serve visitors without a sign-in, but the service is not anonymous, the key is public once shipped, and the account owner remains responsible for the usage. |
-| Billing model | Location Platform uses monthly free tiers and optional pay-as-you-go, not ArcGIS Online credits. Esri states that pay-as-you-go is off by default for new accounts, but this account's actual setting is unverified. With pay-as-you-go off, service access stops when an applicable free tier is exhausted; storage overage can also prevent publishing. |
+| Billing model | Location Platform uses monthly free tiers and optional pay-as-you-go, not ArcGIS Online credits. Esri states that pay-as-you-go is off by default for new accounts; the author confirmed it disabled for this account on 2026-09-07. With pay-as-you-go off, service access stops when an applicable free tier is exhausted; storage overage can also prevent publishing. |
 | Browser API keys | Location Platform accounts have API-key-management privileges by default. Credentials can define service privileges, access to selected items, referrer restrictions, and expiration dates, and can issue up to two keys. Keys are valid for at most one year. Referrer restrictions are a misuse-reduction control, not a secret boundary; browser keys remain public. Changing privileges or item access requires regeneration, and a referrer change requires manual regeneration. |
 
 Current published monthly allowances relevant to this project are:
@@ -1312,7 +1446,7 @@ test or publication. Feature-service reads are metered by returned bandwidth,
 not by a documented request-count allowance. Basemap usage is separately
 metered by returned tiles or created sessions.
 
-**Unverified account properties and author checklist**
+**Unverified selected-route account properties and author checklist**
 
 Do not record an email address, user name, organization URL, subscription ID,
 credential identifier, key value, or payment details. In one private signed-in
@@ -1323,33 +1457,30 @@ session:
    `not confirmed`.
 2. On the dashboard or Billing page, record only whether pay-as-you-go is `off`
    or `on`. Do not add a payment method or change the setting.
-3. Record current aggregate usage and remaining headroom for feature storage;
-   tiles/files/attachments storage; feature-query bandwidth; feature-edit
-   bandwidth; vector-tile bandwidth; map-tile bandwidth; and tiles generated.
-   Do not record usage-resource or subscription identifiers.
-4. Open **My portal** and confirm, without starting an import, whether the
-   account presents creation/publishing paths for feature, vector-tile, and
-   map-tile services, and which sharing levels the account actually offers for
-   a hosted layer. Current documentation says Location Platform offers only
-   `Owner (private)`; record what the account shows rather than assuming
-   either way.
-5. Report only the outcomes above. Do not open the existing credential, inspect
-   its privileges/referrers, reveal either key, generate a replacement, or
-   change its settings.
+3. Record only current basemap usage and remaining applicable monthly free-tier
+   headroom. Do not record usage-resource or subscription identifiers.
+4. Privately inspect the browser credential and confirm it grants only the
+   intended basemap access, has no publishing, content-management, organization,
+   billing or account-management privilege, and uses the exact approved local
+   and production referrers. Do not report the key or credential identifier.
+5. In Vercel, confirm the selected account is Hobby, the deployment qualifies
+   as personal non-commercial use, and no paid plan, trial or add-on is active
+   or required. Do not create or link a project during this read-only check.
+6. Report only those outcomes. If any free-plan, eligibility, billing, capacity
+   or key-scope check fails, stop; there is no paid fallback.
 
-Until those five checks are returned, billing, actual service-creation access,
-available sharing levels, current storage/bandwidth usage, and no-cost headroom
-are `unverified`. Credits and ArcGIS Online organization privileges are
-`unavailable/not applicable` to the reported Location Platform branch.
+The author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on
+2026-09-07. Account product, current basemap usage/headroom, credential validity,
+scope/referrers, and Hobby eligibility remain `unverified`. Actual Esri
+hosted-data and ArcGIS Online organization capabilities are also unverified but
+are not M4 requirements under ADR 0021.
 
-A later throwaway hosted-feature test appears permissible under the documented
-product model because feature hosting has free tiers. It is not yet authorized
-by the evidence: first confirm pay-as-you-go is off, that the creation controls
-are present, which sharing levels the account offers, and that current feature
-storage and feature-query bandwidth leave ample headroom. **Any such test must
-be designed for keyed access, not anonymous access**, because current
-documentation says Location Platform hosted services are not shared publicly.
-The test remains prohibited on this branch.
+### Historical Esri hosted-data route checks
+
+The following subsections are retained because they document how an Esri route
+would be evaluated. Do not perform them for M4 while ADR 0021 remains selected.
+A later decision selecting Esri project-data hosting must restore the applicable
+checks and obtain explicit authority before publication.
 
 ### 1. Identify the account type
 
@@ -1403,7 +1534,8 @@ publication candidates.
 
 ### 3. Conditionally test an Esri-hosted feature service
 
-Attempt a minimal hosted-feature-service test only when the applicable branch
+Attempt a minimal hosted-feature-service test only after a later accepted
+decision selects that route and the applicable branch
 has already verified the sharing level it can actually offer and enough no-cost
 capacity. Use throwaway data — **not** project data and nothing derived from a
 source whose redistribution terms remain unverified.
@@ -1470,8 +1602,9 @@ default. ArcGIS Online API-key availability depends on user type and privileges;
 the account check records the actual outcome.
 
 1. Create API key credentials in the applicable developer-credentials area.
-2. Scope the key to the minimum needed: basemap styles and intended location
-   services, plus read access to a project/test item only when required. It has
+2. Scope the M4 key to the minimum needed: basemap styles and intended location
+   services. A later accepted Esri-hosted-data route may add explicit read access
+   to a selected item. It has
    no publishing, content-management, organization, billing, or
    account-management rights.
 3. Restrict referrer URLs to `http://localhost:3000` and the deployed origin.
@@ -1490,7 +1623,7 @@ hosting.
 Follow "Deploying the application" above, then verify from a clean browser
 session as described there.
 
-### 7. Clean up a test service, if created
+### 7. Clean up a test service, if created by a later route
 
 Delete the hosted feature service and its source item. Remove item access from
 the API key if it was granted, and record the deletion without committing the
@@ -1514,14 +1647,14 @@ credits.
   `blue_whale_display_export_v1` produces the whale GeoJSON, and
   `commercial_vessel_display_export_v1` and
   `analytical_domain_display_export_v1` produce separate vessel-activity and
-  accepted-domain GeoJSON. They are locally verified and **not** an accepted
-  hosting decision. The separate M6 exposure delivery boundary produces a
+  accepted-domain GeoJSON. ADR 0021 selects free Vercel Hobby for these static
+  files. The separate M6 exposure delivery boundary produces a
   measured, locally verified display/manifest pair and a small results
-  contract. This is route evidence, not an accepted route; nothing has been
-  published and the host is unselected. The final route for all derived layers
-  remains open, with static
-  files, ArcGIS Location Platform limited data services, ArcGIS Online
-  organization-hosted layers, and a non-Esri route as candidates.
+  contract, which uses the same selected static route after M7 integrates it.
+  Nothing has been published. Vercel Hobby and ArcGIS pay-as-you-go disabled are
+  author-confirmed as of 2026-09-07; Hobby eligibility, remaining account checks
+  and deployed behavior remain unverified. Esri hosted-data capabilities remain
+  unselected and unverified.
 - Generated display layers are never committed. The exporters stage them into
   Git-ignored `web/public/layers/`, and refuse any destination outside this
   checkout's ignored output roots.
@@ -1570,14 +1703,16 @@ In practice:
   tool/version, inspected views/checks, result, and relevant observations.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
-**Application (TypeScript).** `npm test` in `web/` runs Vitest once (75 tests);
+**Application (TypeScript).** `npm test` in `web/` runs Vitest once (79 tests);
 `npm run test:watch` watches. The suite covers configuration logic in
 `web/lib/`, how the map component's reported load failures become interface
 text, the source-level application boundary that keeps fallback attribution
 present until a ready SDK map assumes attribution responsibility, the project
 input layers' artifact bindings and class breaks, checksum verification that
 ties the identity shown in the interface to the bytes the browser loaded, and
-stale async completion/cleanup behavior. Rendering,
+stale async completion/cleanup behavior. Four release-staging tests cover
+changed/missing artifacts, unsafe release names, deterministic inventories and
+extra files in an upload package. Rendering,
 the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).

@@ -2779,8 +2779,8 @@ for the display,
 for its manifest, and
 `ebba5b06ee804d80b34f5714ecb1d100c0b05d3579307e88384886dcbd339e60`
 for the results. The display is 2,542,744 bytes raw, 528,235 bytes at gzip
-level 9, and 375,238 bytes at Brotli quality 11. This makes static same-origin
-delivery a credible measured candidate, not an accepted route or deployment.
+level 9, and 375,238 bytes at Brotli quality 11. Static same-origin delivery is
+selected by ADR 0021; deployment and deployed verification remain unfinished.
 
 Inspect the exact final display independently in QGIS:
 

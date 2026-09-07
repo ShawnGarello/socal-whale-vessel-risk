@@ -28,6 +28,7 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | [0018](0018-use-vessel-kilometres-for-grid-activity.md) | Use vessel-kilometres as the primary grid activity measure | Accepted |
 | [0019](0019-reference-the-publisher-hosted-vsr-service.md) | Reference the publisher-hosted VSR service | Accepted |
 | [0020](0020-propose-area-integrated-relative-exposure.md) | Propose area-integrated relative exposure | Accepted for exploratory execution |
+| [0021](0021-propose-vercel-static-input-delivery.md) | Use Vercel static input delivery | Accepted |
 
 ADR 0018 was accepted on 2026-09-05, when its 300-second/30-knot production
 configuration completed final production generation, byte-identical repetition,
@@ -52,6 +53,11 @@ headline. See the
 [roadmap](../roadmap.md#m6--whalevessel-exposure-analysis) and the
 [M6 foundation handoff](../m6-exposure-foundation-handoff.md) and
 [exposure-results delivery handoff](../m6-exposure-results-delivery-handoff.md).
+
+[ADR 0021](0021-propose-vercel-static-input-delivery.md) selects free Vercel
+Hobby static delivery and route-specific M4 checks. The author confirmed Vercel
+Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07; Hobby eligibility and the
+remaining basemap checks are unverified. Acceptance does not authorize deployment.
 
 ## Why these exist
 
