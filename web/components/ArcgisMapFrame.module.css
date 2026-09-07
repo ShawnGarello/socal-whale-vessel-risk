@@ -16,6 +16,15 @@
   width: 100%;
 }
 
+.layerHint {
+  margin: 0;
+  padding-block-end: 0.625rem;
+  border-block-end: 1px solid var(--shell-border);
+  color: var(--shell-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -81,4 +90,13 @@
 
 .reasons li + li {
   margin-top: 0.25rem;
+}
+
+/* Keep a persistent configuration notice clear of the layer panel on wide
+   layouts. Narrow and portrait layouts have enough vertical separation and
+   retain the more readable full-width notice. */
+@media (min-width: 60rem) {
+  .notice {
+    right: calc(18rem + 1.5rem);
+  }
 }

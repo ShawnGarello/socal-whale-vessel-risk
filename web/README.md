@@ -8,12 +8,15 @@ The map client uses the ArcGIS Maps SDK for JavaScript and is designed to read
 ArcGIS platform services and authorized items through a scoped browser API key.
 Local API-key-backed access to the `arcgis/oceans` basemap, pan/zoom, and the
 ready-map attribution handoff were verified in Chrome at the three required
-viewports on 2026-08-31. Deployed-origin access remains unverified, and this
-local basemap result does not establish account or project-layer hosting
-capabilities. The author's real account controls, billing state, usage, and
-free-tier headroom remain unverified because no authenticated session was
-available for the read-only inventory, and no hosted-feature test has been
-performed. Paid usage is not authorized.
+viewports on 2026-08-31. That historical credential returned `Token Invalid`
+during the 2026-09-06 vessel/domain check, so the current integration check used
+the unkeyed public `topo-vector` basemap and retained the application's visible
+missing-key warning. Deployed-origin access remains unverified, and neither
+local result establishes account or project-layer hosting capabilities. The
+author's real account controls, billing state, usage, and free-tier headroom
+remain unverified because no authenticated session was available for the
+read-only inventory, and no hosted-feature test has been performed. Paid usage
+is not authorized.
 
 Project-derived layers are delivered here as static same-origin files served
 alongside the export, so they need no layer credential and no hosted service.
@@ -36,10 +39,13 @@ The layer is an ArcGIS `GeoJSONLayer` whose geometry type, spatial reference,
 object-id field, and field schema are declared explicitly rather than inferred
 from the file, so an altered or truncated export fails to load instead of
 rendering with a silently different schema. Loading is independent of the
-basemap and of the VSR layer, is bounded to 30 seconds, verifies the expected
-4,516 grid cells before the layer is called ready, and removes a failed layer
-while leaving an accessible warning. The layer is added at index 0 so the
-publisher's VSR outline always draws above the density fill.
+basemap and every other operational layer, is bounded to 30 seconds, verifies
+the expected 4,516 grid cells before the layer is called ready, and removes a
+failed layer while leaving an accessible warning. One shared project-GeoJSON
+lifecycle applies those controls to the whale, vessel, and domain files without
+merging their state. A deterministic reorder keeps the whale and vessel fills
+below the domain and publisher VSR outlines, regardless of asynchronous
+completion order.
 
 `web/lib/whale-source.ts` binds this build to one exact artifact: export
 SHA-256 `831a5412e9f414d5e4c7011d1b1687a89b8089826f8925f31e737b974662e154`,
@@ -75,7 +81,8 @@ Generated layer data is never committed. The exporter stages its GeoJSON and
 sanitized manifest into the Git-ignored `public/layers/` directory, which
 `next dev` and `next build` then serve from the same origin.
 `NEXT_PUBLIC_WHALE_LAYER_URL` overrides that location at build time for a
-release that publishes a checksum-addressed filename.
+release that publishes a checksum-addressed filename. The vessel and domain
+sections below document their corresponding URL settings.
 
 ### Verified locally on 2026-09-06
 
@@ -116,6 +123,96 @@ deliberate, not an error.
 
 Verification screenshots, browser evidence, and QGIS renders remain under the
 ignored local data root and are not committed.
+
+## Commercial vessel activity and accepted analytical domain
+
+The vessel surface is a deterministic WGS 84 GeoJSON presentation of the
+accepted `production_vessel_input_v1` artifact. It displays retained passenger,
+cargo, and tanker movement from 1 July through 30 November 2024 as
+vessel-kilometres per km² of complete source-cell modeled-whale-support water.
+It does not display speed and does not calculate exposure. Activity values are
+copied unchanged; where the receiver-qualified boundary crosses a cell, the
+geometry is clipped exactly in EPSG:3310 and the complete source-cell value is
+retained with its displayed fraction. That avoids implying an unsupported
+within-cell redistribution.
+
+The companion boundary is the exact accepted
+`receivers_50_nautical_miles` feature: modeled-whale-support water within 50
+nautical miles, exactly 92,600 metres, of the relevant NAIS reception stations.
+It is not measured from the coast and is not empirical 2024 reception coverage.
+The dashed cyan boundary and explicit legend note make water outside it an
+excluded area, not low or zero vessel activity. The broader map/context extent,
+modeled-whale-support water, and accepted analytical domain remain separate
+spatial roles.
+
+`web/lib/vessel-source.ts` and `web/lib/domain-source.ts` bind the application
+to these exact files and inputs:
+
+| Identity                       | SHA-256                                                            |
+| ------------------------------ | ------------------------------------------------------------------ |
+| Vessel GeoJSON, 2,793 features | `3a7f2deeaa1899ac8fc5ecec7e7f522dd058adce667333ba33f8d32d930d3288` |
+| Production vessel input        | `5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0` |
+| Vessel quality report          | `4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7` |
+| Domain GeoJSON, one feature    | `7020ca8dfa27953a24a9db4ad2b0a25fb321c4edbecd383a01c62efb4b3bc7bf` |
+| Domain candidate-mask artifact | `4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77` |
+| Domain evidence report         | `eb7963f6ccf625b1547d01ae768dadabfb3f47207d29c24fa5df47e387df5d98` |
+
+The vessel legend uses a separate neutral zero class followed by fixed
+intervals over 0–1, 1–5, 5–20, 20–100, and over 100 vessel-km/km². The
+classes contain 137 / 381 / 674 / 1,019 / 381 / 201 cells respectively. These
+are stated display intervals, not analytical categories. The zero label says
+"zero retained movement" because successful processing and a zero value do not
+verify vessel absence or AIS observational completeness.
+
+The initial same-origin representation was measured before considering another
+delivery route. The vessel file is 2,720,788 bytes (541,477 gzip; 385,764
+Brotli) and the domain file is 867,910 bytes (265,035 gzip; 199,834 Brotli).
+The existing whale file is 3,277,329 bytes (574,907 gzip; 396,852 Brotli).
+Those are local file/compression measurements, not deployed transfer claims.
+`NEXT_PUBLIC_VESSEL_LAYER_URL` and `NEXT_PUBLIC_DOMAIN_LAYER_URL` can bind a
+release to checksum-addressed URLs; the defaults remain the generated ignored
+same-origin `public/layers/` files.
+
+### Verified locally on 2026-09-06
+
+QGIS 4.2.1 opened both exact GeoJSON files directly through OGR in EPSG:4326.
+It found 2,793 vessel features (2,641 full cells, 152 partial cells, 137 with
+zero retained movement), one domain feature, no empty or invalid geometry, and
+no vessel geometry outside the accepted domain. All feature, polygon-part,
+interior-ring, and vertex counts agreed with the manifests. Five
+checksum-recorded views were visually reviewed at full, northern, southern,
+coast/islands, and boundary-detail extents; the receiver-qualified boundary,
+clipped cells, holes and islands, and vessel-activity corridors were spatially
+coherent. The ignored QGIS report SHA-256 is
+`2cfca5ca98e5de69b5feead7db6e5d8b9e3d276a6076f1a9c55e43bdce55a140`.
+
+Headless Chrome 152 loaded the actual local application at 390 × 844, 820 ×
+1180, and 1440 × 900 CSS pixels. At every viewport the browser verified the
+three project checksums, loaded 4,516 whale cells, 2,793 vessel cells, the one
+domain feature, and the one publisher VSR feature exactly once, and preserved
+the intended layer order. Toggling vessel, whale, and domain visibility changed
+the live layer properties without adding duplicates. The vessel surface,
+qualified boundary, VSR reference, legends, units, excluded-area statement,
+scrolling control panel, and SDK attribution were visually readable; body and
+document had no horizontal overflow and keyboard focus retained a three-pixel
+outline.
+
+From a warm local development server, the three project layers reached ready
+state 2.45–3.17 seconds after document completion. Local resource timings were
+0.15–0.45 seconds per GeoJSON response; observed decoded sizes matched the
+files, and transfer sizes reflected the development server's gzip responses.
+Post-toggle JavaScript heap samples were 161–173 MB. These are local rendering
+observations only, not deployed-performance claims.
+
+Separate request-interception checks exercised an HTTP 404, malformed bytes
+caught by the checksum, and an ArcGIS parse/load error with checksum support
+artificially unavailable. In all three cases the failed vessel layer was
+removed, its accessible warning remained, and the whale, domain, VSR, and map
+stayed ready with exactly one copy each. The normal, missing-file, and
+checksum-mismatch runs had no console errors; the forced 404 produced one
+expected resource-log entry. The forced ArcGIS parse failure produced its two
+expected console errors. The ignored browser report SHA-256 is
+`5e72b5fcc46074282df408ed2f19047944e22feb8ce26b559fa932b0aa250ffc`.
 
 ## Publisher-hosted VSR boundary
 
