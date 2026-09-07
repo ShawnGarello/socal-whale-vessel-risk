@@ -72,6 +72,14 @@ export default function VesselLayerControl({
         <div className={styles.detailsBody}>
           <p>{VESSEL_SOURCE.attribution}</p>
           <p>{VESSEL_SOURCE.method}</p>
+          <p>
+            Analytical processing date:{" "}
+            <time dateTime={VESSEL_SOURCE.analysisProcessedOn}>
+              {VESSEL_SOURCE.analysisProcessedOnLabel}
+            </time>
+            . This date applies to the checksum-bound vessel input and quality report
+            below.
+          </p>
           <p>{VESSEL_SOURCE.classRationale}</p>
           <ul>
             {VESSEL_SOURCE.statements.map((statement) => (

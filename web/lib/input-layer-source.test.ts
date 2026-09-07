@@ -43,6 +43,8 @@ describe("vessel display source", () => {
     expect(VESSEL_SOURCE.qualitySourceSha256).toBe(
       "4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7",
     );
+    expect(VESSEL_SOURCE.analysisProcessedOn).toBe("2026-09-05");
+    expect(VESSEL_SOURCE.analysisProcessedOnLabel).toBe("5 September 2026");
     expect(VESSEL_SOURCE.domainSourceSha256).toBe(
       "4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77",
     );
@@ -90,7 +92,11 @@ describe("vessel display source", () => {
     expect(markup).toContain("vessel-km / km² modeled-whale-support water");
     expect(markup).toContain("not verified vessel absence");
     expect(markup).toContain("not vessel presence, transit count, or speed");
+    expect(markup).toContain("Analytical processing date:");
+    expect(markup).toContain('<time dateTime="2026-09-05">5 September 2026</time>');
+    expect(markup).toContain("checksum-bound vessel input and quality report below");
     expect(markup).toContain(VESSEL_SOURCE.exportSha256);
+    expect(markup).toContain(VESSEL_SOURCE.analysisSourceSha256);
     expect(markup).toContain(VESSEL_SOURCE.qualitySourceSha256);
     expect(markup).not.toContain("checked");
     expect(markup).not.toContain("disabled");
@@ -106,6 +112,8 @@ describe("accepted analytical-domain source", () => {
     expect(DOMAIN_SOURCE.evidenceReportSha256).toBe(
       "eb7963f6ccf625b1547d01ae768dadabfb3f47207d29c24fa5df47e387df5d98",
     );
+    expect(DOMAIN_SOURCE.evidenceProcessedOn).toBe("2026-08-29");
+    expect(DOMAIN_SOURCE.evidenceProcessedOnLabel).toBe("29 August 2026");
   });
 
   it("uses a same-origin default and requires the single accepted feature", () => {
@@ -135,7 +143,12 @@ describe("accepted analytical-domain source", () => {
     expect(markup).toContain("Outside = excluded, not low activity");
     expect(markup).toContain("not from the coast");
     expect(markup).toContain("not verified empirical 2024 reception coverage");
+    expect(markup).toContain("Domain-evidence processing date:");
+    expect(markup).toContain('<time dateTime="2026-08-29">29 August 2026</time>');
+    expect(markup).toContain("checksum-bound evidence mask and report below");
     expect(markup).toContain(DOMAIN_SOURCE.exportSha256);
+    expect(markup).toContain(DOMAIN_SOURCE.evidenceSourceSha256);
+    expect(markup).toContain(DOMAIN_SOURCE.evidenceReportSha256);
     expect(markup).toContain("checked");
   });
 });

@@ -31,6 +31,8 @@ export const VESSEL_SOURCE = {
     "5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0",
   qualitySourceSha256:
     "4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7",
+  analysisProcessedOn: "2026-09-05",
+  analysisProcessedOnLabel: "5 September 2026",
   domainSourceSha256:
     "4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77",
   classes: VESSEL_ACTIVITY_CLASSES,
