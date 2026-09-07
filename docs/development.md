@@ -66,20 +66,20 @@ integration is accepted, and M6 remains in progress. Status lives in the
 
 Each kind of information has exactly one owning document. When information changes, update the owner. Other documents may link to it; they must not restate it in a way that can drift.
 
-| Document | Owns |
-|---|---|
-| [../README.md](../README.md) | Public overview and current visible status |
-| [project-brief.md](project-brief.md) | Authoritative product scope, Version 1 definition, non-goals, scientific communication rules |
-| [roadmap.md](roadmap.md) | Milestones, sequencing, progress, version direction |
-| [architecture.md](architecture.md) | System design, component boundaries, deferred design decisions |
-| [data-sources.md](data-sources.md) | Dataset provenance, source register, discovery status |
-| [../data/README.md](../data/README.md) | Local data-handling policy, including the AIS retrieval policy |
-| [../tools/README.md](../tools/README.md) | Verification utilities and the versions they were run against |
-| [development.md](development.md) | Engineering workflow — this document |
-| [project-vision-and-learning-plan.md](project-vision-and-learning-plan.md) | Original project vision and GIS learning reference |
-| [decisions/](decisions/README.md) | Historical architectural decisions and their rationale |
-| [../AGENTS.md](../AGENTS.md) | Operational instructions for coding agents |
-| [../CLAUDE.md](../CLAUDE.md) | Claude entrypoint pointing to canonical instructions |
+| Document                                                                   | Owns                                                                                         |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [../README.md](../README.md)                                               | Public overview and current visible status                                                   |
+| [project-brief.md](project-brief.md)                                       | Authoritative product scope, Version 1 definition, non-goals, scientific communication rules |
+| [roadmap.md](roadmap.md)                                                   | Milestones, sequencing, progress, version direction                                          |
+| [architecture.md](architecture.md)                                         | System design, component boundaries, deferred design decisions                               |
+| [data-sources.md](data-sources.md)                                         | Dataset provenance, source register, discovery status                                        |
+| [../data/README.md](../data/README.md)                                     | Local data-handling policy, including the AIS retrieval policy                               |
+| [../tools/README.md](../tools/README.md)                                   | Verification utilities and the versions they were run against                                |
+| [development.md](development.md)                                           | Engineering workflow — this document                                                         |
+| [project-vision-and-learning-plan.md](project-vision-and-learning-plan.md) | Original project vision and GIS learning reference                                           |
+| [decisions/](decisions/README.md)                                          | Historical architectural decisions and their rationale                                       |
+| [../AGENTS.md](../AGENTS.md)                                               | Operational instructions for coding agents                                                   |
+| [../CLAUDE.md](../CLAUDE.md)                                               | Claude entrypoint pointing to canonical instructions                                         |
 
 If two documents contradict each other, the owner above wins and the other is corrected in the same change that discovers the contradiction.
 
@@ -131,27 +131,27 @@ no backend, no database, and no analysis. Run every command below from `web/`.
 
 **Prerequisites**
 
-| Tool | Required | Verified against |
-|---|---|---|
-| Node.js | `>=20.9.0` (enforced by `web/package.json` `engines`, and required by Next.js 16) | 22.16.0 |
-| npm | Ships with Node.js | 10.9.2 |
+| Tool    | Required                                                                          | Verified against |
+| ------- | --------------------------------------------------------------------------------- | ---------------- |
+| Node.js | `>=20.9.0` (enforced by `web/package.json` `engines`, and required by Next.js 16) | 22.16.0          |
+| npm     | Ships with Node.js                                                                | 10.9.2           |
 
 npm is the package manager and `web/package-lock.json` is committed. Do not
 install with pnpm, Yarn, or Bun — see [ADR 0007](decisions/0007-use-npm-for-the-web-application.md).
 
 **Commands**
 
-| Command | What it does |
-|---|---|
-| `npm install` | Installs dependencies from the committed lockfile. |
-| `npm run dev` | Development server on <http://localhost:3000>. |
-| `npm run lint` | ESLint, using `eslint-config-next` flat config. |
-| `npm run typegen` | Generates Next.js route-aware types without a full build. |
-| `npm run typecheck` | Generates Next.js route-aware types, then runs `tsc --noEmit` over the whole project. |
-| `npm test` | Vitest, run once. `npm run test:watch` for watch mode. |
-| `npm run format` | Rewrites files with Prettier. |
-| `npm run format:check` | Fails if anything is unformatted. |
-| `npm run build` | Production build **and static export**. |
+| Command                | What it does                                                                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm install`          | Installs dependencies from the committed lockfile.                                                                                       |
+| `npm run dev`          | Development server on <http://localhost:3000>.                                                                                           |
+| `npm run lint`         | ESLint, using `eslint-config-next` flat config.                                                                                          |
+| `npm run typegen`      | Generates Next.js route-aware types without a full build.                                                                                |
+| `npm run typecheck`    | Generates Next.js route-aware types, then runs `tsc --noEmit` over the whole project.                                                    |
+| `npm test`             | Vitest, run once. `npm run test:watch` for watch mode.                                                                                   |
+| `npm run format`       | Rewrites files with Prettier.                                                                                                            |
+| `npm run format:check` | Fails if anything is unformatted.                                                                                                        |
+| `npm run build`        | Production build **and static export**.                                                                                                  |
 | `npm run verify:clean` | Reinstalls locked dependencies, generates Next.js types, and runs every web quality gate plus the static export in clean-checkout order. |
 
 There is no `npm start`. `next start` serves a Node build, and this application
@@ -182,13 +182,13 @@ size limits against this before choosing one.
 
 **Environment variables**
 
-| Name | Required | Purpose |
-|---|---|---|
-| `NEXT_PUBLIC_ARCGIS_API_KEY` | Yes for the default keyed basemap and release path | Access token the browser sends to the ArcGIS basemap styles service. A keyless `topo-vector` integration check is supported with a visible configuration notice; it does not verify release-key access. |
-| `NEXT_PUBLIC_ARCGIS_BASEMAP` | No | Basemap style id. Defaults to `arcgis/oceans`. |
-| `NEXT_PUBLIC_WHALE_LAYER_URL` | No | Where the browser fetches the modeled blue-whale density GeoJSON. Defaults to `/layers/blue-whale-density.geojson`, the same-origin path the display exporter stages into. Set it for a release that publishes a checksum-addressed filename. |
-| `NEXT_PUBLIC_VESSEL_LAYER_URL` | No | Where the browser fetches the commercial-vessel activity GeoJSON. Defaults to `/layers/commercial-vessel-activity.geojson`. Set it for a release that publishes a checksum-addressed filename. |
-| `NEXT_PUBLIC_DOMAIN_LAYER_URL` | No | Where the browser fetches the accepted analytical-domain GeoJSON. Defaults to `/layers/accepted-analytical-domain.geojson`. Set it for a release that publishes a checksum-addressed filename. |
+| Name                           | Required                                           | Purpose                                                                                                                                                                                                                                       |
+| ------------------------------ | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_ARCGIS_API_KEY`   | Yes for the default keyed basemap and release path | Access token the browser sends to the ArcGIS basemap styles service. A keyless `topo-vector` integration check is supported with a visible configuration notice; it does not verify release-key access.                                       |
+| `NEXT_PUBLIC_ARCGIS_BASEMAP`   | No                                                 | Basemap style id. Defaults to `arcgis/oceans`.                                                                                                                                                                                                |
+| `NEXT_PUBLIC_WHALE_LAYER_URL`  | No                                                 | Where the browser fetches the modeled blue-whale density GeoJSON. Defaults to `/layers/blue-whale-density.geojson`, the same-origin path the display exporter stages into. Set it for a release that publishes a checksum-addressed filename. |
+| `NEXT_PUBLIC_VESSEL_LAYER_URL` | No                                                 | Where the browser fetches the commercial-vessel activity GeoJSON. Defaults to `/layers/commercial-vessel-activity.geojson`. Set it for a release that publishes a checksum-addressed filename.                                                |
+| `NEXT_PUBLIC_DOMAIN_LAYER_URL` | No                                                 | Where the browser fetches the accepted analytical-domain GeoJSON. Defaults to `/layers/accepted-analytical-domain.geojson`. Set it for a release that publishes a checksum-addressed filename.                                                |
 
 Names and their constraints are documented in
 [`../web/.env.example`](../web/.env.example). Copy it to `web/.env.local` — which
@@ -276,10 +276,10 @@ below from `analysis/`.
 
 **Prerequisites**
 
-| Tool | Required | Verified against |
-|---|---|---|
-| Python | `>=3.13,<3.14` (enforced by `analysis/pyproject.toml`) | 3.13.7 |
-| uv | 0.12 or later, invoked as `python -m uv` | 0.12.6 |
+| Tool   | Required                                               | Verified against |
+| ------ | ------------------------------------------------------ | ---------------- |
+| Python | `>=3.13,<3.14` (enforced by `analysis/pyproject.toml`) | 3.13.7           |
+| uv     | 0.12 or later, invoked as `python -m uv`               | 0.12.6           |
 
 uv is the environment and dependency manager; `analysis/uv.lock` is committed.
 Do not infer dependencies from an existing `.venv`. Runtime requirements are
@@ -289,28 +289,28 @@ re-run; the built package declares only runtime requirements.
 
 **Setup and quality commands**
 
-| Command | What it does |
-|---|---|
-| `python -m uv sync --locked` | Creates or updates the ignored environment from the committed lock without changing it. |
-| `python -m uv lock --check` | Fails if `pyproject.toml` and `uv.lock` disagree. |
-| `python -m uv run ruff format .` | Rewrites Python source and test files to the configured format. |
-| `python -m uv run ruff format --check .` | Checks formatting without rewriting. |
-| `python -m uv run ruff check .` | Runs Ruff linting. |
-| `python -m uv run mypy src/whale_vessel_analysis` | Strictly type-checks package source. |
-| `python -m uv run pytest` | Runs the self-contained synthetic test suite. |
-| `python -m uv build` | Builds the source distribution and wheel. `analysis/dist/` is generated and must not be committed. |
-| `python -m uv run python -m whale_vessel_analysis --help` | Proves the package module and command boundary load. |
-| `python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help` | Proves the separate local AIS retrieval-verification boundary loads. |
-| `python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli --help` | Proves the bounded local AccessAIS period-intake boundary loads. |
-| `python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --help` | Proves the separate non-production vessel-evidence boundary loads. |
-| `python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help` | Proves the separate multi-day cleaned-input boundary loads. |
-| `python -m uv run python -m whale_vessel_analysis.period_vessel_rule_evidence_cli --help` | Proves the bounded period vessel-rule evidence boundary loads. |
-| `python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --help` | Proves the candidate multi-day vessel-grid aggregation boundary loads. |
-| `python -m uv run python -m whale_vessel_analysis.vessel_input_cli --help` | Proves the selected production vessel-input boundary loads. |
-| `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help` | Proves the separate whale-grid transfer boundary loads. |
-| `python -m uv run python -m whale_vessel_analysis.whale_display_export_cli --help` | Proves the separate public-display export boundary loads. |
-| `python -m uv run python -m whale_vessel_analysis.vessel_domain_display_export_cli --help` | Proves the vessel-activity and analytical-domain public-display export boundary loads. |
-| `python -m uv run python -m whale_vessel_analysis.exposure_delivery_cli --help` | Proves the separate checksum-pinned exposure display/results boundary loads. |
+| Command                                                                                    | What it does                                                                                       |
+| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `python -m uv sync --locked`                                                               | Creates or updates the ignored environment from the committed lock without changing it.            |
+| `python -m uv lock --check`                                                                | Fails if `pyproject.toml` and `uv.lock` disagree.                                                  |
+| `python -m uv run ruff format .`                                                           | Rewrites Python source and test files to the configured format.                                    |
+| `python -m uv run ruff format --check .`                                                   | Checks formatting without rewriting.                                                               |
+| `python -m uv run ruff check .`                                                            | Runs Ruff linting.                                                                                 |
+| `python -m uv run mypy src/whale_vessel_analysis`                                          | Strictly type-checks package source.                                                               |
+| `python -m uv run pytest`                                                                  | Runs the self-contained synthetic test suite.                                                      |
+| `python -m uv build`                                                                       | Builds the source distribution and wheel. `analysis/dist/` is generated and must not be committed. |
+| `python -m uv run python -m whale_vessel_analysis --help`                                  | Proves the package module and command boundary load.                                               |
+| `python -m uv run python -m whale_vessel_analysis.ais_retrieval_cli --help`                | Proves the separate local AIS retrieval-verification boundary loads.                               |
+| `python -m uv run python -m whale_vessel_analysis.accessais_period_intake_cli --help`      | Proves the bounded local AccessAIS period-intake boundary loads.                                   |
+| `python -m uv run python -m whale_vessel_analysis.vessel_activity_evidence_cli --help`     | Proves the separate non-production vessel-evidence boundary loads.                                 |
+| `python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help`                 | Proves the separate multi-day cleaned-input boundary loads.                                        |
+| `python -m uv run python -m whale_vessel_analysis.period_vessel_rule_evidence_cli --help`  | Proves the bounded period vessel-rule evidence boundary loads.                                     |
+| `python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --help`                  | Proves the candidate multi-day vessel-grid aggregation boundary loads.                             |
+| `python -m uv run python -m whale_vessel_analysis.vessel_input_cli --help`                 | Proves the selected production vessel-input boundary loads.                                        |
+| `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help`                   | Proves the separate whale-grid transfer boundary loads.                                            |
+| `python -m uv run python -m whale_vessel_analysis.whale_display_export_cli --help`         | Proves the separate public-display export boundary loads.                                          |
+| `python -m uv run python -m whale_vessel_analysis.vessel_domain_display_export_cli --help` | Proves the vessel-activity and analytical-domain public-display export boundary loads.             |
+| `python -m uv run python -m whale_vessel_analysis.exposure_delivery_cli --help`            | Proves the separate checksum-pinned exposure display/results boundary loads.                       |
 
 The toolchain decision is [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md).
 
@@ -1004,11 +1004,11 @@ retained source identities below and `--output-directory
 ..\web\public\layers`. Use `--overwrite` only after confirming that replacing
 the existing complete bundle is intended.
 
-| Source | Required SHA-256 |
-|---|---|
-| Production vessel grid | `5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0` |
-| Vessel quality report | `4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7` |
-| Analytical-domain masks | `4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77` |
+| Source                   | Required SHA-256                                                   |
+| ------------------------ | ------------------------------------------------------------------ |
+| Production vessel grid   | `5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0` |
+| Vessel quality report    | `4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7` |
+| Analytical-domain masks  | `4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77` |
 | Analytical-domain report | `eb7963f6ccf625b1547d01ae768dadabfb3f47207d29c24fa5df47e387df5d98` |
 
 The expected outputs are `commercial-vessel-activity.geojson`, SHA-256
@@ -1098,9 +1098,10 @@ ArcGIS Pro directory or project to implement.
 
 ## Deploying the application
 
-**Status: not deployed.** Nothing has been published to any host. The
-requirements below are what a host must satisfy; the platform itself is still an
-open decision in [architecture.md](architecture.md).
+**Status: not deployed.** Nothing has been published to any host. ADR 0021
+selects Vercel Hobby, and the isolated project and reviewed-main release
+candidate now exist; explicit upload approval and deployed verification remain
+open.
 
 **Requirements**
 
@@ -1134,13 +1135,13 @@ configuration); recheck before release, because live pages change.
 
 Documented Hobby-plan limits and how this project compares:
 
-| Documented Hobby limit | This project as measured |
-|---|---|
-| CLI static-file upload 100 MB | 35,862,761 bytes |
-| 15,000 source files per CLI deployment | 899 files |
-| Build time 45 minutes per deployment | local `next build` is far under it |
-| 100 deployments per day, 100 builds per hour, 1 concurrent | ample |
-| Typical monthly Fast Data Transfer guideline up to 100 GB | roughly 0.98 MB Brotli for all three project input layers, plus the SDK chunks a page actually fetches |
+| Documented Hobby limit                                     | This project as measured                                                                               |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| CLI static-file upload 100 MB                              | 35,862,761 bytes                                                                                       |
+| 15,000 source files per CLI deployment                     | 899 files                                                                                              |
+| Build time 45 minutes per deployment                       | local `next build` is far under it                                                                     |
+| 100 deployments per day, 100 builds per hour, 1 concurrent | ample                                                                                                  |
+| Typical monthly Fast Data Transfer guideline up to 100 GB  | roughly 0.98 MB Brotli for all three project input layers, plus the SDK chunks a page actually fetches |
 
 **The deployment must carry locally generated data.** The implemented staging
 procedure below builds the static export and assembles Build Output API v3
@@ -1325,10 +1326,38 @@ Official provider sources were rechecked on 2026-09-07: [Hobby requirements](htt
 [Location Platform billing](https://location.arcgis.com/help/billing/),
 [pricing](https://location.arcgis.com/pricing/), [sharing](https://location.arcgis.com/help/data-sharing-and-access/),
 and [API-key credentials](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/api-key-credentials/location-platform/).
-Hobby is restricted to personal non-commercial use; account eligibility is
-unverified. Esri requires attribution and an appropriate account; SDK access
-does not prove free service capacity. Hosted Location Platform data is not
-publicly shared. These documented facts are not observed account findings.
+Hobby is restricted to personal non-commercial use; the author confirmed this
+project is a personal, unpaid, non-monetized portfolio. Esri requires
+attribution and an appropriate account; the observed account and key checks
+below establish the selected basemap route only. Hosted Location Platform data
+is not publicly shared.
+
+**Initial setup execution, 2026-09-07.** Authenticated CLI 59.11.7 read back the
+`Stemry` Hobby scope before changing anything. Its existing `stemry-waitlist`
+project remained unchanged. No project named `socal-whale-vessel-overlap`
+existed, so the separately authorized project was created. Its verified reserved
+production domain is `socal-whale-vessel-overlap.vercel.app`; it has no Git
+repository, deployment or production target. Only the ignored
+`data/interim/m4-releases/m4-initial-production-01/deploy/` directory was linked.
+The CLI-created link and OIDC environment metadata remain outside
+`.vercel/output` and outside the receipt inventory.
+
+The author confirmed ArcGIS Location Platform, pay-as-you-go disabled, and
+5,292 of 2,000,000 monthly basemap tiles used. The replacement public-browser
+key has no item access and no analysis, general or administrator privilege.
+Read-only authorization-header checks returned HTTP 200 for the Basemap Styles
+service from exact referrers `http://localhost:3000` and
+`https://socal-whale-vessel-overlap.vercel.app`, HTTP 401 from an unrelated
+origin, and HTTP 403 from the Static Basemap Tiles service. No key value,
+credential identifier or key-bearing URL was retained.
+
+The fresh keyed candidate was built from merged `origin/main` commit
+`8b1f65c8556955d6f28ee86426c09d55b7ea71fa`. Locked installation, formatting,
+linting, generated-type checking, all 79 tests and the Next.js 16.3.3 static
+build passed. The complete 901-file, 36,021,531-byte `.vercel/output` has receipt
+SHA-256 `194f8877d040220214205af1b03917fc320e703114513e7ea04bb819f700352a`;
+receipt read-back passed both before and after linking. It is awaiting explicit
+upload approval and has not been deployed.
 
 ### Release-time VSR service and version check
 
@@ -1417,27 +1446,27 @@ Sources are Esri's [portal and data-services FAQ](https://developers.arcgis.com/
 [current pricing page](https://location.arcgis.com/pricing/), and
 [Location Platform API-key credential guide](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/api-key-credentials/location-platform/).
 
-| Capability | Documented Location Platform behavior checked 2026-08-31 |
-|---|---|
-| Account and portal | A Location Platform subscription supplies a limited single-user organization and portal. It is not an ArcGIS Online organization subscription. |
-| Hosted service types | The limited organization supports creating hosted feature, vector-tile, and map-tile services. Hosted image and scene service creation is not supported. |
-| Public access | **Corrected 2026-09-06.** The 2026-08-31 entry recorded that a Location Platform hosted layer can be shared with `Everyone` for anonymous access. That was wrong; it applied cross-product sharing guidance to Location Platform. Esri's product-specific [data sharing and access guide](https://location.arcgis.com/help/data-sharing-and-access/) states that "Hosted data services in ArcGIS Location Platform are not shared publicly," citing anonymous-traffic and billing risk, and directs public-facing applications to authenticated access with developer credentials such as an API key. The [feature-service sharing and security guide](https://developers.arcgis.com/documentation/portal-and-data-services/data-services/feature-services/sharing-and-security/) lists `Owner (private)` as the only Location Platform sharing level and states that a scoped API key is required; ArcGIS Online additionally offers Organization, Group, and `Everyone (public)`. A visitor who never signs in is therefore **not** the same as a token-free service request: a scoped, origin-restricted browser key can serve visitors without a sign-in, but the service is not anonymous, the key is public once shipped, and the account owner remains responsible for the usage. |
-| Billing model | Location Platform uses monthly free tiers and optional pay-as-you-go, not ArcGIS Online credits. Esri states that pay-as-you-go is off by default for new accounts; the author confirmed it disabled for this account on 2026-09-07. With pay-as-you-go off, service access stops when an applicable free tier is exhausted; storage overage can also prevent publishing. |
-| Browser API keys | Location Platform accounts have API-key-management privileges by default. Credentials can define service privileges, access to selected items, referrer restrictions, and expiration dates, and can issue up to two keys. Keys are valid for at most one year. Referrer restrictions are a misuse-reduction control, not a secret boundary; browser keys remain public. Changing privileges or item access requires regeneration, and a referrer change requires manual regeneration. |
+| Capability           | Documented Location Platform behavior checked 2026-08-31                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Account and portal   | A Location Platform subscription supplies a limited single-user organization and portal. It is not an ArcGIS Online organization subscription.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Hosted service types | The limited organization supports creating hosted feature, vector-tile, and map-tile services. Hosted image and scene service creation is not supported.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Public access        | **Corrected 2026-09-06.** The 2026-08-31 entry recorded that a Location Platform hosted layer can be shared with `Everyone` for anonymous access. That was wrong; it applied cross-product sharing guidance to Location Platform. Esri's product-specific [data sharing and access guide](https://location.arcgis.com/help/data-sharing-and-access/) states that "Hosted data services in ArcGIS Location Platform are not shared publicly," citing anonymous-traffic and billing risk, and directs public-facing applications to authenticated access with developer credentials such as an API key. The [feature-service sharing and security guide](https://developers.arcgis.com/documentation/portal-and-data-services/data-services/feature-services/sharing-and-security/) lists `Owner (private)` as the only Location Platform sharing level and states that a scoped API key is required; ArcGIS Online additionally offers Organization, Group, and `Everyone (public)`. A visitor who never signs in is therefore **not** the same as a token-free service request: a scoped, origin-restricted browser key can serve visitors without a sign-in, but the service is not anonymous, the key is public once shipped, and the account owner remains responsible for the usage. |
+| Billing model        | Location Platform uses monthly free tiers and optional pay-as-you-go, not ArcGIS Online credits. Esri states that pay-as-you-go is off by default for new accounts; the author confirmed it disabled for this account on 2026-09-07. With pay-as-you-go off, service access stops when an applicable free tier is exhausted; storage overage can also prevent publishing.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Browser API keys     | Location Platform accounts have API-key-management privileges by default. Credentials can define service privileges, access to selected items, referrer restrictions, and expiration dates, and can issue up to two keys. Keys are valid for at most one year. Referrer restrictions are a misuse-reduction control, not a secret boundary; browser keys remain public. Changing privileges or item access requires regeneration, and a referrer change requires manual regeneration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 Current published monthly allowances relevant to this project are:
 
-| Meter | Free tier | Unit after the free tier |
-|---|---:|---:|
-| Basemap tiles | 2,000,000 tiles | $0.15 per 1,000 tiles |
-| Basemap sessions | 1,000 sessions | $4.00 per 1,000 sessions |
-| Feature storage | 250 MB | $0.0044 per additional MB |
-| Tiles, files, and attachments storage | 250 MB | $0.00012 per additional MB |
-| Feature-query bandwidth | 125 MB | $0.0008 per additional MB |
-| Feature-edit bandwidth | 125 MB | $0.0008 per additional MB |
-| Vector-tile bandwidth | 25 GB | $0.43 per additional GB |
-| Map-tile bandwidth | 25 GB | $0.43 per additional GB |
-| Map and vector tiles generated during publishing | 25,000 tiles | $0.12 per 1,000 tiles |
+| Meter                                            |       Free tier |   Unit after the free tier |
+| ------------------------------------------------ | --------------: | -------------------------: |
+| Basemap tiles                                    | 2,000,000 tiles |      $0.15 per 1,000 tiles |
+| Basemap sessions                                 |  1,000 sessions |   $4.00 per 1,000 sessions |
+| Feature storage                                  |          250 MB |  $0.0044 per additional MB |
+| Tiles, files, and attachments storage            |          250 MB | $0.00012 per additional MB |
+| Feature-query bandwidth                          |          125 MB |  $0.0008 per additional MB |
+| Feature-edit bandwidth                           |          125 MB |  $0.0008 per additional MB |
+| Vector-tile bandwidth                            |           25 GB |    $0.43 per additional GB |
+| Map-tile bandwidth                               |           25 GB |    $0.43 per additional GB |
+| Map and vector tiles generated during publishing |    25,000 tiles |      $0.12 per 1,000 tiles |
 
 These are product-wide allowances, not verified balances on the author's
 account. Esri says free tiers refresh at the start of the account's billing
@@ -1469,11 +1498,13 @@ session:
 6. Report only those outcomes. If any free-plan, eligibility, billing, capacity
    or key-scope check fails, stop; there is no paid fallback.
 
-The author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on
-2026-09-07. Account product, current basemap usage/headroom, credential validity,
-scope/referrers, and Hobby eligibility remain `unverified`. Actual Esri
-hosted-data and ArcGIS Online organization capabilities are also unverified but
-are not M4 requirements under ADR 0021.
+On 2026-09-07 the author confirmed Vercel Hobby eligibility for this personal,
+unpaid, non-monetized portfolio and ArcGIS Location Platform with pay-as-you-go
+disabled. Current basemap use and free headroom, credential validity, minimum
+scope, no item access and the two exact referrers were verified as recorded in
+the deployment procedure above. Actual Esri hosted-data and ArcGIS Online
+organization capabilities remain unverified but are not M4 requirements under
+ADR 0021.
 
 ### Historical Esri hosted-data route checks
 
@@ -1581,7 +1612,7 @@ Distinguish them explicitly when recording the result:
 Test accordingly:
 
 - **ArcGIS Location Platform:** the service is private, so an unauthenticated
-  request is *expected* to be refused, and that refusal is the correct result
+  request is _expected_ to be refused, and that refusal is the correct result
   rather than a failure. Verify instead that a scoped browser API key with read
   access to that item lets the application load the service from the authorized
   origin, with no interactive sign-in and no ArcGIS identity prompt. Record that
@@ -1634,7 +1665,7 @@ credits.
 
 - **Raw source data is never committed.** It lives under the Git-ignored local data root described in [../data/README.md](../data/README.md).
 - Extract only what the study area and analytical period need. **Retrieval rules for large sources live in [../data/README.md](../data/README.md)**, which owns the local data-handling policy — including the AIS retrieval policy and the standing prohibition on staging an entire national season locally. Do not restate those rules here; they have already drifted once.
-- Every raw dataset must be *re-obtainable*: its source, retrieval method, parameters, and retrieval date are recorded in [data-sources.md](data-sources.md) at the time of retrieval, not from memory later.
+- Every raw dataset must be _re-obtainable_: its source, retrieval method, parameters, and retrieval date are recorded in [data-sources.md](data-sources.md) at the time of retrieval, not from memory later.
 - Do not modify files in the raw directory. Cleaning produces new files elsewhere; the raw copy stays as downloaded so processing can be rerun from a known starting point.
 - Git LFS is not in use. If large binaries ever seem necessary, that needs a decision record before anything is added.
 
@@ -1651,10 +1682,10 @@ credits.
   files. The separate M6 exposure delivery boundary produces a
   measured, locally verified display/manifest pair and a small results
   contract, which uses the same selected static route after M7 integrates it.
-  Nothing has been published. Vercel Hobby and ArcGIS pay-as-you-go disabled are
-  author-confirmed as of 2026-09-07; Hobby eligibility, remaining account checks
-  and deployed behavior remain unverified. Esri hosted-data capabilities remain
-  unselected and unverified.
+  Nothing has been published. Vercel Hobby eligibility and ArcGIS Location
+  Platform free-tier-only basemap access were verified on 2026-09-07; deployed
+  behavior remains unverified. Esri hosted-data capabilities remain unselected
+  and unverified.
 - Generated display layers are never committed. The exporters stage them into
   Git-ignored `web/public/layers/`, and refuse any destination outside this
   checkout's ignored output roots.

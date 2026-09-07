@@ -10,9 +10,10 @@
 > selects direct use of the publisher-hosted VSR Feature Service as a narrow
 > Version 1 exception to the project-derived-layer publication boundary.
 > [ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md) selects
-> checksum-addressed static project files on free Vercel Hobby. The plan is
-> author-confirmed; eligibility, remaining account and basemap checks are
-> unverified.
+> checksum-addressed static project files on free Vercel Hobby. Initial
+> eligibility, account, capacity and minimum browser-key checks passed on
+> 2026-09-07; the isolated project and reviewed-main candidate exist, but no
+> deployment has been uploaded.
 >
 > The Next.js application shell, Python processing foundation, deterministic
 > one-extract AIS cleaning, projected water-grid construction, and deterministic
@@ -50,8 +51,9 @@
 > implemented and locally verified in the web application. Deterministic
 > presentation exports and checksum-bound same-origin display are also
 > implemented and locally verified for the whale, vessel-activity, and accepted
-> analytical-domain layers. Vercel Hobby is selected; remaining account checks,
-> the public project, deployment and deployed verification remain unfinished.
+> analytical-domain layers. Vercel Hobby is selected and its route-specific
+> account checks and isolated project are established; deployment and deployed
+> verification remain unfinished.
 > See the [roadmap](roadmap.md) for milestone status.
 
 The analytical and statistical domain is accepted in
@@ -68,10 +70,12 @@ files. The whale,
 vessel-activity, and accepted analytical-domain layers are exported as WGS 84
 GeoJSON and read as static same-origin files, which is implemented and locally
 verified. The exposure delivery contract uses the same selected route when M7
-integrates it. The author confirmed Vercel Hobby on 2026-09-07; personal-use
-eligibility remains unverified. The ArcGIS account serves the basemap only; the
-author confirmed pay-as-you-go disabled on 2026-09-07, while its product,
-current basemap headroom and browser-key restrictions remain unverified.
+integrates it. On 2026-09-07 the author confirmed Vercel Hobby eligibility for
+this personal, unpaid, non-monetized portfolio and ArcGIS Location Platform with
+pay-as-you-go disabled. Current basemap use was 5,292 of 2,000,000 monthly
+tiles, and the minimum browser key was verified against the exact localhost and
+reserved production origins. The isolated Vercel project and keyed release
+candidate exist; no deployment has been uploaded.
 Location Platform hosted-data services and ArcGIS Online organization hosting
 are unselected, so their actual publishing capabilities remain unverified and
 are not M4 prerequisites. A later choice to use them requires a superseding
@@ -577,15 +581,15 @@ an unrecorded manual transformation.
 
 ## Processing versus presentation
 
-| Concern | Python processing | QGIS review | Browser application |
-|---|---|---|---|
-| Raw retrieval, validation, cleaning | Owns | May inspect read-only | Never |
-| Reprojection, clipping, gridding | Owns | Verifies output | Never |
-| Exposure and inside/outside statistics | Owns | Verifies spatial output | Never |
-| Exploratory method/cartography review | Records accepted method in code/configuration | Supports exploration | Never |
-| Publication-format conversion | Reproducible export boundary | May inspect exported artifact | Never |
-| Layer visibility, opacity, map view | — | May preview | Owns |
-| Display filtering and popups | — | May preview | Owns |
+| Concern                                | Python processing                             | QGIS review                   | Browser application |
+| -------------------------------------- | --------------------------------------------- | ----------------------------- | ------------------- |
+| Raw retrieval, validation, cleaning    | Owns                                          | May inspect read-only         | Never               |
+| Reprojection, clipping, gridding       | Owns                                          | Verifies output               | Never               |
+| Exposure and inside/outside statistics | Owns                                          | Verifies spatial output       | Never               |
+| Exploratory method/cartography review  | Records accepted method in code/configuration | Supports exploration          | Never               |
+| Publication-format conversion          | Reproducible export boundary                  | May inspect exported artifact | Never               |
+| Layer visibility, opacity, map view    | —                                             | May preview                   | Owns                |
+| Display filtering and popups           | —                                             | May preview                   | Owns                |
 
 The rule is simple: if an operation can change a number a reader might quote,
 it belongs in the reproducible Python path.
@@ -596,12 +600,14 @@ it belongs in the reproducible Python path.
 author's preferred Vercel Hobby route for the existing input-layer application.
 Local release staging is implemented to package committed source and exactly
 three pinned GeoJSON/manifest pairs as static Build Output API v3 output.
-The author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on
-2026-09-07. Personal-use eligibility, remaining account and basemap checks remain
-unverified; no project is created or deployed, and exposure integration remains
-outside this initial deployment. The entire project must remain within free
-capacity. Paid plans, trials, add-ons, pay-as-you-go and other charged usage are
-prohibited.
+On 2026-09-07 the author confirmed Vercel Hobby personal-use eligibility and
+ArcGIS Location Platform with pay-as-you-go disabled. Basemap free-tier
+headroom, minimum key scope and exact origin restrictions were verified. The
+isolated `socal-whale-vessel-overlap` project reserves the intended production
+hostname and the reviewed-main candidate is linked only from its ignored deploy
+directory; no deployment exists, and exposure integration remains outside this
+initial deployment. The entire project must remain within free capacity. Paid
+plans, trials, add-ons, pay-as-you-go and other charged usage are prohibited.
 
 - Next.js produces a static export served over HTTPS from a stable public URL.
 - Version 1 has no custom backend, server-side analysis, database, or runtime
@@ -847,26 +853,26 @@ its milestone needs it.
 
 ## Explicitly deferred decisions
 
-| Decision | Deferred until | Selection basis |
-|---|---|---|
-| Exposure formula, normalization, and weighting | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not independently reviewed or accepted, and final headline messaging is still open. |
-| High-exposure threshold | **Resolved for exploratory use** in ADR 0020 | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits independent review and the owner. |
-| Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021** | Checksum-addressed static files beside the application on free Vercel Hobby. Input files are integrated and locally verified; exposure integration remains M7 work. Account and deployed-browser evidence remain open. |
-| ArcGIS Location Platform publication route | Unselected by ADR 0021 | Actual hosted-data creation, storage and sharing capabilities remain unverified. The account used for the basemap still needs its narrower route-specific check. |
-| ArcGIS Online publication route | Unselected by ADR 0021 | Actual organization and publishing capabilities remain unverified. |
-| Static application host | **Resolved by ADR 0021, verification open** | Free Vercel Hobby, author-confirmed 2026-09-07 and conditional on personal-use eligibility, HTTPS, stable origin, static-export limits, and clean-browser verification. No paid fallback is authorized. |
-| General visual-verification record across spatial outputs | M8 reproducibility work | Layer-specific checksum-bound commands now exist for the three project input displays and exposure evidence. A general record must cover every spatial output's checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage. |
-[ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts
-`receivers_50_nautical_miles` as the scope-reduced,
-system-performance-qualified AIS analytical domain: 50 nautical miles, exactly
-92,600 metres, from the relevant NAIS reception stations, not from the coast.
-It is not empirical 2024 coverage. Outside-domain cells are excluded from
-headline statistics and are not classified as low traffic. Receiver uptime,
-station completeness, feed interruptions, antenna and terrain effects, and
-observational completeness remain unknown or unverified. M2 is **Complete**:
-ADR 0019 resolves its final publication-posture criterion by prohibiting
-project-hosted VSR copies and selecting direct publisher-service display, not by
-claiming that redistribution permission was granted.
+| Decision                                                                                    | Deferred until                                                                                              | Selection basis                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Exposure formula, normalization, and weighting                                              | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not independently reviewed or accepted, and final headline messaging is still open.                                                                                                                    |
+| High-exposure threshold                                                                     | **Resolved for exploratory use** in ADR 0020                                                                | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits independent review and the owner.                                                                |
+| Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021**                                                                                    | Checksum-addressed static files beside the application on free Vercel Hobby. Input files are integrated and locally verified; exposure integration remains M7 work. Account and deployed-browser evidence remain open.                                                                  |
+| ArcGIS Location Platform publication route                                                  | Unselected by ADR 0021                                                                                      | Actual hosted-data creation, storage and sharing capabilities remain unverified. The account used for the basemap still needs its narrower route-specific check.                                                                                                                        |
+| ArcGIS Online publication route                                                             | Unselected by ADR 0021                                                                                      | Actual organization and publishing capabilities remain unverified.                                                                                                                                                                                                                      |
+| Static application host                                                                     | **Resolved by ADR 0021, verification open**                                                                 | Free Vercel Hobby, author-confirmed 2026-09-07 and conditional on personal-use eligibility, HTTPS, stable origin, static-export limits, and clean-browser verification. No paid fallback is authorized.                                                                                 |
+| General visual-verification record across spatial outputs                                   | M8 reproducibility work                                                                                     | Layer-specific checksum-bound commands now exist for the three project input displays and exposure evidence. A general record must cover every spatial output's checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage. |
+| [ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts                 |
+| `receivers_50_nautical_miles` as the scope-reduced,                                         |
+| system-performance-qualified AIS analytical domain: 50 nautical miles, exactly              |
+| 92,600 metres, from the relevant NAIS reception stations, not from the coast.               |
+| It is not empirical 2024 coverage. Outside-domain cells are excluded from                   |
+| headline statistics and are not classified as low traffic. Receiver uptime,                 |
+| station completeness, feed interruptions, antenna and terrain effects, and                  |
+| observational completeness remain unknown or unverified. M2 is **Complete**:                |
+| ADR 0019 resolves its final publication-posture criterion by prohibiting                    |
+| project-hosted VSR copies and selecting direct publisher-service display, not by            |
+| claiming that redistribution permission was granted.                                        |
 
 Resolved choices remain recorded in their ADRs: the map/context extent and
 qualified analytical domain ([0002](decisions/0002-southern-california-study-area-extent.md)), EPSG:3310

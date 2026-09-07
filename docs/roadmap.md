@@ -8,17 +8,17 @@ A milestone is not "in progress" because work has been thought about. It is in p
 
 **Status legend:** `Not started` · `In progress` · `Blocked` · `Complete`
 
-| # | Milestone | Status |
-|---|-----------|--------|
-| M1 | Project foundation | Complete |
-| M2 | Data discovery and validation | Complete |
-| M3 | Processing workflow | Complete |
-| M4 | GIS application foundation | In progress |
-| M5 | Core input layers | In progress |
-| M6 | Whale–vessel exposure analysis | In progress |
-| M7 | Application integration | Not started |
-| M8 | Verification and reproducibility | Not started |
-| M9 | Public release | Not started |
+| #   | Milestone                        | Status      |
+| --- | -------------------------------- | ----------- |
+| M1  | Project foundation               | Complete    |
+| M2  | Data discovery and validation    | Complete    |
+| M3  | Processing workflow              | Complete    |
+| M4  | GIS application foundation       | In progress |
+| M5  | Core input layers                | In progress |
+| M6  | Whale–vessel exposure analysis   | In progress |
+| M7  | Application integration          | Not started |
+| M8  | Verification and reproducibility | Not started |
+| M9  | Public release                   | Not started |
 
 ---
 
@@ -33,6 +33,7 @@ Establish the documentation baseline that everything else is built against: scop
 None.
 
 **Deliverables**
+
 - Relocated and preserved original project vision.
 - Product scope document, roadmap, proposed architecture, data-source register, development process.
 - Decision-record directory and format.
@@ -40,6 +41,7 @@ None.
 - Recruiter-facing README.
 
 **Completion criteria**
+
 - The Version 1 question, scope, and non-goals are written down in one authoritative place.
 - The initial architecture is documented, reviewed, and accepted, with its data-dependent decisions explicitly deferred.
 - Every intended data source is registered with its verification status.
@@ -47,6 +49,7 @@ None.
 - Documents do not contradict each other.
 
 **Risks and open questions**
+
 - The proposed architecture has not been reviewed against real data yet; parts of it may not survive M2.
 - Documentation written before data inspection can encourage premature commitment. Anything unverified must stay labeled as unverified.
 
@@ -62,31 +65,32 @@ None.
 Obtain and inspect the actual candidate datasets, and determine what analysis the data can genuinely support. This milestone is where assumptions become findings.
 
 **Dependencies**
+
 - M1 (source register exists with the questions each source must answer).
 
 **Deliverables**
 
-| Deliverable | State |
-|---|---|
-| A small, retrievable sample of each candidate dataset, inspected locally | **Done.** Twenty artifacts, each with a recorded size and SHA-256 |
-| For each source: confirmed format, CRS, spatial extent and resolution, temporal coverage, value meaning and units, and licence or terms of use | **Done.** The VSR review found no explicit redistribution grant; ADR 0019 records a conservative no-copy public-use posture instead of converting that uncertainty into permission |
-| A written definition of the Southern California study area: extent, projected CRS, and analysis grid | **Done.** The map/context extent and scope-reduced `receivers_50_nautical_miles` analytical domain ([0002](decisions/0002-southern-california-study-area-extent.md)), projected CRS ([0003](decisions/0003-projected-coordinate-system.md)), grid ([0004](decisions/0004-analysis-grid-resolution.md)), and modeled-whale-support water geometry ([0014](decisions/0014-select-the-grid-water-mask.md)) are accepted and explicitly distinct |
-| A decision on the analytical period | **Done** ([0005](decisions/0005-analytical-period.md)) |
-| A decision on whether vessel speed can be derived reliably from the available AIS records | **Done, with its evidentiary limits stated** ([0006](decisions/0006-report-vessel-speed-separately.md)). `SOG` is present, documented, and appears usable in the inspected sample; that is not the same as established across the period |
-| Updated source register with verification status replacing every resolved "to be verified" entry | **Done**, with a provenance manifest and a utility that re-checks it |
-| Architecture decision records for choices that constrain later work | **Done.** ADRs 0002 and 0019 were accepted at M2; the separate AIS retrieval (0017) and vessel-activity method (0018) records were Proposed M3 decisions then and have since been accepted |
+| Deliverable                                                                                                                                    | State                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A small, retrievable sample of each candidate dataset, inspected locally                                                                       | **Done.** Twenty artifacts, each with a recorded size and SHA-256                                                                                                                                                                                                                                                                                                                                                                            |
+| For each source: confirmed format, CRS, spatial extent and resolution, temporal coverage, value meaning and units, and licence or terms of use | **Done.** The VSR review found no explicit redistribution grant; ADR 0019 records a conservative no-copy public-use posture instead of converting that uncertainty into permission                                                                                                                                                                                                                                                           |
+| A written definition of the Southern California study area: extent, projected CRS, and analysis grid                                           | **Done.** The map/context extent and scope-reduced `receivers_50_nautical_miles` analytical domain ([0002](decisions/0002-southern-california-study-area-extent.md)), projected CRS ([0003](decisions/0003-projected-coordinate-system.md)), grid ([0004](decisions/0004-analysis-grid-resolution.md)), and modeled-whale-support water geometry ([0014](decisions/0014-select-the-grid-water-mask.md)) are accepted and explicitly distinct |
+| A decision on the analytical period                                                                                                            | **Done** ([0005](decisions/0005-analytical-period.md))                                                                                                                                                                                                                                                                                                                                                                                       |
+| A decision on whether vessel speed can be derived reliably from the available AIS records                                                      | **Done, with its evidentiary limits stated** ([0006](decisions/0006-report-vessel-speed-separately.md)). `SOG` is present, documented, and appears usable in the inspected sample; that is not the same as established across the period                                                                                                                                                                                                     |
+| Updated source register with verification status replacing every resolved "to be verified" entry                                               | **Done**, with a provenance manifest and a utility that re-checks it                                                                                                                                                                                                                                                                                                                                                                         |
+| Architecture decision records for choices that constrain later work                                                                            | **Done.** ADRs 0002 and 0019 were accepted at M2; the separate AIS retrieval (0017) and vessel-activity method (0018) records were Proposed M3 decisions then and have since been accepted                                                                                                                                                                                                                                                   |
 
 **Completion criteria**
 
-| Criterion | State |
-|---|---|
-| Every Version 1 input has an identified, retrievable, authoritative source with recorded provenance | **Met.** Source URL or query endpoint, method and parameters, retrieval date, local filename, byte size and SHA-256 are recorded for all twenty artifacts in [data-sources.md](data-sources.md), and `python tools/m2_verify.py verify` parses that register and checks retained local copies against those identities. The two USCG PDFs added on 2026-08-31 matched their recorded identities. The separate [analytical-domain evidence command](analytical-domain-evidence.md#reproducible-calculation) regenerates the candidate-domain report and mask when its ignored inputs are present. This criterion was previously claimed as met when the checksums did not exist |
-| The whale model layer's values are understood well enough to state what they mean in the application legend | **Met.** `DENSITY` is animals per km², publisher-defined, with a per-cell coefficient of variation |
-| The AIS extract needed for the study area and analytical period has been scoped, and its volume is known | **Met, with the volume qualified.** The period is fixed and the retrieval footprint is bounded, but the volume is an **order-of-magnitude planning estimate** — 60 to 90 million study-area records, ≈56 GB of transfer — extrapolated from five 34-minute windows all at the same time of day. It is not a measurement and nothing analytical rests on it |
-| The VSR boundary geometry is confirmed as obtainable from an authoritative source, or a documented derivation from published coordinates is agreed on | **Met.** A closed, land-clipped polygon is retrievable, and seven of the program's eight published points lie exactly on its boundary |
-| Each input has a documented public-use and publication posture, so it is clear what may be committed, hosted, or referenced publicly | **Met.** The NOAA postures are recorded. For the VSR geometry, permission to redistribute remains unconfirmed, so [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md) prohibits project-hosted copies and selects direct display from the publisher's service with attribution, disclaimer, and release-time verification |
-| **The analytical and statistical domain over which headline results can be defended has been accepted** | **Met.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts `receivers_50_nautical_miles`: 50 nautical miles, exactly 92,600 metres, from the relevant NAIS reception stations, not from the coast. It is a scope-reduced, system-performance-qualified AIS receiver domain, not empirical 2024 coverage. Unknown receiver uptime, station completeness, feed interruptions, antenna and terrain effects, and observational completeness remain limitations |
-| Anything that cannot be verified is explicitly recorded as unresolved rather than assumed | **Met**, and this is what the audit repaired. Several things previously stated as established are now recorded as unresolved |
+| Criterion                                                                                                                                             | State                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Every Version 1 input has an identified, retrievable, authoritative source with recorded provenance                                                   | **Met.** Source URL or query endpoint, method and parameters, retrieval date, local filename, byte size and SHA-256 are recorded for all twenty artifacts in [data-sources.md](data-sources.md), and `python tools/m2_verify.py verify` parses that register and checks retained local copies against those identities. The two USCG PDFs added on 2026-08-31 matched their recorded identities. The separate [analytical-domain evidence command](analytical-domain-evidence.md#reproducible-calculation) regenerates the candidate-domain report and mask when its ignored inputs are present. This criterion was previously claimed as met when the checksums did not exist |
+| The whale model layer's values are understood well enough to state what they mean in the application legend                                           | **Met.** `DENSITY` is animals per km², publisher-defined, with a per-cell coefficient of variation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| The AIS extract needed for the study area and analytical period has been scoped, and its volume is known                                              | **Met, with the volume qualified.** The period is fixed and the retrieval footprint is bounded, but the volume is an **order-of-magnitude planning estimate** — 60 to 90 million study-area records, ≈56 GB of transfer — extrapolated from five 34-minute windows all at the same time of day. It is not a measurement and nothing analytical rests on it                                                                                                                                                                                                                                                                                                                     |
+| The VSR boundary geometry is confirmed as obtainable from an authoritative source, or a documented derivation from published coordinates is agreed on | **Met.** A closed, land-clipped polygon is retrievable, and seven of the program's eight published points lie exactly on its boundary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Each input has a documented public-use and publication posture, so it is clear what may be committed, hosted, or referenced publicly                  | **Met.** The NOAA postures are recorded. For the VSR geometry, permission to redistribute remains unconfirmed, so [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md) prohibits project-hosted copies and selects direct display from the publisher's service with attribution, disclaimer, and release-time verification                                                                                                                                                                                                                                                                                                                                 |
+| **The analytical and statistical domain over which headline results can be defended has been accepted**                                               | **Met.** [ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts `receivers_50_nautical_miles`: 50 nautical miles, exactly 92,600 metres, from the relevant NAIS reception stations, not from the coast. It is a scope-reduced, system-performance-qualified AIS receiver domain, not empirical 2024 coverage. Unknown receiver uptime, station completeness, feed interruptions, antenna and terrain effects, and observational completeness remain limitations                                                                                                                                                                                           |
+| Anything that cannot be verified is explicitly recorded as unresolved rather than assumed                                                             | **Met**, and this is what the audit repaired. Several things previously stated as established are now recorded as unresolved                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 **M2 is complete.** Every criterion above is met. The original redistribution
 criterion was not satisfied by obtaining permission: no explicit grant was
@@ -165,6 +169,7 @@ Detail is in [data-sources.md](data-sources.md); this is the summary that change
 Turn raw source data into validated, derived geospatial datasets through an ordered, repeatable process.
 
 **Dependencies**
+
 - M2. Data, projection, grid, analytical period, analytical domain, and the VSR no-copy publication posture are accepted. Permission to redistribute the VSR geometry remains unconfirmed, but Version 1 does not depend on it because project-hosted copies are prohibited.
 
 ### Progress
@@ -282,8 +287,8 @@ non-spatial rule evidence exercised with the real ready 153-date input**
   support, not an authoritative shoreline, general water mask, or AIS
   observability boundary. A candidate segment/grid processing foundation
   is now implemented, but the gap, implied-speed, edge-support, and vessel-
-  length choices remain unresolved and ADR 0018 remains Proposed. *(History: all
-  four were resolved and ADR 0018 was accepted on 2026-09-05.)*
+  length choices remain unresolved and ADR 0018 remains Proposed. _(History: all
+  four were resolved and ADR 0018 was accepted on 2026-09-05.)_
 - An isolated, read-only vessel-activity evidence harness now validates one
   explicit current cleaner bundle and constructs deterministic consecutive
   pairs for diagnostics. It reports group and commercial-union observation and
@@ -878,6 +883,7 @@ non-spatial rule evidence exercised with the real ready 153-date input**
   these later analytical products are not implemented.
 
 **Deliverables**
+
 - A documented, ordered processing path from raw inputs to derived datasets, implemented as scripts or as recorded tooling steps.
 - Clipping, reprojection, and normalization of each input onto the common study area and analysis grid, in EPSG:3310 ([ADR 0003](decisions/0003-projected-coordinate-system.md)) on the 5 km grid ([ADR 0004](decisions/0004-analysis-grid-resolution.md)).
 - **A per-cell water geometry and its area**, produced by intersecting each grid cell with the water mask. This is an input to the fractional boundary accounting in M6, not a by-product, and the mask it comes from must be named and inspected.
@@ -887,6 +893,7 @@ non-spatial rule evidence exercised with the real ready 153-date input**
 - Recorded data lineage for each derived dataset — source, retrieval date, and the steps applied.
 
 **Completion criteria**
+
 - Each derived dataset can be regenerated from raw inputs by following the documented process.
 - Rerunning the process on unchanged inputs produces equivalent outputs.
 - Every filtering and aggregation choice is documented with its rationale.
@@ -895,13 +902,13 @@ non-spatial rule evidence exercised with the real ready 153-date input**
 
 ### Completion criteria status, 2026-09-05
 
-| Criterion | State |
-|---|---|
-| Each derived dataset regenerable from raw inputs by the documented process | **Satisfied.** Documented commands exist for the projected water grid, the whale-density transfer and the production vessel input; the vessel input was regenerated from the ready period and exact grid on 2026-09-05. |
-| Rerunning on unchanged inputs produces equivalent outputs | **Satisfied.** All three reproduce byte-identically: water grid `7229098c…`, whale grid `421dc7bf…` across two clean runs, and the vessel input's Parquet and quality bytes across an independent repeat. Only timestamp-bearing lineage differs, by contract. |
-| Every filtering and aggregation choice documented with rationale | **Satisfied.** ADR 0013 covers conflicting-key removal, ADR 0018 the gap, speed, population, censoring and support choices, ADR 0006 the speed-summary semantics, with limitations recorded rather than resolved away. |
-| Per-cell water areas from actual intersected geometry | **Satisfied.** 431 distinct partial areas from 0.002163 to 25 km², 4,085 full-water cells, none above the nominal maximum; verified directly against the output. |
-| Intermediate outputs inspected visually, not only programmatically | **Satisfied.** Water and whale grids in QGIS 4.2.1 on 2026-08-27; the production vessel activity and speed fields on 2026-09-05, each bound to the exact output checksum. Rendering was not treated as inspection. |
+| Criterion                                                                  | State                                                                                                                                                                                                                                                          |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Each derived dataset regenerable from raw inputs by the documented process | **Satisfied.** Documented commands exist for the projected water grid, the whale-density transfer and the production vessel input; the vessel input was regenerated from the ready period and exact grid on 2026-09-05.                                        |
+| Rerunning on unchanged inputs produces equivalent outputs                  | **Satisfied.** All three reproduce byte-identically: water grid `7229098c…`, whale grid `421dc7bf…` across two clean runs, and the vessel input's Parquet and quality bytes across an independent repeat. Only timestamp-bearing lineage differs, by contract. |
+| Every filtering and aggregation choice documented with rationale           | **Satisfied.** ADR 0013 covers conflicting-key removal, ADR 0018 the gap, speed, population, censoring and support choices, ADR 0006 the speed-summary semantics, with limitations recorded rather than resolved away.                                         |
+| Per-cell water areas from actual intersected geometry                      | **Satisfied.** 431 distinct partial areas from 0.002163 to 25 km², 4,085 full-water cells, none above the nominal maximum; verified directly against the output.                                                                                               |
+| Intermediate outputs inspected visually, not only programmatically         | **Satisfied.** Water and whale grids in QGIS 4.2.1 on 2026-08-27; the production vessel activity and speed fields on 2026-09-05, each bound to the exact output checksum. Rendering was not treated as inspection.                                             |
 
 All five criteria are satisfied on the evidence above, and **M3 is Complete as
 of 2026-09-05**.
@@ -920,6 +927,7 @@ Publisher-side transfer completeness and observational completeness remain
 calculation is M6 and is not an M3 criterion.
 
 **Risks and open questions**
+
 - Raster–vector alignment and resampling choices can materially change results; the chosen approach must be justified.
 - AIS records commonly contain implausible positions and speeds; the cleaning rules will need documenting and will affect outputs.
 - QGIS exploration can reveal useful methods, but no production result may
@@ -937,10 +945,12 @@ Stand up the web application shell — the framework, the map, and the deploymen
 path — before there is analytical content to put in it.
 
 **Dependencies**
+
 - M1 (architecture reviewed and accepted).
 - Independent of M2 and M3; can proceed in parallel with data work.
 
 **Deliverables**
+
 - Application scaffold created following the reviewed architecture.
 - A working map view of the study area using the ArcGIS Maps SDK for JavaScript.
 - Environment-variable and credential handling in place, with nothing secret committed.
@@ -959,6 +969,7 @@ path — before there is analytical content to put in it.
 - Formatting, linting, and type-checking configured.
 
 **Completion criteria**
+
 - The application builds locally and in the deployment environment.
 - The map renders, pans, and zooms over the study area.
 - No API keys or credentials appear in the repository or in committed build output.
@@ -1083,15 +1094,13 @@ Built on the `feat/web-foundation` branch. The application is in
 
 **Not done**
 
-- **The static-shell deployment.** This can proceed independently of an ArcGIS
-  account. The application has never been deployed anywhere, and there is no
-  public URL.
-- The remaining route-specific account checks. The author confirmed Vercel
-  Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07. Hobby personal-use
-  eligibility, the basemap account's product and current headroom, and
-  browser-key validity, scope and exact referrers remain unverified.
-- The Vercel deploy-and-serve test. No public project exists and the staged
-  rehearsal is deliberately keyless and ineligible for deployment.
+- **The static-shell deployment and deployed-browser verification.** The
+  isolated project, stable hostname, completed route-specific account checks,
+  and reviewed-main keyed candidate are ready, but no upload has been approved
+  or attempted and the hostname serves no production deployment.
+- The Vercel deploy-and-serve test. The earlier rehearsal remains deliberately
+  keyless and ineligible; only the fresh keyed candidate described below may be
+  proposed for upload.
 
 The ordered steps for all of the above are in
 [development.md](development.md#selected-route-account-and-service-checks).
@@ -1124,14 +1133,11 @@ with pinned public manifests, isolated committed-source builds and full upload
 inventories. [ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md)
 was accepted by the author on 2026-09-07. It selects free Vercel Hobby static
 delivery and route-specific checks; an Esri hosted-data test is not applicable
-unless a later accepted decision selects that route. The author confirmed
-Vercel Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07; no account session
-was accessed, no project or service was created, and there is no
-deployment approval or public URL. The historical key's later `Token Invalid`
-result remains a release-key blocker; earlier local success is not current
-credential verification. Actual account product, usage/headroom, Hobby
-eligibility and production key restrictions await author evidence. Development
-owns staging and the deployment checkpoint.
+unless a later accepted decision selects that route. That closure-preparation
+session did not access an account, create a project or obtain deployment
+approval. The later initial-setup evidence below supersedes its then-open
+account, hostname and release-key checks. Development owns staging and the
+deployment checkpoint.
 
 The keyless isolated rehearsal at implementation commit `4f9b2c2` passed locked
 installation, formatting, lint, generated-type checking, all 79 tests and static
@@ -1146,16 +1152,42 @@ unresolved blocking findings, including receipt read-back. No application or ana
 changed. [The M4 handoff](m4-release-staging-handoff.md) retains commands,
 artifact locations, failures and the next approval checkpoint.
 
-| Criterion | State |
-|---|---|
-| Builds locally | **Verified.** Historical browser evidence remains local. The 2026-09-07 isolated committed-source rehearsal passed all 79 tests and the static build, including the six pinned input files. |
-| Builds in the deployment environment | **Unverified.** No deployment environment exists yet. |
-| Map renders, pans, and zooms | **Verified locally.** The keyed static export rendered `arcgis/oceans`, panned, zoomed, and completed the ready-map attribution handoff in Chrome at all three required viewports. The deployed-origin path remains unverified. |
-| No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored. |
-| Deployment reachable and reflecting main | **Unverified.** No deployment exists; main has not been deployed or verified. |
-| Route-specific account checks complete and recorded | **Partial.** The author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07. Hobby eligibility, the basemap account's product and current headroom, and browser-key validity, scope and exact referrers remain unverified. |
-| Selected static publish-and-serve test | **Not attempted.** The exact files are staged and locally verified, but no Vercel project or public deployment exists. An Esri hosted-data test is not applicable under ADR 0021. |
-| Unselected Esri hosted-data capabilities | **Not applicable to M4 and unverified.** Static project files need no Esri hosted-data service. Documentation-only product facts remain background; actual service creation, storage, sharing and ArcGIS Online privileges were not checked. |
+**2026-09-07 initial deployment setup:** Authenticated Vercel CLI 59.11.7
+confirmed the `Stemry` Hobby scope and found only the existing
+`stemry-waitlist` project. The separately authorized
+`socal-whale-vessel-overlap` project was therefore created without Git
+integration or deployment; its verified reserved production hostname is
+`https://socal-whale-vessel-overlap.vercel.app`. Only the ignored release
+candidate's isolated `deploy/` directory is linked. The existing Stemry project
+was not changed.
+
+The author confirmed this is a personal, unpaid, non-monetized portfolio and
+confirmed ArcGIS Location Platform with pay-as-you-go disabled. Current basemap
+use was 5,292 of the 2,000,000 monthly tile allowance. The replacement key has
+no item access or analysis, general or administrator privileges. Service checks
+allowed Basemap Styles from exactly `http://localhost:3000` and the reserved
+production origin, refused an unrelated origin, and refused Static Basemap
+Tiles. No credential value or credential-bearing URL was retained.
+
+The keyed candidate `m4-initial-production-01` was staged from exact merged
+`origin/main` commit `8b1f65c8556955d6f28ee86426c09d55b7ea71fa` with the same six pinned
+GeoJSON/manifest inputs. Locked installation, formatting, linting,
+generated-type checking, all 79 tests and the static build passed. Its 901-file,
+36,021,531-byte upload receipt is
+`194f8877d040220214205af1b03917fc320e703114513e7ea04bb819f700352a`;
+complete read-back passed before and after local project linking. The candidate
+is awaiting explicit deployment approval and has not been uploaded.
+
+| Criterion                                                  | State                                                                                                                                                                                                                                        |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Builds locally                                             | **Verified.** Historical browser evidence remains local. Both the keyless rehearsal and reviewed-main keyed candidate passed all 79 tests and the static build with the six pinned input files.                                              |
+| Builds in the deployment environment                       | **Unverified.** No deployment environment exists yet.                                                                                                                                                                                        |
+| Map renders, pans, and zooms                               | **Verified locally.** The keyed static export rendered `arcgis/oceans`, panned, zoomed, and completed the ready-map attribution handoff in Chrome at all three required viewports. The deployed-origin path remains unverified.              |
+| No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored.                                                                                                                                                         |
+| Deployment reachable and reflecting main                   | **Unverified.** No deployment exists; main has not been deployed or verified.                                                                                                                                                                |
+| Route-specific account checks complete and recorded        | **Verified.** Vercel Hobby personal-use eligibility, ArcGIS Location Platform free-tier-only status and headroom, and browser-key validity, minimum scope, no item access and exact referrers were confirmed on 2026-09-07.                  |
+| Selected static publish-and-serve test                     | **Not attempted.** The exact files are staged, locally verified and linked to the isolated project, but no upload is approved and no deployment exists. An Esri hosted-data test is not applicable under ADR 0021.                           |
+| Unselected Esri hosted-data capabilities                   | **Not applicable to M4 and unverified.** Static project files need no Esri hosted-data service. Documentation-only product facts remain background; actual service creation, storage, sharing and ArcGIS Online privileges were not checked. |
 
 M4 is not complete and must not be marked complete until the route-specific
 account checks and the reviewed main-backed Vercel deployment are verified.
@@ -1171,15 +1203,15 @@ tooling rather than reading about it, and constrain later work.
 
 **Toolchain, as verified on the author's machine**
 
-| Component | Version |
-|---|---|
-| Node.js | 22.16.0 (Next.js 16 requires `>=20.9.0`) |
-| npm | 10.9.2 — the only package manager present |
-| Next.js | 16.3.3 |
-| React | 19.2.8 |
-| ArcGIS Maps SDK for JavaScript | 5.1.20 (`@arcgis/core` and `@arcgis/map-components`) |
-| Calcite components | 5.1.2 (`@esri/calcite-components`) — versioned separately from the Maps SDK |
-| Vitest | 4.1.11 |
+| Component                      | Version                                                                     |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| Node.js                        | 22.16.0 (Next.js 16 requires `>=20.9.0`)                                    |
+| npm                            | 10.9.2 — the only package manager present                                   |
+| Next.js                        | 16.3.3                                                                      |
+| React                          | 19.2.8                                                                      |
+| ArcGIS Maps SDK for JavaScript | 5.1.20 (`@arcgis/core` and `@arcgis/map-components`)                        |
+| Calcite components             | 5.1.2 (`@esri/calcite-components`) — versioned separately from the Maps SDK |
+| Vitest                         | 4.1.11                                                                      |
 
 **The SDK's widgets are deprecated as of 5.0**, and its web components are the
 supported path forward. The shell uses components. Later milestones should not
@@ -1225,19 +1257,20 @@ from this number. First development-server compile of the map route takes
 this repository's own. Disabled with `agentRules: false`.
 
 **Risks and open questions**
+
 - **The project-data route is resolved.** ADR 0021 selects checksum-addressed
   static files on free Vercel Hobby. Esri hosted-data product facts remain
   documented background; actual publishing capabilities are unverified and do
   not constrain M4 while those routes remain unselected.
-- Vercel Hobby and ArcGIS pay-as-you-go disabled are author-confirmed as of
-  2026-09-07. Hobby eligibility and the remaining ArcGIS basemap account checks
-  are still unverified. A failed free-capacity check stops deployment; no paid
-  fallback is authorized. **Still open.**
-- ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Partly resolved:** a browser-delivered, origin-restricted API key is required for the basemap, Location Platform accounts have API-key privileges by default, the requirements for scoping a browser key are recorded in [development.md](development.md), and local service access succeeded from the authorized localhost origin. The real account capabilities and deployed-origin service access remain unverified.
+- Vercel Hobby eligibility and ArcGIS Location Platform free-tier-only basemap
+  access were verified on 2026-09-07. Continued free capacity and deployed
+  behavior remain release checks; no paid fallback is authorized. **Resolved
+  for initial deployment eligibility; runtime verification remains open.**
+- ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Resolved for setup:** the minimum browser key and its exact localhost and production referrers were verified against the Basemap Styles service. Clean-browser access from the actual deployment remains unverified.
 - Bundle size and initial load time of the SDK need an early look rather than a late one. **Resolved for size** — see the findings above. Load time still needs measuring on a real deployment.
-- Vercel Hobby is selected and author-confirmed, conditional on the
-  still-unverified personal-use eligibility and remaining account checks. No
-  project has been created or deployed.
+- Vercel Hobby is selected and the route-specific account checks passed. The
+  isolated project and reviewed-main keyed candidate exist; no deployment has
+  been uploaded.
 
 ---
 
@@ -1250,6 +1283,7 @@ Prepare the validated input datasets for public delivery and make them visible
 in the application through the evidence-selected publication route.
 
 **Dependencies**
+
 - M3 (validated derived datasets exist).
 - M4 (application shell exists and selected-route capability evidence is recorded).
 
@@ -1277,8 +1311,7 @@ delivery remains unfinished**
   hid and restored the layer, repeated ready events retained exactly one layer,
   source/use content was reachable, and no horizontal overflow, HTTP error,
   unexpected request failure, sign-in prompt, or unexpected console error was
-  observed. Publisher layer metadata and filtered query requests returned HTTP
-  200.
+  observed. Publisher layer metadata and filtered query requests returned HTTP 200.
 - A separate 820 × 1180 check blocked only the publisher endpoint. It produced
   the accessible VSR warning and the expected SDK layer-load console errors,
   removed the failed layer, and retained a ready, non-updating oceans basemap,
@@ -1410,6 +1443,7 @@ verified; not published**
 - M5 remains in progress, and its completion criteria are not met.
 
 **Deliverables**
+
 - Study area, whale density, and vessel activity prepared in a selected public
   representation based on measured output size, browser performance,
   redistribution terms, and real account capabilities.
@@ -1442,6 +1476,7 @@ verified; not published**
   comparison with the analytical snapshot.
 
 **Completion criteria**
+
 - Each layer renders at the study-area scale within an acceptable load time.
   **Met locally only for all three project input layers**, on one machine over
   loopback; deployed load time is unmeasured.
@@ -1475,6 +1510,7 @@ route-specific account evidence, and deployed-origin verification remain
 unfinished, so M5 stays in progress.
 
 **Risks and open questions**
+
 - Deployed transfer behavior, low-end-device performance, or host limits may
   still force a different representation, aggregation, or generalization.
 - Raster and vector outputs may need different public delivery methods.
@@ -1493,6 +1529,7 @@ unfinished, so M5 stays in progress.
 Produce the project's own analytical result: a documented relative exposure layer, and the inside-versus-outside VSR statistics derived from it. This is the milestone that makes the project an analysis rather than a viewer.
 
 **Dependencies**
+
 - M3 (validated, grid-aligned whale and vessel inputs).
 - M2 (understood value meanings and units for both inputs).
 
@@ -1634,6 +1671,7 @@ M7 integration, and release remain open**
   These are navigation and evidence, not the owner of this status.
 
 **Deliverables**
+
 - A written definition of the relative exposure calculation: inputs, normalization, weighting, combination method, and units.
 - The derived exposure or hotspot layer over the study area.
 - Inside-versus-outside VSR statistics: share of total relative exposure, share of high-exposure area, and the threshold definitions used. **Computed from the immutable local analytical snapshot by fractional area intersection** — each cell's water geometry is intersected with that VSR polygon and its exposure split by the resulting area fractions. The remotely displayed service is not substituted for this input. Whole-cell, centroid, and majority-area assignment are all excluded; see [ADR 0004](decisions/0004-analysis-grid-resolution.md).
@@ -1643,6 +1681,7 @@ M7 integration, and release remain open**
 - An assumptions-and-limitations record covering what the exposure index does and does not represent.
 
 **Completion criteria**
+
 - The exposure calculation is reproducible from the derived inputs.
 - Every reported statistic states its basis — area, total exposure, or cell count — and its threshold.
 - Boundary-derived statistics are computed fractionally, the synthetic cases pass, and the uniform-exposure-within-cell assumption is stated wherever such a statistic is reported.
@@ -1658,6 +1697,7 @@ M7 integration, and release remain open**
   alone does not satisfy this release gate.
 
 **Completion criteria status, 2026-09-06**
+
 - Reproducible from the derived inputs: **met for the exploratory bundle** —
   first and repeat runs produced byte-identical deterministic files from pinned,
   checksum-verified retained inputs.
@@ -1688,6 +1728,7 @@ the results, sensitivity, maps and final messaging, are also outstanding, so M6
 stays in progress.
 
 **Risks and open questions**
+
 - Combining a modeled density surface with an observed traffic measure implies choices about units and scaling that have no single correct answer; whatever is chosen must be justified and tested.
 - Threshold-based "high exposure" statistics are sensitive to the threshold. Reporting a single number without sensitivity context would overstate certainty.
 - Differing native resolutions between whale and vessel data force a resampling decision that can bias results toward one input.
@@ -1703,6 +1744,7 @@ stays in progress.
 Bring the analysis into the application so a visitor can explore the exposure layer and read the results without prior GIS knowledge.
 
 **Dependencies**
+
 - M5 (input layers publicly delivered and displayed).
 - M6 (exposure layer and statistics exist).
 
@@ -1711,6 +1753,7 @@ science, but M5 remains incomplete, the selected static route is not deployed,
 M6 still awaits independent audit and owner acceptance, and M7 has not started.
 
 **Deliverables**
+
 - The derived exposure layer delivered through the selected public route and
   rendered in the application.
 - A results panel presenting the inside-versus-outside statistics.
@@ -1730,6 +1773,7 @@ M6 still awaits independent audit and owner acceptance, and M7 has not started.
   local analytical VSR geometry.
 
 **Completion criteria**
+
 - The statistics displayed match the documented analysis exactly.
 - A first-time visitor can tell what they are looking at without reading the repository.
 - Limitations are visible in the interface, not hidden behind a link nobody clicks.
@@ -1737,6 +1781,7 @@ M6 still awaits independent audit and owner acceptance, and M7 has not started.
 - The application remains usable on a mid-range connection.
 
 **Risks and open questions**
+
 - Presenting a single headline percentage invites overinterpretation; the framing needs care.
 - The measured static exposure artifact uses the selected same-origin route,
   but browser performance with all layers and responsive behavior remain open.
@@ -1751,10 +1796,12 @@ M6 still awaits independent audit and owner acceptance, and M7 has not started.
 Confirm that the results are correct, that the process can be rerun, and that the documentation matches what was actually built.
 
 **Dependencies**
+
 - M6 (analysis complete).
 - M7 (application integrated).
 
 **Deliverables**
+
 - End-to-end rerun of the processing path from raw inputs, with outputs compared
   against the public layer representations.
 - Verification that every statistic in the application traces to a processing step.
@@ -1767,6 +1814,7 @@ Confirm that the results are correct, that the process can be rerun, and that th
   documentation tied to an output checksum. This did not gate M3.
 
 **Completion criteria**
+
 - A rerun reproduces the derived outputs behind the public layer
   representations.
 - No documented capability is absent from the implementation, and no implemented capability is undocumented.
@@ -1774,6 +1822,7 @@ Confirm that the results are correct, that the process can be rerun, and that th
 - Known limitations are recorded in one place and referenced from the application.
 
 **Risks and open questions**
+
 - Unrecorded manual QGIS transformations would be a reproducibility gap. QGIS
   remains a verification tool; result-changing production steps belong in the
   tested Python path.
@@ -1789,10 +1838,12 @@ Confirm that the results are correct, that the process can be rerun, and that th
 Make the project publicly presentable: deployed, documented, and readable by a reviewer who has ten minutes.
 
 **Dependencies**
+
 - M7 (application integrated).
 - M8 (results verified).
 
 **Deliverables**
+
 - Deployed application at a stable public URL.
 - README updated with the live demo link, screenshots, and headline results.
 - Methodology, provenance, assumptions, and limitations complete and linked.
@@ -1804,6 +1855,7 @@ Make the project publicly presentable: deployed, documented, and readable by a r
   local analytical snapshot.
 
 **Completion criteria**
+
 - The deployed application works from a clean browser session with no local setup.
 - The README communicates the question, the method, the result, and the limitations without requiring any other document.
 - Every documentation link resolves.
@@ -1815,6 +1867,7 @@ Make the project publicly presentable: deployed, documented, and readable by a r
   displayed in the released application; a warning alone is insufficient.
 
 **Risks and open questions**
+
 - **Public delivery depends on verifying the selected route.** ADR 0021 selects
   checksum-addressed static files on free Vercel Hobby, which the author
   confirmed on 2026-09-07. Personal-use eligibility, free capacity, and

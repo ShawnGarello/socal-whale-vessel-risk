@@ -12,6 +12,37 @@ This is execution evidence and navigation. Roadmap owns M4 status; development
 owns the procedure; accepted ADR 0021 owns the static delivery decision and its
 route-specific capability checks.
 
+## Initial deployment setup continuation
+
+Session: 2026-09-07. Branch: `chore/m4-initial-vercel-setup`. The clean M4
+worktree was reused and the branch was created from freshly fetched
+`origin/main` commit `8b1f65c8556955d6f28ee86426c09d55b7ea71fa`, the merge of PR #27.
+
+- Authenticated Vercel CLI 59.11.7 confirmed the `Stemry` scope and found only
+  the existing `stemry-waitlist` project. The separately authorized
+  `socal-whale-vessel-overlap` project was created without Git integration or a
+  deployment. Its verified reserved production hostname is
+  `https://socal-whale-vessel-overlap.vercel.app`. The existing project was not
+  changed.
+- The author confirmed Vercel Hobby eligibility for this personal, unpaid,
+  non-monetized portfolio and ArcGIS Location Platform with pay-as-you-go
+  disabled. Current use was 5,292 of 2,000,000 monthly basemap tiles. The
+  replacement key has no item access and no analysis, general or administrator
+  privilege. It allowed Basemap Styles from the exact localhost and production
+  referrers, refused an unrelated origin, and refused Static Basemap Tiles. No
+  credential value, credential identifier or key-bearing URL was retained.
+- `m4-initial-production-01` is a fresh keyed candidate from that exact merged
+  main commit and the same six pins in `web/scripts/release-inputs.json`. Its
+  isolated locked build passed formatting, linting, generated-type checking,
+  all 79 tests and Next.js 16.3.3 static export. The upload contains 901 files,
+  36,021,531 bytes, and has receipt SHA-256
+  `194f8877d040220214205af1b03917fc320e703114513e7ea04bb819f700352a`.
+  Receipt read-back passed before and after linking.
+- Only the ignored candidate directory
+  `data/interim/m4-releases/m4-initial-production-01/deploy/` is linked to the
+  new project. CLI-created project/OIDC metadata is outside `.vercel/output`
+  and outside the receipt. No upload command has run.
+
 ## Completed preparation
 
 - Fetched origin; clean local main matched `origin/main` at
@@ -50,13 +81,13 @@ node scripts/stage-release.mjs --verify m4-rehearsal-01 7cf829418f808bd1092547eb
 Both completed successfully. Retained beneath this worktree's ignored
 `data/interim/m4-releases/m4-rehearsal-01/`:
 
-| Artifact | Identity or purpose |
-|---|---|
-| `receipt.json` | SHA-256 `7cf829418f808bd1092547ebe0e2790eec5220616cc1e4ee353d518d5ef0d815` |
-| `deploy/.vercel/output/` | 901 files, 36,021,239 bytes, exact inventory in receipt |
-| `deploy/.vercel/output/static/release.json` | Application commit `4f9b2c24cf2819afb6e636931d4c9c58e78c77ae`; static-file inventory |
-| `verification.log` | Locked install, type generation, Prettier, ESLint, TypeScript, 79 passing tests in eight files, successful Next.js 16.3.3 static build |
-| `source/` | Isolated committed source, installed dependencies and build output; never upload |
+| Artifact                                    | Identity or purpose                                                                                                                    |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `receipt.json`                              | SHA-256 `7cf829418f808bd1092547ebe0e2790eec5220616cc1e4ee353d518d5ef0d815`                                                             |
+| `deploy/.vercel/output/`                    | 901 files, 36,021,239 bytes, exact inventory in receipt                                                                                |
+| `deploy/.vercel/output/static/release.json` | Application commit `4f9b2c24cf2819afb6e636931d4c9c58e78c77ae`; static-file inventory                                                   |
+| `verification.log`                          | Locked install, type generation, Prettier, ESLint, TypeScript, 79 passing tests in eight files, successful Next.js 16.3.3 static build |
+| `source/`                                   | Isolated committed source, installed dependencies and build output; never upload                                                       |
 
 The package mode is `keyless-rehearsal-not-for-deployment`. It contains no
 release key. All three configured `/layers/<sha256>.geojson` URLs are present
@@ -101,41 +132,30 @@ No Python code changed and no analytical run was required. Both `analysis` and
 
 ## Remaining work and approval checkpoint
 
-M4 is **in progress, not complete**. No deployment URL exists. Nothing was
-pushed or merged. The author accepted ADR 0021's free static Vercel Hobby
-direction and route-specific checks, confirmed Vercel Hobby and ArcGIS
-pay-as-you-go disabled on 2026-09-07, and explicitly withheld deployment
-approval. Hobby eligibility and all other account/key checks remain unverified.
+M4 is **in progress, not complete**. Nothing was pushed, merged or deployed in
+the continuation. The route-specific setup and keyed candidate are complete.
 
-1. Author privately confirms personal-use eligibility, basemap account product,
-   available basemap capacity, and the browser key's validity, minimum
-   privileges and exact referrers. Never
-   send credentials or account identifiers to chat. Esri hosted-data and ArcGIS
-   Online publishing capabilities remain unverified but are not M4 checks under
-   the selected static route.
-2. Obtain push/PR authorization, conduct independent audit of the new PR head,
-   pass both CI checks, obtain merge authorization, merge through GitHub, then
-   stage the reviewed current main with a valid, minimally scoped browser key
-   supplied privately.
-3. Present the new source commit and receipt, all six artifact identities,
-   observed account/plan state, actual intended stable production origin and
-   exact external actions. Request explicit approval for the approved Hobby
-   project/link, any required key/referrer changes, and
-   `vercel deploy --prebuilt --prod` from the isolated `deploy/` directory.
-   No GitHub integration or paid resource is needed. The current rehearsal is
-   not the artifact to approve for upload.
+1. Present the exact project, source commit, hostname, receipt, pins and upload
+   action and obtain explicit author approval.
+2. Immediately before upload, rerun receipt verification from `web/`:
+
+   ```powershell
+   node scripts/stage-release.mjs --verify m4-initial-production-01 194f8877d040220214205af1b03917fc320e703114513e7ea04bb819f700352a
+   ```
+
+3. Only after approval, run Vercel CLI 59.11.7 from the isolated `deploy/`
+   directory with `vercel deploy --prebuilt --prod`. Do not connect GitHub or
+   change either project's settings.
 4. Verify all development's clean-browser deployment checks at the three
    required viewports. Only then update public URL/status and applicable M4
    criteria. Keep the final-results VSR snapshot comparison separately open.
 
-The key must permit only approved exact localhost/production origins, with no
-publishing or account rights and no broad Vercel wildcard. The production
-hostname cannot yet be confirmed because no hosting project has been created.
-The historical key was reported invalid in the September 6 browser check.
+The key permits only the approved exact localhost/production origins, with no
+item, publishing or account rights and no wildcard.
 Current source-use interpretation remains the one in the source register:
 attributed NOAA derivatives and direct publisher VSR access with no copied
-geometry; neither public service access nor this rehearsal grants redistribution
-permission. Keep prior verified release packages for the documented re-upload
+geometry; neither public service access nor a staged candidate grants
+redistribution permission. Keep prior verified release packages for the documented re-upload
 rollback; this initial rehearsal has no previous public release to restore.
 
 Next scoped M5 step: add the missing retrieval/processing dates to the vessel

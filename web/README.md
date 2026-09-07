@@ -14,17 +14,22 @@ the unkeyed public `topo-vector` basemap and retained the application's visible
 missing-key warning. Deployed-origin access remains unverified, and neither
 local result establishes account or project-layer hosting capabilities. The
 author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07.
-The basemap account product, usage, free-tier headroom, browser-key validity and
-restrictions, and Hobby eligibility remain unverified. Esri hosted-data
-capabilities are unselected and remain unverified. Paid plans, trials, add-ons,
+On 2026-09-07 the Location Platform product and disabled pay-as-you-go state
+were author-confirmed; current use was 5,292 of 2,000,000 monthly basemap tiles.
+The replacement key allowed the Basemap Styles service from only the exact
+localhost and reserved production origins, refused an unrelated origin, and
+refused the unneeded Static Basemap Tiles service. Esri hosted-data capabilities
+are unselected and remain unverified. Paid plans, trials, add-ons,
 pay-as-you-go and other charged usage are prohibited.
 
 Project-derived layers are delivered here as static same-origin files served
 alongside the export, so they need no layer credential and no hosted service.
 That is what this application implements and what has been verified locally.
-ADR 0021 selects free Vercel Hobby for these files. The plan is author-confirmed;
-personal-use eligibility, remaining account checks and deployed behavior remain
-unverified. No public project or deployment exists.
+ADR 0021 selects free Vercel Hobby for these files. The plan and personal,
+unpaid, non-monetized portfolio eligibility are author-confirmed. The isolated
+`socal-whale-vessel-overlap` project and reserved production hostname exist, and
+a reviewed-main keyed candidate is staged and locally linked, but no deployment
+or public project file exists.
 
 ## Modeled blue-whale density layer
 
