@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
-from typing import Any, Final, cast
+from typing import Any, Final, Literal, TypedDict, cast
 
 import numpy as np
 import pyarrow as pa
@@ -44,13 +44,23 @@ from shapely.geometry.base import BaseGeometry
 
 from whale_vessel_analysis.cleaned_ais_bundle import sha256_file
 from whale_vessel_analysis.config import load_default_config
-from whale_vessel_analysis.exposure import METHODS, PERCENTILES
-from whale_vessel_analysis.exposure_geometry import DOMAIN_SHA256, VSR_SHA256
+from whale_vessel_analysis.exposure import (
+    METHODS,
+    PERCENTILES,
+    ExposureCell,
+    analyze_grid,
+)
+from whale_vessel_analysis.exposure_geometry import (
+    DOMAIN_SHA256,
+    VSR_SHA256,
+    CellAreas,
+)
 from whale_vessel_analysis.exposure_inputs import (
     VESSEL_QUALITY_SHA256,
     VESSEL_SHA256,
     WATER_SHA256,
     WHALE_SHA256,
+    ExposureInputCell,
 )
 from whale_vessel_analysis.exposure_run import (
     CONTRACT as ANALYTICAL_CONTRACT,
@@ -246,6 +256,54 @@ _RUN_ID_PATTERN: Final = re.compile(r"^exposure-[0-9a-f]{24}$")
 _SHA256_PATTERN: Final = re.compile(r"^[0-9a-f]{64}$")
 
 
+class AvailableNormalizationControl(TypedDict):
+    """Allowlisted public shape for an available scaling control."""
+
+    available: Literal[True]
+    normalizer: float
+    inside_share_difference: float
+    all_threshold_memberships_equal: bool
+
+
+class UnavailableNormalizationControl(TypedDict):
+    """Allowlisted public shape for an unavailable scaling control."""
+
+    available: Literal[False]
+    reason: str
+
+
+type PublicNormalizationControl = (
+    AvailableNormalizationControl | UnavailableNormalizationControl
+)
+
+
+class PublicNormalizationControls(TypedDict):
+    """Only the two predeclared global-scaling checks cross publication."""
+
+    product_max: PublicNormalizationControl
+    separate_input_maxima: PublicNormalizationControl
+
+
+class PublicDisplayDiagnostics(TypedDict):
+    """Allowlisted geometry/value diagnostics written to the public manifest."""
+
+    feature_count: int
+    unique_cell_count: int
+    polygon_part_count: int
+    interior_ring_count: int
+    coordinate_count: int
+    geometry_types: list[str]
+    bounds_lon_lat: list[float]
+    max_vertex_roundtrip_metres: float
+    transformation_definition: str
+    transformation_accuracy_metres: float
+    configured_map_extent_lon_lat: list[float]
+    map_extent_display_tolerance_degrees: float
+    qualified_area_km2_total: float
+    non_null_index_min: float | None
+    non_null_index_max: float | None
+
+
 class ExposureDeliveryError(ValueError):
     """Base error for a rejected delivery input or output."""
 
@@ -376,6 +434,142 @@ def _read_json(path: Path) -> Mapping[str, Any]:
     return cast(Mapping[str, Any], document)
 
 
+def _compare_verified_value(actual: Any, expected: Any, path: str) -> None:
+    """Require an exact typed shape and numerically equivalent verified value."""
+    if isinstance(expected, Mapping):
+        if not isinstance(actual, dict):
+            raise ExposureDeliveryInputError(f"{path} must be an object")
+        actual_keys = set(actual)
+        expected_keys = set(expected)
+        if actual_keys != expected_keys:
+            missing = sorted(expected_keys - actual_keys)
+            unexpected = sorted(actual_keys - expected_keys)
+            raise ExposureDeliveryInputError(
+                f"{path} fields differ; missing={missing}, unexpected={unexpected}"
+            )
+        for key, value in expected.items():
+            _compare_verified_value(actual[key], value, f"{path}.{key}")
+        return
+    if isinstance(expected, list):
+        if not isinstance(actual, list) or len(actual) != len(expected):
+            raise ExposureDeliveryInputError(f"{path} list shape differs")
+        for index, (actual_item, expected_item) in enumerate(
+            zip(actual, expected, strict=True)
+        ):
+            _compare_verified_value(actual_item, expected_item, f"{path}[{index}]")
+        return
+    if expected is None:
+        if actual is not None:
+            raise ExposureDeliveryInputError(f"{path} must be null")
+        return
+    if isinstance(expected, bool):
+        if not isinstance(actual, bool) or actual is not expected:
+            raise ExposureDeliveryInputError(f"{path} boolean differs")
+        return
+    if isinstance(expected, int):
+        if (
+            isinstance(actual, bool)
+            or not isinstance(actual, int)
+            or actual != expected
+        ):
+            raise ExposureDeliveryInputError(f"{path} integer differs")
+        return
+    if isinstance(expected, float):
+        absolute_tolerance = (
+            1e-6
+            if "maximum_" in path and "_residual_m2" in path
+            else 1e-9
+            if "_km2" in path or "integrated_" in path
+            else 1e-12
+        )
+        if (
+            isinstance(actual, bool)
+            or not isinstance(actual, (int, float))
+            or not math.isfinite(float(actual))
+            or not math.isclose(
+                float(actual),
+                expected,
+                rel_tol=1e-12,
+                abs_tol=absolute_tolerance,
+            )
+        ):
+            raise ExposureDeliveryInputError(
+                f"{path} differs from the value recomputed from verified rows"
+            )
+        return
+    if isinstance(expected, str):
+        if not isinstance(actual, str) or actual != expected:
+            raise ExposureDeliveryInputError(
+                f"{path} text/enumeration differs from the accepted calculation"
+            )
+        return
+    raise AssertionError(f"unsupported verified value at {path}: {type(expected)}")
+
+
+def _reconstruct_verified_cells(table: pa.Table) -> tuple[ExposureCell, ...]:
+    """Reconstruct summary inputs from serialized rows without private lineage.
+
+    ``analyze_grid`` needs only the stored scalar sufficient statistics, exact
+    area partitions, identifiers and qualified geometry. The placeholder full-
+    water geometry is deliberately never used by that calculation.
+    """
+    cells: list[ExposureCell] = []
+    for row in cast(list[dict[str, Any]], table.to_pylist()):
+        water_km2 = float(row["water_area_km2"])
+        density = float(row["whale_density_animals_per_km2"])
+        abundance = float(row["whale_abundance_animals"])
+        vessel_km = float(row["vessel_km"])
+        if (
+            not all(
+                math.isfinite(value) and value >= 0
+                for value in (water_km2, density, abundance, vessel_km)
+            )
+            or water_km2 <= 0
+        ):
+            raise ExposureDeliveryInputError(
+                "analytical sufficient statistics are nonfinite or negative"
+            )
+        if not math.isclose(
+            abundance, density * water_km2, rel_tol=1e-10, abs_tol=1e-9
+        ):
+            raise ExposureDeliveryInputError(
+                "stored whale abundance differs from density times full water area"
+            )
+        qualified_km2 = float(row["qualified_area_km2"])
+        expected_status = "qualified" if qualified_km2 > 0 else "excluded_domain"
+        if row["analysis_status"] != expected_status:
+            raise ExposureDeliveryInputError(
+                "analysis status differs from receiver-qualified area"
+            )
+        qualified_geometry = (
+            _decode_qualified_geometry(row) if qualified_km2 > 0 else Polygon()
+        )
+        try:
+            areas = CellAreas(
+                water_m2=water_km2 * 1e6,
+                qualified_m2=qualified_km2 * 1e6,
+                inside_vsr_m2=float(row["inside_vsr_area_km2"]) * 1e6,
+                outside_vsr_m2=float(row["outside_vsr_area_km2"]) * 1e6,
+                excluded_domain_m2=float(row["excluded_domain_area_km2"]) * 1e6,
+            )
+        except ValueError as exc:
+            raise ExposureDeliveryInputError(
+                f"stored water partitions are invalid: {exc}"
+            ) from exc
+        source = ExposureInputCell(
+            cell_id=row["cell_id"],
+            x_min_m=row["x_min_m"],
+            y_min_m=row["y_min_m"],
+            water=Polygon(),
+            water_km2=water_km2,
+            whale_density=density,
+            whale_abundance=abundance,
+            vessel_km=vessel_km,
+        )
+        cells.append(ExposureCell(source, areas, qualified_geometry))
+    return tuple(cells)
+
+
 def _validate_geo_metadata(table: pa.Table, label: str) -> Mapping[str, Any]:
     metadata = table.schema.metadata or {}
     try:
@@ -493,21 +687,18 @@ def _validate_report(report: Mapping[str, Any], identity: Mapping[str, Any]) -> 
             if not isinstance(summary, dict):
                 raise ExposureDeliveryInputError("method summary is malformed")
             _threshold_rows(summary)
-            inside = summary.get("share_exposure_inside")
-            outside = summary.get("share_exposure_outside")
-            if (inside is None) != (outside is None):
-                raise ExposureDeliveryInputError(
-                    "exposure shares have mixed null state"
-                )
-            if inside is not None and not math.isclose(
-                float(inside) + float(cast(float, outside)),
-                1.0,
-                rel_tol=1e-12,
-                abs_tol=1e-12,
-            ):
-                raise ExposureDeliveryInputError(
-                    "inside/outside shares do not sum to one"
-                )
+
+
+def _validate_report_statistics(
+    report: Mapping[str, Any], tables: Mapping[str, pa.Table]
+) -> None:
+    """Recompute every report grid field from the verified serialized rows."""
+    grids = cast(Mapping[str, Any], report["grids"])
+    for grid_name in ("5km", "10km"):
+        expected = analyze_grid(_reconstruct_verified_cells(tables[grid_name]))
+        _compare_verified_value(
+            grids[grid_name], expected, f"sensitivity report.grids.{grid_name}"
+        )
 
 
 def load_bundle(
@@ -584,6 +775,14 @@ def load_bundle(
             raise ExposureDeliveryInputError(
                 f"{label} analytical read-back verification failed: {exc}"
             ) from exc
+    try:
+        _validate_report_statistics(report, tables)
+    except ExposureDeliveryInputError:
+        raise
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ExposureDeliveryInputError(
+            f"sensitivity report statistics are malformed: {exc}"
+        ) from exc
 
     return BundleInspection(
         tables=tables,
@@ -821,6 +1020,275 @@ def _relative_change(left: float, right: float) -> float | None:
     return None if right == 0 else (left - right) / right
 
 
+def _require_fields(value: object, expected: set[str], label: str) -> Mapping[str, Any]:
+    if not isinstance(value, dict):
+        raise ExposureDeliveryInputError(f"{label} must be an object")
+    actual = set(value)
+    if actual != expected:
+        raise ExposureDeliveryInputError(
+            f"{label} fields differ; missing={sorted(expected - actual)}, "
+            f"unexpected={sorted(actual - expected)}"
+        )
+    return cast(Mapping[str, Any], value)
+
+
+def _public_normalization_control(
+    value: object, label: str
+) -> PublicNormalizationControl:
+    control = _require_fields(
+        value,
+        (
+            {
+                "available",
+                "normalizer",
+                "inside_share_difference",
+                "all_threshold_memberships_equal",
+            }
+            if isinstance(value, dict) and value.get("available") is True
+            else {"available", "reason"}
+        ),
+        label,
+    )
+    available = control["available"]
+    if available is True:
+        normalizer = control["normalizer"]
+        difference = control["inside_share_difference"]
+        memberships_equal = control["all_threshold_memberships_equal"]
+        if (
+            isinstance(normalizer, bool)
+            or not isinstance(normalizer, (int, float))
+            or not math.isfinite(float(normalizer))
+            or float(normalizer) <= 0
+            or isinstance(difference, bool)
+            or not isinstance(difference, (int, float))
+            or not math.isfinite(float(difference))
+            or abs(float(difference)) > 1e-12
+            or memberships_equal is not True
+        ):
+            raise ExposureDeliveryInputError(f"{label} values are malformed")
+        return AvailableNormalizationControl(
+            available=True,
+            normalizer=float(normalizer),
+            inside_share_difference=float(difference),
+            all_threshold_memberships_equal=True,
+        )
+    if available is False and control["reason"] == "zero normalizer":
+        return UnavailableNormalizationControl(
+            available=False, reason="zero normalizer"
+        )
+    raise ExposureDeliveryInputError(f"{label} availability/reason enumeration differs")
+
+
+def _public_normalization_controls(
+    value: object, label: str
+) -> PublicNormalizationControls:
+    controls = _require_fields(value, {"product_max", "separate_input_maxima"}, label)
+    return PublicNormalizationControls(
+        product_max=_public_normalization_control(
+            controls["product_max"], f"{label}.product_max"
+        ),
+        separate_input_maxima=_public_normalization_control(
+            controls["separate_input_maxima"], f"{label}.separate_input_maxima"
+        ),
+    )
+
+
+def _public_sha256_map(
+    value: object, keys: tuple[str, ...], label: str
+) -> dict[str, str]:
+    source = _require_fields(value, set(keys), label)
+    result: dict[str, str] = {}
+    for key in keys:
+        digest = source[key]
+        if not isinstance(digest, str) or not _SHA256_PATTERN.fullmatch(digest):
+            raise ExposureDeliveryInputError(f"{label}.{key} is not a SHA-256")
+        result[key] = digest
+    return result
+
+
+def _public_domain_limitations(value: object) -> dict[str, str]:
+    keys = (
+        "receiver_uptime_2024",
+        "station_completeness",
+        "feed_interruptions",
+        "antenna_and_terrain_effects",
+        "observational_completeness",
+    )
+    limitations = _require_fields(value, set(keys), "analytical domain limitations")
+    result: dict[str, str] = {}
+    for key in keys:
+        text = limitations[key]
+        if not isinstance(text, str) or not text:
+            raise ExposureDeliveryInputError(
+                f"analytical domain limitation {key} must be nonempty text"
+            )
+        result[key] = text
+    return result
+
+
+def _public_length_filter(value: object) -> dict[str, object]:
+    length_filter = _require_fields(
+        value, {"minimum_length_m", "reason", "status"}, "vessel length filter"
+    )
+    if length_filter["minimum_length_m"] is not None:
+        raise ExposureDeliveryInputError("vessel length-filter minimum must be null")
+    if (
+        length_filter["status"] != "type-only-no-length-filter"
+        or not isinstance(length_filter["reason"], str)
+        or not length_filter["reason"]
+    ):
+        raise ExposureDeliveryInputError(
+            "vessel length-filter text/enumeration differs"
+        )
+    return {
+        "minimum_length_m": None,
+        "reason": length_filter["reason"],
+        "status": "type-only-no-length-filter",
+    }
+
+
+def _public_source_references() -> dict[str, dict[str, object]]:
+    """Project the authored source register text through fixed field lists."""
+    return {
+        "whales": {
+            "publisher": SOURCE_REFERENCES["whales"]["publisher"],
+            "product": SOURCE_REFERENCES["whales"]["product"],
+            "layer": SOURCE_REFERENCES["whales"]["layer"],
+            "survey_basis": SOURCE_REFERENCES["whales"]["survey_basis"],
+            "metadata": SOURCE_REFERENCES["whales"]["metadata"],
+        },
+        "traffic": {
+            "publisher": SOURCE_REFERENCES["traffic"]["publisher"],
+            "source": SOURCE_REFERENCES["traffic"]["source"],
+            "period": SOURCE_REFERENCES["traffic"]["period"],
+            "population": SOURCE_REFERENCES["traffic"]["population"],
+            "terms": SOURCE_REFERENCES["traffic"]["terms"],
+        },
+        "vsr": {
+            "publisher": SOURCE_REFERENCES["vsr"]["publisher"],
+            "feature": SOURCE_REFERENCES["vsr"]["feature"],
+            "boundary_year": SOURCE_REFERENCES["vsr"]["boundary_year"],
+            "snapshot_retrieved": SOURCE_REFERENCES["vsr"]["snapshot_retrieved"],
+            "public_service": SOURCE_REFERENCES["vsr"]["public_service"],
+            "display_rule": SOURCE_REFERENCES["vsr"]["display_rule"],
+        },
+    }
+
+
+def _public_number(value: object, label: str) -> float:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(float(value))
+    ):
+        raise ExposureDeliveryOutputError(f"{label} must be a finite number")
+    return float(value)
+
+
+def _public_nonnegative_int(value: object, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ExposureDeliveryOutputError(f"{label} must be a nonnegative integer")
+    return value
+
+
+def _public_number_list(value: object, size: int, label: str) -> list[float]:
+    if not isinstance(value, list) or len(value) != size:
+        raise ExposureDeliveryOutputError(f"{label} shape differs")
+    return [
+        _public_number(item, f"{label}[{index}]") for index, item in enumerate(value)
+    ]
+
+
+def _public_optional_number(value: object, label: str) -> float | None:
+    return None if value is None else _public_number(value, label)
+
+
+def _public_display_diagnostics(value: object) -> PublicDisplayDiagnostics:
+    keys = {
+        "feature_count",
+        "unique_cell_count",
+        "polygon_part_count",
+        "interior_ring_count",
+        "coordinate_count",
+        "geometry_types",
+        "bounds_lon_lat",
+        "max_vertex_roundtrip_metres",
+        "transformation_definition",
+        "transformation_accuracy_metres",
+        "configured_map_extent_lon_lat",
+        "map_extent_display_tolerance_degrees",
+        "qualified_area_km2_total",
+        "non_null_index_min",
+        "non_null_index_max",
+    }
+    try:
+        diagnostics = _require_fields(value, keys, "display diagnostics")
+    except ExposureDeliveryInputError as exc:
+        raise ExposureDeliveryOutputError(str(exc)) from exc
+    geometry_types = diagnostics["geometry_types"]
+    if (
+        not isinstance(geometry_types, list)
+        or not geometry_types
+        or any(item not in {"Polygon", "MultiPolygon"} for item in geometry_types)
+        or geometry_types != sorted(set(geometry_types))
+    ):
+        raise ExposureDeliveryOutputError("display diagnostics geometry types differ")
+    definition = diagnostics["transformation_definition"]
+    if not isinstance(definition, str) or not definition:
+        raise ExposureDeliveryOutputError(
+            "display transformation definition must be nonempty text"
+        )
+    return PublicDisplayDiagnostics(
+        feature_count=_public_nonnegative_int(
+            diagnostics["feature_count"], "display feature count"
+        ),
+        unique_cell_count=_public_nonnegative_int(
+            diagnostics["unique_cell_count"], "display unique cell count"
+        ),
+        polygon_part_count=_public_nonnegative_int(
+            diagnostics["polygon_part_count"], "display polygon part count"
+        ),
+        interior_ring_count=_public_nonnegative_int(
+            diagnostics["interior_ring_count"], "display interior ring count"
+        ),
+        coordinate_count=_public_nonnegative_int(
+            diagnostics["coordinate_count"], "display coordinate count"
+        ),
+        geometry_types=list(geometry_types),
+        bounds_lon_lat=_public_number_list(
+            diagnostics["bounds_lon_lat"], 4, "display bounds"
+        ),
+        max_vertex_roundtrip_metres=_public_number(
+            diagnostics["max_vertex_roundtrip_metres"],
+            "display maximum vertex roundtrip",
+        ),
+        transformation_definition=definition,
+        transformation_accuracy_metres=_public_number(
+            diagnostics["transformation_accuracy_metres"],
+            "display transformation accuracy",
+        ),
+        configured_map_extent_lon_lat=_public_number_list(
+            diagnostics["configured_map_extent_lon_lat"],
+            4,
+            "configured map extent",
+        ),
+        map_extent_display_tolerance_degrees=_public_number(
+            diagnostics["map_extent_display_tolerance_degrees"],
+            "map extent display tolerance",
+        ),
+        qualified_area_km2_total=_public_number(
+            diagnostics["qualified_area_km2_total"],
+            "display qualified area total",
+        ),
+        non_null_index_min=_public_optional_number(
+            diagnostics["non_null_index_min"], "display non-null index minimum"
+        ),
+        non_null_index_max=_public_optional_number(
+            diagnostics["non_null_index_max"], "display non-null index maximum"
+        ),
+    )
+
+
 def _high_result(row: Mapping[str, Any], units: str) -> dict[str, object]:
     return {
         "percentile": row["percentile"],
@@ -999,15 +1467,17 @@ def _comparisons(inspection: BundleInspection) -> dict[str, object]:
         },
         "grid_resolution_sensitivity": resolution,
         "global_scaling_controls": {
-            grid: grids[grid]["normalization_controls"] for grid in ("5km", "10km")
+            grid: _public_normalization_controls(
+                grids[grid]["normalization_controls"],
+                f"sensitivity report.grids.{grid}.normalization_controls",
+            )
+            for grid in ("5km", "10km")
         },
     }
 
 
-def build_results_export(
-    inspection: BundleInspection, *, generated_at: datetime
-) -> ResultsExport:
-    """Build the small M7-ready results contract entirely from verified M6 data."""
+def _build_results_base(inspection: BundleInspection) -> dict[str, object]:
+    """Project verified inputs into an explicitly allowlisted public result."""
     method = inspection.identity["method"]
     domain = method["reporting_domain"]["analytical_domain"]
     vessel_method = selected_method()
@@ -1023,8 +1493,16 @@ def build_results_export(
             "method_version": method["method_version"],
             "decision": method["decision"],
             "run_id": inspection.identity["run_id"],
-            "source_artifact_sha256": dict(inspection.source_sha256),
-            "analytical_input_sha256": dict(inspection.identity["input_sha256"]),
+            "source_artifact_sha256": _public_sha256_map(
+                inspection.source_sha256,
+                ("exposure_5km", "exposure_10km", "sensitivity_report"),
+                "analytical source artifacts",
+            ),
+            "analytical_input_sha256": _public_sha256_map(
+                inspection.identity["input_sha256"],
+                ("water", "whale", "vessel", "vessel_quality", "domain", "vsr"),
+                "analytical input provenance",
+            ),
             "execution_lineage": "excluded from this public contract and identity",
         },
         "scope": {
@@ -1044,7 +1522,7 @@ def build_results_export(
                 "empirical_2024_coverage": domain["empirical_2024_coverage"],
                 "boundary_cell_treatment": domain["boundary_cell_treatment"],
                 "outside_cell_treatment": domain["outside_cell_treatment"],
-                "limitations": domain["limitations"],
+                "limitations": _public_domain_limitations(domain["limitations"]),
             },
             "vessel_parameters": {
                 "commercial_type_codes": ["60-69", "70-79", "80-89"],
@@ -1052,7 +1530,9 @@ def build_results_export(
                 "maximum_implied_speed_knots": vessel_method[
                     "implied_speed_ceiling_knots"
                 ],
-                "length_filter": vessel_method["vessel_length_filter"],
+                "length_filter": _public_length_filter(
+                    vessel_method["vessel_length_filter"]
+                ),
                 "edge_treatment": vessel_method["edge_treatment"],
                 "water_support_treatment": vessel_method["support_treatment"],
                 "threshold_status": vessel_method["threshold_status"],
@@ -1098,7 +1578,7 @@ def build_results_export(
                 "publisher_transfer_completeness"
             ],
         },
-        "source_references": SOURCE_REFERENCES,
+        "source_references": _public_source_references(),
         "limitations": [
             "The inputs mix a multi-year modeled summer-fall whale surface, "
             "July-November 2024 traffic, and the 2026 VSR boundary; they do not "
@@ -1125,6 +1605,14 @@ def build_results_export(
             "exact_values": "unrounded numeric fields remain authoritative",
         },
     }
+    return base
+
+
+def build_results_export(
+    inspection: BundleInspection, *, generated_at: datetime
+) -> ResultsExport:
+    """Build the small M7-ready results contract entirely from verified M6 data."""
+    base = _build_results_base(inspection)
     results_id = (
         "exposure-results-"
         + hashlib.sha256(canonical_json_bytes(base)).hexdigest()[:24]
@@ -1150,6 +1638,7 @@ def build_display_manifest(
 ) -> bytes:
     """Build a sanitized public manifest binding display bytes to M6 and results."""
     method = inspection.identity["method"]
+    public_diagnostics = _public_display_diagnostics(display.diagnostics)
     classifications: dict[str, object] = {}
     for method_name in METHODS:
         threshold = _threshold_lookup(inspection, "5km", method_name, 0.9)
@@ -1171,8 +1660,16 @@ def build_display_manifest(
             "analytical_contract": ANALYTICAL_CONTRACT,
             "method_version": method["method_version"],
             "analysis_run_id": inspection.identity["run_id"],
-            "artifact_sha256": dict(inspection.source_sha256),
-            "analytical_input_sha256": dict(inspection.identity["input_sha256"]),
+            "artifact_sha256": _public_sha256_map(
+                inspection.source_sha256,
+                ("exposure_5km", "exposure_10km", "sensitivity_report"),
+                "analytical source artifacts",
+            ),
+            "analytical_input_sha256": _public_sha256_map(
+                inspection.identity["input_sha256"],
+                ("water", "whale", "vessel", "vessel_quality", "domain", "vsr"),
+                "analytical input provenance",
+            ),
             "execution_lineage": "excluded; no private run metadata was read",
         },
         "results": {
@@ -1199,14 +1696,14 @@ def build_display_manifest(
         ],
         "classification": classifications,
         "display_statements": list(DISPLAY_STATEMENTS),
-        "source_references": SOURCE_REFERENCES,
+        "source_references": _public_source_references(),
         "output": {
             "name": output_name,
             "format": "GeoJSON (RFC 7946)",
             "media_type": "application/geo+json",
             "bytes": len(display.geojson),
             "sha256": display.sha256,
-            **display.diagnostics,
+            **public_diagnostics,
         },
     }
     payload = canonical_json_bytes(manifest)
@@ -1283,73 +1780,32 @@ def verify_results_document(
     """Compare every public result field with report values and contract rules."""
     if document.get("contract") != RESULTS_CONTRACT:
         raise ExposureDeliveryOutputError("serialized results contract differs")
-    basis = dict(document)
-    results_id = basis.pop("results_id", None)
-    basis.pop("generated_at_utc", None)
+    expected_basis = _build_results_base(inspection)
+    expected_fields = {*expected_basis, "results_id", "generated_at_utc"}
+    if set(document) != expected_fields:
+        raise ExposureDeliveryOutputError("serialized results fields differ")
+    generated_at = document["generated_at_utc"]
+    if not isinstance(generated_at, str):
+        raise ExposureDeliveryOutputError("serialized generation time is malformed")
+    try:
+        if _utc_text(parse_utc_timestamp(generated_at)) != generated_at:
+            raise ExposureDeliveryOutputError(
+                "serialized generation time is not canonical UTC"
+            )
+    except ExposureDeliveryOutputError:
+        raise
+    basis = {key: document[key] for key in expected_basis}
+    results_id = document["results_id"]
     expected_id = (
         "exposure-results-"
         + hashlib.sha256(canonical_json_bytes(basis)).hexdigest()[:24]
     )
     if results_id != expected_id:
         raise ExposureDeliveryOutputError("serialized results identity differs")
-    scenarios = document.get("scenarios")
-    if not isinstance(scenarios, dict):
-        raise ExposureDeliveryOutputError("serialized result scenarios are absent")
-    for grid in ("5km", "10km"):
-        report_grid = inspection.report["grids"][grid]
-        for method in METHODS:
-            scenario = scenarios.get(f"{grid}_{method}")
-            if not isinstance(scenario, dict):
-                raise ExposureDeliveryOutputError("serialized result scenario differs")
-            summary = report_grid["methods"][method]
-            integrated = scenario["integrated_exposure"]
-            expected_integrated = (
-                summary["integrated_qualified"],
-                summary["integrated_inside"],
-                summary["integrated_outside"],
-                summary["share_exposure_inside"],
-                summary["share_exposure_outside"],
-            )
-            actual_integrated = (
-                integrated["total_qualified"],
-                integrated["inside_vsr"],
-                integrated["outside_vsr"],
-                integrated["inside_share"],
-                integrated["outside_share"],
-            )
-            if actual_integrated != expected_integrated:
-                raise ExposureDeliveryOutputError("serialized integrated values differ")
-            report_thresholds = _threshold_rows(summary)
-            result_thresholds = [
-                *scenario["high_exposure"]["all_valid"],
-                *scenario["high_exposure"]["positive_only_sensitivity"],
-            ]
-            if len(result_thresholds) != len(report_thresholds):
-                raise ExposureDeliveryOutputError("serialized threshold count differs")
-            for actual, expected in zip(
-                result_thresholds, report_thresholds, strict=True
-            ):
-                pairs = {
-                    "percentile": "percentile",
-                    "threshold": "threshold",
-                    "available": "available",
-                    "unavailable_reason": "unavailable_reason",
-                    "selected_water_area_km2": "high_area_km2",
-                    "inside_water_area_km2": "high_inside_km2",
-                    "outside_water_area_km2": "high_outside_km2",
-                    "inside_share_of_selected_water": "share_high_area_inside",
-                    "outside_share_of_selected_water": "share_high_area_outside",
-                    "selected_share_of_qualified_domain_water": (
-                        "share_domain_area_high"
-                    ),
-                    "threshold_tied_water_area_km2": "threshold_tied_area_km2",
-                }
-                if any(
-                    actual[left] != expected[right] for left, right in pairs.items()
-                ):
-                    raise ExposureDeliveryOutputError(
-                        "serialized high-exposure values differ"
-                    )
+    if basis != expected_basis:
+        raise ExposureDeliveryOutputError(
+            "serialized results differ from the typed verified projection"
+        )
 
 
 def verify_display_manifest(
@@ -1371,7 +1827,7 @@ def verify_display_manifest(
     output = manifest["output"]
     if output["sha256"] != display.sha256 or output["bytes"] != len(display.geojson):
         raise ExposureDeliveryOutputError("display manifest output identity differs")
-    for key, value in display.diagnostics.items():
+    for key, value in _public_display_diagnostics(display.diagnostics).items():
         if output[key] != value:
             raise ExposureDeliveryOutputError("display manifest diagnostics differ")
     for method in METHODS:

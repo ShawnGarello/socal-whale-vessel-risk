@@ -20,13 +20,17 @@ from whale_vessel_analysis.exposure import prepare_cells
 from whale_vessel_analysis.exposure_delivery import (
     DISPLAY_FIELDS,
     EXPECTED_INPUT_SHA256,
+    BundleInspection,
+    DisplayExport,
     ExposureDeliveryInputError,
     ExposureDeliveryOutputError,
     _area_text,
     _percent_text,
     _threshold_text,
     build_delivery_export,
+    build_display_manifest,
     build_results_export,
+    canonical_json_bytes,
     load_bundle,
     parse_utc_timestamp,
     verify_results_document,
@@ -127,6 +131,14 @@ def _load(bundle: Path, hashes: dict[str, str]):
     )
 
 
+def _rewrite_report(
+    bundle: Path, hashes: dict[str, str], report: dict[str, object]
+) -> None:
+    report_path = bundle / "sensitivity-report.json"
+    report_path.write_text(exposure_run.json_text(report), encoding="utf-8")
+    hashes["report"] = sha256_file(report_path)
+
+
 def test_known_answer_results_denominators_thresholds_and_display_fields(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -162,6 +174,14 @@ def test_known_answer_results_denominators_thresholds_and_display_fields(
         "selected high-exposure qualified water area"
         in scenario["high_exposure"]["area_share_denominator"]
     )
+    controls = results["comparisons"]["global_scaling_controls"]["5km"]
+    assert set(controls) == {"product_max", "separate_input_maxima"}
+    assert set(controls["product_max"]) == {
+        "available",
+        "normalizer",
+        "inside_share_difference",
+        "all_threshold_memberships_equal",
+    }
 
     display = json.loads(export.display.geojson)
     assert [feature["id"] for feature in display["features"]] == ["a", "b"]
@@ -252,6 +272,91 @@ def test_rejects_incompatible_source_schema_and_inconsistent_provenance(
         _load(other, other_hashes)
 
 
+@pytest.mark.parametrize(
+    "case",
+    (
+        "integrated_share",
+        "high_area_partition",
+        "outside_contribution",
+        "method_ranks",
+        "normalization_control",
+    ),
+)
+def test_rejects_checksum_matched_report_with_inconsistent_consumed_statistics(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, case: str
+) -> None:
+    bundle, hashes = _make_bundle(tmp_path, monkeypatch, name=case)
+    report = json.loads(
+        (bundle / "sensitivity-report.json").read_text(encoding="utf-8")
+    )
+    grid = report["grids"]["5km"]
+    product = grid["methods"]["product"]
+    if case == "integrated_share":
+        # Preserve the superficial inside + outside = 1 check.
+        product["share_exposure_inside"] = 0.4
+        product["share_exposure_outside"] = 0.6
+    elif case == "high_area_partition":
+        threshold = product["thresholds"][1]
+        threshold["high_inside_km2"] += 0.25
+        threshold["high_outside_km2"] -= 0.25
+        threshold["share_high_area_inside"] = (
+            threshold["high_inside_km2"] / threshold["high_area_km2"]
+        )
+        threshold["share_high_area_outside"] = (
+            threshold["high_outside_km2"] / threshold["high_area_km2"]
+        )
+    elif case == "outside_contribution":
+        product["top_outside_cells"][0]["share_outside_total"] += 0.01
+    elif case == "method_ranks":
+        grid["product_vs_log"]["spearman_cell_ranks"] = 0.5
+    else:
+        grid["normalization_controls"]["product_max"]["inside_share_difference"] = 0.01
+    _rewrite_report(bundle, hashes, report)
+
+    with pytest.raises(
+        ExposureDeliveryInputError, match="recomputed from verified rows"
+    ):
+        _load(bundle, hashes)
+
+
+def test_rejects_checksum_matched_unexpected_private_report_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle, hashes = _make_bundle(tmp_path, monkeypatch)
+    report = json.loads(
+        (bundle / "sensitivity-report.json").read_text(encoding="utf-8")
+    )
+    report["grids"]["5km"]["normalization_controls"]["product_max"]["private_debug"] = {
+        "local_path": "C:/private/source.parquet",
+        "access_token": "must-not-propagate",
+    }
+    _rewrite_report(bundle, hashes, report)
+
+    with pytest.raises(ExposureDeliveryInputError, match=r"unexpected=.*private_debug"):
+        _load(bundle, hashes)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (("reference", "private_debug"), ("unavailable_reason", "debug-only note")),
+)
+def test_rejects_checksum_matched_report_text_or_enumeration_changes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    field: str,
+    value: str,
+) -> None:
+    bundle, hashes = _make_bundle(tmp_path, monkeypatch, name=field)
+    report = json.loads(
+        (bundle / "sensitivity-report.json").read_text(encoding="utf-8")
+    )
+    report["grids"]["5km"]["methods"]["product"]["thresholds"][0][field] = value
+    _rewrite_report(bundle, hashes, report)
+
+    with pytest.raises(ExposureDeliveryInputError):
+        _load(bundle, hashes)
+
+
 def test_rejects_incompatible_source_crs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -291,6 +396,23 @@ def test_checksum_is_required_and_serialized_results_reject_tampering(
     tampered = copy.deepcopy(result.document)
     tampered["scenarios"]["5km_product"]["integrated_exposure"]["inside_share"] = 0.99
     with pytest.raises(ExposureDeliveryOutputError, match="identity differs"):
+        verify_results_document(tampered, inspection)
+
+    # Even a replacement self-identity cannot make altered public values valid.
+    tampered = copy.deepcopy(result.document)
+    tampered["comparisons"]["global_scaling_controls"]["5km"]["product_max"][
+        "normalizer"
+    ] = 999.0
+    basis = {
+        key: value
+        for key, value in tampered.items()
+        if key not in {"results_id", "generated_at_utc"}
+    }
+    tampered["results_id"] = (
+        "exposure-results-"
+        + hashlib.sha256(canonical_json_bytes(basis)).hexdigest()[:24]
+    )
+    with pytest.raises(ExposureDeliveryOutputError, match="typed verified projection"):
         verify_results_document(tampered, inspection)
 
 
@@ -434,6 +556,44 @@ def test_public_artifacts_have_no_private_locator_credential_or_vsr_geometry(
         )
         for feature in display["features"]
     )
+
+
+def test_typed_public_projection_rejects_post_validation_debug_injection(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle, hashes = _make_bundle(tmp_path, monkeypatch)
+    inspection = _load(bundle, hashes)
+    poisoned_report = copy.deepcopy(inspection.report)
+    poisoned_report["grids"]["5km"]["normalization_controls"]["product_max"][
+        "private_debug"
+    ] = {"local_path": "C:/private/source.parquet", "secret": "do-not-copy"}
+    poisoned = BundleInspection(
+        tables=inspection.tables,
+        report=poisoned_report,
+        source_sha256=inspection.source_sha256,
+        identity=inspection.identity,
+    )
+
+    with pytest.raises(ExposureDeliveryInputError, match="private_debug"):
+        build_results_export(poisoned, generated_at=datetime(2026, 9, 6, tzinfo=UTC))
+
+    valid = build_delivery_export(
+        inspection,
+        display_name="relative-exposure.geojson",
+        generated_at=datetime(2026, 9, 6, tzinfo=UTC),
+    )
+    poisoned_display = DisplayExport(
+        valid.display.geojson,
+        {**valid.display.diagnostics, "private_debug": {"source": "local-only"}},
+    )
+    with pytest.raises(ExposureDeliveryOutputError, match="private_debug"):
+        build_display_manifest(
+            inspection,
+            poisoned_display,
+            valid.results,
+            output_name="relative-exposure.geojson",
+            generated_at=datetime(2026, 9, 6, tzinfo=UTC),
+        )
 
 
 def test_parse_timestamp_requires_utc() -> None:
