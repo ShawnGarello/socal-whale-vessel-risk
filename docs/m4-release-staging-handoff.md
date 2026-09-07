@@ -4,11 +4,13 @@ Session: 2026-09-07. Branch: `feat/m4-release-staging`. Worktree:
 `C:/Users/teche/socal-whale-vessel-risk-m4-release`.
 Implementation commit: `4f9b2c24cf2819afb6e636931d4c9c58e78c77ae`.
 Correction/evidence commit: `5c9d58d16661cde6029121cbe2a5f8122c04df00`.
-It changes ignore rules and documentation only. The final documentation commit
-records the completed independent audit; `git log -3 --oneline` lists all three.
+It changes ignore rules and documentation only. The audit documentation commit
+records the completed independent audit; `git log --oneline origin/main..HEAD`
+lists the complete branch history, including the later ADR acceptance update.
 
 This is execution evidence and navigation. Roadmap owns M4 status; development
-owns the procedure; proposed ADR 0021 does not supersede existing requirements.
+owns the procedure; accepted ADR 0021 owns the static delivery decision and its
+route-specific capability checks.
 
 ## Completed preparation
 
@@ -100,29 +102,28 @@ No Python code changed and no analytical run was required. Both `analysis` and
 ## Remaining work and approval checkpoint
 
 M4 is **in progress, not complete**. No deployment URL exists. Nothing was
-pushed or merged. No account findings have been supplied by the author in this
-session, and “continue” was not interpreted as deployment or criterion approval.
+pushed or merged. The author accepted ADR 0021's free static Vercel Hobby
+direction and route-specific checks, but supplied no account findings and
+explicitly withheld deployment approval.
 
-1. Obtain agreement on proposed ADR 0021: static input hosting, route-specific
-   hosted-service test, and mandatory checks restricted to the selected route.
-   Until then, retain the current full account/capability and conditional
-   Esri-test requirements; unselected capabilities are unverified, not waived.
-2. Author privately confirms actual Vercel Hobby plan and personal-use
+1. Author privately confirms actual Vercel Hobby plan and personal-use
    eligibility, basemap account product, pay-as-you-go off, available basemap
-   capacity, and whether any ArcGIS Online organization exists. If retaining
-   the current criterion, complete its full service/storage/bandwidth/control
-   inventory too. Never send credentials or account identifiers to chat.
-3. Obtain push/PR and merge authorization after the completed independent audit,
-   pass both CI checks, merge through GitHub, then stage the reviewed current
-   main with a valid, minimally scoped browser key supplied privately.
-4. Present the new source commit and receipt, all six artifact identities,
+   capacity, and the browser key's minimum privileges and exact referrers. Never
+   send credentials or account identifiers to chat. Esri hosted-data and ArcGIS
+   Online publishing capabilities remain unverified but are not M4 checks under
+   the selected static route.
+2. Obtain push/PR authorization, conduct independent audit of the new PR head,
+   pass both CI checks, obtain merge authorization, merge through GitHub, then
+   stage the reviewed current main with a valid, minimally scoped browser key
+   supplied privately.
+3. Present the new source commit and receipt, all six artifact identities,
    observed account/plan state, actual intended stable production origin and
    exact external actions. Request explicit approval for the approved Hobby
    project/link, any required key/referrer changes, and
    `vercel deploy --prebuilt --prod` from the isolated `deploy/` directory.
    No GitHub integration or paid resource is needed. The current rehearsal is
    not the artifact to approve for upload.
-5. Verify all development's clean-browser deployment checks at the three
+4. Verify all development's clean-browser deployment checks at the three
    required viewports. Only then update public URL/status and applicable M4
    criteria. Keep the final-results VSR snapshot comparison separately open.
 

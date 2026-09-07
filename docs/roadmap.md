@@ -944,22 +944,17 @@ path — before there is analytical content to put in it.
 - Application scaffold created following the reviewed architecture.
 - A working map view of the study area using the ArcGIS Maps SDK for JavaScript.
 - Environment-variable and credential handling in place, with nothing secret committed.
-- **A verified account-type capability check.** For ArcGIS Location Platform,
-  record limited feature/vector-tile/map-tile service support, the sharing
-  levels the account actually offers, storage, bandwidth, monthly free-tier
-  headroom, and billing status. For
-  ArcGIS Online, record organization access, publishing/public-sharing
-  privileges, hosted feature/tile/imagery support, credits, and storage. The
-  check does not enable pay-as-you-go or authorize spending.
-- **When either Esri account type safely supports hosted-feature publishing
-  without paid usage**, a minimal test item published at the sharing level that
-  account actually offers, and loaded from the application to prove that
-  candidate route end to end. The two branches differ: an ArcGIS Online item can
-  be shared with `Everyone` and read with no credential, whereas a Location
-  Platform item stays private and is read with a scoped API key, so its test
-  proves keyed visitor access rather than token-free access. If neither account
-  supports the test, the outcome is recorded and the end-to-end test waits for
-  the selected non-Esri route.
+- **Verified route-specific account checks.** Confirm the actual Vercel plan and
+  Hobby personal-use eligibility. For the ArcGIS account used only for the
+  basemap, confirm the product, pay-as-you-go disabled, remaining applicable
+  free-tier headroom, and a read-only browser key restricted to the exact local
+  and production origins. Hosted-data publishing, storage, sharing and ArcGIS
+  Online organization privileges are not M4 requirements for this selected
+  static route and remain unverified unless a later decision selects them.
+- A checksum-bound Vercel static deployment that includes the exact ignored
+  project files and public manifests selected by the application, then loads
+  them token-free from the deployed origin. An Esri publish-and-serve test is
+  required only if an accepted decision selects Esri hosting for project data.
 - A working deployment of the empty shell.
 - Formatting, linting, and type-checking configured.
 
@@ -968,20 +963,16 @@ path — before there is analytical content to put in it.
 - The map renders, pans, and zooms over the study area.
 - No API keys or credentials appear in the repository or in committed build output.
 - The deployment is reachable and reflects the current main branch state.
-- **The applicable account-type checks are complete and recorded.** Location
-  Platform's limited data-service support, available sharing levels, storage,
-  bandwidth, free-tier, and billing status, and ArcGIS Online's organization
-  privileges, public sharing, service types, credits, and storage, are each
-  confirmed or confirmed unavailable.
-- If either Esri-hosted route safely supports the test, the application is
-  verified loading the temporary hosted item **the way a visitor would reach
-  it on that account type**, with no interactive sign-in and no ArcGIS identity
-  prompt: token-free loading for an ArcGIS Online item shared with `Everyone`,
-  or loading with a scoped browser API key for a private Location Platform
-  item. The record must say which of the two was demonstrated, because they are
-  different claims. Otherwise the outcome is carried into M5 as evidence
-  requiring a non-Esri publication-route decision; M4 does not invent or verify
-  that fallback.
+- **The selected route's account checks are complete and recorded.** Vercel is
+  confirmed as an eligible Hobby account with no paid plan, trial or add-on.
+  The ArcGIS basemap account is identified, pay-as-you-go is confirmed disabled,
+  current basemap free-tier headroom is sufficient, and the browser key is
+  confirmed read-only and restricted to the exact approved origins.
+- From a clean browser with no visitor sign-in, the deployed application loads
+  every selected project file token-free from its Vercel origin, verifies the
+  fetched checksums, and isolates a failed file without losing the other layers.
+  No Esri hosted-data publication test is applicable while ADR 0021 remains the
+  selected project-data route.
 
 ### Progress
 
@@ -1085,32 +1076,24 @@ Built on the `feat/web-foundation` branch. The application is in
   available sharing levels, billing mode, usage, and free-tier headroom have not
   been verified from the real account. The short private author checklist is in
   [development.md](development.md#read-only-capability-inventory-2026-08-31).
-- On documentation alone, a later minimal hosted-feature test appears capable
-  of remaining inside the free tiers. It is not yet permitted by the evidence:
-  actual pay-as-you-go status, controls, available sharing levels, usage, and
-  headroom must be confirmed first. On the Location Platform branch such a test
-  would be a keyed-access test, since those hosted services are documented as
-  not shared publicly. No item was created or published on this branch.
+- This historical inventory did not create or publish an item. ADR 0021 now
+  selects static Vercel delivery for project files, so Location Platform hosted
+  data capabilities are unselected and remain unverified; M4 no longer requires
+  a throwaway hosted-feature test.
 
 **Not done**
 
 - **The static-shell deployment.** This can proceed independently of an ArcGIS
   account. The application has never been deployed anywhere, and there is no
   public URL.
-- The authenticated account portion of the account-type capability check.
-  Location Platform product behavior and current published allowances are
-  documented, but the author's actual account type, service controls, public
-  sharing, storage/bandwidth usage, remaining headroom, and billing status are
-  unverified. ArcGIS Online organization privileges and credits are not
-  applicable to the reported Location Platform branch unless the product check
-  fails.
-- The conditional Esri-hosted test item and loading it from the application.
-  This is attempted only if the applicable account branch establishes public
-  hosted-feature support and enough no-cost capacity. The check requires the
-  author's real account and never enables billing or authorizes spending.
+- The route-specific account checks. Actual Vercel Hobby plan and personal-use
+  eligibility, and the basemap account's product, pay-as-you-go-disabled state,
+  current basemap headroom, browser-key scope and exact referrers are unverified.
+- The Vercel deploy-and-serve test. No public project exists and the staged
+  rehearsal is deliberately keyless and ineligible for deployment.
 
 The ordered steps for all of the above are in
-[development.md](development.md#arcgis-account-type-capability-checks-and-service-access).
+[development.md](development.md#selected-route-account-and-service-checks).
 
 ### Completion criteria status
 
@@ -1138,13 +1121,14 @@ the final-results snapshot-comparison gate remains open.
 Local staging tooling is implemented for the initial three-input application,
 with pinned public manifests, isolated committed-source builds and full upload
 inventories. [ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md)
-proposes Vercel Hobby and a route-specific hosted-test criterion, **pending
-author agreement**. Existing M4 requirements below are unchanged. No account
+was accepted by the author on 2026-09-07. It selects free Vercel Hobby static
+delivery and route-specific checks; an Esri hosted-data test is not applicable
+unless a later accepted decision selects that route. No account
 session was accessed, no project or service was created, and there is no
 deployment approval or public URL. The historical key's later `Token Invalid`
 result remains a release-key blocker; earlier local success is not current
 credential verification. Actual account product, billing, usage/headroom,
-capabilities, Hobby plan/eligibility and production key restrictions await
+Hobby plan/eligibility and production key restrictions await
 author evidence. Development owns staging and the deployment checkpoint.
 
 The keyless isolated rehearsal at implementation commit `4f9b2c2` passed locked
@@ -1167,19 +1151,16 @@ artifact locations, failures and the next approval checkpoint.
 | Map renders, pans, and zooms | **Verified locally.** The keyed static export rendered `arcgis/oceans`, panned, zoomed, and completed the ready-map attribution handoff in Chrome at all three required viewports. The deployed-origin path remains unverified. |
 | No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored. |
 | Deployment reachable and reflecting main | **Unverified.** No deployment exists; main has not been deployed or verified. |
-| Account-type capability checks complete and recorded | **Partial.** Current Location Platform documentation and allowances are recorded. The author reports a Location Platform account, but no authenticated session was available; actual product identity, billing, usage, controls, and headroom remain unverified. |
-| Conditional Esri-hosted publish-and-serve test | **Not attempted.** Documentation indicates a minimal feature service can fit the free tiers, but the test waits for actual pay-as-you-go, control, sharing-level, usage, and headroom checks. On the reported Location Platform branch the test would demonstrate keyed visitor access, not token-free access, because those hosted services are documented as not shared publicly. |
-| Unavailable capabilities recorded as constraints for M5 | **Partial.** Location Platform hosted image and scene creation are documentation-only unavailable; ArcGIS Online credits/privileges are not applicable to the reported branch. Actual account constraints remain unverified. |
+| Route-specific account checks complete and recorded | **Unverified.** Vercel Hobby plan/eligibility and the basemap account's product, pay-as-you-go-disabled state, current basemap headroom, browser-key scope and exact referrers have not been checked. |
+| Selected static publish-and-serve test | **Not attempted.** The exact files are staged and locally verified, but no Vercel project or public deployment exists. An Esri hosted-data test is not applicable under ADR 0021. |
+| Unselected Esri hosted-data capabilities | **Not applicable to M4 and unverified.** Static project files need no Esri hosted-data service. Documentation-only product facts remain background; actual service creation, storage, sharing and ArcGIS Online privileges were not checked. |
 
-M4 is not complete and must not be marked complete until the deployed
-application and the real account-type capability checks are verified. An
-Esri-hosted publish-and-serve test is also
-required when either account type safely supports it without paid usage, and
-its record must state whether it demonstrated token-free access or keyed
-visitor access. Any
-unavailable capabilities must be recorded as publication constraints for M5;
-selection and end-to-end testing of a non-Esri route happen in later milestones
-after real layers exist.
+M4 is not complete and must not be marked complete until the route-specific
+account checks and the reviewed main-backed Vercel deployment are verified.
+The project files must load token-free from the deployed origin with exact
+checksums; the basemap remains separately keyed with no visitor sign-in. The
+entire route must stay within verified free capacity. Paid plans, trials,
+add-ons, pay-as-you-go and other charged usage are prohibited.
 
 ### Findings
 
@@ -1242,22 +1223,17 @@ from this number. First development-server compile of the map route takes
 this repository's own. Disabled with `agentRules: false`.
 
 **Risks and open questions**
-- **The Location Platform product boundary is documented, but the real account
-  remains unverified and constrains publication.** Official documentation
-  supports feature, vector-tile, and map-tile services and identifies the
-  current free tiers. Rechecked on 2026-09-06, it also says those hosted
-  services are **not** shared publicly and require a scoped API key, so any
-  Location Platform route would give visitors keyed rather than anonymous
-  access. Actual service controls, sharing levels, usage, headroom, and billing
-  state still require the author's private check. If that account does not fit,
-  ArcGIS Online and then a non-Esri public route remain candidates.
-  **Partly resolved from documentation only.**
-- Location Platform storage/bandwidth usage and ArcGIS Online credit/storage
-  consumption could constrain iteration. The project does not enable
-  pay-as-you-go or authorize spending. **Still open.**
+- **The project-data route is resolved.** ADR 0021 selects checksum-addressed
+  static files on free Vercel Hobby. Esri hosted-data product facts remain
+  documented background; actual publishing capabilities are unverified and do
+  not constrain M4 while those routes remain unselected.
+- Actual Vercel Hobby plan and eligibility and ArcGIS basemap account state are
+  still unverified. A failed free-capacity check stops deployment; no paid
+  fallback is authorized. **Still open.**
 - ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Partly resolved:** a browser-delivered, origin-restricted API key is required for the basemap, Location Platform accounts have API-key privileges by default, the requirements for scoping a browser key are recorded in [development.md](development.md), and local service access succeeded from the authorized localhost origin. The real account capabilities and deployed-origin service access remain unverified.
 - Bundle size and initial load time of the SDK need an early look rather than a late one. **Resolved for size** — see the findings above. Load time still needs measuring on a real deployment.
-- The hosting platform is still unchosen. Its requirements are now written down in [development.md](development.md), so the choice is constrained rather than open-ended.
+- Vercel Hobby is selected conditionally on the still-unverified free-plan,
+  personal-use and account checks. No project has been created or deployed.
 
 ---
 
@@ -1271,7 +1247,7 @@ in the application through the evidence-selected publication route.
 
 **Dependencies**
 - M3 (validated derived datasets exist).
-- M4 (application shell exists and account-type capability evidence is recorded).
+- M4 (application shell exists and selected-route capability evidence is recorded).
 
 ### Progress
 
@@ -1418,17 +1394,15 @@ verified; not published**
 
 - **Nothing has been deployed or published.** There is no public URL, and no
   anonymous end-to-end access, deployed-origin service access, real compression
-  or cache behaviour, or clean-browser verification exists. Static same-origin
-  delivery is implemented and locally verified; it is **not** an accepted
-  hosting decision, and the host is unselected. Vercel is the author's
-  preference and its documented constraints are recorded in
-  [development.md](development.md), including an unresolved Hobby-plan
-  eligibility question and an untested prebuilt-deploy path.
-- The final public representation and host are not selected or accepted. The
-  exposure layer belongs to M6 and M7 and has no display or publication
-  contract.
-- The authenticated ArcGIS account capability checks M4 requires are still
-  outstanding.
+  or cache behaviour, or clean-browser verification exists. ADR 0021 selects
+  checksum-addressed static same-origin delivery on free Vercel Hobby, but the
+  actual plan, personal-use eligibility and provider acceptance of the staged
+  prebuilt deployment remain unverified.
+- The exposure display/results contract is implemented and locally verified,
+  but M7 integration and deployment remain open.
+- The route-specific Vercel and ArcGIS basemap account checks M4 requires are
+  still outstanding. Esri hosted-data capabilities are unselected and are not
+  M4 gates.
 - M5 remains in progress, and its completion criteria are not met.
 
 **Deliverables**
@@ -1444,17 +1418,12 @@ verified; not published**
   public `WhaleAtlas_2026` Feature Service using `FID = 126`, with Danielle
   Alvarez, CMSF, and BWBS attribution and the publisher's non-navigational
   disclaimer. No VSR geometry is copied into project-controlled hosting.
-- A public representation for the project-derived layers. **Static same-origin
-  representations are implemented for the whale, vessel-activity, and accepted
-  analytical-domain layers:** deterministic WGS 84 GeoJSON exports verified
-  locally but not published, and not an accepted hosting decision. The exposure
-  representation, final route for all derived layers, and host are still open.
-  ArcGIS Location Platform
-  feature/vector-tile/map-tile services remain a candidate where verified
-  free-tier capacity and service support fit — noting that its hosted services
-  are documented as not shared publicly, so visitor access would be keyed —
-  alongside ArcGIS Online hosted layers where verified organization
-  capabilities fit, and a documented non-Esri route.
+- A public representation for the project-derived layers. **ADR 0021 selects
+  deterministic, checksum-addressed static same-origin files on free Vercel
+  Hobby.** The whale, vessel-activity, and accepted analytical-domain exports are
+  verified locally but not published. The exposure display/results contract is
+  also locally verified and awaits M7 integration. Esri hosted-data routes are
+  unselected and remain unverified.
 - The ArcGIS Maps SDK application assembling the public layers with symbology
   chosen for legibility, not decoration.
 - Layer visibility control and legends in the application.
@@ -1527,7 +1496,7 @@ Produce the project's own analytical result: a documented relative exposure laye
 
 **Method accepted for exploratory execution, computed and locally verified;
 downstream delivery contracts implemented; independent audit, owner acceptance,
-M7 integration, publication-route selection, and release remain open**
+M7 integration, and release remain open**
 
 - [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md)
   defines the calculation: per cell, modeled whale density multiplied by period
@@ -1734,8 +1703,8 @@ Bring the analysis into the application so a visitor can explore the exposure la
 - M6 (exposure layer and statistics exist).
 
 The M6 display/results artifacts now exist for integration without recomputing
-science, but M5 remains incomplete, the exposure route is not selected, M6 still
-awaits independent audit and owner acceptance, and M7 has not started.
+science, but M5 remains incomplete, the selected static route is not deployed,
+M6 still awaits independent audit and owner acceptance, and M7 has not started.
 
 **Deliverables**
 - The derived exposure layer delivered through the selected public route and
@@ -1765,9 +1734,8 @@ awaits independent audit and owner acceptance, and M7 has not started.
 
 **Risks and open questions**
 - Presenting a single headline percentage invites overinterpretation; the framing needs care.
-- The measured static exposure artifact is a credible same-origin candidate,
-  but browser performance with all layers, responsive behavior, and the final
-  provider-neutral route remain open.
+- The measured static exposure artifact uses the selected same-origin route,
+  but browser performance with all layers and responsive behavior remain open.
 
 ---
 
@@ -1843,15 +1811,14 @@ Make the project publicly presentable: deployed, documented, and readable by a r
   displayed in the released application; a warning alone is insufficient.
 
 **Risks and open questions**
-- **Public delivery depends on a verified publication route.** ArcGIS Location
-  Platform limited data services or ArcGIS Online organization hosting may be
-  used if the applicable account evidence supports the selected representation.
-  If neither does, a non-Esri public fallback must be selected and verified end
-  to end before release; none is implemented today.
-- Location Platform storage/bandwidth limits and billing status or ArcGIS Online
-  credits/storage are constraints if those routes are selected. The project
-  does not enable pay-as-you-go or authorize spending. Any non-Esri host will
-  have its own measured limits and operating constraints.
+- **Public delivery depends on verifying the selected route.** ADR 0021 selects
+  checksum-addressed static files on free Vercel Hobby. Actual plan and
+  personal-use eligibility, free capacity, and deployed-browser behavior remain
+  unverified. A failed free check stops deployment; no paid fallback is
+  authorized.
+- Esri hosted-data services are unselected. Choosing one later requires a
+  superseding decision and route-specific evidence; their current account
+  capabilities are not M4 prerequisites.
 - Deployment hosting and any ArcGIS credential requirements must be settled before release, not at release.
 - The external VSR service can change, disappear, be rate-limited, or become
   private. Version 1 uses a documented release-time check rather than an

@@ -9,6 +9,9 @@
 > context. [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md)
 > selects direct use of the publisher-hosted VSR Feature Service as a narrow
 > Version 1 exception to the project-derived-layer publication boundary.
+> [ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md) selects
+> checksum-addressed static project files on free Vercel Hobby, conditional on
+> the still-unverified plan, eligibility, account and basemap checks.
 >
 > The Next.js application shell, Python processing foundation, deterministic
 > one-extract AIS cleaning, projected water-grid construction, and deterministic
@@ -46,8 +49,8 @@
 > implemented and locally verified in the web application. Deterministic
 > presentation exports and checksum-bound same-origin display are also
 > implemented and locally verified for the whale, vessel-activity, and accepted
-> analytical-domain layers; this does not select a public host or establish
-> deployment.
+> analytical-domain layers. Vercel Hobby is selected, but the account checks,
+> public project and deployment remain unfinished.
 > See the [roadmap](roadmap.md) for milestone status.
 
 The analytical and statistical domain is accepted in
@@ -59,20 +62,18 @@ a copy or derivative of that geometry. Permission to redistribute remains
 unconfirmed; Version 1 avoids redistribution rather than treating public access
 as a licence.
 
-The public host for the project's derived layers remains open. The whale,
+ADR 0021 selects free Vercel Hobby as the public host for static project-derived
+files. The whale,
 vessel-activity, and accepted analytical-domain layers are exported as WGS 84
 GeoJSON and read as static same-origin files, which is implemented and locally
-verified but is not an accepted hosting decision. Official documentation
-confirms the Location Platform product supports feature, vector-tile, and
-map-tile services under metered monthly free tiers, and — rechecked 2026-09-06 —
-that those hosted services are not shared publicly and require a scoped API
-key, so a visitor would reach them with a credential rather than anonymously.
-The author's actual
-account product identity, controls, usage, remaining headroom, and billing
-state are unverified because no authenticated session was available. ArcGIS Online
-organization access is not applicable to the reported Location Platform branch
-unless that product check fails. Account-specific evidence still constrains
-that publication route; it does not determine whether the analysis can exist.
+verified. The exposure delivery contract uses the same selected route when M7
+integrates it. Actual Vercel Hobby plan and personal-use eligibility remain
+unverified. The ArcGIS account serves the basemap only; its product, billing,
+current basemap headroom and browser-key restrictions also remain unverified.
+Location Platform hosted-data services and ArcGIS Online organization hosting
+are unselected, so their actual publishing capabilities remain unverified and
+are not M4 prerequisites. A later choice to use them requires a superseding
+decision and route-specific free-capability evidence.
 
 Changes to this accepted architecture are recorded under
 [decisions/](decisions/README.md), not made silently.
@@ -91,10 +92,10 @@ The system has four kinds of participant:
   and analysis. QGIS inspects source and derived spatial artifacts and supplies
   visual-verification evidence. Local source and generated data are not
   committed.
-- **Public publication services** — validated project-derived outputs cross a provider-neutral
-  boundary into a publicly accessible representation. ArcGIS Location Platform
-  limited data services and ArcGIS Online organization-hosted layers are
-  separate Esri candidates. A non-Esri route remains available if neither fits.
+- **Public publication services** — validated project-derived outputs cross a
+  provider-neutral boundary as checksum-addressed static files served beside
+  the application on free Vercel Hobby. Esri hosted-data services are
+  unselected; adopting one later requires a superseding decision.
   The VSR boundary is the Version 1 exception: the browser references the
   publisher's service directly instead of sending a copy across this boundary.
 - **A visitor's browser** — a static Next.js application uses the ArcGIS Maps
@@ -134,14 +135,8 @@ Validated derived artifacts and lineage
 Provider-neutral publication / export boundary               |
   project-derived whale, vessel, and exposure layers         |
         |
-        +----> ArcGIS Location Platform feature/vector-tile/map-tile service,
-        |        when free-tier capacity and account capabilities permit
-        |
-        +----> ArcGIS Online organization-hosted layer,
-        |        when privileges, credits, and storage permit
-        |
-        `----> selected non-Esri public representation,
-               when neither Esri-hosted route is suitable
+        `----> checksum-addressed static same-origin files
+               in the free Vercel Hobby application deployment
         |
         v
 Next.js + ArcGIS Maps SDK for JavaScript <--------------------'
@@ -152,9 +147,9 @@ Next.js + ArcGIS Maps SDK for JavaScript <--------------------'
 Static deployment -> visitor's browser
 ```
 
-The three project-derived publication branches in this diagram are candidates,
-not implemented fallbacks. Their final format and host remain deferred. The VSR
-display source is selected but not implemented. Summary statistics follow the
+ADR 0021 selects the project-derived publication branch in this diagram. It is
+implemented and locally staged but not deployed. The VSR display source is the
+publisher-hosted exception selected by ADR 0019. Summary statistics follow the
 analysis boundary and may be delivered as a small, versioned file the static
 application reads; the browser does not recompute them.
 
@@ -401,10 +396,9 @@ executions cannot update state or remove or overwrite newer or unrelated
 layers. Deterministic ordering keeps both analytical fills beneath the domain
 and publisher VSR outlines.
 
-This is an implemented and locally verified route, **not an accepted hosting
-decision and not a deployment**. Nothing has been published. The public host,
-and whether a hosted Esri service is preferable to static files for the
-final project-derived layers, are still open and need a decision record.
+This implemented and locally verified representation is selected for free
+Vercel Hobby delivery by ADR 0021. It is not a deployment: nothing has been
+published, and the required account and deployed-browser checks remain open.
 
 **A static exposure representation is also implemented and measured as local
 delivery evidence.** The provider-neutral boundary emits qualified-water-only
@@ -417,16 +411,10 @@ cells are absent, never low or zero. The public properties preserve the primary
 product and required log-traffic sensitivity while keeping speed separate.
 
 This representation passed programmatic reconciliation, deterministic repeat,
-and checksum-bound QGIS inspection. It is **not** an accepted publication route,
-application integration, or deployment. The locally implemented input-layer
-and exposure routes may still be revised before release. Candidate routes are
-static same-origin files, ArcGIS Location Platform limited data services,
-ArcGIS Online organization-hosted layers, and a non-Esri public route.
-Selection depends on measured output size, feature count or raster
-characteristics, geometry complexity, browser load/render performance,
-redistribution terms, access requirements, and verified account or hosting
-capabilities. GeoJSON, vector tiles, hosted feature layers, hosted tile/imagery
-layers, and other supported representations remain candidates.
+and checksum-bound QGIS inspection. ADR 0021 selects the same static route for
+delivery after M7 integrates it; application integration, result acceptance and
+deployment remain open. A representation change requires a later decision
+supported by measured need, source terms and verified free capability.
 
 ### Publisher-hosted VSR display exception
 
@@ -464,10 +452,9 @@ posture.
 
 ### ArcGIS Online organization hosting
 
-ArcGIS Online is a conditional publication and hosting option, not a processing
-tier and not a prerequisite for Version 1. If a real account check verifies the
-needed capabilities, it may host project feature, tile, or imagery layers and
-serve them anonymously to the application.
+ArcGIS Online is an unselected publication option, not a processing tier or a
+Version 1 prerequisite under ADR 0021. A later decision could select it only
+after verifying the necessary free capabilities and access model.
 
 The following facts remain unverified and must not be inferred from account type
 or documentation alone:
@@ -479,16 +466,13 @@ or documentation alone:
 - available storage; and
 - anonymous access to the resulting service.
 
-If a required capability is unavailable, that evidence becomes a constraint on
-the publication-format decision. It does not invalidate the Python analysis,
-QGIS verification, static application, or Esri map-client integration. A later
-milestone must evaluate ArcGIS Location Platform and, if needed, a non-Esri
-public route; none is selected or implemented yet.
+These facts remain background unless a later decision selects this route. They
+are not M4 gates and have not been checked against a real account.
 
 ### ArcGIS Location Platform limited organization and data services
 
-ArcGIS Location Platform is a separate Esri-hosted publication candidate, not
-only an API-key and basemap provider. Esri documents it as a limited single-user
+ArcGIS Location Platform is an unselected Esri-hosted publication option as
+well as a possible API-key and basemap provider. Esri documents it as a limited single-user
 organization with support for creating hosted feature, vector-tile, and
 map-tile services. It does not provide the full ArcGIS Online organization
 capability set, and the documented Location Platform data-service list does not
@@ -526,7 +510,7 @@ map-tile bandwidth, and 25,000 generated tiles. Basemaps have separate monthly
 allowances of 2,000,000 tiles or 1,000 sessions. These are product-wide limits,
 not verified balances for the author's account.
 
-Before this route can be selected, the author must verify the real account's
+Before a later decision could select this route, the author must verify the real account's
 product identity, supported creation and sharing controls, current storage and
 bandwidth use, remaining headroom, and billing status. This project does **not**
 authorize enabling pay-as-you-go, adding a payment method, or incurring a
@@ -606,29 +590,29 @@ it belongs in the reproducible Python path.
 
 ## Deployment model
 
-[ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md) proposes the
+[ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md) selects the
 author's preferred Vercel Hobby route for the existing input-layer application.
 Local release staging is implemented to package committed source and exactly
 three pinned GeoJSON/manifest pairs as static Build Output API v3 output.
-The proposal awaits author agreement and account evidence; no host is accepted
-or deployed by that implementation, and exposure integration remains outside
-this initial deployment.
+The plan, personal-use eligibility, account and basemap checks remain
+unverified; no project is created or deployed, and exposure integration remains
+outside this initial deployment. The entire project must remain within free
+capacity. Paid plans, trials, add-ons, pay-as-you-go and other charged usage are
+prohibited.
 
 - Next.js produces a static export served over HTTPS from a stable public URL.
 - Version 1 has no custom backend, server-side analysis, database, or runtime
   application server.
-- Project-derived public layers are loaded directly by the browser from the
-  selected delivery route. The VSR boundary is loaded separately from the
+- Project-derived public layers are loaded token-free by the browser as
+  checksum-addressed same-origin files on free Vercel Hobby. The VSR boundary is loaded separately from the
   publisher's public Feature Service with `FID = 126`.
 - ArcGIS platform basemap/service/item requests are made through the SDK with a
   scoped and origin-restricted browser API key where available.
-- The project-derived-layer route may use ArcGIS Location Platform limited data
-  services, ArcGIS Online organization-hosted layers, or a non-Esri public
-  representation. A later evidence-based decision selects among them.
+- Esri hosted-data services are unselected. Using one later requires a
+  superseding decision and its own free-capability and visitor-access evidence.
 
-The application host and layer host need not be the same provider. The static
-hosting platform, project-layer representation, and project-layer host all
-remain unselected. A local build proves none of them: completion requires a
+The application and project-file host are the same Vercel deployment. Selection
+does not prove availability: completion requires a
 clean-browser test of the deployed application, basemap/service access, public
 project layers, and matching precomputed results.
 
@@ -781,11 +765,10 @@ The intended end-to-end test is to rerun from unchanged raw inputs, reproduce
 the validated derived outputs, repeat spatial verification where required, and
 compare them with what the deployed application serves. M8 owns that gate.
 
-## Performance and publication-format selection
+## Performance and publication-format verification
 
-No final format or host is selected for the project-derived whale, vessel, and
-exposure layers. The decision requires evidence from those real outputs,
-including:
+ADR 0021 selects the static format and Vercel Hobby host. Deployed verification
+still requires evidence from the real outputs, including:
 
 - byte size, feature count, geometry complexity, and raster dimensions where
   applicable;
@@ -795,9 +778,8 @@ including:
   attribution, and what access a visitor needs — a token-free public file or
   service, or one read with a scoped browser credential;
 - redistribution conditions for each source and derivative; and
-- actual ArcGIS Location Platform service support, storage, bandwidth,
-  free-tier/billing status; ArcGIS Online privileges, credits, and storage; or
-  alternative-host capability and operating constraints.
+- actual Vercel Hobby plan, personal-use eligibility and free capacity, plus the
+  separate ArcGIS basemap account's free-tier/billing status.
 
 All three M5 input layers have now been measured locally. The whale GeoJSON is
 3,277,329 bytes raw / 574,907 gzip / 396,852 Brotli; the vessel GeoJSON is
@@ -825,8 +807,8 @@ is integrated with the three input layers. The Location Platform agreement's ben
 benchmark-publication clauses remain unresolved and must be settled before any
 timing exercise that measures ArcGIS services.
 
-Hosted feature layers, hosted tiles/imagery, vector tiles, and other formats
-remain candidates until route review and browser evidence support a decision.
+A material representation change requires a later decision. No paid service is
+an authorized fallback.
 
 ## Version 1 architectural constraints
 
@@ -866,11 +848,10 @@ its milestone needs it.
 |---|---|---|
 | Exposure formula, normalization, and weighting | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not independently reviewed or accepted, and final headline messaging is still open. |
 | High-exposure threshold | **Resolved for exploratory use** in ADR 0020 | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits independent review and the owner. |
-| Final public representation and host for project-derived whale, vessel, and exposure layers | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, performance in a clean browser session, required interactions, the access model a visitor needs (token-free or keyed), legal constraints, usage limits, and supported service types. Static same-origin GeoJSON is implemented and locally verified for the whale, vessel-activity, and analytical-domain inputs; the exposure display/results pair is implemented, reconciled, measured, and QGIS-verified. Neither route is accepted as final, exposure browser integration remains open, and no public host is selected. The publisher-hosted VSR exception is already selected in ADR 0019. |
-| ArcGIS Location Platform publication route | Author completes the authenticated portion of the Location Platform capability check | Official documentation confirms a limited single-user organization, feature/vector-tile/map-tile support, and current monthly free tiers. Rechecked 2026-09-06: Location Platform hosted data services are **not** shared publicly; a scoped API key is required, so visitor access is keyed rather than anonymous. The real account's product identity, controls, usage, headroom, and billing status remain unverified. No pay-as-you-go activation or spending is authorized. |
-| ArcGIS Online publication route | Author completes the ArcGIS Online capability check | Organization privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |
-| Non-Esri public delivery route, if needed | Both Esri routes are unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |
-| Static application host | Deployment milestone | HTTPS, stable origin, static-export limits, build-time environment values, and clean-browser verification. |
+| Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021** | Checksum-addressed static files beside the application on free Vercel Hobby. Input files are integrated and locally verified; exposure integration remains M7 work. Account and deployed-browser evidence remain open. |
+| ArcGIS Location Platform publication route | Unselected by ADR 0021 | Actual hosted-data creation, storage and sharing capabilities remain unverified. The account used for the basemap still needs its narrower route-specific check. |
+| ArcGIS Online publication route | Unselected by ADR 0021 | Actual organization and publishing capabilities remain unverified. |
+| Static application host | **Resolved by ADR 0021, verification open** | Free Vercel Hobby, conditional on actual plan and personal-use eligibility, HTTPS, stable origin, static-export limits, and clean-browser verification. No paid fallback is authorized. |
 | General visual-verification record across spatial outputs | M8 reproducibility work | Layer-specific checksum-bound commands now exist for the three project input displays and exposure evidence. A general record must cover every spatial output's checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage. |
 [ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts
 `receivers_50_nautical_miles` as the scope-reduced,
