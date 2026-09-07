@@ -1410,6 +1410,25 @@ changed to investigate or remove it. Because step 1 requires fetched application
 assets to match the approved receipt, this is a deployment-verification failure:
 M4 remains in progress pending an authorized resolution and a fresh exact check.
 
+**Project-only Toolbar change and redeployment checkpoint:** Later on
+2026-09-07, the author authorized disabling the Vercel Toolbar for Production
+on `Stemry/socal-whale-vessel-overlap` only. A project API attempt using the
+dashboard's string label `off` was rejected with HTTP 400 and made no change.
+The documented project field requires a boolean; setting
+`enableProductionFeedback=false` then succeeded. Read-back confirmed the new
+project setting, no Git connection, and the same production alias. No team-wide
+setting or `stemry-waitlist` setting was changed.
+
+The change was not retroactive to the existing deployment. Its generated
+runtime response still contained the same exact 9,689-byte staged prefix plus
+the same 439-byte Toolbar append. A fresh full public read-back again returned
+900 successful files and the exact approved release identity, with 899 exact
+file matches and that single unchanged mismatch. Vercel still reported the same
+production deployment Ready. A new deployment is therefore required to test the
+Production-off setting. Per the author's checkpoint instruction, no redeployment
+or repeated browser suite was started; report and obtain explicit approval
+before re-uploading the unchanged approved package and receipt.
+
 ### Release-time VSR service and version check
 
 Before final release, use an anonymous browser session or anonymous HTTP

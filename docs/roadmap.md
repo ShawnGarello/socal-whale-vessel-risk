@@ -1205,6 +1205,17 @@ receipt. No project setting was changed. Because the documented deployment gate
 requires fetched application assets to match the approved receipt, this is an
 unresolved failure and M4 remains in progress.
 
+The author subsequently authorized disabling the Toolbar for Production on the
+new project only. Project-level `enableProductionFeedback=false` succeeded and
+read-back confirmed it without a Git connection; no team-wide or existing-project
+setting changed. The current deployment still served the same appended bytes,
+and a complete 900-file recheck again found 899 exact matches plus the one
+unchanged runtime mismatch. The stable alias still points to the same Ready
+deployment, so the setting requires a new deployment to take effect. Execution
+stopped before redeployment as instructed, and the browser suite was not repeated
+against unchanged bytes. M4 remains in progress pending explicit redeployment
+approval and the resulting full verification.
+
 | Criterion                                                  | State                                                                                                                                                                                                                                        |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Builds locally                                             | **Verified.** Historical browser evidence remains local. Both the keyless rehearsal and reviewed-main keyed candidate passed all 79 tests and the static build with the six pinned input files.                                              |

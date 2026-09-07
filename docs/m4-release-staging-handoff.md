@@ -79,6 +79,16 @@ without a Vercel Toolbar cookie, but the documented whole-receipt criterion is
 strict. No project setting was changed. M4 remains in progress pending author
 direction and an exact recheck after any authorized resolution.
 
+The author then authorized a Production Toolbar change for this new project
+only. Project-level `enableProductionFeedback=false` succeeded; read-back found
+the setting off, the Git connection still absent and the stable alias unchanged.
+No team-wide or `stemry-waitlist` setting changed. The existing deployment is
+immutable with respect to this setting: its affected runtime asset retained the
+same 439-byte append, and a fresh complete public check again returned 899 exact
+matches out of 900 files. The same deployment remained Ready. A new deployment
+is required before the setting can be evaluated. Per the explicit checkpoint,
+no upload or repeated browser suite followed.
+
 ## Completed preparation
 
 - Fetched origin; clean local main matched `origin/main` at
@@ -172,11 +182,12 @@ M4 is **in progress, not complete**. The approved upload and documented browser
 checks ran, but the one platform-appended runtime response prevents strict
 whole-receipt acceptance. Nothing was pushed or merged.
 
-1. Obtain author direction before changing any new-project Toolbar setting or
-   preparing a reviewed correction. Do not alter the existing Stemry project.
-2. After an authorized resolution, repeat the full receipt and clean-browser
-   checks at the stable origin. Mark M4 complete only if every applicable
-   criterion passes.
+1. Obtain explicit author approval to redeploy the unchanged approved
+   `m4-initial-production-01` package and receipt now that Production Toolbar is
+   off. Do not alter the existing Stemry project.
+2. Immediately before an approved re-upload, reverify the receipt and target.
+   Then repeat the full receipt and clean-browser checks at the stable origin.
+   Mark M4 complete only if every applicable criterion passes.
 3. Keep the final-results VSR geometry snapshot comparison separately open; the
    initial application has no exposure statistics.
 
