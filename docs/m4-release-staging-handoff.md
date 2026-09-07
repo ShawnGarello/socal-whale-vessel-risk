@@ -3,8 +3,9 @@
 Session: 2026-09-07. Branch: `feat/m4-release-staging`. Worktree:
 `C:/Users/teche/socal-whale-vessel-risk-m4-release`.
 Implementation commit: `4f9b2c24cf2819afb6e636931d4c9c58e78c77ae`.
-A following correction/evidence commit changes ignore rules and documentation
-only; obtain its exact identity with `git log -2 --oneline`.
+Correction/evidence commit: `5c9d58d16661cde6029121cbe2a5f8122c04df00`.
+It changes ignore rules and documentation only. The final documentation commit
+records the completed independent audit; `git log -3 --oneline` lists all three.
 
 This is execution evidence and navigation. Roadmap owns M4 status; development
 owns the procedure; proposed ADR 0021 does not supersede existing requirements.
@@ -86,6 +87,12 @@ deployed map rendering and fresh visitor access remain unverified.
 - Independent read-only audit of `c8bf397..4f9b2c2` verified the six input hashes
   and found the ignore gap and old test-count text. Both are corrected. No
   further blocking finding was reported. No duplicate full build was requested.
+- Final independent audit passed exact head `5c9d58d` with no unresolved blocking
+  finding. The auditor re-ran receipt verification and confirmed the 901 files,
+  36,021,239 bytes, retained web-gate log, ignore correction and clean tree.
+  The web source is unchanged since the rehearsal commit. Final fetch still
+  found local main equal to origin/main. Relative documentation file links and
+  `git diff --check` passed.
 
 No Python code changed and no analytical run was required. Both `analysis` and
 `web` CI jobs remain mandatory on a future PR head before an authorized merge.
@@ -105,7 +112,7 @@ session, and “continue” was not interpreted as deployment or criterion appro
    capacity, and whether any ArcGIS Online organization exists. If retaining
    the current criterion, complete its full service/storage/bandwidth/control
    inventory too. Never send credentials or account identifiers to chat.
-3. Complete correction/evidence audit, obtain push/PR and merge authorization,
+3. Obtain push/PR and merge authorization after the completed independent audit,
    pass both CI checks, merge through GitHub, then stage the reviewed current
    main with a valid, minimally scoped browser key supplied privately.
 4. Present the new source commit and receipt, all six artifact identities,

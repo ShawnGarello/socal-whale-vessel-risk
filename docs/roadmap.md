@@ -1155,7 +1155,8 @@ Read-back verification matched the complete upload inventory and all three
 compiled checksum-addressed layer URLs. The package is explicitly **not for
 deployment** because it has no basemap key and is not a reviewed main release.
 Independent audit found a release-root ignore gap and stale test-count prose;
-both are corrected in the follow-up. No application or analytical behavior
+both are corrected and the final independent audit of `5c9d58d` passed with no
+unresolved blocking findings, including receipt read-back. No application or analytical behavior
 changed. [The M4 handoff](m4-release-staging-handoff.md) retains commands,
 artifact locations, failures and the next approval checkpoint.
 
