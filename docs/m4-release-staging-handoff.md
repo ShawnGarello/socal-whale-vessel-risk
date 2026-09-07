@@ -89,6 +89,18 @@ matches out of 900 files. The same deployment remained Ready. A new deployment
 is required before the setting can be evaluated. Per the explicit checkpoint,
 no upload or repeated browser suite followed.
 
+The author approved redeploying the unchanged package. Receipt, target,
+`origin/main`, project-only Toolbar-off and no-Git checks passed immediately
+before upload. Vercel accepted the same package as production deployment
+`dpl_ArbLiGBmjzxRHP5CeYj98ugjd1Yu` and retained the stable alias. The affected
+runtime file then matched its exact 9,689-byte receipt entry; a complete read-back
+of 900 public files and 36,020,586 decoded bytes found zero mismatches. The full
+Chrome suite repeated successfully at all three viewports, including normal
+console/network results, attribution transition, project transfer, popup and all
+four isolated failure cases. Anonymous VSR identity, `FID = 126`, credit and
+disclaimer passed again. M4 is complete; the final-results geometry comparison
+remains a later gate.
+
 ## Completed preparation
 
 - Fetched origin; clean local main matched `origin/main` at
@@ -176,20 +188,14 @@ deployed map rendering and fresh visitor access remain unverified.
 No Python code changed and no analytical run was required. Both `analysis` and
 `web` CI jobs remain mandatory on a future PR head before an authorized merge.
 
-## Remaining work
+## Completion and next work
 
-M4 is **in progress, not complete**. The approved upload and documented browser
-checks ran, but the one platform-appended runtime response prevents strict
-whole-receipt acceptance. Nothing was pushed or merged.
+M4 is **complete**. The exact approved package, full public receipt, route-specific
+account constraints and all documented deployed-browser behaviors pass. Nothing
+was pushed or merged.
 
-1. Obtain explicit author approval to redeploy the unchanged approved
-   `m4-initial-production-01` package and receipt now that Production Toolbar is
-   off. Do not alter the existing Stemry project.
-2. Immediately before an approved re-upload, reverify the receipt and target.
-   Then repeat the full receipt and clean-browser checks at the stable origin.
-   Mark M4 complete only if every applicable criterion passes.
-3. Keep the final-results VSR geometry snapshot comparison separately open; the
-   initial application has no exposure statistics.
+Keep the final-results VSR geometry snapshot comparison separately open; the
+initial application has no exposure statistics.
 
 The key permits only the approved exact localhost/production origins, with no
 item, publishing or account rights and no wildcard.
@@ -200,5 +206,4 @@ redistribution permission. Keep prior verified release packages for the document
 rollback; this initial rehearsal has no previous public release to restore.
 
 Next scoped M5 step: add the missing retrieval/processing dates to the vessel
-and domain source disclosures, then verify the existing input layers against
-the approved deployed route. Do not start M7 or alter analytical methods.
+and domain source disclosures. Do not start M7 or alter analytical methods.

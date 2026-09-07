@@ -13,7 +13,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 | M1  | Project foundation               | Complete    |
 | M2  | Data discovery and validation    | Complete    |
 | M3  | Processing workflow              | Complete    |
-| M4  | GIS application foundation       | In progress |
+| M4  | GIS application foundation       | Complete    |
 | M5  | Core input layers                | In progress |
 | M6  | Whale–vessel exposure analysis   | In progress |
 | M7  | Application integration          | Not started |
@@ -1092,11 +1092,12 @@ Built on the `feat/web-foundation` branch. The application is in
   data capabilities are unselected and remain unverified; M4 no longer requires
   a throwaway hosted-feature test.
 
-**Remaining**
+**Completed**
 
-- Resolve the strict whole-receipt mismatch recorded below. The deployment is
-  public and otherwise verified, but one Vercel-appended Toolbar loader prevents
-  an exact match for one generated runtime chunk.
+- The reviewed-main static application, exact pinned files, free-route account
+  checks, production deployment, full public receipt and documented clean-browser
+  behavior all pass. The first-deployment Toolbar mismatch and its resolution
+  are retained below.
 
 The ordered steps for all of the above are in
 [development.md](development.md#selected-route-account-and-service-checks).
@@ -1216,22 +1217,44 @@ stopped before redeployment as instructed, and the browser suite was not repeate
 against unchanged bytes. M4 remains in progress pending explicit redeployment
 approval and the resulting full verification.
 
+The author approved redeploying the unchanged package. Immediate receipt,
+target, `origin/main`, project-only Toolbar-off and no-Git checks passed. Vercel
+accepted the same 901-file Build Output API package as production deployment
+`dpl_ArbLiGBmjzxRHP5CeYj98ugjd1Yu` and reassigned the stable alias without a
+remote rebuild. The formerly modified runtime file now matched its exact
+9,689-byte receipt entry with no append. A complete public read-back fetched all
+900 public files, 36,020,586 decoded bytes, with zero mismatches; `release.json`
+still identified exact application commit
+`8b1f65c8556955d6f28ee86426c09d55b7ea71fa` and the approved release inventory.
+
+Clean Chrome 152.0.7977.76 then repeated every documented viewport and isolated
+failure check successfully. Oceans, pan/zoom, attribution transition, responsive
+layout, counts, toggles, legends, disclosures and the desktop popup passed;
+normal contexts had no console warnings or errors. Each individually blocked
+whale, vessel, domain and VSR request removed only its own layer while the map
+and remaining layers stayed ready. Project transfer behavior and required cache,
+encoding and content-type headers passed. Anonymous HTTP again confirmed the
+expected public item, Feature Layer 0 and exactly `FID = 126`, with publisher
+credit and non-navigation warning. No geometry was requested, so the later
+final-results snapshot gate remains separate. The new project remains
+Git-disconnected with Production Toolbar off; the existing Stemry project and
+team settings were not changed. All applicable M4 criteria pass.
+
 | Criterion                                                  | State                                                                                                                                                                                                                                        |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Builds locally                                             | **Verified.** Historical browser evidence remains local. Both the keyless rehearsal and reviewed-main keyed candidate passed all 79 tests and the static build with the six pinned input files.                                              |
 | Builds in the deployment environment                       | **Verified for the selected prebuilt route.** Vercel accepted the complete Build Output API v3 package and reported the production deployment Ready; the route deliberately performs no remote rebuild.                                      |
 | Map renders, pans, and zooms                               | **Verified locally and deployed.** Clean Chrome rendered `ArcGIS Oceans`, panned, zoomed, and completed the attribution handoff at all three required viewports.                                                                             |
 | No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored.                                                                                                                                                         |
-| Deployment reachable and reflecting main                   | **Partially verified.** The stable public origin and `release.json` identify exact current `origin/main`; all six pins match. One platform-appended Toolbar loader prevents the required strict match of every application asset.            |
+| Deployment reachable and reflecting main                   | **Verified.** The stable public origin and `release.json` identify exact current `origin/main`; all six pins and all 900 public receipt files match byte-for-byte.                                                                           |
 | Route-specific account checks complete and recorded        | **Verified.** Vercel Hobby personal-use eligibility, ArcGIS Location Platform free-tier-only status and headroom, and browser-key validity, minimum scope, no item access and exact referrers were confirmed on 2026-09-07.                  |
-| Selected static publish-and-serve test                     | **Verified for project files and behavior; full receipt still failing.** All three project files load token-free with exact hashes and isolated failures. An Esri hosted-data test is not applicable under ADR 0021.                         |
+| Selected static publish-and-serve test                     | **Verified.** All three project files load token-free with exact hashes and isolated failures, and the full public receipt matches. An Esri hosted-data test is not applicable under ADR 0021.                                               |
 | Unselected Esri hosted-data capabilities                   | **Not applicable to M4 and unverified.** Static project files need no Esri hosted-data service. Documentation-only product facts remain background; actual service creation, storage, sharing and ArcGIS Online privileges were not checked. |
 
-M4 is not complete. The route-specific account checks, project-file hashes and
-deployed behavior pass, but the platform-appended runtime bytes violate the
-strict whole-receipt check. The basemap remains separately keyed with no visitor
-sign-in. The entire route must stay within verified free capacity. Paid plans,
-trials, add-ons, pay-as-you-go and other charged usage are prohibited.
+M4 is complete. The route-specific account checks, full receipt, project-file
+hashes and deployed behavior pass. The basemap remains separately keyed with no
+visitor sign-in. The entire route must stay within verified free capacity. Paid
+plans, trials, add-ons, pay-as-you-go and other charged usage are prohibited.
 
 ### Findings
 
@@ -1308,9 +1331,9 @@ this repository's own. Disabled with `agentRules: false`.
   production referrers were verified, and clean-browser production access passed.
 - Bundle size and deployed project-file transfer behavior received the required
   early check. This was not an Esri-service benchmark.
-- Vercel Hobby is selected and the production deployment is Ready. Exact
-  full-receipt matching remains open because of the platform-appended Toolbar
-  loader described above.
+- Vercel Hobby is selected and the production deployment is Ready. Production
+  Toolbar is off for this project and exact full-receipt matching passes after
+  the unchanged-package redeployment.
 
 ---
 
@@ -1470,8 +1493,9 @@ unfinished**
 
 - The initial input-layer application is deployed and its project-file hashes,
   real compression/cache behavior and clean-browser access are verified. That
-  does not publish or verify the later exposure layer/results contract, and the
-  M4 whole-receipt Toolbar mismatch remains open.
+  does not publish or verify the later exposure layer/results contract. The
+  resolved first-deployment Toolbar mismatch does not apply to the current
+  receipt-exact production deployment.
 - The exposure display/results contract is implemented and locally verified,
   but M7 integration and deployment remain open.
 - The route-specific Vercel and ArcGIS basemap account checks passed. Esri

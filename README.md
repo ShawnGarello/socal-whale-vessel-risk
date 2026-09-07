@@ -2,7 +2,7 @@
 
 A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
 
-> **Status: in development.** M1 through M3 are complete; M4 through M6 are in progress.
+> **Status: in development.** M1 through M4 are complete; M5 and M6 are in progress.
 > The ready AIS period contains all 153 dates and 15,458,567 cleaned commercial
 > observations. The exact water grid and modeled-whale transfer are reproducible
 > and visually verified. All four full-period candidate vessel grids were
@@ -28,14 +28,14 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > activity starts hidden, the domain remains visible as an outline, and the
 > interface distinguishes excluded water from low or zero recorded activity.
 >
-> **The reviewed M4 input-layer application is deployed at the stable URL below, but
-> M4 verification remains open.** Route-specific plan, eligibility,
+> **The reviewed M4 input-layer application is deployed at the stable URL below and
+> M4 is complete.** Route-specific plan, eligibility,
 > basemap-capacity and browser-key checks passed on 2026-09-07. The approved
 > checksum-bound package from merged `main` is reachable and its three pinned
 > input files match exactly. Clean Chrome checks passed at all required
-> viewports. Vercel appended a 439-byte, cookie-gated Toolbar loader to one
-> otherwise byte-identical runtime chunk, so the strict whole-receipt asset
-> match is unresolved and M4 remains in progress.
+> viewports. After Production Toolbar was disabled for this project and the
+> unchanged approved package was redeployed, all 900 public files matched the
+> approved receipt byte-for-byte.
 > The exposure method and its distinct
 > display/results delivery contracts are implemented and locally verified, but
 > **the results are exploratory and not yet independently reviewed or accepted,
@@ -86,7 +86,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Processing workflow         | **M3 complete** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; the selected vessel rules of [ADR 0018](docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md) were accepted after real production generation, byte-identical repetition and QGIS validation. See [analysis](analysis/README.md).                                                                                                                                                                                                                                            |
 | Analysis and derived layers | **M6 in progress** — the water grid, whale grid, fresh current-code exploratory exposure bundles, and distinct exposure display/results contracts are generated, programmatically reconciled, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md), accepted for exploratory execution only; its results await independent review and owner acceptance, one sensitivity comparison is materially non-robust, and no exposure layer or statistic is published or adopted as a headline |
 | Web application             | **M4 foundation and M5 input-layer displays deployed** — Next.js and TypeScript with an ArcGIS map shell over Southern California. The filtered publisher-hosted 2026 California VSR boundary and checksum-bound same-origin whale, vessel-activity, and analytical-domain layers render at the required responsive viewports with visibility controls, legends, source/method disclosures, deterministic ordering, and isolated failure behavior. Exposure display remains unfinished                                                                                                  |
-| Deployment                  | Stable free Vercel Hobby production URL is reachable from clean Chrome and serves the exact pinned project files from merged `main`; strict whole-receipt verification remains open because Vercel appended its inactive Toolbar loader to one runtime chunk                                                                                                                                                                                                                                                                                                                            |
+| Deployment                  | **M4 complete** — the stable free Vercel Hobby production URL is reachable from clean Chrome and serves all 900 public files byte-for-byte from the approved receipt and merged `main`; GitHub remains disconnected and the existing Stemry project remains unchanged                                                                                                                                                                                                                                                                                                                   |
 
 ## Technology direction
 
@@ -120,8 +120,7 @@ owner acceptance, application integration, and release verification remain.
 
 [Open the deployed input-layer application](https://socal-whale-vessel-overlap.vercel.app/).
 
-This is an in-progress portfolio deployment, not a released exposure result.
-M4 remains open for the strict whole-receipt asset mismatch described above.
+This is the completed M4/M5-input foundation, not a released exposure result.
 
 ## Screenshots
 

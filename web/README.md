@@ -31,9 +31,9 @@ ADR 0021 selects free Vercel Hobby for these files. The plan and personal,
 unpaid, non-monetized portfolio eligibility are author-confirmed. The isolated
 `socal-whale-vessel-overlap` project now serves the approved reviewed-main
 package at `https://socal-whale-vessel-overlap.vercel.app`. The three public
-project files loaded token-free with exact decoded hashes. M4 remains open
-because Vercel appended a cookie-gated Toolbar loader to one generated runtime
-chunk, preventing a strict byte-for-byte match of the complete public inventory.
+project files loaded token-free with exact decoded hashes. After Production
+Toolbar was disabled for this project and the unchanged package was redeployed,
+all 900 public files matched the approved receipt byte-for-byte and M4 completed.
 
 ## Modeled blue-whale density layer
 

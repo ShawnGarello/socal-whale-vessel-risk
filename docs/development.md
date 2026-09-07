@@ -1429,6 +1429,39 @@ Production-off setting. Per the author's checkpoint instruction, no redeployment
 or repeated browser suite was started; report and obtain explicit approval
 before re-uploading the unchanged approved package and receipt.
 
+**Receipt-exact redeployment and M4 completion:** The author approved that exact
+redeployment. Immediate read-back again verified receipt
+`194f8877d040220214205af1b03917fc320e703114513e7ea04bb819f700352a`,
+application commit `8b1f65c8556955d6f28ee86426c09d55b7ea71fa`, current `origin/main`,
+the linked new project, Production Toolbar off and no Git connection. Vercel
+accepted the unchanged 901-file package as production deployment
+`dpl_ArbLiGBmjzxRHP5CeYj98ugjd1Yu`; the stable alias remained
+`https://socal-whale-vessel-overlap.vercel.app`.
+
+The affected runtime asset then matched its exact 9,689-byte receipt entry with
+no append. Full public verification fetched all 900 public files and 36,020,586
+decoded bytes with zero mismatches. `release.json` matched the approved commit,
+mode and 899-file public release inventory. Repeat requests and headers again
+confirmed Brotli GeoJSON/manifests with year-long immutable caching, no-store
+release identity and revalidated HTML.
+
+Clean Chrome 152.0.7977.76 repeated the complete normal and failure suite at the
+three required viewports. Public no-sign-in access, Oceans readiness, pan/zoom,
+attribution handoff, responsive controls, no horizontal overflow, counts
+4,516 / 2,793 / 1, all disclosures/legends/toggles and the desktop popup passed.
+Normal contexts recorded no console warnings or errors. Four independent blocked
+requests again removed only the whale, vessel, domain or VSR layer under test,
+kept its warning visible and preserved the other layers and map. The separate
+loading check observed the fallback attribution before readiness and SDK
+attribution afterward, recorded 1,365,369 compressed / 6,866,027 decoded bytes
+for the three project GeoJSON files and found no interaction request failures.
+Anonymous VSR item/layer/`FID = 126`, credit and disclaimer checks passed again
+without requesting geometry. The existing Stemry project, team-wide Toolbar
+setting, Git integrations, paid features, ArcGIS content and credentials were
+unchanged. Every applicable M4 completion criterion passes; the later
+final-results geometry comparison remains open because this initial application
+presents no exposure statistics.
+
 ### Release-time VSR service and version check
 
 Before final release, use an anonymous browser session or anonymous HTTP

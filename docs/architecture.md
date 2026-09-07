@@ -13,9 +13,9 @@
 > checksum-addressed static project files on free Vercel Hobby. Initial
 > eligibility, account, capacity and minimum browser-key checks passed on
 > 2026-09-07. The isolated project now serves the reviewed-main package at its
-> stable production origin. Deployed behavior passed, but strict full-receipt
-> matching remains open because Vercel appended its cookie-gated Toolbar loader
-> to one generated runtime chunk.
+> stable production origin. Production Toolbar is disabled for this project,
+> and the final unchanged-package redeployment passed strict receipt matching
+> for all 900 public files.
 >
 > The Next.js application shell, Python processing foundation, deterministic
 > one-extract AIS cleaning, projected water-grid construction, and deterministic
@@ -54,8 +54,8 @@
 > presentation exports and checksum-bound same-origin display are also
 > implemented and locally verified for the whale, vessel-activity, and accepted
 > analytical-domain layers. Vercel Hobby is selected and its route-specific
-> account checks and isolated project are established; deployed-origin browser
-> behavior is verified, subject to the recorded whole-receipt mismatch.
+> account checks, isolated project, deployed-origin browser behavior and full
+> receipt integrity are verified. M4 is complete.
 > See the [roadmap](roadmap.md) for milestone status.
 
 The analytical and statistical domain is accepted in
@@ -406,8 +406,10 @@ and publisher VSR outlines.
 
 This implemented representation is deployed through free Vercel Hobby under
 ADR 0021. The three exact project files and their clean-browser behavior are
-verified at the stable production origin. One platform-appended Toolbar loader
-keeps strict full-receipt matching open.
+verified at the stable production origin. A platform-appended Toolbar loader on
+the first deployment was eliminated by disabling Production Toolbar for this
+project and redeploying the unchanged approved package; all public bytes now
+match the receipt.
 
 **A static exposure representation is also implemented and measured as local
 delivery evidence.** The provider-neutral boundary emits qualified-water-only
