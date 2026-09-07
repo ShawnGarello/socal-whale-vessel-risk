@@ -44,9 +44,14 @@ covers implementation and local computation. It does not adopt the resulting
 numbers as final headlines, assert scientific validation, or authorize public
 publication. Independent review of the implementation and results, and owner
 acceptance of the results, maps and final messaging, remain open, and M6 remains
-incomplete; see the
+incomplete. Distinct checksum-pinned display/results contracts are now
+implemented, numerically reconciled against verified table values, repeated
+deterministically, and inspected in QGIS. That is local delivery evidence, not
+acceptance of a publication route, application integration, deployment, or a
+headline. See the
 [roadmap](../roadmap.md#m6--whalevessel-exposure-analysis) and the
-[M6 handoff](../m6-exposure-foundation-handoff.md).
+[M6 foundation handoff](../m6-exposure-foundation-handoff.md) and
+[exposure-results delivery handoff](../m6-exposure-results-delivery-handoff.md).
 
 ## Why these exist
 

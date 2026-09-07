@@ -58,6 +58,7 @@ python -m uv run python -m whale_vessel_analysis.multiday_ais_cli --help
 python -m uv run python -m whale_vessel_analysis.period_vessel_rule_evidence_cli --help
 python -m uv run python -m whale_vessel_analysis.vessel_grid_cli --help
 python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help
+python -m uv run python -m whale_vessel_analysis.exposure_delivery_cli --help
 ```
 
 `uv.lock` is committed. `uv sync --locked` creates an ignored local virtual
@@ -102,12 +103,12 @@ geometry, and accepted `receivers_50_nautical_miles` scope-reduced,
 system-performance-qualified AIS analytical domain. The domain is 50 nautical
 miles (92,600 metres) from the relevant NAIS reception stations, not from the
 coast and not empirical 2024 coverage. It requires exact fractional boundary
-geometry; outside cells are excluded from future headline statistics, not
+geometry; outside cells are excluded from headline statistics, not
 classified as low traffic. Unknown receiver uptime, station completeness, feed
 interruptions, antenna and terrain effects, and unverified observational
 completeness remain explicit. Loading this contract cannot alter the upstream
-processing configuration or its digest. No exposure, inside-versus-outside
-statistics, exposure-layer, or application-results contract is implemented.
+processing configuration or its digest. The downstream exposure contracts
+described below consume this reporting domain without changing it.
 
 ## Verify one author-supplied AIS delivery
 
@@ -2642,12 +2643,12 @@ Implemented under `exploratory_relative_exposure_v1` / method version `1.0.0`,
 following [ADR 0020](../docs/decisions/0020-propose-area-integrated-relative-exposure.md).
 The ADR is **accepted for bounded exploratory execution only**: the method may
 be run locally, but its results still need independent review and owner
-acceptance, and must not be quoted as headline findings. The run identity and
-artifact hashes recorded in the handoff are historical: they predate the
-correction that removed execution lineage from run identity, so a fresh bundle
-reproduces the numbers but not those identifiers. There is no exposure
-publication route and no application-results contract; the bundle is ignored
-local evidence.
+acceptance, and must not be quoted as headline findings. Historical bundle
+identities remain recorded in the foundation handoff. Fresh current-code
+bundles and the downstream display/results delivery evidence are recorded in
+the [delivery handoff](../docs/m6-exposure-results-delivery-handoff.md). The
+analytical bundle remains ignored local evidence; a public route is not yet
+accepted and nothing has been published.
 
 Four modules make up the boundary.
 
@@ -2657,6 +2658,7 @@ Four modules make up the boundary.
 | `exposure_inputs` | The exact retained M3 water, whale and vessel join, with lineage validated against verified dataset metadata rather than historical paths |
 | `exposure.py` | Intensities, area-weighted quantile thresholds, maximum-scaled display normalization, 10 km coarsening, method comparison and per-grid summaries |
 | `exposure_run` | The full run: both grids, the threshold family, sensitivity comparisons, the deterministic bundle, and a read-back re-verification of what it wrote |
+| `exposure_delivery` | Checksum-pinned analytical-bundle reconciliation, explicit typed public projections, WGS 84 display export, and the small versioned application-results contract |
 
 **Two different areas are involved, and confusing them is the easiest way to get
 this wrong.**
@@ -2723,10 +2725,88 @@ may be committed or publicly exported.
 python -m uv run pytest tests/test_exposure.py tests/test_exposure_geometry.py
 ```
 
-64 synthetic cases, including the ADR 0004 fractional-boundary cases whose
+64 foundation synthetic cases, including the ADR 0004 fractional-boundary cases whose
 answers are known by construction, area and abundance conservation, threshold
 tie and zero handling, scaling invariance, coarsening conservation, and
 regenerated, inconsistent and equal-identity lineage behavior.
+
+### Exposure display and application-results delivery
+
+`exposure_delivery_cli` consumes the three deterministic files from one exact
+current-code bundle; the caller must pin every source SHA-256. Before creating
+any public object it re-verifies both tables, reconstructs the complete accepted
+summary calculation from their serialized rows, and reconciles the entire
+sensitivity report. A matching report checksum identifies bytes but is not
+treated as proof that the statistics are correct.
+
+```text
+python -m uv run python -m whale_vessel_analysis.exposure_delivery_cli --bundle ../data/derived/<bundle-name> --expected-5km-sha256 <sha256> --expected-10km-sha256 <sha256> --expected-report-sha256 <sha256> --display-output ../web/public/layers/relative-exposure.geojson --results-output ../results/exposure-results.v1.json --generated-at-utc <explicit-UTC>
+```
+
+Use fresh ignored destinations while comparing an export; pass `--overwrite`
+only for an intentional replacement after preserving the previous evidence.
+The coordinated writer produces:
+
+- `relative_exposure_display_v1` GeoJSON with 2,793 qualified 5 km cells;
+- a colocated `relative_exposure_display_manifest_v1` that binds the display
+  checksum to the exact results checksum and results ID; and
+- tracked `relative_exposure_application_results_v1`, schema version 1, at
+  `results/exposure-results.v1.json`.
+
+The display and results are separate from private generation lineage. Public
+nested objects are rebuilt through explicit typed allowlists; unexpected,
+mistyped, private, debug, path-shaped, credential-like, or unapproved text and
+enumeration fields fail validation or are excluded. Display geometry is exact
+qualified water only. No VSR geometry or per-cell VSR split crosses the public
+boundary, and excluded cells are absent rather than represented as zero.
+
+Fresh first/repeat analytical bundles have stable run ID
+`exposure-6dd927974fae959765c9b5c3` despite distinct timestamp-bearing upstream
+lineage. Their deterministic inputs are:
+
+| Artifact | SHA-256 |
+|---|---|
+| `exposure-5km.parquet` | `a8e65b6d0019a24122f16feb7d847e5e5a31ce1670a2eaa9ebfbb64fe4835a29` |
+| `exposure-10km.parquet` | `cff427ae54b3660389cc8abe7a547ea060ee39038b542b9ee819d00c53eaf194` |
+| `sensitivity-report.json` | `520afde75f34a0293feef17376d44be12e9b96dcfe1b4dac9bee56747b0504ff` |
+
+The canonical/repeated delivery identity is
+`exposure-results-8a0bf6c27e00fb40a13d6870`. Final public-artifact hashes
+are `1ccb605cad9640f42ca5eb2cb1ac3543b3a1341a3375f6e78166dd0fd16e92cb`
+for the display,
+`0a1b0dea947b3f96dec9cc6ca5037ffe7af4ce949c4e197d8126818e71c569c0`
+for its manifest, and
+`ebba5b06ee804d80b34f5714ecb1d100c0b05d3579307e88384886dcbd339e60`
+for the results. The display is 2,542,744 bytes raw, 528,235 bytes at gzip
+level 9, and 375,238 bytes at Brotli quality 11. This makes static same-origin
+delivery a credible measured candidate, not an accepted route or deployment.
+
+Inspect the exact final display independently in QGIS:
+
+```text
+QT_QPA_PLATFORM=offscreen <qgis-python> scripts/qgis_inspect_exposure_display.py --export ../web/public/layers/relative-exposure.geojson --sha256 1ccb605cad9640f42ca5eb2cb1ac3543b3a1341a3375f6e78166dd0fd16e92cb --vsr <immutable-local-vsr-snapshot> --vsr-sha256 2358bd39df3f3ca084b8ef8c3ea3321c7d93fe9bec76f5a2d61e01370549c783 --font C:/Windows/Fonts/arial.ttf --output-dir ../data/interim/<fresh-inspection-name>
+```
+
+The final QGIS 4.2.1 / GDAL 3.13.2 inspection passed for those exact display
+and manifest hashes: EPSG:4326, 2,793 features, no empty or invalid geometry,
+and matching counts, parts, holes, vertices, area, extent, and threshold flags.
+The ignored report and two reviewed render identities are in the delivery
+handoff; the local VSR was inspection context only and was not exported.
+
+Delivery-focused validation is:
+
+```text
+python -m uv run pytest tests/test_exposure_delivery.py tests/test_exposure_delivery_cli.py
+```
+
+All 24 focused tests and the full 617-test analysis suite passed on 2026-09-06.
+They cover known answers, denominators, nulls, thresholds, decimal presentation,
+inconsistent checksum-matched summaries, strict provenance and public-field
+allowlists, private/debug injection, deterministic repetition, identity
+stability, output guards, and CLI behavior. Resource-profile evidence for the
+two fresh analytical runs and all exact ignored artifact locations are recorded
+in the delivery handoff. Independent audit and owner conclusion/map review are
+still required.
 
 ## Re-running the large-tabular benchmark
 

@@ -48,12 +48,18 @@ Historical candidate-run sections below retain their original scope.
 **M6 update, 2026-09-06:** the ADR 0020 exposure method is implemented as
 `exposure_geometry`, `exposure_inputs`, `exposure.py` and `exposure_run`, and was
 run locally to produce a deterministic, byte-identically repeated exploratory
-bundle that was then rendered against its exact checksums in QGIS. The guarded
-profiler invocation, the checksum-bound rendering route and the test command are
-in the [analysis README](../analysis/README.md#exploratory-relative-exposure-foundation).
+bundle that was then rendered against its exact checksums in QGIS. Fresh
+current-code bundles confirm that timestamp-bearing upstream lineage does not
+change analytical identity. The separate exposure-delivery boundary now
+reconciles every consumed report statistic against the verified tables and
+writes typed, allowlisted display/results contracts. Its exact repeat and final
+display both passed, including checksum-bound QGIS inspection. The guarded
+profiler invocation, checksum-pinned export and rendering routes, and test
+commands are in the
+[analysis README](../analysis/README.md#exposure-display-and-application-results-delivery).
 The ADR is accepted for exploratory execution only: the results still need
-independent review and owner acceptance, no exposure statistics, layer or
-publication contract exists, and M6 remains in progress. Status lives in the
+independent review and owner acceptance; no publication route or application
+integration is accepted, and M6 remains in progress. Status lives in the
 [roadmap](roadmap.md#m6--whalevessel-exposure-analysis).
 
 ## Documentation sources of truth
@@ -260,10 +266,12 @@ DuckDB period relation, a bounded period vessel-rule evidence command, a
 parameterized candidate vessel-grid aggregation, a production vessel-input
 boundary with separate movement-speed summaries, deterministic public-display
 exports of the validated whale grid, vessel activity, and accepted domain, a
-guarded exploratory relative-exposure boundary with its checksum-bound QGIS
-inspection script, and synthetic tests. It does **not** submit orders, download AIS, or publish any
-artifact, and the exposure bundle it writes is ignored local evidence rather
-than an accepted result or an application-results contract. Run every command
+relative-exposure boundary, its distinct typed display/results delivery
+contracts, and checksum-bound QGIS inspection scripts, plus synthetic tests. It
+does **not** submit orders, download AIS, or publish any artifact. Analytical
+exposure bundles and spatial display staging remain ignored local evidence; the
+small versioned results artifact is committed for later M7 consumption, not
+accepted as a headline or deployment. Run every command
 below from `analysis/`.
 
 **Prerequisites**
@@ -302,8 +310,39 @@ re-run; the built package declares only runtime requirements.
 | `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help` | Proves the separate whale-grid transfer boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.whale_display_export_cli --help` | Proves the separate public-display export boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.vessel_domain_display_export_cli --help` | Proves the vessel-activity and analytical-domain public-display export boundary loads. |
+| `python -m uv run python -m whale_vessel_analysis.exposure_delivery_cli --help` | Proves the separate checksum-pinned exposure display/results boundary loads. |
 
 The toolchain decision is [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md).
+
+**M6 exposure delivery**
+
+Run the delivery boundary only against one checksum-pinned, current-code M6
+bundle. It re-verifies the two tables, recomputes and reconciles all consumed
+summary values, then writes the display, its paired manifest, and the small
+results artifact as one coordinated operation:
+
+```text
+python -m uv run python -m whale_vessel_analysis.exposure_delivery_cli --bundle ../data/derived/<bundle-name> --expected-5km-sha256 <sha256> --expected-10km-sha256 <sha256> --expected-report-sha256 <sha256> --display-output ../web/public/layers/relative-exposure.geojson --results-output ../results/exposure-results.v1.json --generated-at-utc <explicit-UTC>
+```
+
+Generate comparison exports in fresh ignored locations. Use `--overwrite` only
+for an intentional canonical replacement after preserving existing evidence.
+Never edit the generated files or transcribe a result. The display manifest must
+bind the exact display SHA-256 to the exact committed results SHA-256 and results
+ID; M7 and release verification must reject a mismatched pair.
+
+Inspect the exact new spatial representation separately:
+
+```text
+QT_QPA_PLATFORM=offscreen <qgis-python> scripts/qgis_inspect_exposure_display.py --export ../web/public/layers/relative-exposure.geojson --sha256 <display-sha256> --vsr <immutable-local-vsr-snapshot> --vsr-sha256 <vsr-sha256> --font C:/Windows/Fonts/arial.ttf --output-dir ../data/interim/<fresh-inspection-name>
+```
+
+The retained final run used display SHA-256
+`1ccb605cad9640f42ca5eb2cb1ac3543b3a1341a3375f6e78166dd0fd16e92cb`
+and passed in QGIS 4.2.1 / GDAL 3.13.2. Exact source identities, resource
+profiles, results/manifest hashes, failed checks, and render evidence are in the
+[M6 exposure-results delivery handoff](m6-exposure-results-delivery-handoff.md).
+This is local validation, not publication or deployed verification.
 
 **Read-only validation**
 
@@ -1476,10 +1515,13 @@ credits.
   `commercial_vessel_display_export_v1` and
   `analytical_domain_display_export_v1` produce separate vessel-activity and
   accepted-domain GeoJSON. They are locally verified and **not** an accepted
-  hosting decision; nothing has been published and the host is unselected. The
-  exposure representation and the final route for all derived layers remain
-  open, with static files, ArcGIS Location Platform limited data services,
-  ArcGIS Online organization-hosted layers, and a non-Esri route as candidates.
+  hosting decision. The separate M6 exposure delivery boundary produces a
+  measured, locally verified display/manifest pair and a small results
+  contract. This is route evidence, not an accepted route; nothing has been
+  published and the host is unselected. The final route for all derived layers
+  remains open, with static
+  files, ArcGIS Location Platform limited data services, ArcGIS Online
+  organization-hosted layers, and a non-Esri route as candidates.
 - Generated display layers are never committed. The exporters stage them into
   Git-ignored `web/public/layers/`, and refuse any destination outside this
   checkout's ignored output roots.
@@ -1488,9 +1530,9 @@ credits.
   publisher's service. No project-hosted copy or derived VSR geometry may cross
   the publication boundary; see
   [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md).
-- Small results the application reads — such as a future summary-statistics
-  file — may be committed once their contract is allowed, so the application
-  and its numbers stay versioned together.
+- The small `relative_exposure_application_results_v1` JSON artifact is
+  committed so later M7 application code and its numbers stay versioned
+  together. It remains machine-readable delivery data, not an accepted headline.
 - A committed generated file must record what produced it and when.
 - Build output, caches, virtual environments, QGIS/ArcGIS scratch data, and
   editor state are ignored, never committed.
@@ -1540,7 +1582,7 @@ the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 623 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 647 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -1600,6 +1642,10 @@ tie handling, invariance under global positive scaling, 10 km coarsening
 conservation, method comparison and rank behavior, and exposure-input lineage
 admission covering regenerated upstream bundles, inconsistent provenance and
 equal analytical identity under distinct source lineage,
+exposure-delivery known answers, full report-to-table numerical reconciliation,
+checksum-matched inconsistent summaries, denominators, nulls, thresholds,
+presentation rounding, typed public allowlists, private/debug injection,
+deterministic export and timestamp-independent results identity,
 and all CLI boundaries.
 Tests create temporary CSVs and geometry or use data in memory; the ignored M2
 artifacts are not test prerequisites. Third-party libraries are not themselves

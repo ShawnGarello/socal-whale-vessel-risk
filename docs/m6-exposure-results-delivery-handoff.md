@@ -28,8 +28,10 @@ the M6 analytical-foundation handoff.
   from branch history.
 - The concurrent M5 vessel/domain-display session used the separate
   `C:\Users\teche\socal-whale-vessel-risk-vessel-domain-display` worktree.
-- This branch does not modify web application code, `web/README.md`, the
-  vessel/domain-display export, or shared owner documents.
+- The implementation phase did not modify web application code, `web/README.md`,
+  the vessel/domain-display export, or shared owner documents. A later
+  owner-authorized documentation-only pass integrated this handoff's proposed
+  updates into the shared owners; it changed no application or analysis code.
 
 The owner-selected presentation direction is implemented as a contract, not as
 a scientific expansion: the proportional product is primary, log traffic is a
@@ -434,27 +436,29 @@ Web checks were not run because this branch is prohibited from changing or
 integrating web code. Both analysis and web CI jobs still must pass at the exact
 future PR head before any authorized merge.
 
-## Proposed shared-owner documentation updates
+## Shared-owner documentation integration
 
-This session intentionally did not edit shared owners. At integration/review,
-the following changes should be proposed against their current contents:
+An owner-authorized documentation-only follow-up integrated the proposed
+updates into their owning documents:
 
-- `docs/architecture.md`: document the two public exposure contracts, their
-  provider-neutral boundary, exact pairing, and measured static payload.
-- `docs/roadmap.md`: record downstream M6 contract/export completion while
-  leaving M6 incomplete pending independent audit and owner conclusion/map
-  review; do not mark M7 complete.
-- `docs/development.md`: add the checksum-pinned export/QGIS commands, generated
-  output handling, current 608-test count, and release pairing check.
-- `analysis/README.md`: add the exposure-delivery CLI, contract definitions,
-  artifact identities, deterministic repeat, resource evidence, and QGIS record.
-- `README.md`: update visible status only after integration and owner approval.
-- `docs/decisions/README.md` and ADR 0020: register or update the accepted public
-  delivery route only after route review; distinguish static-delivery evidence
-  from authorization to deploy.
-- `docs/data-sources.md`: no new source fact was introduced. Add a link to this
-  delivery evidence only if the owner wants the validated downstream identity
-  discoverable there.
+- `docs/architecture.md` now records the two exposure contracts, typed public
+  boundary, exact pairing, measured static payload, and deferred route decision;
+- `docs/roadmap.md` records delivery completion, validation evidence, the
+  proposed interpretation separately from computed observations, and a precise
+  M7 consumer contract while keeping M5 and M6 in progress and M7 not started;
+- `docs/development.md` records checksum-pinned export/QGIS commands, generated
+  output handling, the combined 647-test evidence, and the release pairing check;
+- `analysis/README.md` records the delivery CLI, contract definitions, artifact
+  identities, deterministic repeat, resource evidence, focused tests, and QGIS
+  result;
+- `README.md` exposes the implemented local delivery status while stating that
+  there is no reviewed headline, publication, or deployment; and
+- `docs/decisions/README.md` and ADR 0020 distinguish the measured static
+  delivery evidence from any future route acceptance.
+
+`docs/data-sources.md` was intentionally unchanged because this work introduced
+no source fact or changed source provenance. No publication route was accepted,
+so no new route ADR was created.
 
 ## Remaining review, integration, and release gates
 
@@ -464,8 +468,8 @@ the following changes should be proposed against their current contents:
 - The owner should review the two final QGIS sheets and the proposed conclusion,
   especially how prominently the 17.2741-point formula sensitivity and grid
   sensitivity are shown.
-- Integrate with the M5 vessel/domain branch without overwriting either session's
-  owned work; resolve any helper overlap explicitly after both branches settle.
+- Independently audit the rebased integration with the M5 vessel/domain work,
+  including the combined shared-owner documentation and test surface.
 - Decide and record the actual provider-neutral exposure publication route. The
   static payload is measured and plausible but not yet an accepted deployment
   decision.

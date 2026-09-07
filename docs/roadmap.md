@@ -1480,7 +1480,8 @@ Produce the project's own analytical result: a documented relative exposure laye
 ### Progress
 
 **Method accepted for exploratory execution, computed and locally verified;
-independent review, owner acceptance and every downstream contract remain open**
+downstream delivery contracts implemented; independent audit, owner acceptance,
+M7 integration, publication-route selection, and release remain open**
 
 - [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md)
   defines the calculation: per cell, modeled whale density multiplied by period
@@ -1511,6 +1512,42 @@ independent review, owner acceptance and every downstream contract remain open**
   64,716.65982166734 km² at both resolutions; the 5 km layer has 4,516 rows
   (2,793 qualified) and the 10 km layer 1,155 rows (738 qualified). The bundle
   is ignored local evidence under `data/derived/`; nothing is published.
+- Two fresh current-code analytical runs preserved those numerical values and
+  produced the same run ID, `exposure-6dd927974fae959765c9b5c3`, plus
+  byte-identical 5 km, 10 km, and sensitivity-report files despite distinct
+  timestamp-bearing upstream lineage. This verifies the corrected separation
+  between deterministic analytical identity and private execution provenance.
+  The runs processed only the retained small grid tables under the documented
+  memory/disk/RSS gates; no AIS retrieval, five-month cleaning, cache clearing,
+  or historical-artifact replacement occurred.
+- Distinct downstream contracts now exist:
+  `relative_exposure_display_v1`, its
+  `relative_exposure_display_manifest_v1`, and
+  `relative_exposure_application_results_v1` schema 1. The display has 2,793
+  qualified-water 5 km features and is 2,542,744 bytes raw, 528,235 gzip, and
+  375,238 Brotli; the small tracked results artifact is 31,381 bytes. The
+  manifest binds the exact display checksum to results ID
+  `exposure-results-8a0bf6c27e00fb40a13d6870` and its checksum. These local
+  artifacts make static same-origin delivery a credible candidate, not an
+  accepted route, publication, application integration, or deployment.
+- The exporter verifies pinned source bytes, re-verifies both analytical tables,
+  recomputes the accepted summaries from their serialized rows, and reconciles
+  the complete supplied report. A matching checksum identifies report bytes but
+  does not establish their numerical correctness. Public nested objects are
+  built through explicit typed allowlists; unexpected fields, invalid controlled
+  text/enumerations, private paths, credentials, debug metadata, execution
+  clocks, and private generation lineage cannot propagate.
+- The final display and manifest passed checksum-bound inspection in QGIS 4.2.1
+  / GDAL 3.13.2: EPSG:4326, 2,793 nonempty valid geometries, and matching feature,
+  part, hole, vertex, area, extent, and threshold-flag summaries. Qualified
+  domain-water geometry is the only public geometry. The immutable local VSR was
+  inspection context only; no copied or derived VSR geometry was exported.
+- Final verification passed 24 focused exposure-delivery tests and the full 647-
+  test analysis suite, plus lock, format, lint, strict type-check, and build
+  gates. Known answers cover statistics, denominators, nulls, thresholds,
+  presentation rounding, incompatible provenance, checksum-matched but
+  internally inconsistent reports, private/debug injection, deterministic
+  repeat, and timestamp-independent results identity.
 - Primary 5 km product results: **92.2185%** of integrated exposure inside the
   VSR zone, and 93.6947 / 98.5024 / 99.9401% of selected high-exposure water
   area at the 80th, 90th and 95th percentiles. These are exploratory overlap
@@ -1529,6 +1566,18 @@ independent review, owner acceptance and every downstream contract remain open**
   validated hotspot clusters: the product method's leading outside cells are
   `r015_c079`, `r015_c078` and `r016_c054`, whose top ten contribute 9.4717% of
   outside exposure.
+- **Proposed interpretation, pending owner review:** under the proportional
+  product, most modeled blue-whale-habitat and commercial-vessel-activity
+  co-occurrence in receiver-qualified Southern California water is concentrated
+  inside the current VSR zone. This is not formula-invariant: the required
+  log-traffic sensitivity materially lowers the integrated inside share and
+  broadens the spatial pattern. The defensible scope is exploratory spatial
+  overlap, not collision probability, causation, avoided collisions, VSR
+  effectiveness, an optimal boundary, or a policy recommendation. The mixed
+  vintages — modeled multi-year whale density, July–November 2024 traffic, and
+  the 2026 VSR boundary — and the uniform-within-water-cell assumption must
+  remain visible. These sentences are interpretation for review, distinct from
+  the computed observations above, and are not accepted website copy.
 - QGIS 4.2.1 rendered the exact first-bundle checksums with the pinned local VSR
   and domain. Coastline and island holes, curved receiver clipping, absence of
   colored geometry outside qualification, and VSR boundaries crossing cells
@@ -1542,7 +1591,10 @@ independent review, owner acceptance and every downstream contract remain open**
     first and repeat runs are byte-identical, `exposure_run` reads its own
     output back and re-checks formula, integration, geometry, nulls, indices,
     flags and summaries, and the bundle was rendered in QGIS against its exact
-    checksums.
+    checksums. The downstream delivery boundary additionally reconciles the full
+    report against the verified tables, sanitizes typed public projections,
+    reproduces exact bytes from independent current-code bundles, and has its
+    own checksum-bound final-display QGIS evidence.
   - **Pending.** Independent review of the implementation and the results by
     another session, per the
     [review workflow](development.md#pull-request-and-continuous-integration-workflow),
@@ -1553,11 +1605,14 @@ independent review, owner acceptance and every downstream contract remain open**
     the calculation, it does not settle which statements, if any, become
     headline findings. Human scientific and cartographic review of the maps is
     also outstanding.
-- Also not done: uncertainty propagation, and the downstream exposure
-  statistics, layer and publication contracts, which must be settled with M5.
-  Execution and reproduction detail is in the
-  [M6 handoff](m6-exposure-foundation-handoff.md), which is navigation and
-  evidence, not the owner of this status.
+- Also not done: independent audit, owner conclusion/map review, propagation of
+  native whale uncertainty, selection of the exposure publication route, M7
+  application consumption and browser verification, and the M9 release-time VSR
+  comparison. Analytical execution detail is in the
+  [M6 foundation handoff](m6-exposure-foundation-handoff.md); downstream contract,
+  artifact, resource, repeat, and final QGIS evidence is in the
+  [M6 exposure-results delivery handoff](m6-exposure-results-delivery-handoff.md).
+  These are navigation and evidence, not the owner of this status.
 
 **Deliverables**
 - A written definition of the relative exposure calculation: inputs, normalization, weighting, combination method, and units.
@@ -1587,10 +1642,12 @@ independent review, owner acceptance and every downstream contract remain open**
 - Reproducible from the derived inputs: **met for the exploratory bundle** —
   first and repeat runs produced byte-identical deterministic files from pinned,
   checksum-verified retained inputs.
-- Every statistic states its basis and threshold: **met in the retained report** —
+- Every statistic states its basis and threshold: **met in the retained report
+  and machine-readable results contract** —
   integrated shares are distinguished from high-exposure **water-area** shares,
   and thresholds are qualified-area-weighted observed quantiles including zeros
-  and all ties. Not yet met in any public-facing text, because none exists.
+  and all ties. Not yet met in application-facing narrative, because M7 has not
+  started.
 - Fractional boundary statistics with passing synthetic cases and a labelled
   uniformity assumption: **met**.
 - Accepted analytical domain applied exactly: **met** — results use the
@@ -1601,8 +1658,11 @@ independent review, owner acceptance and every downstream contract remain open**
 - Sensitivity documented, including non-robust conclusions: **met** — the
   log-traffic result is recorded as materially non-robust.
 - Layer and statistics consistent, with the pre-release comparison of the
-  publisher-hosted display geometry against the local snapshot: **not met** —
-  no exposure layer is published and that release gate belongs to M9.
+  publisher-hosted display geometry against the local snapshot: **met locally
+  for the checksum-bound delivery artifacts; release criterion not met** — the
+  exporter verifies every public numerical field against the analytical bundle
+  and the final display passed QGIS inspection, but no exposure layer is
+  published and the publisher-hosted VSR comparison still belongs to M9.
 
 Independent review of the exact commit and artifacts, and owner acceptance of
 the results, sensitivity, maps and final messaging, are also outstanding, so M6
@@ -1627,6 +1687,10 @@ Bring the analysis into the application so a visitor can explore the exposure la
 - M5 (input layers publicly delivered and displayed).
 - M6 (exposure layer and statistics exist).
 
+The M6 display/results artifacts now exist for integration without recomputing
+science, but M5 remains incomplete, the exposure route is not selected, M6 still
+awaits independent audit and owner acceptance, and M7 has not started.
+
 **Deliverables**
 - The derived exposure layer delivered through the selected public route and
   rendered in the application.
@@ -1634,6 +1698,17 @@ Bring the analysis into the application so a visitor can explore the exposure la
 - Explanatory text stating what the exposure layer represents, in plain language, with its assumptions visible at the point of reading.
 - Methodology and limitations reachable from the application, not only from the repository.
 - Responsive behavior adequate for a reviewer opening the app on a laptop or phone.
+- Contract-pinned consumption of `results/exposure-results.v1.json`: use
+  `scenarios.5km_product` as the primary measure, keep
+  `scenarios.5km_log_traffic` plainly visible as required sensitivity, and use
+  the generated presentation strings rather than transcribing or recalculating
+  values. Default high-exposure text to the all-valid p90 definition while
+  retaining p80/p95 and positive-only sensitivity information.
+- Exact pairing of the selected display bytes and manifest with the committed
+  results checksum and results ID. Excluded cells render as no analytical
+  coverage, never low or zero; indices remain release-relative. Public VSR
+  context continues to reference publisher-hosted `FID = 126` and never copies
+  local analytical VSR geometry.
 
 **Completion criteria**
 - The statistics displayed match the documented analysis exactly.
@@ -1644,9 +1719,9 @@ Bring the analysis into the application so a visitor can explore the exposure la
 
 **Risks and open questions**
 - Presenting a single headline percentage invites overinterpretation; the framing needs care.
-- Interactive exploration of a continuous surface may require a pre-rendered or
-  tiled representation rather than raw values; the format remains open until
-  the real output is measured.
+- The measured static exposure artifact is a credible same-origin candidate,
+  but browser performance with all layers, responsive behavior, and the final
+  provider-neutral route remain open.
 
 ---
 
