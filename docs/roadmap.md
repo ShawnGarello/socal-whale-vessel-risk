@@ -1114,6 +1114,39 @@ The ordered steps for all of the above are in
 
 ### Completion criteria status
 
+**2026-09-07 closure preparation:** `main` and freshly fetched `origin/main`
+matched at `c8bf3977b4a43f7b2e691e87011bdda34300fbf7`, with a clean starting
+tree. Existing M4 branches were inspected and predated that main state. Work
+continues on `feat/m4-release-staging` in a dedicated worktree.
+
+The three retained input GeoJSON files were rehashed and match the application
+bindings: whale `831a5412…662e154`, vessel `3a7f2dee…0d3288`, and domain
+`7020ca8d…b3bc7bf` (full identities in `web/scripts/release-inputs.json`). The
+retained vessel/domain QGIS and browser reports match their previously recorded
+SHA-256 values `2cfca5ca…e55a140` and `8e9e1395…5501a`; the inspected geometry
+has not changed. The selected whale manifest records a later generation time,
+with the same inspected GeoJSON identity. This recheck does not claim a new
+spatial inspection or deployed browser test.
+
+Anonymous HTTP requests on 2026-09-07 confirmed public item
+`b400c7f418b04dc5a9d7ce5015adae32`, its expected Feature Service, and one
+`FID = 126` feature named `California Voluntary Vessel Speed Reduction Zone`,
+season `April 22 - December 31, 2026`. Item credit and the non-navigational
+disclaimer remain present. No geometry was requested, retained or compared:
+the final-results snapshot-comparison gate remains open.
+
+Local staging tooling is implemented for the initial three-input application,
+with pinned public manifests, isolated committed-source builds and full upload
+inventories. [ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md)
+proposes Vercel Hobby and a route-specific hosted-test criterion, **pending
+author agreement**. Existing M4 requirements below are unchanged. No account
+session was accessed, no project or service was created, and there is no
+deployment approval or public URL. The historical key's later `Token Invalid`
+result remains a release-key blocker; earlier local success is not current
+credential verification. Actual account product, billing, usage/headroom,
+capabilities, Hobby plan/eligibility and production key restrictions await
+author evidence. Development owns staging and the deployment checkpoint.
+
 | Criterion | State |
 |---|---|
 | Builds locally | **Verified.** `npm run build` succeeds; the export was served and loaded. |

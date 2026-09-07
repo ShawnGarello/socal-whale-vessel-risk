@@ -606,6 +606,14 @@ it belongs in the reproducible Python path.
 
 ## Deployment model
 
+[ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md) proposes the
+author's preferred Vercel Hobby route for the existing input-layer application.
+Local release staging is implemented to package committed source and exactly
+three pinned GeoJSON/manifest pairs as static Build Output API v3 output.
+The proposal awaits author agreement and account evidence; no host is accepted
+or deployed by that implementation, and exposure integration remains outside
+this initial deployment.
+
 - Next.js produces a static export served over HTTPS from a stable public URL.
 - Version 1 has no custom backend, server-side analysis, database, or runtime
   application server.

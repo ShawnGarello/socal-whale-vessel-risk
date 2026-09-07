@@ -29,8 +29,10 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > interface distinguishes excluded water from low or zero recorded activity.
 >
 > **Nothing has been deployed or published.** There is no public URL, no
-> project-derived layer is hosted anywhere, and the host is unselected. Local
-> rendering is not deployed verification. The exposure method and its distinct
+> project-derived layer is hosted anywhere, and the host is unselected. Release
+> staging is implemented for the proposed free Vercel route; account
+> verification, author agreement, review and deployment approval remain open.
+> Local rendering is not deployed verification. The exposure method and its distinct
 > display/results delivery contracts are implemented and locally verified, but
 > **the results are exploratory and not yet independently reviewed or accepted,
 > and no number from them is a finding of this project yet.** The final

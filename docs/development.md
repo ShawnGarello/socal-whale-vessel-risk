@@ -1158,7 +1158,8 @@ involved in any part of the production of the project, including a paid
 employee or consultant writing the code." The enumerated examples — collecting
 payment, advertising a product or service for sale, being paid to create or
 host the site, affiliate linking as the site's primary purpose, advertisements,
-and soliciting donations — do **not** apply to this project. The broad
+— do **not** apply to this project. The current guidelines explicitly exclude
+donation requests from commercial usage (rechecked 2026-09-07). The broad
 "financial gain" clause is the open question for a portfolio piece aimed at
 internship reviewers, and Vercel's own guidance is to ask their support team
 when unsure. This is the author's decision. If it resolves unfavourably, the
@@ -1174,17 +1175,11 @@ is known to be necessary yet.
 
 **Proposed release staging**
 
-1. Regenerate every display export from its exact validated sources and
-   checksums.
-2. Assemble an isolated, ignored release directory: the static export plus the
-   checksum-addressed layer files and their manifests.
-3. Verify that directory — file count, total size, no source data, no VSR
-   geometry, no private lineage, no credential — and record the application
-   commit together with every data checksum.
-4. Author runs the build and the deploy, then verifies the public URL in a
-   clean browser with no session.
-5. Keep the previous complete release available for rollback, and never replace
-   different bytes at an immutable URL.
+Use the implemented local procedure below. Reuse the exact validated retained
+display exports after hashing them; regeneration is needed only if those bytes
+are missing or invalid. Do not rerun AIS processing for deployment. A browser
+key is intentionally in the built JavaScript; it must be the explicitly scoped
+public basemap key, never a publication or account credential.
 
 **Before calling a deployment done**
 
@@ -1197,6 +1192,145 @@ For a release that carries project-derived layers, also confirm that the fetched
 bytes match the pinned checksum, that compression and cache headers behave as
 expected, that the layer's source metadata is reachable, and that the deployed
 application commit is the intended one. A local check proves none of these.
+
+### Initial M4 release staging and approval procedure
+
+The local tool is `web/scripts/stage-release.mjs`. Its committed input inventory
+is `web/scripts/release-inputs.json`; the three layer identities must also match
+the existing application source bindings. Manifest hashes select exact retained
+generation records and do not replace separate spatial-inspection evidence.
+The selected whale manifest is the September 7 UTC generation retained with
+the vessel/domain display work; its GeoJSON is identical to the inspected whale
+export. No generation manifest is edited.
+
+From a clean dedicated checkout's `web/` directory, for a local keyless rehearsal:
+
+```powershell
+node scripts/stage-release.mjs --rehearsal m4-rehearsal-01 C:/Users/teche/socal-whale-vessel-risk-vessel-domain-display/web/public/layers
+```
+
+The source directory argument is read-only. Only the six pinned files are read.
+The tool reads tracked `web/` files from the current commit, never from a dirty
+working copy, excludes environment files, and refuses unreviewed public assets
+other than the existing favicon. It creates a new ignored directory under
+`data/interim/m4-releases/<name>/`; existing and failed attempts are preserved.
+The isolated source build runs `npm run verify:clean`, including `npm ci`, all
+web checks and the static export. Public layer URLs are fixed to their SHA-256
+filenames. All inherited `NEXT_PUBLIC_` overrides are removed; the default
+`arcgis/oceans` basemap is explicitly selected. Rehearsals have no key and are
+labelled **not for deployment**.
+
+The output has three boundaries:
+
+- `source/`: isolated build and dependencies, private and never uploaded;
+- `deploy/.vercel/output/`: only `config.json` and static application assets,
+  six public input files, and `release.json`;
+- `receipt.json` and sanitized `verification.log`: local verification records,
+  outside the upload directory. The receipt inventories every uploaded file,
+  including the public release inventory and routing configuration.
+
+`release.json` records the application commit and hashes/lengths of all static
+files except itself. The local receipt binds that file without a circular hash.
+Generated files remain ignored. The tool refuses changed/missing inputs, stale
+application bindings, symlinks in output, unsupported export file types, extra
+layer files, known source-directory paths in output, and packages exceeding
+100,000,000 bytes or 15,000 files. Exact input hashes are the public-data
+allowlist; this is not a generalized secret detector. Review committed source
+and the actual inventory before approval. No raw data, private generation
+lineage, exposure results or VSR geometry is an input to staging.
+
+For a release candidate, first independently audit the implementation, obtain
+push/merge authorization, pass both `analysis` and `web` PR checks, merge through
+GitHub, fetch, and prepare a clean dedicated checkout at `origin/main`. Privately
+supply `NEXT_PUBLIC_ARCGIS_API_KEY` in the invoking process environment, then run
+the same command without `--rehearsal` and with a new name. The tool requires
+HEAD equal to `origin/main` and a nonempty key; it does not verify the key's
+validity, account rights or referrers. Never put its value on a command line or
+in chat. No deployment tool is invoked by staging.
+
+Before external actions, present the source commit, receipt hash, six artifact
+identities, actual Hobby/account findings, intended project/origin, key scope
+and referrers, requested permissions, source-use posture and rollback package.
+Get explicit author approval for project creation/linking, any key/referrer
+change and the exact upload. No GitHub integration is needed. Do not create a
+project, change deployment protection, or choose a paid plan/trial/add-on under
+the staging authorization.
+
+After approval and private CLI authentication, link only the `deploy/` directory
+to the approved Hobby project (author-reviewed `vercel link`, no automatic
+defaults). From that directory use `vercel deploy --prebuilt --prod`. Record
+the CLI version used and read the selected scope/project back before uploading.
+Only `.vercel/output` is the approved payload; never deploy `source/`, the
+checkout, or a Git-only build. Verify its inventory against `receipt.json`
+immediately before upload using, from the checkout's `web/` directory:
+
+```powershell
+node scripts/stage-release.mjs --verify <release-name> <approved-receipt-sha256>
+```
+
+This checks the complete upload file set, hashes and sizes, including added
+files. A matching rehearsal receipt remains ineligible for deployment.
+This direct Build Output API path is documented by
+[Vercel's static primitives](https://vercel.com/docs/build-output-api/primitives)
+and [output configuration](https://vercel.com/docs/build-output-api/configuration);
+the [CLI prebuilt option](https://vercel.com/docs/cli/deploy#prebuilt) uploads
+local output. Provider acceptance has not yet been tested. This supersedes the
+earlier preference for a framework-aware `vercel build` trial, not the approval
+or deployed-verification gates.
+
+Restrict the basemap key to the exact approved stable HTTPS production origin
+and authorized localhost origin; add a specific deployment hostname only if it
+will actually be tested. Do not allow all `*.vercel.app` tenants. Privileges
+must cover basemap access only, without publishing/account management or unused
+item grants. The author must verify expiry and any required regeneration
+privately. Referrer changes require a valid replacement build where applicable;
+the old locally successful key was later reported invalid.
+
+Verify in clean Chrome at 390 × 844, 820 × 1180 and 1440 × 900 CSS pixels:
+
+1. Public HTTPS with no host/ArcGIS visitor sign-in, and `release.json` plus
+   fetched application assets matching the approved receipt and main commit.
+2. Default oceans basemap ready, pan/zoom working, attribution visible before
+   and after readiness, and usable responsive controls with no overflow.
+3. Three input layers fetched from the deployed origin with matching decoded
+   SHA-256 bytes, counts 4,516 / 2,793 / 1, and readable citations, units,
+   source/use disclosures, legends, toggles and popups.
+4. Anonymous publisher item/layer availability and exactly `FID = 126`; visible
+   Danielle Alvarez/CMSF/BWBS credit and the non-navigational disclaimer.
+5. Sanitized console/network outcomes and one-at-a-time blocked layer requests:
+   only the failed layer is removed, its warning remains, and other layers and
+   map interaction continue. Never retain key-bearing URLs or raw HAR files.
+6. Actual GeoJSON `Content-Type`, `Content-Encoding`, cache headers and repeat
+   request behavior. The configuration requests year-long immutable caching
+   only for checksum-addressed layer/manifest URLs and no-store for release
+   identity. Test HTML freshness too. Record project-file transfer and usable
+   loading behavior; do not benchmark Esri services while that agreement
+   interpretation remains unresolved.
+
+The initial application presents no exposure statistics. Its anonymous VSR
+availability/identity check cannot satisfy the separate snapshot comparison
+below, which must occur before publicly presenting statistics against it.
+
+Rollback: retain each complete receipt and `deploy/.vercel/output` package.
+After author approval, re-upload the last verified package to the same approved
+project with `vercel deploy --prebuilt --prod`, then verify its original commit
+and hashes at the stable origin. This does not rely on a paid rollback feature.
+The embedded basemap key must still be valid for that origin; otherwise rebuild
+the reviewed prior application with an authorized replacement and approve its
+new receipt. For the first deployment there is no previous release: if it fails
+verification, report it as unverified and obtain author direction to remove the
+deployment or publish a reviewed correction. Never mark M4 complete on upload.
+
+Official provider sources were rechecked on 2026-09-07: [Hobby requirements](https://vercel.com/docs/plans/hobby),
+[limits](https://vercel.com/docs/limits), [fair use](https://vercel.com/docs/limits/fair-use-guidelines),
+[Esri SDK licensing/attribution](https://developers.arcgis.com/javascript/latest/licensing/),
+[Location Platform billing](https://location.arcgis.com/help/billing/),
+[pricing](https://location.arcgis.com/pricing/), [sharing](https://location.arcgis.com/help/data-sharing-and-access/),
+and [API-key credentials](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/api-key-credentials/location-platform/).
+Hobby is restricted to personal non-commercial use; account eligibility is
+unverified. Esri requires attribution and an appropriate account; SDK access
+does not prove free service capacity. Hosted Location Platform data is not
+publicly shared. These documented facts are not observed account findings.
 
 ### Release-time VSR service and version check
 

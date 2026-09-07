@@ -55,6 +55,10 @@ headline. See the
 
 ## Why these exist
 
+[ADR 0021](0021-propose-vercel-static-input-delivery.md) proposes Vercel static
+delivery for the initial input-layer application. It is not accepted and does
+not change M4's existing account or hosted-test criteria.
+
 The most expensive question in a project six months old is "why is it like this?" Code shows what was decided; it rarely shows what else was considered or what was known at the time. An ADR captures the reasoning while it is still fresh, so a later reader can tell the difference between a deliberate choice and an accident — and so a decision can be revisited on its merits rather than re-argued from scratch.
 
 This matters more than usual here, because [architecture.md](../architecture.md) deliberately defers a long list of decisions until real data has been inspected. Each of those, when resolved, is exactly the kind of thing an ADR exists to record.
