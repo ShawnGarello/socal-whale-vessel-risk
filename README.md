@@ -2,7 +2,7 @@
 
 A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
 
-> **Status: in development.** M1 through M3 are complete; M4 and M5 are in progress.
+> **Status: in development.** M1 through M3 are complete; M4 through M6 are in progress.
 > The ready AIS period contains all 153 dates and 15,458,567 cleaned commercial
 > observations. The exact water grid and modeled-whale transfer are reproducible
 > and visually verified. All four full-period candidate vessel grids were
@@ -22,16 +22,22 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > WGS 84 GeoJSON and verified on 2026-09-06 in QGIS and in a browser at the
 > three documented viewports. That layer is served as a static same-origin file
 > and its identity is checked against its checksum in the browser.
+> The accepted commercial-vessel activity and receiver-qualified analytical
+> domain are now exported through the same checksum-bound presentation route
+> and were verified locally in QGIS and Chrome at the same viewports. Vessel
+> activity starts hidden, the domain remains visible as an outline, and the
+> interface distinguishes excluded water from low or zero recorded activity.
 >
 > **Nothing has been deployed or published.** There is no public URL, no
 > project-derived layer is hosted anywhere, and the host is unselected. Local
 > rendering is not deployed verification. The exposure method is now implemented
 > and has been run locally, but **its results are exploratory and not yet
 > reviewed or accepted, and no number from it is a finding of this project
-> yet.** The vessel and study-area display layers, publication and deployment
-> remain unfinished. See
+> yet.** The final delivery-route decision, public delivery, exposure display,
+> and deployment remain unfinished. See
 > the [roadmap](docs/roadmap.md), the
 > [M5 whale display handoff](docs/m5-whale-display-handoff.md), the
+> [M5 vessel/domain display handoff](docs/m5-vessel-domain-display-handoff.md), the
 > [M6 exposure handoff](docs/m6-exposure-foundation-handoff.md), and the
 > [M3 handoff](docs/m3-completion-handoff.md).
 
@@ -71,12 +77,12 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Study area | **Accepted with separate roles** — the map/context extent, modeled-whale-support water geometry, and scope-reduced `receivers_50_nautical_miles` analytical domain are distinct; see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) |
 | Processing workflow | **M3 complete** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; the selected vessel rules of [ADR 0018](docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md) were accepted after real production generation, byte-identical repetition and QGIS validation. See [analysis](analysis/README.md). |
 | Analysis and derived layers | **In progress** — the water grid, whale grid and an exploratory relative-exposure bundle are generated, programmatically verified, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md), accepted for exploratory execution only; its results await independent review and owner acceptance, one sensitivity comparison is materially non-robust, and no exposure layer or statistic is published or adopted as a headline |
-| Web application | **M4 foundation and one M5 slice built** — Next.js and TypeScript with an ArcGIS map shell over Southern California. Local keyed oceans-basemap rendering, pan/zoom, attribution handoff, and direct publisher-hosted display of the filtered 2026 California VSR boundary are verified at the required responsive viewports. VSR visibility, source/use disclosure, and isolated failure behavior are implemented; deployment, account capabilities, project-derived layers, and analysis remain unfinished |
+| Web application | **M4 foundation and M5 input-layer displays built locally** — Next.js and TypeScript with an ArcGIS map shell over Southern California. The filtered publisher-hosted 2026 California VSR boundary and checksum-bound same-origin whale, vessel-activity, and analytical-domain layers render at the required responsive viewports with visibility controls, legends, source/method disclosures, deterministic ordering, and isolated failure behavior. Deployment, account capabilities, the final delivery-route decision, exposure display, and public access remain unfinished |
 | Deployment | Not started |
 
 ## Technology direction
 
-The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. The whale layer is delivered as a deterministic WGS 84 GeoJSON export served as a static same-origin file beside the application: an implemented, locally verified route, not an accepted hosting decision. The representation for the vessel and exposure layers, and the public host for all of them, remain open. Candidates are static same-origin files, limited ArcGIS Location Platform feature/vector-tile/map-tile services within verified free-tier capacity, ArcGIS Online organization-hosted layers when account capabilities support them, and a non-Esri route. Current official documentation confirms Location Platform's limited service types and published free tiers; rechecked on 2026-09-06, it also states that Location Platform hosted data services are **not** shared publicly and require a scoped API key, so visitor access on that route would be keyed rather than anonymous. The author's actual account controls, billing state, usage, and headroom remain unverified. Local ArcGIS basemap, publisher-hosted VSR, and whale-layer rendering through the static client are verified; deployed-origin access is not. No project-derived layer has been published, and the project does not authorize paid usage.
+The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. The whale, vessel-activity, and analytical-domain layers are delivered locally as deterministic WGS 84 GeoJSON exports served as static same-origin files beside the application: an implemented and locally verified route, not an accepted hosting decision. The representation for the exposure layer, the final representation decision for all project-derived layers, and the public host remain open. Candidates are static same-origin files, limited ArcGIS Location Platform feature/vector-tile/map-tile services within verified free-tier capacity, ArcGIS Online organization-hosted layers when account capabilities support them, and a non-Esri route. Current official documentation confirms Location Platform's limited service types and published free tiers; rechecked on 2026-09-06, it also states that Location Platform hosted data services are **not** shared publicly and require a scoped API key, so visitor access on that route would be keyed rather than anonymous. The author's actual account controls, billing state, usage, and headroom remain unverified. Local ArcGIS basemap, publisher-hosted VSR, and all three project input-layer displays are verified; deployed-origin access is not. No project-derived layer has been published, and the project does not authorize paid usage.
 
 Python produces the analysis and lineage; QGIS does not replace that production path. The browser displays and filters public results but does not compute exposure. ArcGIS Pro is optional and unnecessary for Version 1. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md) and [ADR 0015](docs/decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md).
 
@@ -106,7 +112,8 @@ Any modeled distribution is an estimate, not observed whale locations. AIS limit
 
 ## Screenshots
 
-**Not yet available.** No screenshots are included with this architecture update; they will be added only after the application renders real layers.
+**Not yet available.** Local verification screenshots remain ignored audit
+evidence; public portfolio screenshots have not been selected or committed.
 
 ## Documentation
 

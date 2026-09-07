@@ -168,7 +168,8 @@ creates and validates the static export. `next typegen` is the supported Next.js
 mechanism for generating the ignored route-aware helpers (including
 `LayoutProps`) before TypeScript runs; generated `.next/` types remain local.
 
-The export is roughly 30 MB on disk, almost all of it ArcGIS Maps SDK chunks.
+The export is roughly 34 MiB on disk with all three generated M5 input layers
+staged, and much of the remainder is ArcGIS Maps SDK chunks.
 That is the on-disk size, not the download: the SDK is code-split and the
 browser fetches only what the current map needs. Check any host's file-count and
 size limits against this before choosing one.
@@ -177,9 +178,11 @@ size limits against this before choosing one.
 
 | Name | Required | Purpose |
 |---|---|---|
-| `NEXT_PUBLIC_ARCGIS_API_KEY` | Yes, for the map to render | Access token the browser sends to the ArcGIS basemap styles service. |
+| `NEXT_PUBLIC_ARCGIS_API_KEY` | Yes for the default keyed basemap and release path | Access token the browser sends to the ArcGIS basemap styles service. A keyless `topo-vector` integration check is supported with a visible configuration notice; it does not verify release-key access. |
 | `NEXT_PUBLIC_ARCGIS_BASEMAP` | No | Basemap style id. Defaults to `arcgis/oceans`. |
 | `NEXT_PUBLIC_WHALE_LAYER_URL` | No | Where the browser fetches the modeled blue-whale density GeoJSON. Defaults to `/layers/blue-whale-density.geojson`, the same-origin path the display exporter stages into. Set it for a release that publishes a checksum-addressed filename. |
+| `NEXT_PUBLIC_VESSEL_LAYER_URL` | No | Where the browser fetches the commercial-vessel activity GeoJSON. Defaults to `/layers/commercial-vessel-activity.geojson`. Set it for a release that publishes a checksum-addressed filename. |
+| `NEXT_PUBLIC_DOMAIN_LAYER_URL` | No | Where the browser fetches the accepted analytical-domain GeoJSON. Defaults to `/layers/accepted-analytical-domain.geojson`. Set it for a release that publishes a checksum-addressed filename. |
 
 Names and their constraints are documented in
 [`../web/.env.example`](../web/.env.example). Copy it to `web/.env.local` — which
@@ -197,6 +200,11 @@ If the map becomes ready, the fallback is removed and the ArcGIS SDK retains
 responsibility for its automatic, dynamic data attribution; the application
 does not disable or hide it. The successful local keyed path is verified below;
 deployment-origin service access remains unverified.
+
+For a keyless project-layer integration check, `topo-vector` can supply the
+public basemap while the configuration notice remains visible. That path was
+used for the 2026-09-06 vessel/domain browser evidence; it does not replace the
+keyed default-basemap check or verify a release credential.
 
 On 2026-08-30 a keyless production/static export was exercised in headless
 Chrome at exact 390 x 844, 820 x 1180, and 1440 x 900 CSS-pixel viewports.
@@ -250,10 +258,10 @@ modeled blue-whale density to that grid, a read-only one-bundle vessel-measure
 evidence harness, a versioned multi-day cleaned-input manifest with a bounded
 DuckDB period relation, a bounded period vessel-rule evidence command, a
 parameterized candidate vessel-grid aggregation, a production vessel-input
-boundary with separate movement-speed summaries, a deterministic
-public-display export of the validated whale grid, a guarded exploratory
-relative-exposure boundary with its checksum-bound QGIS inspection script, and
-synthetic tests. It does **not** submit orders, download AIS, or publish any
+boundary with separate movement-speed summaries, deterministic public-display
+exports of the validated whale grid, vessel activity, and accepted domain, a
+guarded exploratory relative-exposure boundary with its checksum-bound QGIS
+inspection script, and synthetic tests. It does **not** submit orders, download AIS, or publish any
 artifact, and the exposure bundle it writes is ignored local evidence rather
 than an accepted result or an application-results contract. Run every command
 below from `analysis/`.
@@ -293,6 +301,7 @@ re-run; the built package declares only runtime requirements.
 | `python -m uv run python -m whale_vessel_analysis.vessel_input_cli --help` | Proves the selected production vessel-input boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.whale_grid_cli --help` | Proves the separate whale-grid transfer boundary loads. |
 | `python -m uv run python -m whale_vessel_analysis.whale_display_export_cli --help` | Proves the separate public-display export boundary loads. |
+| `python -m uv run python -m whale_vessel_analysis.vessel_domain_display_export_cli --help` | Proves the vessel-activity and analytical-domain public-display export boundary loads. |
 
 The toolchain decision is [ADR 0011](decisions/0011-use-uv-for-the-python-analysis-toolchain.md).
 
@@ -941,6 +950,74 @@ the QGIS and browser views are directly comparable. Rendering images is not
 itself verification: a person must inspect the renders and record the result
 against the exact output checksum, as with any other derived layer.
 
+**Commercial-vessel and analytical-domain display export**
+
+The combined command checksum-verifies all four accepted sources and writes the
+fixed vessel/domain GeoJSON and sanitized-manifest pairs atomically into one
+ignored directory:
+
+```text
+python -m uv run python -m whale_vessel_analysis.vessel_domain_display_export_cli --vessel-source <vessel-grid.parquet> --expected-vessel-sha256 <sha256> --vessel-quality-report <quality-report.json> --expected-vessel-quality-report-sha256 <sha256> --domain-source <domain-candidate-masks.parquet> --expected-domain-sha256 <sha256> --domain-report <domain-evidence-report.json> --expected-domain-report-sha256 <sha256> --output-directory <ignored-output-directory> [--overwrite]
+```
+
+For the verified application files, run it from `analysis/` with the exact
+retained source identities below and `--output-directory
+..\web\public\layers`. Use `--overwrite` only after confirming that replacing
+the existing complete bundle is intended.
+
+| Source | Required SHA-256 |
+|---|---|
+| Production vessel grid | `5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0` |
+| Vessel quality report | `4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7` |
+| Analytical-domain masks | `4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77` |
+| Analytical-domain report | `eb7963f6ccf625b1547d01ae768dadabfb3f47207d29c24fa5df47e387df5d98` |
+
+The expected outputs are `commercial-vessel-activity.geojson`, SHA-256
+`3a7f2deeaa1899ac8fc5ecec7e7f522dd058adce667333ba33f8d32d930d3288`,
+and `accepted-analytical-domain.geojson`, SHA-256
+`7020ca8dfa27953a24a9db4ad2b0a25fb321c4edbecd383a01c62efb4b3bc7bf`.
+The complete contract and exact retained source paths are in
+[`../analysis/README.md`](../analysis/README.md) and the
+[M5 vessel/domain handoff](m5-vessel-domain-display-handoff.md).
+
+Inspect both exact outputs through QGIS/OGR before browser verification:
+
+```text
+"C:\Program Files\QGIS 4.2.1\bin\python-qgis.bat" scripts\qgis_inspect_vessel_domain_display.py --vessel "..\web\public\layers\commercial-vessel-activity.geojson" --vessel-sha256 3a7f2deeaa1899ac8fc5ecec7e7f522dd058adce667333ba33f8d32d930d3288 --domain "..\web\public\layers\accepted-analytical-domain.geojson" --domain-sha256 7020ca8dfa27953a24a9db4ad2b0a25fb321c4edbecd383a01c62efb4b3bc7bf --output-dir "..\data\interim\m5-vessel-domain-display\<fresh-qgis-directory>"
+```
+
+The output directory must be fresh. Inspect all five renders and retain the
+report and render hashes under the ignored local data root; do not edit the
+generated manifests to record the later visual check.
+
+**Browser verification for the three input layers**
+
+Stage all three checksum-bound GeoJSON files in `web/public/layers/`, then run
+the actual local application with `npm run dev`. If a currently authorized
+basemap key is unavailable, set `NEXT_PUBLIC_ARCGIS_BASEMAP=topo-vector` in the
+ignored local environment, leave the key unset, and retain the application's
+visible missing-key notice; that verifies project-layer behavior
+but does not replace the separate keyed-basemap or deployed-origin gates.
+
+At 390 × 844, 820 × 1180, and 1440 × 900 CSS pixels, record the exact application
+commit and source bytes, then verify:
+
+1. exactly 4,516 whale, 2,793 vessel, one domain, and one publisher VSR feature;
+2. whale/vessel/domain/VSR ordering, initial visibility, live visibility
+   toggles, legends, units, disclosures, attribution, focus, scrolling, and no
+   horizontal overflow;
+3. the checksums reported by the interface match the fetched bytes; and
+4. missing-file, checksum-mismatch, and ArcGIS parse/load failures remove only
+   the failed layer and leave every unrelated layer ready without duplication.
+
+Retain sanitized console/network results, screenshots, decoded and transfer
+sizes, readiness/resource timing, and post-toggle memory observations in a fresh
+ignored evidence directory. The verified 2026-09-06 run used headless Chrome
+152 and produced `browser-report.json`, SHA-256
+`8e9e1395539ccb0d2cdf18dedbb815effb555bf915184abc4a1a3352ee45501a`.
+The browser harness and profile are local evidence rather than committed test
+fixtures; automated lifecycle regressions remain in Vitest.
+
 **Large-tabular evidence benchmark**
 
 The parameterized command supporting [ADR 0012](decisions/0012-use-duckdb-for-large-tabular-processing.md)
@@ -995,17 +1072,17 @@ open decision in [architecture.md](architecture.md).
 - Node.js `>=20.9.0` available in the build environment.
 - Build-time environment variables, because `NEXT_PUBLIC_` values are inlined
   during the build and cannot be injected afterwards.
-- Tolerates the measured build output: **30.75 MiB across 895 files** as of
-  2026-09-06, whose largest single file is the 3.28 MB whale GeoJSON.
+- Tolerates the measured build output: **35,862,761 bytes across 899 files** as
+  of 2026-09-06, whose largest single file is the 3.28 MB whale GeoJSON.
 - Serves `out/<route>/index.html` for directory URLs. The build sets
   `trailingSlash: true` so this works on hosts that do not rewrite
   extensionless paths.
-- Serves `.geojson` with a JSON media type and compresses it. The whale layer
-  is 3,277,329 bytes uncompressed, 574,907 gzipped and 396,852 with Brotli, so
-  compression is what makes the transfer reasonable.
+- Serves `.geojson` with a JSON media type and compresses it. The whale, vessel,
+  and domain files total 6,866,027 bytes uncompressed, 1,381,419 gzipped, and
+  982,450 with Brotli, so compression is what makes the transfer reasonable.
 - **Carries the generated layer files.** They are Git-ignored by design, so a
   host that builds from the Git repository alone would deploy an application
-  with no whale layer. See the Vercel path below.
+  with no project input layers. See the Vercel path below.
 
 **Vercel, the author's preferred host**
 
@@ -1020,11 +1097,11 @@ Documented Hobby-plan limits and how this project compares:
 
 | Documented Hobby limit | This project as measured |
 |---|---|
-| CLI static-file upload 100 MB | 30.75 MiB |
-| 15,000 source files per CLI deployment | 895 files |
+| CLI static-file upload 100 MB | 35,862,761 bytes |
+| 15,000 source files per CLI deployment | 899 files |
 | Build time 45 minutes per deployment | local `next build` is far under it |
 | 100 deployments per day, 100 builds per hour, 1 concurrent | ample |
-| Typical monthly Fast Data Transfer guideline up to 100 GB | roughly 0.4 MB Brotli per whale-layer load, plus the SDK chunks a page actually fetches |
+| Typical monthly Fast Data Transfer guideline up to 100 GB | roughly 0.98 MB Brotli for all three project input layers, plus the SDK chunks a page actually fetches |
 
 **The deployment must carry locally generated data.** Two documented paths do.
 The recommended one is `vercel build` followed by `vercel deploy --prebuilt`,
@@ -1058,9 +1135,10 @@ is known to be necessary yet.
 
 **Proposed release staging**
 
-1. Regenerate the export from the exact validated source with its checksum.
+1. Regenerate every display export from its exact validated sources and
+   checksums.
 2. Assemble an isolated, ignored release directory: the static export plus the
-   checksum-addressed layer file and its manifest.
+   checksum-addressed layer files and their manifests.
 3. Verify that directory — file count, total size, no source data, no VSR
    geometry, no private lineage, no credential — and record the application
    commit together with every data checksum.
@@ -1392,16 +1470,18 @@ credits.
 
 - Derived datasets are generated by the processing path, not hand-edited. If a derived file needs changing, change the process that produces it.
 - Validated derived datasets cross the provider-neutral publication boundary to
-  the evidence-selected public delivery route. **One representation is
-  implemented, for the whale layer:** the `blue_whale_display_export_v1`
-  boundary produces WGS 84 GeoJSON that the application reads as a static
-  same-origin file. It is locally verified and **not** an accepted hosting
-  decision; nothing has been published and the host is unselected. The
-  representation for the vessel and exposure layers is still open, with static
-  files, ArcGIS Location Platform limited data services, ArcGIS Online
-  organization-hosted layers, and a non-Esri route as candidates.
-- Generated display layers are never committed. The exporter stages them into
-  Git-ignored `web/public/layers/`, and refuses any destination outside this
+  the evidence-selected public delivery route. **Static same-origin
+  representations are implemented for the three M5 project input layers:**
+  `blue_whale_display_export_v1` produces the whale GeoJSON, and
+  `commercial_vessel_display_export_v1` and
+  `analytical_domain_display_export_v1` produce separate vessel-activity and
+  accepted-domain GeoJSON. They are locally verified and **not** an accepted
+  hosting decision; nothing has been published and the host is unselected. The
+  exposure representation and the final route for all derived layers remain
+  open, with static files, ArcGIS Location Platform limited data services,
+  ArcGIS Online organization-hosted layers, and a non-Esri route as candidates.
+- Generated display layers are never committed. The exporters stage them into
+  Git-ignored `web/public/layers/`, and refuse any destination outside this
   checkout's ignored output roots.
 - The VSR boundary is the exception: analysis uses the immutable ignored local
   snapshot, while the application displays `FID = 126` directly from the
@@ -1448,18 +1528,19 @@ In practice:
   tool/version, inspected views/checks, result, and relevant observations.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
-**Application (TypeScript).** `npm test` in `web/` runs Vitest once (63 tests);
+**Application (TypeScript).** `npm test` in `web/` runs Vitest once (75 tests);
 `npm run test:watch` watches. The suite covers configuration logic in
 `web/lib/`, how the map component's reported load failures become interface
 text, the source-level application boundary that keeps fallback attribution
-present until a ready SDK map assumes attribution responsibility, the whale
-layer's artifact binding and class breaks, and the checksum verification that
-ties the identity shown in the interface to the bytes the browser loaded. Rendering,
+present until a ready SDK map assumes attribution responsibility, the project
+input layers' artifact bindings and class breaks, checksum verification that
+ties the identity shown in the interface to the bytes the browser loaded, and
+stale async completion/cleanup behavior. Rendering,
 the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 593 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 623 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -1504,7 +1585,7 @@ grid evaluator, period-evidence atomic output and CLI behavior,
 normalized-memory verification, deterministic resource-threshold evaluation,
 mocked runtime abort and process cleanup, profiler CLI/output safeguards and
 version reporting,
-display-export source-contract enforcement, longitude/latitude axis order
+display-export source/quality/domain-contract enforcement, longitude/latitude axis order
 anchored to the projection's own central meridian, polygon-with-hole and
 MultiPolygon preservation with RFC 7946 ring orientation, exact value and
 identifier preservation, byte-identical export repetition, configured-extent

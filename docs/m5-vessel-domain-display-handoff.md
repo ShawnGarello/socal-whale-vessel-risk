@@ -19,9 +19,10 @@ This handoff records the next M5 input-layer slice implemented on
 - Generated display files and verification evidence remain ignored. No
   publication, deployment, push, or merge was performed.
 
-The slice is implementation-complete and ready for independent audit. M5 as a
-whole is not complete: owner-document updates, delivery-route confirmation,
-release-time VSR verification, and public delivery remain separate work.
+The slice is implementation-complete. Its shared-owner documentation has now
+been integrated in a documentation-only follow-up that is ready for independent
+audit. M5 as a whole is not complete: delivery-route confirmation, release-time
+VSR verification, and public delivery remain separate work.
 
 ## Accepted source artifacts
 
@@ -298,24 +299,27 @@ completed with `/` and `/_not-found` prerendered.
 `git diff --check` also passed. Generated layers, manifests, QGIS output,
 browser output, Chrome profile, `.next`, and `out` remain ignored.
 
-## Owner-document updates proposed after audit
+## Shared-owner integration
 
-This branch intentionally does not edit shared M5/M6 owner documents while a
-parallel M6 session may be active. After independent audit, update owners rather
-than duplicating this run history:
+The implementation commits intentionally did not edit shared M5/M6 owner
+documents while a parallel M6 session was active. The subsequent
+documentation-only follow-up integrates the implemented behavior and
+verification evidence into owners without duplicating this run history:
 
-1. `docs/roadmap.md`: record this M5 input-layer slice as implemented and tested,
+1. `docs/roadmap.md`: records this M5 input-layer slice as implemented and tested,
    without marking M5 complete or claiming public delivery.
-2. `docs/architecture.md`: record the two display contracts, checksum-bound
+2. `docs/architecture.md`: records the two display contracts, checksum-bound
    same-origin loading, measured local sizes, and independent layer lifecycle.
-3. `analysis/README.md`: document the exporter/CLI contract, exact required
+3. `analysis/README.md`: documents the exporter/CLI contract, exact required
    input identities, output identities, and QGIS evidence command/report.
-4. `docs/development.md`: add the reproducible export and browser-verification
+4. `docs/development.md`: adds the reproducible export and browser-verification
    procedures, environment hooks, and current component gate counts.
-5. `README.md`: update visible project status only after review confirms the
-   slice is accepted.
-6. Revisit the M5 publication-boundary decision using these measured sizes; do
-   not infer hosting access, enable pay-as-you-go, or publish from CI.
+5. `README.md`: updates the visible project status while retaining the local-only
+   verification boundary.
 
-No changes are proposed to the accepted reporting-domain contract, vessel
+Remaining M5 decision work is to revisit the publication boundary using these
+measured sizes; do not infer hosting access, enable pay-as-you-go, or publish
+from CI.
+
+No changes were made to the accepted reporting-domain contract, vessel
 method, VSR reference decision, or M6 exposure contract.

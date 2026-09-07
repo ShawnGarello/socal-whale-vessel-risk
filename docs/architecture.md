@@ -42,7 +42,11 @@
 > statistics, layer and publication contracts, final public representations for
 > project-derived layers, and deployment remain unfinished.
 > Publisher-hosted VSR display is
-> implemented and locally verified in the web application.
+> implemented and locally verified in the web application. Deterministic
+> presentation exports and checksum-bound same-origin display are also
+> implemented and locally verified for the whale, vessel-activity, and accepted
+> analytical-domain layers; this does not select a public host or establish
+> deployment.
 > See the [roadmap](roadmap.md) for milestone status.
 
 The analytical and statistical domain is accepted in
@@ -54,14 +58,15 @@ a copy or derivative of that geometry. Permission to redistribute remains
 unconfirmed; Version 1 avoids redistribution rather than treating public access
 as a licence.
 
-The public host for the project's derived layers remains open, and one
-representation is implemented: the whale layer is exported as WGS 84 GeoJSON
-and read as a static same-origin file, which is locally verified but not an
-accepted hosting decision. Official documentation confirms the Location
-Platform product supports feature, vector-tile, and map-tile services under
-metered monthly free tiers, and — rechecked 2026-09-06 — that those hosted
-services are not shared publicly and require a scoped API key, so a visitor
-would reach them with a credential rather than anonymously. The author's actual
+The public host for the project's derived layers remains open. The whale,
+vessel-activity, and accepted analytical-domain layers are exported as WGS 84
+GeoJSON and read as static same-origin files, which is implemented and locally
+verified but is not an accepted hosting decision. Official documentation
+confirms the Location Platform product supports feature, vector-tile, and
+map-tile services under metered monthly free tiers, and — rechecked 2026-09-06 —
+that those hosted services are not shared publicly and require a scoped API
+key, so a visitor would reach them with a credential rather than anonymously.
+The author's actual
 account product identity, controls, usage, remaining headroom, and billing
 state are unverified because no authenticated session was available. ArcGIS Online
 organization access is not applicable to the reported Location Platform branch
@@ -359,33 +364,44 @@ among:
 - any export or tiling parameters; and
 - the public layer or file the application consumes.
 
-**One representation is implemented for the whale input layer.** The
-`blue_whale_display_export_v1` boundary in `analysis/` turns a validated
+**Static same-origin representations are implemented for the three M5 project
+input layers.** `blue_whale_display_export_v1` turns a validated
 `blue_whale_grid_transfer_v1` GeoParquet artifact into RFC 7946 WGS 84 GeoJSON
-plus a sanitized, publishable manifest, and the application reads that file from
-its own origin. The exporter requires the source checksum, validates the source
-contract before transforming anything, changes representation only — no value is
-recomputed, rescaled, rounded, or simplified — and writes only to Git-ignored
-output roots inside this checkout. The manifest is rebuilt field by field from a
-named allowlist, so no filesystem path, credential, raw input, private lineage,
-or VSR-derived value can reach a public artifact. The browser verifies the
-file's checksum against the bytes it loaded before displaying it, so the
-identity the interface shows is checked rather than merely recorded.
+plus a sanitized, publishable manifest. `commercial_vessel_display_export_v1`
+and `analytical_domain_display_export_v1` produce separate vessel-activity and
+accepted-domain GeoJSON/manifest pairs only after checksum-verifying the
+accepted production vessel grid, its quality report, the domain masks, and the
+domain evidence report. The vessel export clips vessel-cell water geometry to
+the exact receiver-qualified domain in EPSG:3310 while retaining the complete
+source-cell activity and support-water values; it does
+not expose speed or distinct-vessel descriptors and performs no value
+rescaling, simplification, rounding, or densification.
+
+Both exporters write only to Git-ignored output roots inside this checkout and
+rebuild public metadata from named allowlists, so filesystem paths,
+credentials, raw inputs, private lineage, and VSR-derived geometry cannot reach
+a public artifact. The application fetches each same-origin file, verifies its
+checksum against the bytes loaded, and creates the ArcGIS layer from those same
+bytes. Each invocation independently owns its request, checksum, Blob URL,
+layer, readiness/count assertion, timeout, failure state, and cleanup; stale
+executions cannot update state or remove or overwrite newer or unrelated
+layers. Deterministic ordering keeps both analytical fills beneath the domain
+and publisher VSR outlines.
 
 This is an implemented and locally verified route, **not an accepted hosting
 decision and not a deployment**. Nothing has been published. The public host,
 and whether a hosted Esri service is preferable to static files for the
-remaining layers, are still open and need a decision record.
+final project-derived layers, are still open and need a decision record.
 
-The final representation for the vessel and exposure layers remains open, and
-the whale route may still be revised when they are measured. Candidate routes
-are static same-origin files, ArcGIS Location Platform limited data services,
-ArcGIS Online organization-hosted layers, and a non-Esri public route.
+The final representation for the exposure layer remains open, and the locally
+implemented input-layer route may still be revised before release. Candidate
+routes are static same-origin files, ArcGIS Location Platform limited data
+services, ArcGIS Online organization-hosted layers, and a non-Esri public route.
 Selection depends on measured output size, feature count or raster
 characteristics, geometry complexity, browser load/render performance,
 redistribution terms, access requirements, and verified account or hosting
 capabilities. GeoJSON, vector tiles, hosted feature layers, hosted tile/imagery
-layers, and other supported representations remain candidates for those layers.
+layers, and other supported representations remain candidates.
 
 ### Publisher-hosted VSR display exception
 
@@ -528,7 +544,7 @@ enforces a static build with no application server.
 The client is responsible for:
 
 - loading the selected project-derived public layer representations and the
-  publisher-hosted VSR feature;
+  publisher-hosted VSR feature with independent layer lifecycles;
 - rendering the map, layers, legends, visibility controls, and popups;
 - presenting precomputed summary statistics and methodology;
 - exposing units, assumptions, limitations, and provenance; and
@@ -608,7 +624,7 @@ project layers, and matching precomputed results.
 - Local interim and derived artifacts remain ignored. Small results the static
   application reads may be committed when their contract is implemented and
   their provenance is recorded.
-- Generated display layers are **not** committed. The display exporter stages
+- Generated display layers are **not** committed. The display exporters stage
   them into Git-ignored `web/public/layers/`, which `next dev` and `next build`
   serve from the same origin, so the application can read a generated layer
   without it entering version control. The exporter refuses every destination
@@ -686,20 +702,22 @@ evidence:
    inspected views and checks, result, and relevant observations. It does not
    require or permit manually editing the generated lineage sidecar.
 
-The current QGIS documentation records successful verification of output
-SHA-256 `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`
-on 2026-08-27 in QGIS 4.2.1. A formal reusable verification record or command
-is not implemented. That follow-up belongs to the processing/reproducibility
-workflow, not to this documentation-only architecture change.
+The current QGIS documentation records successful verification of the exact
+water-grid, whale-grid, and project-display artifacts. Reusable checksum-bound
+inspection commands now exist for the whale display and the combined
+vessel/domain display; their retained reports remain separate from generation
+lineage and under the ignored local data root.
 
 **A public display artifact is a derived spatial layer and needs the same
 treatment.** Changing representation for the browser can introduce exactly the
 errors visual inspection exists to catch — a wrong axis order, a dropped hole, a
-clipped boundary. The whale display export was therefore inspected in QGIS in
-its published form, opened directly through OGR rather than converted, with the
-inspection bound to the exact output checksum and refusing to run on a
-mismatch. `analysis/scripts/qgis_inspect_whale_display_export.py` performs that
-check.
+clipped boundary. The whale, vessel-activity, and analytical-domain display
+exports were therefore inspected in QGIS in their browser-facing forms, opened
+directly through OGR rather than converted, with inspection bound to the exact
+output checksums and refusing to run on a mismatch.
+`analysis/scripts/qgis_inspect_whale_display_export.py` checks the whale file;
+`analysis/scripts/qgis_inspect_vessel_domain_display.py` checks the vessel and
+domain pair together.
 
 ## Reproducibility and lineage
 
@@ -740,26 +758,27 @@ including:
   free-tier/billing status; ArcGIS Online privileges, credits, and storage; or
   alternative-host capability and operating constraints.
 
-The whale layer has now been measured, locally. Its GeoJSON export is
-3,277,329 bytes uncompressed, 574,907 gzipped and 396,852 with Brotli; geometry
-and feature ids are 67.9 % of it and each published property costs roughly
-150 KB. The complete static export is 30.75 MiB across 895 files. On the
-author's machine, over loopback, with no HTTP compression and no throttling, the
-layer was usable about 1.9 s after navigation cold and about 1.0 s warm, and
-pan/zoom settled in well under a second. That is enough to justify displaying it
-without tiling or geometry simplification, and it is what the implemented route
-rests on.
+All three M5 input layers have now been measured locally. The whale GeoJSON is
+3,277,329 bytes raw / 574,907 gzip / 396,852 Brotli; the vessel GeoJSON is
+2,720,788 / 541,477 / 385,764 bytes; and the analytical-domain GeoJSON is
+867,910 / 265,035 / 199,834 bytes. The two new files total 3,588,698 raw bytes
+and 585,598 Brotli bytes; all three total 6,866,027 raw bytes and 982,450 Brotli
+bytes. The complete static export is 35,862,761 bytes across 899 files. In the
+latest local Chrome check, project-ready times were 2.30–3.34 seconds, and the
+three layers remained usable through visibility changes at all required
+viewports. That is enough to continue evaluating the same-origin route
+without tiling or geometry simplification.
 
-Those numbers are a local functional observation of this project's own static
-asset. They are **not** a benchmark of ArcGIS platform services, no ArcGIS
+These numbers are local functional observations of this project's own static
+assets. They are **not** a benchmark of ArcGIS platform services, no ArcGIS
 service timing is reported, and they establish nothing about deployed load time,
-slow connections, low-end devices, or the combined cost once the vessel and
-exposure layers exist. The Location Platform agreement's benchmarking and
+slow connections, low-end devices, or the combined cost once the exposure layer
+exists. The Location Platform agreement's benchmarking and
 benchmark-publication clauses remain unresolved and must be settled before any
 timing exercise that measures ArcGIS services.
 
 Hosted feature layers, hosted tiles/imagery, vector tiles, and other formats
-remain candidates for the vessel and exposure layers until those outputs are
+remain candidates until the final route is selected and the exposure output is
 measured the same way.
 
 ## Version 1 architectural constraints
@@ -799,12 +818,12 @@ No implementation directory is scaffolded before its milestone needs it.
 |---|---|---|
 | Exposure formula, normalization, and weighting | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not independently reviewed or accepted, and final headline messaging is still open. |
 | High-exposure threshold | **Resolved for exploratory use** in ADR 0020 | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits independent review and the owner. |
-| Final public representation and host for project-derived whale, vessel, and exposure layers | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, performance in a clean browser session, required interactions, the access model a visitor needs (token-free or keyed), legal constraints, usage limits, and supported service types. The whale layer's static same-origin GeoJSON is implemented and locally verified but not accepted; no format or provider is selected. The publisher-hosted VSR exception is already selected in ADR 0019. |
+| Final public representation and host for project-derived whale, vessel, and exposure layers | Real layer outputs, browser measurements, redistribution review, and account capability evidence exist | Output size/shape, performance in a clean browser session, required interactions, the access model a visitor needs (token-free or keyed), legal constraints, usage limits, and supported service types. Static same-origin GeoJSON is implemented and locally verified for the whale, vessel-activity, and analytical-domain inputs but not accepted as the final route; the exposure representation and every public host remain open. The publisher-hosted VSR exception is already selected in ADR 0019. |
 | ArcGIS Location Platform publication route | Author completes the authenticated portion of the Location Platform capability check | Official documentation confirms a limited single-user organization, feature/vector-tile/map-tile support, and current monthly free tiers. Rechecked 2026-09-06: Location Platform hosted data services are **not** shared publicly; a scoped API key is required, so visitor access is keyed rather than anonymous. The real account's product identity, controls, usage, headroom, and billing status remain unverified. No pay-as-you-go activation or spending is authorized. |
 | ArcGIS Online publication route | Author completes the ArcGIS Online capability check | Organization privileges, public sharing, hosted layer types, credits, storage, and anonymous access. A negative finding constrains the route rather than blocking all completion. |
 | Non-Esri public delivery route, if needed | Both Esri routes are unavailable/unsuitable or measurements favor another route | Must preserve public access, static-client compatibility, attribution, lineage, and acceptable browser performance; no fallback is implemented today. |
 | Static application host | Deployment milestone | HTTPS, stable origin, static-export limits, build-time environment values, and clean-browser verification. |
-| Formal visual-verification record or command | M3/M8 reproducibility work | Must record output checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage. |
+| General visual-verification record across spatial outputs | M8 reproducibility work | Layer-specific checksum-bound commands now exist for the three project input displays and exposure evidence. A general record must cover every spatial output's checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage. |
 [ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts
 `receivers_50_nautical_miles` as the scope-reduced,
 system-performance-qualified AIS analytical domain: 50 nautical miles, exactly
