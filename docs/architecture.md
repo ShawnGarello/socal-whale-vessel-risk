@@ -12,8 +12,10 @@
 > [ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md) selects
 > checksum-addressed static project files on free Vercel Hobby. Initial
 > eligibility, account, capacity and minimum browser-key checks passed on
-> 2026-09-07; the isolated project and reviewed-main candidate exist, but no
-> deployment has been uploaded.
+> 2026-09-07. The isolated project now serves the reviewed-main package at its
+> stable production origin. Deployed behavior passed, but strict full-receipt
+> matching remains open because Vercel appended its cookie-gated Toolbar loader
+> to one generated runtime chunk.
 >
 > The Next.js application shell, Python processing foundation, deterministic
 > one-extract AIS cleaning, projected water-grid construction, and deterministic
@@ -45,15 +47,15 @@
 > unimplemented. The ADR 0020 exposure method is implemented and has been run
 > locally for exploratory results, which are unreviewed and unaccepted; exposure
 > display/results contracts are implemented and locally verified. Static
-> delivery is selected by ADR 0021; application integration, deployment, and
-> deployed verification remain unfinished.
+> delivery is selected by ADR 0021; the input-layer application is deployed,
+> while M7 exposure integration remains unfinished.
 > Publisher-hosted VSR display is
 > implemented and locally verified in the web application. Deterministic
 > presentation exports and checksum-bound same-origin display are also
 > implemented and locally verified for the whale, vessel-activity, and accepted
 > analytical-domain layers. Vercel Hobby is selected and its route-specific
-> account checks and isolated project are established; deployment and deployed
-> verification remain unfinished.
+> account checks and isolated project are established; deployed-origin browser
+> behavior is verified, subject to the recorded whole-receipt mismatch.
 > See the [roadmap](roadmap.md) for milestone status.
 
 The analytical and statistical domain is accepted in
@@ -68,14 +70,14 @@ as a licence.
 ADR 0021 selects free Vercel Hobby as the public host for static project-derived
 files. The whale,
 vessel-activity, and accepted analytical-domain layers are exported as WGS 84
-GeoJSON and read as static same-origin files, which is implemented and locally
-verified. The exposure delivery contract uses the same selected route when M7
+GeoJSON and read as static same-origin files, which is implemented and verified
+locally and at the stable production origin. The exposure delivery contract uses the same selected route when M7
 integrates it. On 2026-09-07 the author confirmed Vercel Hobby eligibility for
 this personal, unpaid, non-monetized portfolio and ArcGIS Location Platform with
 pay-as-you-go disabled. Current basemap use was 5,292 of 2,000,000 monthly
 tiles, and the minimum browser key was verified against the exact localhost and
-reserved production origins. The isolated Vercel project and keyed release
-candidate exist; no deployment has been uploaded.
+reserved production origins. The isolated Vercel project serves the keyed
+reviewed-main package at `https://socal-whale-vessel-overlap.vercel.app`.
 Location Platform hosted-data services and ArcGIS Online organization hosting
 are unselected, so their actual publishing capabilities remain unverified and
 are not M4 prerequisites. A later choice to use them requires a superseding
@@ -402,9 +404,10 @@ executions cannot update state or remove or overwrite newer or unrelated
 layers. Deterministic ordering keeps both analytical fills beneath the domain
 and publisher VSR outlines.
 
-This implemented and locally verified representation is selected for free
-Vercel Hobby delivery by ADR 0021. It is not a deployment: nothing has been
-published, and the required account and deployed-browser checks remain open.
+This implemented representation is deployed through free Vercel Hobby under
+ADR 0021. The three exact project files and their clean-browser behavior are
+verified at the stable production origin. One platform-appended Toolbar loader
+keeps strict full-receipt matching open.
 
 **A static exposure representation is also implemented and measured as local
 delivery evidence.** The provider-neutral boundary emits qualified-water-only
@@ -543,9 +546,9 @@ The missing-key failure path is implemented and verified. On 2026-08-31 a real,
 scoped browser key successfully rendered the `arcgis/oceans` basemap from the
 authorized localhost origin in Chrome at all three required viewports; pan,
 zoom, readiness, attribution handoff, and responsive containment were verified.
-That local service-access result does not identify the account type or establish
-project-layer hosting. Account capabilities and service access from a future
-deployed origin remain to be checked.
+That historical local result alone did not identify the account type or establish
+project-layer hosting. The later route-specific account checks and stable-origin
+deployment verification are recorded under M4 in the roadmap.
 
 ### Next.js, TypeScript, and the ArcGIS Maps SDK for JavaScript
 
@@ -566,9 +569,8 @@ The client is responsible for:
 - client-side view state and other presentational interactions.
 
 It does not retrieve raw inputs, transform analytical data, calculate exposure,
-or derive reportable statistics. Local API-key-backed basemap rendering has
-been observed and verified; no deployment exists, so deployed-origin rendering
-remains unverified.
+or derive reportable statistics. API-key-backed basemap rendering has been
+observed and verified locally and at the stable deployed origin.
 
 ### ArcGIS Pro
 
@@ -603,10 +605,9 @@ three pinned GeoJSON/manifest pairs as static Build Output API v3 output.
 On 2026-09-07 the author confirmed Vercel Hobby personal-use eligibility and
 ArcGIS Location Platform with pay-as-you-go disabled. Basemap free-tier
 headroom, minimum key scope and exact origin restrictions were verified. The
-isolated `socal-whale-vessel-overlap` project reserves the intended production
-hostname and the reviewed-main candidate is linked only from its ignored deploy
-directory; no deployment exists, and exposure integration remains outside this
-initial deployment. The entire project must remain within free capacity. Paid
+isolated `socal-whale-vessel-overlap` project serves the approved reviewed-main
+package from the intended stable production hostname; exposure integration
+remains outside this initial deployment. The entire project must remain within free capacity. Paid
 plans, trials, add-ons, pay-as-you-go and other charged usage are prohibited.
 
 - Next.js produces a static export served over HTTPS from a stable public URL.

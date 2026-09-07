@@ -1356,8 +1356,59 @@ The fresh keyed candidate was built from merged `origin/main` commit
 linting, generated-type checking, all 79 tests and the Next.js 16.3.3 static
 build passed. The complete 901-file, 36,021,531-byte `.vercel/output` has receipt
 SHA-256 `194f8877d040220214205af1b03917fc320e703114513e7ea04bb819f700352a`;
-receipt read-back passed both before and after linking. It is awaiting explicit
-upload approval and has not been deployed.
+receipt read-back passed both before and after linking. At that setup checkpoint
+it was awaiting explicit upload approval and had not been deployed.
+
+### Initial M4 deployment outcome
+
+On 2026-09-07 the author approved exactly `m4-initial-production-01`, receipt
+SHA-256 `194f8877d040220214205af1b03917fc320e703114513e7ea04bb819f700352a`,
+for a prebuilt production upload to `Stemry/socal-whale-vessel-overlap`.
+Immediate read-back again matched the 901-file, 36,021,531-byte package and
+application commit `8b1f65c8556955d6f28ee86426c09d55b7ea71fa`, which still matched freshly
+fetched `origin/main`. Vercel CLI 59.11.7 accepted the package with a zero-time
+prebuilt step, reported the production deployment Ready, and assigned the
+stable origin `https://socal-whale-vessel-overlap.vercel.app`. The new project
+still has no Git repository connection. The existing `stemry-waitlist` project
+remained separate and unchanged; no paid feature or ArcGIS setting changed.
+
+Clean Google Chrome 152.0.7977.76 checks at 390 x 844, 820 x 1180 and
+1440 x 900 found public access without sign-in, no horizontal overflow, a ready
+`ArcGIS Oceans` basemap, working drag/zoom, and visible Esri/data-provider
+attribution before and after the ready-state handoff. All project files returned 200. The three GeoJSON files matched their decoded receipt bytes and loaded
+4,516 whale cells, 2,793 vessel/domain cells and one analytical-domain feature.
+All controls were enabled, visibility toggles changed their layers, source/use
+disclosures and legends were readable, the desktop whale popup opened with its
+configured title and content, and the VSR credit and navigation disclaimer were
+visible. The initial project transfer observed in one clean desktop context was
+3,061,650 compressed bytes / 12,682,288 decoded bytes across 97 same-origin
+resources; the three GeoJSON transfers accounted for 1,365,369 compressed bytes
+and 6,866,027 decoded bytes. This records usable loading behavior, not an Esri
+service benchmark.
+
+Anonymous HTTP reverified public item `b400c7f418b04dc5a9d7ce5015adae32`,
+Feature Layer 0 and exactly one non-geometry `FID = 126` result. The expected
+California VSR name, 2026 season, request, publisher identity, item credit and
+non-navigation warning remained present. This applicable M4 check did not
+request or compare geometry and does not close the final-results snapshot gate.
+Four separate 820 x 1180 contexts blocked the whale, vessel, domain and VSR
+requests one at a time. In every case only the blocked layer was removed and
+disabled, its persistent warning appeared, and the other three layers and map
+remained ready. Normal contexts logged no console warning or error. Evidence is
+sanitized; it contains no key-bearing URL or raw HAR.
+
+Headers matched the release policy: checksum-addressed GeoJSON and manifests
+were Brotli encoded with year-long immutable caching, `release.json` was Brotli
+encoded with `no-store`, and HTML used `max-age=0, must-revalidate`; repeat
+requests remained successful. The deployed `release.json`, all six pinned
+inputs, and 899 of 900 public receipt files matched byte-for-byte. One generated
+Turbopack runtime chunk preserved all 9,689 staged bytes as an exact prefix but
+Vercel appended a 439-byte cookie-gated Toolbar loader. The loader exits for an
+ordinary visitor without the Vercel Toolbar cookie, but the resulting 10,128-byte
+response does not equal the approved receipt entry. No project setting was
+changed to investigate or remove it. Because step 1 requires fetched application
+assets to match the approved receipt, this is a deployment-verification failure:
+M4 remains in progress pending an authorized resolution and a fresh exact check.
 
 ### Release-time VSR service and version check
 

@@ -1092,15 +1092,11 @@ Built on the `feat/web-foundation` branch. The application is in
   data capabilities are unselected and remain unverified; M4 no longer requires
   a throwaway hosted-feature test.
 
-**Not done**
+**Remaining**
 
-- **The static-shell deployment and deployed-browser verification.** The
-  isolated project, stable hostname, completed route-specific account checks,
-  and reviewed-main keyed candidate are ready, but no upload has been approved
-  or attempted and the hostname serves no production deployment.
-- The Vercel deploy-and-serve test. The earlier rehearsal remains deliberately
-  keyless and ineligible; only the fresh keyed candidate described below may be
-  proposed for upload.
+- Resolve the strict whole-receipt mismatch recorded below. The deployment is
+  public and otherwise verified, but one Vercel-appended Toolbar loader prevents
+  an exact match for one generated runtime chunk.
 
 The ordered steps for all of the above are in
 [development.md](development.md#selected-route-account-and-service-checks).
@@ -1175,26 +1171,56 @@ GeoJSON/manifest inputs. Locked installation, formatting, linting,
 generated-type checking, all 79 tests and the static build passed. Its 901-file,
 36,021,531-byte upload receipt is
 `194f8877d040220214205af1b03917fc320e703114513e7ea04bb819f700352a`;
-complete read-back passed before and after local project linking. The candidate
-is awaiting explicit deployment approval and has not been uploaded.
+complete read-back passed before and after local project linking. At that setup
+checkpoint the candidate was awaiting explicit deployment approval and had not
+been uploaded.
+
+**2026-09-07 initial production deployment:** The author approved that exact
+candidate and receipt for a prebuilt production upload. Immediate read-back and
+target checks passed; `origin/main` still matched application commit
+`8b1f65c8556955d6f28ee86426c09d55b7ea71fa`. Vercel CLI 59.11.7 accepted the
+package and reported the new project's stable origin Ready at
+`https://socal-whale-vessel-overlap.vercel.app`. The existing Stemry project
+remained separate and unchanged, no Git repository was connected, and no paid
+feature was enabled.
+
+Clean Chrome 152.0.7977.76 checks passed at 390 x 844, 820 x 1180 and
+1440 x 900 for anonymous public access, Oceans rendering, pan/zoom, attribution,
+responsive layout, controls, disclosures, legends and a desktop popup. The
+three project files loaded token-free from the same origin, matched their pinned
+decoded bytes, and reported 4,516 / 2,793 / 1 features. Anonymous HTTP confirmed
+the expected publisher item, Feature Layer 0 and exactly `FID = 126`, with the
+credit and non-navigation warning intact. Four one-at-a-time blocked-resource
+contexts isolated whale, vessel, domain and VSR failures while preserving the
+other layers and map. Normal contexts had no console warnings or errors.
+GeoJSON/manifests used Brotli plus year-long immutable caching, release identity
+used `no-store`, and HTML used `max-age=0, must-revalidate`.
+
+The deployed release identity and all six pinned inputs match the approved
+receipt. Of 900 public receipt files, 899 match byte-for-byte. The remaining
+generated Turbopack chunk contains every staged byte unchanged and then a
+439-byte Vercel-injected, cookie-gated Toolbar loader. It is inactive for normal
+visitors without the Toolbar cookie, but its response hash differs from the
+receipt. No project setting was changed. Because the documented deployment gate
+requires fetched application assets to match the approved receipt, this is an
+unresolved failure and M4 remains in progress.
 
 | Criterion                                                  | State                                                                                                                                                                                                                                        |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Builds locally                                             | **Verified.** Historical browser evidence remains local. Both the keyless rehearsal and reviewed-main keyed candidate passed all 79 tests and the static build with the six pinned input files.                                              |
-| Builds in the deployment environment                       | **Unverified.** No deployment environment exists yet.                                                                                                                                                                                        |
-| Map renders, pans, and zooms                               | **Verified locally.** The keyed static export rendered `arcgis/oceans`, panned, zoomed, and completed the ready-map attribution handoff in Chrome at all three required viewports. The deployed-origin path remains unverified.              |
+| Builds in the deployment environment                       | **Verified for the selected prebuilt route.** Vercel accepted the complete Build Output API v3 package and reported the production deployment Ready; the route deliberately performs no remote rebuild.                                      |
+| Map renders, pans, and zooms                               | **Verified locally and deployed.** Clean Chrome rendered `ArcGIS Oceans`, panned, zoomed, and completed the attribution handoff at all three required viewports.                                                                             |
 | No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored.                                                                                                                                                         |
-| Deployment reachable and reflecting main                   | **Unverified.** No deployment exists; main has not been deployed or verified.                                                                                                                                                                |
+| Deployment reachable and reflecting main                   | **Partially verified.** The stable public origin and `release.json` identify exact current `origin/main`; all six pins match. One platform-appended Toolbar loader prevents the required strict match of every application asset.            |
 | Route-specific account checks complete and recorded        | **Verified.** Vercel Hobby personal-use eligibility, ArcGIS Location Platform free-tier-only status and headroom, and browser-key validity, minimum scope, no item access and exact referrers were confirmed on 2026-09-07.                  |
-| Selected static publish-and-serve test                     | **Not attempted.** The exact files are staged, locally verified and linked to the isolated project, but no upload is approved and no deployment exists. An Esri hosted-data test is not applicable under ADR 0021.                           |
+| Selected static publish-and-serve test                     | **Verified for project files and behavior; full receipt still failing.** All three project files load token-free with exact hashes and isolated failures. An Esri hosted-data test is not applicable under ADR 0021.                         |
 | Unselected Esri hosted-data capabilities                   | **Not applicable to M4 and unverified.** Static project files need no Esri hosted-data service. Documentation-only product facts remain background; actual service creation, storage, sharing and ArcGIS Online privileges were not checked. |
 
-M4 is not complete and must not be marked complete until the route-specific
-account checks and the reviewed main-backed Vercel deployment are verified.
-The project files must load token-free from the deployed origin with exact
-checksums; the basemap remains separately keyed with no visitor sign-in. The
-entire route must stay within verified free capacity. Paid plans, trials,
-add-ons, pay-as-you-go and other charged usage are prohibited.
+M4 is not complete. The route-specific account checks, project-file hashes and
+deployed behavior pass, but the platform-appended runtime bytes violate the
+strict whole-receipt check. The basemap remains separately keyed with no visitor
+sign-in. The entire route must stay within verified free capacity. Paid plans,
+trials, add-ons, pay-as-you-go and other charged usage are prohibited.
 
 ### Findings
 
@@ -1263,14 +1289,17 @@ this repository's own. Disabled with `agentRules: false`.
   documented background; actual publishing capabilities are unverified and do
   not constrain M4 while those routes remain unselected.
 - Vercel Hobby eligibility and ArcGIS Location Platform free-tier-only basemap
-  access were verified on 2026-09-07. Continued free capacity and deployed
-  behavior remain release checks; no paid fallback is authorized. **Resolved
-  for initial deployment eligibility; runtime verification remains open.**
-- ArcGIS SDK licensing and API-key requirements for the intended hosting model need confirming before public deployment. **Resolved for setup:** the minimum browser key and its exact localhost and production referrers were verified against the Basemap Styles service. Clean-browser access from the actual deployment remains unverified.
-- Bundle size and initial load time of the SDK need an early look rather than a late one. **Resolved for size** — see the findings above. Load time still needs measuring on a real deployment.
-- Vercel Hobby is selected and the route-specific account checks passed. The
-  isolated project and reviewed-main keyed candidate exist; no deployment has
-  been uploaded.
+  access were verified on 2026-09-07. Deployed runtime behavior passed; continued
+  free capacity remains a release check and no paid fallback is authorized.
+  **Resolved for initial deployment; monitor at later releases.**
+- ArcGIS SDK licensing and API-key requirements for the intended hosting model
+  are resolved for M4: the minimum browser key and its exact localhost and
+  production referrers were verified, and clean-browser production access passed.
+- Bundle size and deployed project-file transfer behavior received the required
+  early check. This was not an Esri-service benchmark.
+- Vercel Hobby is selected and the production deployment is Ready. Exact
+  full-receipt matching remains open because of the platform-appended Toolbar
+  loader described above.
 
 ---
 
@@ -1289,8 +1318,8 @@ in the application through the evidence-selected publication route.
 
 ### Progress
 
-**All core input-layer displays implemented and locally verified; public
-delivery remains unfinished**
+**All core input-layer displays implemented and deployed; M5 disclosures remain
+unfinished**
 
 - The static client creates an ArcGIS `FeatureLayer` from the publisher's exact
   `WhaleAtlas_2026/FeatureServer/0` URL and applies `FID = 126`. Source identity,
@@ -1318,7 +1347,7 @@ delivery remains unfinished**
   zoom controls, and SDK attribution without an indefinite loading state or
   sign-in prompt.
 
-**Whale display representation implemented and locally verified; not published**
+**Whale display representation implemented and deployed**
 
 - A versioned `blue_whale_display_export_v1` boundary in `analysis/` turns the
   validated `blue_whale_grid_transfer_v1` GeoParquet into RFC 7946 WGS 84
@@ -1377,8 +1406,7 @@ delivery remains unfinished**
   observations of this project's own asset, not a benchmark of ArcGIS services
   and not evidence about a deployed origin.
 
-**Vessel-activity and analytical-domain displays implemented and locally
-verified; not published**
+**Vessel-activity and analytical-domain displays implemented and deployed**
 
 - `commercial_vessel_display_export_v1` and
   `analytical_domain_display_export_v1` checksum-verify the accepted production
@@ -1429,17 +1457,14 @@ verified; not published**
 
 **What this does not establish**
 
-- **Nothing has been deployed or published.** There is no public URL, and no
-  anonymous end-to-end access, deployed-origin service access, real compression
-  or cache behaviour, or clean-browser verification exists. ADR 0021 selects
-  checksum-addressed static same-origin delivery on free Vercel Hobby, but the
-  actual plan, personal-use eligibility and provider acceptance of the staged
-  prebuilt deployment remain unverified.
+- The initial input-layer application is deployed and its project-file hashes,
+  real compression/cache behavior and clean-browser access are verified. That
+  does not publish or verify the later exposure layer/results contract, and the
+  M4 whole-receipt Toolbar mismatch remains open.
 - The exposure display/results contract is implemented and locally verified,
   but M7 integration and deployment remain open.
-- The route-specific Vercel and ArcGIS basemap account checks M4 requires are
-  still outstanding. Esri hosted-data capabilities are unselected and are not
-  M4 gates.
+- The route-specific Vercel and ArcGIS basemap account checks passed. Esri
+  hosted-data capabilities are unselected and are not M4 gates.
 - M5 remains in progress, and its completion criteria are not met.
 
 **Deliverables**
@@ -1459,7 +1484,7 @@ verified; not published**
 - A public representation for the project-derived layers. **ADR 0021 selects
   deterministic, checksum-addressed static same-origin files on free Vercel
   Hobby.** The whale, vessel-activity, and accepted analytical-domain exports are
-  verified locally but not published. The exposure display/results contract is
+  verified at the stable production origin. The exposure display/results contract is
   also locally verified and awaits M7 integration. Esri hosted-data routes are
   unselected and remain unverified.
 - The ArcGIS Maps SDK application assembling the public layers with symbology
@@ -1478,18 +1503,18 @@ verified; not published**
 **Completion criteria**
 
 - Each layer renders at the study-area scale within an acceptable load time.
-  **Met locally only for all three project input layers**, on one machine over
-  loopback; deployed load time is unmeasured.
+  **Met locally and at the production origin for all three project input
+  layers.** One clean desktop context transferred 1,365,369 compressed bytes
+  for the three GeoJSON files and reached usable ready state.
 - Public access works end to end from the application: a visitor reaches every
   layer from the deployed origin without an interactive sign-in, and the record
   states for each layer whether that access is token-free or carried by a
   scoped browser credential, since those are different claims. When neither
   Esri hosting route is suitable, this criterion is verified later against the
-  selected route rather than waived. **Not met for any project-derived layer:
-  nothing is deployed and there is no public URL.** The implemented whale route
-  would be token-free, because a static same-origin file needs no credential,
-  but that is unverified from a deployed origin. The same is true of the
-  implemented vessel and domain routes.
+  selected route rather than waived. **Met for the whale, vessel and domain
+  files at the stable production origin.** All three are token-free static
+  same-origin files with checksum verification; the separately keyed basemap
+  required no visitor sign-in.
 - Every layer's legend states its units and the meaning of its values.
   **Met locally for the whale, vessel-activity, and analytical-domain layers.**
 - Every layer names its source and its retrieval or processing date somewhere the user can reach.
@@ -1499,22 +1524,25 @@ verified; not published**
   retrieval or processing date.
 - Layer geometry visually aligns across layers; no projection mismatch is visible.
   **Observed among the whale, vessel-activity, analytical-domain, publisher VSR,
-  and basemap layers in the local browser check**, with separate checksum-bound
-  QGIS inspection of all three project input files.
+  and basemap layers in local and deployed browser checks**, with separate
+  checksum-bound QGIS inspection of all three project input files.
 - The VSR feature loads anonymously from the publisher's service and is not a
-  project-hosted copy. **Met locally.**
+  project-hosted copy. **Met locally and at the stable production origin.**
 
-The local display, legend, provenance, and alignment evidence now covers every
-core input layer. Static delivery is selected by ADR 0021; deployment, remaining
-route-specific account evidence, and deployed-origin verification remain
-unfinished, so M5 stays in progress.
+The display, legend, provenance, and alignment evidence now covers every core
+input layer locally and at the stable production origin. M5 stays in progress
+because the vessel and domain source disclosures still lack the required
+retrieval or processing dates.
 
 **Risks and open questions**
 
-- Deployed transfer behavior, low-end-device performance, or host limits may
-  still force a different representation, aggregation, or generalization.
-- Raster and vector outputs may need different public delivery methods.
-- Symbology for a continuous density surface needs a defensible classification, since the class breaks chosen will shape how the map is read.
+- Deployed transfer behavior and host acceptance passed for the selected input
+  representation. Low-end-device performance remains unmeasured and could still
+  motivate a later representation change.
+- The selected input displays use deterministic GeoJSON; no separate raster
+  delivery is currently required.
+- The whale density classification is implemented with its display rationale
+  visible in the application.
 - The publisher can change, remove, rate-limit, or make the VSR service private.
   The displayed remote geometry can also drift from the local analytical
   snapshot; release verification in M9 must detect and address that condition.

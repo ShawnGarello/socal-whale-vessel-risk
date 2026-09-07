@@ -41,7 +41,43 @@ worktree was reused and the branch was created from freshly fetched
 - Only the ignored candidate directory
   `data/interim/m4-releases/m4-initial-production-01/deploy/` is linked to the
   new project. CLI-created project/OIDC metadata is outside `.vercel/output`
-  and outside the receipt. No upload command has run.
+  and outside the receipt. At the setup checkpoint no upload command had run.
+
+## Initial production deployment
+
+The author explicitly approved exact release `m4-initial-production-01`, receipt
+SHA-256 `194f8877d040220214205af1b03917fc320e703114513e7ea04bb819f700352a`,
+for the proposed prebuilt production upload. Immediately before upload, receipt
+read-back, the linked `Stemry/socal-whale-vessel-overlap` target and fresh
+`origin/main` commit `8b1f65c8556955d6f28ee86426c09d55b7ea71fa` all matched. Vercel CLI
+59.11.7 accepted the package and reported the stable production origin Ready:
+
+`https://socal-whale-vessel-overlap.vercel.app`
+
+The isolated project remains disconnected from GitHub. The existing
+`stemry-waitlist` project remained separate and unchanged. No paid Vercel or
+ArcGIS feature was enabled and no account or key setting changed during upload
+or verification.
+
+Sanitized ignored evidence under the release's `verification/` directory records
+clean Chrome 152.0.7977.76 checks at 390 x 844, 820 x 1180 and 1440 x 900. The
+Oceans basemap, pan/zoom, attribution handoff, all four layer lifecycles, counts
+4,516 / 2,793 / 1, toggles, legends, disclosures, VSR credit/disclaimer and a
+desktop popup passed without sign-in or horizontal overflow. Normal contexts had
+no console warnings or errors. Separate blocked whale, vessel, domain and VSR
+requests each removed only that layer while preserving the other layers and map.
+Anonymous HTTP reverified the expected public item, Feature Layer 0 and exactly
+`FID = 126` without requesting geometry. Project-layer transfer, decoded hashes,
+headers and repeat behavior were recorded without key-bearing URLs or raw HAR.
+
+The six pinned inputs, deployed release identity and 899 of 900 public receipt
+files matched byte-for-byte. The sole exception is a generated Turbopack runtime
+chunk: its first 9,689 bytes exactly equal the staged file, after which Vercel
+appended a 439-byte cookie-gated Toolbar loader. The public response is therefore
+10,128 bytes and does not match the approved receipt hash. The loader is inactive
+without a Vercel Toolbar cookie, but the documented whole-receipt criterion is
+strict. No project setting was changed. M4 remains in progress pending author
+direction and an exact recheck after any authorized resolution.
 
 ## Completed preparation
 
@@ -130,25 +166,19 @@ deployed map rendering and fresh visitor access remain unverified.
 No Python code changed and no analytical run was required. Both `analysis` and
 `web` CI jobs remain mandatory on a future PR head before an authorized merge.
 
-## Remaining work and approval checkpoint
+## Remaining work
 
-M4 is **in progress, not complete**. Nothing was pushed, merged or deployed in
-the continuation. The route-specific setup and keyed candidate are complete.
+M4 is **in progress, not complete**. The approved upload and documented browser
+checks ran, but the one platform-appended runtime response prevents strict
+whole-receipt acceptance. Nothing was pushed or merged.
 
-1. Present the exact project, source commit, hostname, receipt, pins and upload
-   action and obtain explicit author approval.
-2. Immediately before upload, rerun receipt verification from `web/`:
-
-   ```powershell
-   node scripts/stage-release.mjs --verify m4-initial-production-01 194f8877d040220214205af1b03917fc320e703114513e7ea04bb819f700352a
-   ```
-
-3. Only after approval, run Vercel CLI 59.11.7 from the isolated `deploy/`
-   directory with `vercel deploy --prebuilt --prod`. Do not connect GitHub or
-   change either project's settings.
-4. Verify all development's clean-browser deployment checks at the three
-   required viewports. Only then update public URL/status and applicable M4
-   criteria. Keep the final-results VSR snapshot comparison separately open.
+1. Obtain author direction before changing any new-project Toolbar setting or
+   preparing a reviewed correction. Do not alter the existing Stemry project.
+2. After an authorized resolution, repeat the full receipt and clean-browser
+   checks at the stable origin. Mark M4 complete only if every applicable
+   criterion passes.
+3. Keep the final-results VSR geometry snapshot comparison separately open; the
+   initial application has no exposure statistics.
 
 The key permits only the approved exact localhost/production origins, with no
 item, publishing or account rights and no wildcard.

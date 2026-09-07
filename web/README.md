@@ -11,8 +11,9 @@ ready-map attribution handoff were verified in Chrome at the three required
 viewports on 2026-08-31. That historical credential returned `Token Invalid`
 during the 2026-09-06 vessel/domain check, so the current integration check used
 the unkeyed public `topo-vector` basemap and retained the application's visible
-missing-key warning. Deployed-origin access remains unverified, and neither
-local result establishes account or project-layer hosting capabilities. The
+missing-key warning. Deployed-origin access was verified in clean Chrome on
+2026-09-07; the earlier local results alone did not establish account or
+project-layer hosting capabilities. The
 author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07.
 On 2026-09-07 the Location Platform product and disabled pay-as-you-go state
 were author-confirmed; current use was 5,292 of 2,000,000 monthly basemap tiles.
@@ -24,12 +25,15 @@ pay-as-you-go and other charged usage are prohibited.
 
 Project-derived layers are delivered here as static same-origin files served
 alongside the export, so they need no layer credential and no hosted service.
-That is what this application implements and what has been verified locally.
+That is what this application implements and what has been verified locally and
+from the stable production origin.
 ADR 0021 selects free Vercel Hobby for these files. The plan and personal,
 unpaid, non-monetized portfolio eligibility are author-confirmed. The isolated
-`socal-whale-vessel-overlap` project and reserved production hostname exist, and
-a reviewed-main keyed candidate is staged and locally linked, but no deployment
-or public project file exists.
+`socal-whale-vessel-overlap` project now serves the approved reviewed-main
+package at `https://socal-whale-vessel-overlap.vercel.app`. The three public
+project files loaded token-free with exact decoded hashes. M4 remains open
+because Vercel appended a cookie-gated Toolbar loader to one generated runtime
+chunk, preventing a strict byte-for-byte match of the complete public inventory.
 
 ## Modeled blue-whale density layer
 
