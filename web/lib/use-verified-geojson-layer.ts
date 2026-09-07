@@ -4,8 +4,8 @@ import type { Dispatch, MutableRefObject } from "react";
 import { useEffect } from "react";
 import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer.js";
 import type Map from "@arcgis/core/Map.js";
-import { releaseOwnedLayer } from "./layer-lifecycle";
 import type { MapLayerAction } from "./map-layer-state";
+import { startVerifiedGeoJsonLayerLoad } from "./verified-geojson-layer-lifecycle";
 
 interface VerifiedGeoJsonSource {
   readonly layerId: string;
@@ -67,71 +67,28 @@ export function useVerifiedGeoJsonLayer({
       return;
     }
 
-    let disposed = false;
-    let ownedLayer: GeoJSONLayer | null = null;
-    let objectUrl: string | null = null;
-    const abortController = new AbortController();
-    const timeout = window.setTimeout(() => abortController.abort(), loadTimeoutMs);
-
-    const loadLayer = async () => {
-      dispatch({ type: "load-started" });
-      setChecksumVerified(null);
-      try {
-        if (map.findLayerById(source.layerId)) {
-          throw new Error(`${source.title} layer id is already in use.`);
-        }
-        const response = await fetch(url, {
-          signal: abortController.signal,
-          cache: "no-store",
-        });
-        if (!response.ok) {
-          throw new Error(`${source.title} request returned HTTP ${response.status}.`);
-        }
-        const bytes = await response.arrayBuffer();
-        setChecksumVerified(await verifyBytes(bytes));
-        objectUrl = URL.createObjectURL(
-          new Blob([bytes], { type: "application/geo+json" }),
-        );
-        ownedLayer = createLayer(objectUrl);
-        ownedLayer.visible = visibleRef.current;
-        layerRef.current = ownedLayer;
-        map.add(ownedLayer);
-        afterAdd?.(map);
-
-        await ownedLayer.load({ signal: abortController.signal });
-        const featureCount = await ownedLayer.queryFeatureCount(undefined, {
-          signal: abortController.signal,
-        });
-        assertFeatureCount(featureCount);
-        if (!disposed) dispatch({ type: "load-succeeded", featureCount });
-      } catch (error) {
-        releaseOwnedLayer(map, ownedLayer, layerRef);
-        ownedLayer = null;
-        if (objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-          objectUrl = null;
-        }
-        if (!disposed) {
-          setChecksumVerified(null);
-          dispatch({
-            type: "load-failed",
-            warning: checksumError(error) ? checksumMessage : failureMessage,
-          });
-        }
-      } finally {
-        window.clearTimeout(timeout);
-      }
-    };
-
-    void loadLayer();
-    return () => {
-      disposed = true;
-      abortController.abort();
-      window.clearTimeout(timeout);
-      releaseOwnedLayer(map, ownedLayer, layerRef);
-      ownedLayer = null;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
+    const load = startVerifiedGeoJsonLayerLoad({
+      map,
+      source,
+      url,
+      visibleRef,
+      layerRef,
+      dispatch,
+      setChecksumVerified,
+      fetchResponse: (requestUrl, options) => fetch(requestUrl, options),
+      createObjectUrl: (bytes) =>
+        URL.createObjectURL(new Blob([bytes], { type: "application/geo+json" })),
+      revokeObjectUrl: (objectUrl) => URL.revokeObjectURL(objectUrl),
+      createLayer,
+      verifyBytes,
+      assertFeatureCount,
+      checksumError,
+      failureMessage,
+      checksumMessage,
+      loadTimeoutMs,
+      afterAdd,
+    });
+    return load.dispose;
   }, [
     afterAdd,
     assertFeatureCount,

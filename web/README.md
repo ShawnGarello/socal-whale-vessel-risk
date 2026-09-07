@@ -43,9 +43,12 @@ basemap and every other operational layer, is bounded to 30 seconds, verifies
 the expected 4,516 grid cells before the layer is called ready, and removes a
 failed layer while leaving an accessible warning. One shared project-GeoJSON
 lifecycle applies those controls to the whale, vessel, and domain files without
-merging their state. A deterministic reorder keeps the whale and vessel fills
-below the domain and publisher VSR outlines, regardless of asynchronous
-completion order.
+merging their state. Each async continuation proves that its effect execution is
+still active before updating state, creating a Blob URL, assigning a layer ref,
+or adding a layer. Cleanup aborts pending work and releases only its own URL and
+layer, so an older request cannot interfere with a replacement. A deterministic
+reorder keeps the whale and vessel fills below the domain and publisher VSR
+outlines, regardless of asynchronous completion order.
 
 `web/lib/whale-source.ts` binds this build to one exact artifact: export
 SHA-256 `831a5412e9f414d5e4c7011d1b1687a89b8089826f8925f31e737b974662e154`,
@@ -198,10 +201,10 @@ document had no horizontal overflow and keyboard focus retained a three-pixel
 outline.
 
 From a warm local development server, the three project layers reached ready
-state 2.45–3.17 seconds after document completion. Local resource timings were
-0.15–0.45 seconds per GeoJSON response; observed decoded sizes matched the
+state 2.30–3.34 seconds after document completion. Local resource timings were
+0.21–0.55 seconds per GeoJSON response; observed decoded sizes matched the
 files, and transfer sizes reflected the development server's gzip responses.
-Post-toggle JavaScript heap samples were 161–173 MB. These are local rendering
+Post-toggle JavaScript heap samples were 159–168 MB. These are local rendering
 observations only, not deployed-performance claims.
 
 Separate request-interception checks exercised an HTTP 404, malformed bytes
@@ -212,7 +215,7 @@ stayed ready with exactly one copy each. The normal, missing-file, and
 checksum-mismatch runs had no console errors; the forced 404 produced one
 expected resource-log entry. The forced ArcGIS parse failure produced its two
 expected console errors. The ignored browser report SHA-256 is
-`5e72b5fcc46074282df408ed2f19047944e22feb8ce26b559fa932b0aa250ffc`.
+`8e9e1395539ccb0d2cdf18dedbb815effb555bf915184abc4a1a3352ee45501a`.
 
 ## Publisher-hosted VSR boundary
 

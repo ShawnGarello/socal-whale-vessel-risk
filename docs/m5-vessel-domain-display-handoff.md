@@ -102,10 +102,14 @@ These values describe processing accounting, not observational completeness.
 The application uses the existing same-origin pattern. `web/lib/vessel-source.ts`
 and `web/lib/domain-source.ts` bind exact output/source checksums, public fields,
 units, renderer classes, provenance, method statements, and limitations.
-`web/lib/use-verified-geojson-layer.ts` is the small shared lifecycle needed by
-the three project-owned GeoJSON layers; it owns fetch, byte checksum, Blob URL,
+`web/lib/use-verified-geojson-layer.ts` and the testable lifecycle controller in
+`web/lib/verified-geojson-layer-lifecycle.ts` own fetch, byte checksum, Blob URL,
 ArcGIS layer, count assertion, timeout, failure state, and cleanup independently
-for each invocation.
+for each invocation. Every async continuation checks the execution's disposed
+and abort state before updating checksum/readiness state, creating a Blob URL,
+assigning the shared layer ref, adding a layer, or continuing to a feature-count
+query. Cleanup clears only locally owned resources, so a stale rejection or
+resolution cannot remove or overwrite a newer layer.
 
 - Whale and domain start visible; vessel starts hidden so two opaque analytical
   fills do not obscure each other on first load.
@@ -125,6 +129,10 @@ for each invocation.
   domain-mask, and evidence-report identities plus the analytical limitations.
 - Missing file, checksum mismatch/malformed file, and ArcGIS parse/load errors
   remove only the failed layer and retain an accessible layer-specific warning.
+- Behavioral regression tests dispose during deferred checksum verification and
+  resolve an old layer load after its replacement is ready. They assert no stale
+  state update, Blob URL, ref assignment, layer addition, feature query, failure,
+  or replacement cleanup; a separate failure test retains an unrelated layer.
 - `NEXT_PUBLIC_VESSEL_LAYER_URL` and `NEXT_PUBLIC_DOMAIN_LAYER_URL` permit a
   release to select checksum-addressed URLs. No account or publishing access is
   inferred by those configuration hooks.
@@ -220,7 +228,7 @@ Retained evidence and screenshots are under
 `data/interim/m5-vessel-domain-display/browser-verification/`.
 
 - Browser report: `browser-report.json`, SHA-256
-  `5e72b5fcc46074282df408ed2f19047944e22feb8ce26b559fa932b0aa250ffc`.
+  `8e9e1395539ccb0d2cdf18dedbb815effb555bf915184abc4a1a3352ee45501a`.
 - Each viewport loaded exactly one whale layer with 4,516 features, one vessel
   layer with 2,793 features, one analytical-domain layer with one feature, and
   the publisher VSR layer with one feature.
@@ -228,8 +236,8 @@ Retained evidence and screenshots are under
   fields, and layer order were present. Toggling vessel on, whale off, and domain
   off/on changed the live layer properties without creating duplicates.
 - All three source files' decoded sizes matched disk. Warm project-ready times
-  were 2.45–3.17 seconds; individual local GeoJSON resource times were
-  0.15–0.45 seconds. Post-toggle JavaScript heap samples were 161–173 MB.
+  were 2.30–3.34 seconds; individual local GeoJSON resource times were
+  0.21–0.55 seconds. Post-toggle JavaScript heap samples were 159–168 MB.
 - Document and body horizontal overflow were false at every viewport. The panel
   scrolls at constrained sizes, keyboard focus had a 3 px outline, and the SDK
   attribution was present and visible at every viewport.
@@ -283,8 +291,8 @@ npm test
 npm run build
 ```
 
-Results: Prettier clean, ESLint clean, generated types and TypeScript clean, 72
-tests passed across six files, and the Next 16.3.3 static production build
+Results: Prettier clean, ESLint clean, generated types and TypeScript clean, 75
+tests passed across seven files, and the Next 16.3.3 static production build
 completed with `/` and `/_not-found` prerendered.
 
 `git diff --check` also passed. Generated layers, manifests, QGIS output,

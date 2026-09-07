@@ -20,6 +20,10 @@ const verifiedLayerHookSource = readFileSync(
   new URL("./use-verified-geojson-layer.ts", import.meta.url),
   "utf8",
 );
+const verifiedLayerLifecycleSource = readFileSync(
+  new URL("./verified-geojson-layer-lifecycle.ts", import.meta.url),
+  "utf8",
+);
 
 describe("whale layer source configuration", () => {
   it("binds the build to one exact export and its validated analysis source", () => {
@@ -146,8 +150,8 @@ describe("whale layer map integration", () => {
     );
     expect(mapFrameSource).toContain("dispatch: dispatchWhale");
     expect(mapFrameSource).toContain("failureMessage: WHALE_FAILURE_MESSAGE");
-    expect(verifiedLayerHookSource).toContain('type: "load-failed"');
-    expect(verifiedLayerHookSource).toContain(
+    expect(verifiedLayerLifecycleSource).toContain('type: "load-failed"');
+    expect(verifiedLayerLifecycleSource).toContain(
       "releaseOwnedLayer(map, ownedLayer, layerRef)",
     );
   });
@@ -204,7 +208,7 @@ describe("whale layer checksum binding", () => {
   it("hashes the bytes the layer will display, not the URL", () => {
     // The layer is created from a blob built from the verified bytes, so the
     // file that was hashed is necessarily the file that is rendered.
-    expect(verifiedLayerHookSource).toContain(
+    expect(verifiedLayerLifecycleSource).toContain(
       "const bytes = await response.arrayBuffer();",
     );
     expect(mapFrameSource).toContain(
