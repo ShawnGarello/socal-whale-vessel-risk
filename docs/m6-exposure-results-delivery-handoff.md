@@ -22,6 +22,8 @@ the M6 analytical-foundation handoff.
 - Implementation commit: `3b149e8` (`feat: add exposure delivery contracts`).
 - Generated-results commit: `9ec6abc` (`feat: add generated exposure
   application results`).
+- Summary-reconciliation hardening commit: `c9daa16` (`fix: verify exposure
+  summary values before export`).
 - This handoff is committed separately so its final commit remains identifiable
   from branch history.
 - The concurrent M5 vessel/domain-display session used the separate
@@ -113,6 +115,47 @@ units, source vintages, accepted vessel parameters, source references,
 limitations, and provenance hashes are explicit. The exporter does not invent a
 metric to fill an interface.
 
+## Summary reconciliation hardening
+
+Follow-up review correctly identified that a matching supplied report checksum
+identifies the submitted bytes but does not establish that every statistic in
+those bytes is numerically correct. Commit `c9daa16` closes that gap before any
+public object is built.
+
+For each 5 km and 10 km table, the loader now reconstructs the analytical
+summary inputs from the verified serialized rows and reruns the accepted
+`analyze_grid` calculation. It compares the complete report tree against those
+recomputed values with exact keys, strict primitive types, exact text/enumerated
+values, and calculation-appropriate floating tolerances. This covers:
+
+- qualified, excluded, water, and zero-product cell counts;
+- qualified water area and both water/VSR conservation residuals;
+- integrated qualified/inside/outside totals and derived inside/outside shares;
+- normalization maxima;
+- both all-valid and positive-only p80/p90/p95 thresholds, availability/reason,
+  selected identities, total/inside/outside area, shares, domain share, and tie
+  area;
+- ranked top-outside cell identities, coordinates, contributions, individual
+  shares, and top-ten share;
+- product-versus-log rank correlation and maximum rank change; and
+- both global normalization controls, including normalizers, invariant shares,
+  and threshold-membership equality.
+
+The results verifier also regenerates the entire typed public projection and
+requires the serialized public tree to equal it. Recomputing a self-consistent
+`results_id` after altering a public value is therefore insufficient to pass.
+
+No upstream nested mapping is copied wholesale into results or the display
+manifest. Source/input hash maps, analytical-domain limitations, vessel
+length-filter details, source references, normalization controls, and display
+diagnostics are projected through explicit field lists. Available and
+unavailable normalization controls and display diagnostics use dedicated typed
+public shapes. Unexpected fields are rejected; allowed text/enumerations and
+primitive types are checked. Regression tests inject private paths, debug
+objects, token-like fields, and unexpected diagnostics at both checksum-matched
+load and post-validation projection boundaries and confirm that no public
+artifact can be produced from them.
+
 ## Fresh analytical source bundles
 
 The retained M6 bundles predated the corrected identity/provenance separation,
@@ -202,6 +245,17 @@ The measured payload makes same-origin static delivery a credible candidate for
 this exposure layer, but it is evidence for the later publication-route decision,
 not authorization to deploy or a replacement for the required ADR/release
 review.
+
+After summary hardening, final-code exports from the independent analytical
+bundles were written to fresh ignored locations:
+
+- `data/interim/m6-exposure-results-reconciliation-first-v3/`; and
+- `data/interim/m6-exposure-results-reconciliation-repeat-v3/`.
+
+Each location reproduced the three canonical hashes and the results ID in the
+table above. Thus stricter numerical reconciliation changed no public byte. The
+existing QGIS evidence below remains bound to those exact display and manifest
+bytes; no replacement geometry or visual claim was needed.
 
 ## QGIS and visual verification
 
@@ -363,16 +417,18 @@ Results:
 - formatting: passed, 97 files already formatted;
 - lint: passed;
 - mypy: passed, 45 source files;
-- pytest: passed, 608 tests in 106.31 seconds; and
+- pytest: passed, 617 tests in 81.47 seconds; and
 - source distribution and wheel build: passed.
 
-The 15 delivery-focused tests are included in that full count. They cover a
+The 24 delivery-focused tests are included in that full count. They cover a
 known-answer one-third inside share, the full-water/intensity versus qualified-
 water/integration distinction, threshold ties and denominators, all-zero nulls,
 decimal presentation, strict schemas/CRS/checksums/provenance, results tampering,
-upstream metadata exclusion, deterministic repetition, timestamp-independent
-results identity, output guards, private-data sanitation, RFC 7946 ring order,
-and CLI behavior.
+checksum-matched numerical inconsistencies across every consumed summary family,
+strict text/enumeration and nested-field handling, upstream metadata exclusion,
+post-validation private/debug injection, deterministic repetition,
+timestamp-independent results identity, output guards, private-data sanitation,
+RFC 7946 ring order, and CLI behavior.
 
 Web checks were not run because this branch is prohibited from changing or
 integrating web code. Both analysis and web CI jobs still must pass at the exact
