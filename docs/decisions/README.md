@@ -28,6 +28,7 @@ This directory holds Architecture Decision Records (ADRs). An ADR is a short not
 | [0018](0018-use-vessel-kilometres-for-grid-activity.md) | Use vessel-kilometres as the primary grid activity measure | Accepted |
 | [0019](0019-reference-the-publisher-hosted-vsr-service.md) | Reference the publisher-hosted VSR service | Accepted |
 | [0020](0020-propose-area-integrated-relative-exposure.md) | Propose area-integrated relative exposure | Accepted for exploratory execution |
+| [0021](0021-propose-vercel-static-input-delivery.md) | Propose Vercel static input delivery | Proposed; author agreement pending |
 
 ADR 0018 was accepted on 2026-09-05, when its 300-second/30-knot production
 configuration completed final production generation, byte-identical repetition,
@@ -53,11 +54,11 @@ headline. See the
 [M6 foundation handoff](../m6-exposure-foundation-handoff.md) and
 [exposure-results delivery handoff](../m6-exposure-results-delivery-handoff.md).
 
-## Why these exist
-
 [ADR 0021](0021-propose-vercel-static-input-delivery.md) proposes Vercel static
 delivery for the initial input-layer application. It is not accepted and does
 not change M4's existing account or hosted-test criteria.
+
+## Why these exist
 
 The most expensive question in a project six months old is "why is it like this?" Code shows what was decided; it rarely shows what else was considered or what was known at the time. An ADR captures the reasoning while it is still fresh, so a later reader can tell the difference between a deliberate choice and an accident — and so a decision can be revisited on its merits rather than re-argued from scratch.
 

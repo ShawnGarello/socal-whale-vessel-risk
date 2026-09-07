@@ -1147,9 +1147,21 @@ credential verification. Actual account product, billing, usage/headroom,
 capabilities, Hobby plan/eligibility and production key restrictions await
 author evidence. Development owns staging and the deployment checkpoint.
 
+The keyless isolated rehearsal at implementation commit `4f9b2c2` passed locked
+installation, formatting, lint, generated-type checking, all 79 tests and static
+build. The prepared package is 36,021,239 bytes across 901 files; receipt SHA-256
+is `7cf829418f808bd1092547ebe0e2790eec5220616cc1e4ee353d518d5ef0d815`.
+Read-back verification matched the complete upload inventory and all three
+compiled checksum-addressed layer URLs. The package is explicitly **not for
+deployment** because it has no basemap key and is not a reviewed main release.
+Independent audit found a release-root ignore gap and stale test-count prose;
+both are corrected in the follow-up. No application or analytical behavior
+changed. [The M4 handoff](m4-release-staging-handoff.md) retains commands,
+artifact locations, failures and the next approval checkpoint.
+
 | Criterion | State |
 |---|---|
-| Builds locally | **Verified.** `npm run build` succeeds; the export was served and loaded. |
+| Builds locally | **Verified.** Historical browser evidence remains local. The 2026-09-07 isolated committed-source rehearsal passed all 79 tests and the static build, including the six pinned input files. |
 | Builds in the deployment environment | **Unverified.** No deployment environment exists yet. |
 | Map renders, pans, and zooms | **Verified locally.** The keyed static export rendered `arcgis/oceans`, panned, zoomed, and completed the ready-map attribution handoff in Chrome at all three required viewports. The deployed-origin path remains unverified. |
 | No credentials in the repository or committed build output | **Verified.** Staged diffs were scanned before each commit; build output is ignored. |

@@ -1142,14 +1142,12 @@ Documented Hobby-plan limits and how this project compares:
 | 100 deployments per day, 100 builds per hour, 1 concurrent | ample |
 | Typical monthly Fast Data Transfer guideline up to 100 GB | roughly 0.98 MB Brotli for all three project input layers, plus the SDK chunks a page actually fetches |
 
-**The deployment must carry locally generated data.** Two documented paths do.
-The recommended one is `vercel build` followed by `vercel deploy --prebuilt`,
-which uploads the local `.vercel/output` rather than the source, so ignored
-generated files reach the deployment without entering Git. The alternative is
-uploading the finished `out/` directory as a static deployment with
-`outputDirectory` set and no build command. **Neither has been executed**, so
-whether `vercel build` produces the expected static output for this
-`output: "export"` project is unverified and needs one author-run trial.
+**The deployment must carry locally generated data.** The implemented staging
+procedure below builds the static export and assembles Build Output API v3
+output for `vercel deploy --prebuilt`. It needs no Vercel account operation to
+prepare local files. The earlier framework-aware `vercel build` proposal and
+direct `out/` upload remain alternatives; neither has been deployed or selected.
+Provider acceptance of the prepared static package remains unverified.
 
 **An eligibility question the author must settle.** Vercel documents the Hobby
 plan as restricted to non-commercial personal use, defining commercial usage as
@@ -1157,7 +1155,7 @@ plan as restricted to non-commercial personal use, defining commercial usage as
 involved in any part of the production of the project, including a paid
 employee or consultant writing the code." The enumerated examples — collecting
 payment, advertising a product or service for sale, being paid to create or
-host the site, affiliate linking as the site's primary purpose, advertisements,
+host the site, affiliate linking as the site's primary purpose, and advertisements
 — do **not** apply to this project. The current guidelines explicitly exclude
 donation requests from commercial usage (rechecked 2026-09-07). The broad
 "financial gain" clause is the open question for a portfolio piece aimed at
@@ -1704,14 +1702,16 @@ In practice:
   tool/version, inspected views/checks, result, and relevant observations.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
-**Application (TypeScript).** `npm test` in `web/` runs Vitest once (75 tests);
+**Application (TypeScript).** `npm test` in `web/` runs Vitest once (79 tests);
 `npm run test:watch` watches. The suite covers configuration logic in
 `web/lib/`, how the map component's reported load failures become interface
 text, the source-level application boundary that keeps fallback attribution
 present until a ready SDK map assumes attribution responsibility, the project
 input layers' artifact bindings and class breaks, checksum verification that
 ties the identity shown in the interface to the bytes the browser loaded, and
-stale async completion/cleanup behavior. Rendering,
+stale async completion/cleanup behavior. Four release-staging tests cover
+changed/missing artifacts, unsafe release names, deterministic inventories and
+extra files in an upload package. Rendering,
 the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
 building it and looking at it in a browser. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
