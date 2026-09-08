@@ -310,6 +310,14 @@ function validateGridSensitivity(value: unknown, path: string): void {
       `${path}.high_area_inside_share_changes[${index}].presentation_change_percentage_points_4dp`,
     );
   });
+  const percentiles = highChanges.map(
+    (entry) => record(entry, `${path}.high_area_inside_share_changes`).percentile,
+  );
+  if (percentiles[0] !== 0.8 || percentiles[1] !== 0.9 || percentiles[2] !== 0.95) {
+    throw new ExposureResultsContractError(
+      `${path}.high_area_inside_share_changes must be ordered p80, p90, p95.`,
+    );
+  }
 }
 
 /** Validate and narrow the single generated schema supported by this build. */
@@ -486,7 +494,7 @@ export interface ExposureResultsViewModel {
   readonly formulaInsideChangePercentagePoints: string;
   readonly thresholdRows: readonly ThresholdView[];
   readonly positiveOnlyRows: readonly ThresholdView[];
-  readonly gridProduct: GridSensitivity;
+  readonly gridSensitivityRows: readonly GridSensitivityView[];
   readonly limitationPoints: readonly string[];
   readonly resultsId: string;
 }
@@ -511,6 +519,13 @@ interface ThresholdView {
   readonly logInside: string;
   readonly productThreshold: string;
   readonly logThreshold: string;
+}
+
+interface GridSensitivityView {
+  readonly measure: string;
+  readonly unit: "percentage points" | "percent";
+  readonly productChange: string;
+  readonly logTrafficChange: string;
 }
 
 function scenarioView(scenario: ExposureScenario): ScenarioView {
@@ -547,6 +562,34 @@ function thresholdRows(
   }));
 }
 
+function gridSensitivityRows(
+  product: GridSensitivity,
+  logTraffic: GridSensitivity,
+): readonly GridSensitivityView[] {
+  return [
+    {
+      measure: "Integrated inside share",
+      unit: "percentage points",
+      productChange: product.presentation_inside_change_percentage_points_4dp,
+      logTrafficChange: logTraffic.presentation_inside_change_percentage_points_4dp,
+    },
+    {
+      measure: "Integrated total",
+      unit: "percent",
+      productChange: product.presentation_integrated_total_percent_change_6dp,
+      logTrafficChange: logTraffic.presentation_integrated_total_percent_change_6dp,
+    },
+    ...product.high_area_inside_share_changes.map((entry, index) => ({
+      measure: `p${entry.percentile * 100} high-area inside share`,
+      unit: "percentage points" as const,
+      productChange: entry.presentation_change_percentage_points_4dp,
+      logTrafficChange:
+        logTraffic.high_area_inside_share_changes[index]
+          ?.presentation_change_percentage_points_4dp ?? unavailable,
+    })),
+  ];
+}
+
 /** Select display-ready values without recalculating or reformatting numbers. */
 export function buildExposureResultsViewModel(
   results: ExposureResults,
@@ -567,7 +610,10 @@ export function buildExposureResultsViewModel(
       product.high_exposure.positive_only_sensitivity,
       log.high_exposure.positive_only_sensitivity,
     ),
-    gridProduct: results.comparisons.grid_resolution_sensitivity.product,
+    gridSensitivityRows: gridSensitivityRows(
+      results.comparisons.grid_resolution_sensitivity.product,
+      results.comparisons.grid_resolution_sensitivity.log_traffic,
+    ),
     limitationPoints: [
       "Modeled whale habitat, not observed individual whales.",
       `${results.source_references.traffic.period} vessel activity is compared with the ${results.scope.vsr_boundary_year} VSR boundary; the inputs are not contemporaneous encounters.`,

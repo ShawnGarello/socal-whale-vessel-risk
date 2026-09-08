@@ -115,17 +115,36 @@ function SensitivityTable({ results }: { readonly results: ExposureResults }) {
             </tbody>
           </table>
         </div>
+        <div className={styles.tableScroller} tabIndex={0}>
+          <table>
+            <caption>Generated change from the 5 km to 10 km grid</caption>
+            <thead>
+              <tr>
+                <th scope="col">Measure</th>
+                <th scope="col">Product</th>
+                <th scope="col">Log traffic</th>
+              </tr>
+            </thead>
+            <tbody>
+              {view.gridSensitivityRows.map((row) => (
+                <tr key={row.measure}>
+                  <th scope="row">
+                    {row.measure}
+                    <span className={styles.tableUnit}>
+                      {row.unit === "percentage points" ? " (pp)" : " (%)"}
+                    </span>
+                  </th>
+                  <td>{row.productChange}</td>
+                  <td>{row.logTrafficChange}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         <p>
-          At 10 km, the primary integrated inside share changes by{" "}
-          <strong>
-            {view.gridProduct.presentation_inside_change_percentage_points_4dp}
-          </strong>{" "}
-          percentage points and its integrated total changes by{" "}
-          <strong>
-            {view.gridProduct.presentation_integrated_total_percent_change_6dp}%
-          </strong>
-          . Grid stability for the integrated share does not establish stability for
-          every high-area statistic.
+          These are generated 10 km minus 5 km comparisons; positive values are
+          increases and negative values are decreases. Grid stability for an integrated
+          share does not establish stability for the high-area statistics.
         </p>
       </div>
     </details>

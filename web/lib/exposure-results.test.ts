@@ -11,7 +11,10 @@ import {
   parseExposureResultsText,
   type ExposureResults,
 } from "./exposure-results";
-import { loadExposureResults } from "./load-exposure-results";
+import {
+  EXPOSURE_RESULTS_PUBLIC_ERROR_MESSAGE,
+  loadExposureResults,
+} from "./load-exposure-results";
 
 const resultText = readFileSync(
   new URL("../../results/exposure-results.v1.json", import.meta.url),
@@ -33,6 +36,40 @@ describe("exposure results contract", () => {
     expect(parsed.results_id).toBe(EXPOSURE_RESULTS_ID);
     expect(loaded).toMatchObject({ ok: true, sha256: EXPOSURE_RESULTS_SHA256 });
   });
+
+  it.each([
+    [
+      "missing",
+      String.raw`ENOENT: no such file or directory, open 'C:\private-build\results\exposure-results.v1.json'`,
+    ],
+    [
+      "unreadable",
+      String.raw`EACCES: permission denied, open 'C:\private-build\results\exposure-results.v1.json'`,
+    ],
+  ])(
+    "keeps the filesystem path build-side when results are %s",
+    (_case, diagnosticMessage) => {
+      const diagnostics: unknown[] = [];
+      const load = loadExposureResults(
+        () => {
+          throw new Error(diagnosticMessage);
+        },
+        (_message, error) => diagnostics.push(error),
+      );
+      const markup = renderToStaticMarkup(
+        createElement(ExposureResultsPanel, { load }),
+      );
+
+      expect(load).toEqual({
+        ok: false,
+        message: EXPOSURE_RESULTS_PUBLIC_ERROR_MESSAGE,
+      });
+      expect(markup).toContain(EXPOSURE_RESULTS_PUBLIC_ERROR_MESSAGE);
+      expect(markup).not.toContain("private-build");
+      expect(markup).not.toContain("C:\\");
+      expect((diagnostics[0] as Error).message).toContain("C:\\private-build");
+    },
+  );
 
   it("rejects an incompatible version, identity, and missing required field", () => {
     const wrongVersion = resultObject();
@@ -63,6 +100,38 @@ describe("exposure results contract", () => {
       "p80",
       "p90",
       "p95",
+    ]);
+    expect(view.gridSensitivityRows).toEqual([
+      {
+        measure: "Integrated inside share",
+        unit: "percentage points",
+        productChange: "0.0278",
+        logTrafficChange: "1.1050",
+      },
+      {
+        measure: "Integrated total",
+        unit: "percent",
+        productChange: "-0.006753",
+        logTrafficChange: "6.000890",
+      },
+      {
+        measure: "p80 high-area inside share",
+        unit: "percentage points",
+        productChange: "4.1484",
+        logTrafficChange: "3.4734",
+      },
+      {
+        measure: "p90 high-area inside share",
+        unit: "percentage points",
+        productChange: "-0.1473",
+        logTrafficChange: "2.8319",
+      },
+      {
+        measure: "p95 high-area inside share",
+        unit: "percentage points",
+        productChange: "-0.1105",
+        logTrafficChange: "2.8978",
+      },
     ]);
   });
 
@@ -133,6 +202,15 @@ describe("exposure results contract", () => {
     expect(markup).toContain("Share of high-exposure water area");
     expect(markup).toContain("74.9%");
     expect(markup).toContain("-17.2741");
+    expect(markup).toContain("Generated change from the 5 km to 10 km grid");
+    expect(markup).toContain("4.1484");
+    expect(markup).toContain("3.4734");
+    expect(markup).toContain("1.1050");
+    expect(markup).toContain("-0.1473");
+    expect(markup).toContain("-0.1105");
+    expect(markup).toContain("2.8319");
+    expect(markup).toContain("2.8978");
+    expect(markup).toContain("6.000890");
     expect(markup).toContain("Modeled whale habitat, not observed individual whales");
     expect(markup).toContain("not empirically complete AIS coverage");
     expect(markup).toContain("Speed remains separate");

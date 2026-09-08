@@ -183,6 +183,11 @@
   text-align: start;
 }
 
+.tableUnit {
+  color: var(--shell-muted);
+  font-weight: 400;
+}
+
 .limitations ul,
 .additionalList {
   margin: 0.5rem 0 0;

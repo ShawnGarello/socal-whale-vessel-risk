@@ -12,10 +12,20 @@ export type ExposureResultsLoad =
   | { readonly ok: true; readonly results: ExposureResults; readonly sha256: string }
   | { readonly ok: false; readonly message: string };
 
+export const EXPOSURE_RESULTS_PUBLIC_ERROR_MESSAGE =
+  "The generated relative-exposure results could not be read or verified for this build.";
+
+type ReadResultsFile = (path: string) => Buffer;
+type ReportResultsDiagnostic = (message: string, error: unknown) => void;
+
 /** Read and verify the committed results during the static build. */
-export function loadExposureResults(): ExposureResultsLoad {
+export function loadExposureResults(
+  readResultsFile: ReadResultsFile = (path) => readFileSync(path),
+  reportDiagnostic: ReportResultsDiagnostic = (message, error) =>
+    console.error(message, error),
+): ExposureResultsLoad {
   try {
-    const bytes = readFileSync(
+    const bytes = readResultsFile(
       resolve(process.cwd(), "../results/exposure-results.v1.json"),
     );
     const sha256 = createHash("sha256").update(bytes).digest("hex");
@@ -30,12 +40,10 @@ export function loadExposureResults(): ExposureResultsLoad {
       sha256,
     };
   } catch (error) {
+    reportDiagnostic("Exposure results failed static-build verification.", error);
     return {
       ok: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Exposure results could not be read or verified.",
+      message: EXPOSURE_RESULTS_PUBLIC_ERROR_MESSAGE,
     };
   }
 }
