@@ -211,14 +211,15 @@ outside this branch's authority.
 
 ## Live browser evidence
 
-Final local verification used the production static export served on localhost
-and headless Chrome 152.0.7977.76. The report is retained, ignored, at
-`data/interim/m7-exposure-interface/browser-verification/browser-report.json`:
+Final local verification after the rebase used the production static export
+served on localhost and headless Chrome 152.0.7977.76. The fresh report is
+retained, ignored, at
+`data/interim/m7-exposure-interface/browser-verification-rebase/browser-report.json`:
 
-- Checked at: `2026-09-08T17:00:47.529Z`
-- Bytes: 155,399
+- Checked at: `2026-09-08T22:29:19.097Z`
+- Bytes: 155,398
 - SHA-256:
-  `5d364fd729f70c9b89f9000941a46ba9df7782cad7461c0e0d2f223f2fce21e6`
+  `aaa5e0bde72d91019d18f350cfbf21c927360f670e47ceed942c1ea6b4c679d2`
 
 At 390×844, 820×1180, and 1440×900, the browser independently confirmed:
 
@@ -257,15 +258,19 @@ Their final SHA-256 values are:
 
 | Screenshot                      | SHA-256                                                            |
 | ------------------------------- | ------------------------------------------------------------------ |
-| `390x844-map.png`               | `af8639304abd3c6d1829e9bdfb10be09d146be67bdc27d31c3be34cbe2b50697` |
+| `390x844-map.png`               | `02061acaccd71a0fab4a2d9e929185af240626be4e50804f6f891882c77ae96d` |
 | `390x844-results.png`           | `0634cfd99d5b096cb7609f7deb57d9153f21d5fc35686a1ea83cc5a3b7e6360b` |
-| `820x1180-map.png`              | `7c10d7a98a490addce7ce0862d051a73f5478828750cc35c442617f591473b2c` |
+| `820x1180-map.png`              | `fd446d80cd6fb447f7a77017e5e48ab50bdbf9b8079229f78b60a221740e9e25` |
 | `820x1180-results.png`          | `6a2d07e8332ae0657de82571093b488ed395892b6c0c1b2a2a4005ae49ea70fa` |
-| `1440x900-map.png`              | `f1a0b6aae331d19159878df07043a803ae7b0d0679ecaad27b2ede7396819ff7` |
-| `1440x900-results.png`          | `0956f1191e5cb837c5f2e6591538580e61e45c191c8b17edcbc8076fbaa0f7d3` |
-| `failure-missing.png`           | `fd5ff77b14a7d6fa69c932ae4d4345a2a50b5a1a16c171f92816c646d38be77e` |
-| `failure-manifest-mismatch.png` | `8f0a7f75f1da730d2f2da649f2de9efaf57278d709fb2ff57a5c88387afb9215` |
-| `failure-malformed.png`         | `3c63ce7e21f49a5ace25410e28e8aa77f409816356eb87c98501bddd09a3530e` |
+| `1440x900-map.png`              | `569a981af9172004340ddf3551e1784da232af60910aee31da190a436740f04a` |
+| `1440x900-results.png`          | `8a65375e4aa0f289892830eb5d4d3db5e5c9e416c03c4673d58301acbb3f6c16` |
+| `failure-missing.png`           | `ef892db68308326c274886bca5f9eda1c0075b419d8b030ae1aea26cdb9310f4` |
+| `failure-manifest-mismatch.png` | `33f985485659c97c659adf33adc28ecc5700ea339862a02cbfdbf5d33741aa59` |
+| `failure-malformed.png`         | `1042d3dc41660a7ebbe2b6a7120695edb704228dd287a57227c6aca7593c2086` |
+
+The pre-rebase approval-correction evidence remains preserved separately under
+`browser-verification/`; its report SHA-256 is
+`5d364fd729f70c9b89f9000941a46ba9df7782cad7461c0e0d2f223f2fce21e6`.
 
 The first development browser pass exposed a collapsed small-screen map caused
 by a percentage-height flex chain; the map now has a tested small-screen height.
