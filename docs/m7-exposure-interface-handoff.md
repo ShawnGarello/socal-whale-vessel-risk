@@ -12,10 +12,17 @@ final public headline.
   `C:\Users\teche\socal-whale-vessel-risk-m7-exposure-interface`
 - Base and initial `origin/main`:
   `8b1f65c8556955d6f28ee86426c09d55b7ea71fa`
-- Implementation commit:
+- Initial implementation commit:
   `841fe3d8b495943fb511a056f65c2bde2ff21033`
   (`feat: add verified exposure results interface`)
-- This handoff is committed separately in the commit that contains this file.
+- Initial handoff commit:
+  `ab0617d42bac45310c805bd6b02d1d1acebf40ae`
+  (`docs: record M7 exposure interface handoff`)
+- Approval-correction commit:
+  `d207fb22b95cf0e0e5addd1f7ee9313b185a3155`
+  (`fix: harden exposure results disclosure`)
+- The current handoff update is committed separately in the commit containing
+  this revision.
 - No push, merge, deployment, account operation, key/referrer change, or
   milestone-status change was performed.
 
@@ -43,6 +50,9 @@ narrow static-build boundary:
 - An incompatible, changed, missing, or malformed results file produces an
   isolated **Results unavailable** panel. It does not fall back to hardcoded
   statistics and does not disable the independent map inputs.
+- Results-file exceptions, including absolute missing/unreadable paths, are
+  reported only to the static-build diagnostic channel. The rendered panel
+  receives a fixed public message with no exception text or filesystem path.
 - Display values come from the generated presentation strings. The view model
   does not derive or reformat the scientific percentages in the browser.
 - Exact zero shares remain visible as generated zero strings. Null shares remain
@@ -84,8 +94,11 @@ The results panel makes the two headline measures visibly distinct:
   presentation **6473.8 km^2**.
 - Required 5 km log-traffic sensitivity: **74.9%** inside and **25.1%** outside,
   with generated change **-17.2741** percentage points from the primary formula.
-- P80/p90/p95 all-valid, positive-only, and 10 km grid sensitivities remain
-  directly reachable in an expandable, keyboard-scrollable section.
+- P80/p90/p95 all-valid, positive-only, and complete 5 km-to-10 km grid
+  sensitivities remain directly reachable in an expandable,
+  keyboard-scrollable section. The grid table uses the generated presentation
+  strings for both product and log-traffic integrated-share changes, integrated
+  total changes, and p80/p90/p95 high-area inside-share changes.
 
 The main copy consistently calls the output **Relative exposure** or modeled
 whale–vessel overlap. It does not present collision zones, collision probability,
@@ -147,8 +160,9 @@ and `7020ca8dfa27953a24a9db4ad2b0a25fb321c4edbecd383a01c62efb4b3bc7bf`.
 From `web/`, committed dependencies were installed with Node 22.16.0 and npm
 10.9.2. The required affected-component gates produced:
 
-- Focused M7 run: 3 files, 10 tests passed.
-- Full `npm test`: 11 files, 89 tests passed.
+- Initial focused M7 run: 3 files, 10 tests passed.
+- Approval-correction focused run: 1 file, 7 tests passed.
+- Final full `npm test`: 11 files, 91 tests passed.
 - `npm run typegen`: passed.
 - `npm run typecheck:generated`: passed.
 - `npm run format:check`: passed.
@@ -160,14 +174,18 @@ From `web/`, committed dependencies were installed with Node 22.16.0 and npm
 The M7 tests cover supported contract/version/identity and required-field
 rejection; exact generated-string selection; null, all-zero, exact-zero, and
 excluded-area semantics; separation of integrated shares from high-area shares;
-required sensitivity and limitation copy; exact display/manifest/results pins;
-malformed and mismatched manifest rejection; feature-count rejection; accessible
-default controls; and pairing-failure lifecycle isolation without disturbing
-unrelated layers.
+fixed public results-file errors for simulated missing and unreadable files while
+retaining their path-bearing exceptions build-side; complete generated product
+and log-traffic grid-sensitivity selection and rendering; required sensitivity
+and limitation copy; exact display/manifest/results pins; malformed and
+mismatched manifest rejection; feature-count rejection; accessible default
+controls; and pairing-failure lifecycle isolation without disturbing unrelated
+layers.
 
-The repository-wide clean gate reached and passed dependency installation,
-type-generation, formatting, lint, generated-type checking, and all tests. Its
-first build attempt compiled and generated every page but ended with Windows
+The final repository-wide `npm run verify:clean` passed dependency installation,
+type-generation, formatting, lint, generated-type checking, all 91 tests, and the
+static production build in one run. Historically, the initial implementation's
+first clean-gate build compiled and generated every page but ended with Windows
 `EBUSY` while removing `web/out`, because the local browser-verification server
 still held that directory as its working directory. After stopping that server,
 the same production build passed. This was an environmental output-lock failure,
@@ -184,10 +202,10 @@ Final local verification used the production static export served on localhost
 and headless Chrome 152.0.7977.76. The report is retained, ignored, at
 `data/interim/m7-exposure-interface/browser-verification/browser-report.json`:
 
-- Checked at: `2026-09-08T07:41:42.110Z`
-- Bytes: 153,597
+- Checked at: `2026-09-08T17:00:47.529Z`
+- Bytes: 155,399
 - SHA-256:
-  `5f177f879afb6dc644fc571ae3a59e5841ca687c605755bd8a07c3308910069a`
+  `5d364fd729f70c9b89f9000941a46ba9df7782cad7461c0e0d2f223f2fce21e6`
 
 At 390×844, 820×1180, and 1440×900, the browser independently confirmed:
 
@@ -200,7 +218,8 @@ At 390×844, 820×1180, and 1440×900, the browser independently confirmed:
   `[-121.85726659994603, 32.05514455657572, -117.097556437, 35.000000108282464]`;
 - exposure off/on and product/log renderer changes without duplicate layers;
 - whale/vessel on and domain off/on without duplicate layers;
-- all expected generated result strings visible;
+- all expected generated result strings visible, including both methods'
+  integrated and p80/p90/p95 high-area grid changes;
 - the verified display/manifest/results-pairing disclosure present;
 - 3 px visible focus outline on the log-traffic radio control;
 - usable document/panel scrolling, expandable sensitivity content, and no body
@@ -225,15 +244,15 @@ Their final SHA-256 values are:
 
 | Screenshot                      | SHA-256                                                            |
 | ------------------------------- | ------------------------------------------------------------------ |
-| `390x844-map.png`               | `085d29f03846be11e163f4df09543fd1e8f14919a0c5d2569e7842476abf96a4` |
-| `390x844-results.png`           | `f4f91184ac9430f438fdd2bc225f2eea510de4c4a711e3785efd77959a123213` |
-| `820x1180-map.png`              | `774fd65580516bc843fc6e4a4070acd8a0dfc0e297540b11b14a85f607adfc3a` |
-| `820x1180-results.png`          | `5afe6be4d0bf1bd6ee8b62deffa1994d287b6095c260d0b692389c4381efd3c5` |
-| `1440x900-map.png`              | `523e95f75d07b721cd1a81f911aa78612eec8f45c3424918a16987097d7d4fb3` |
-| `1440x900-results.png`          | `cdf5223979093c3971bbd45efc1a0b20e717805bb4fb51dc033a96a6dac70409` |
-| `failure-missing.png`           | `45e97d598055c97d1324a972269dd7eec24d9cb422cae26d6aa663d41517e374` |
-| `failure-manifest-mismatch.png` | `3701b27d43dded826003d242b6d9ec14ddd20c4792203d5455f6c06835f4bdcc` |
-| `failure-malformed.png`         | `47839721c5081286833be47ae3a5353bd807616dfcd0979650dd03c0aba8b8a6` |
+| `390x844-map.png`               | `af8639304abd3c6d1829e9bdfb10be09d146be67bdc27d31c3be34cbe2b50697` |
+| `390x844-results.png`           | `0634cfd99d5b096cb7609f7deb57d9153f21d5fc35686a1ea83cc5a3b7e6360b` |
+| `820x1180-map.png`              | `7c10d7a98a490addce7ce0862d051a73f5478828750cc35c442617f591473b2c` |
+| `820x1180-results.png`          | `6a2d07e8332ae0657de82571093b488ed395892b6c0c1b2a2a4005ae49ea70fa` |
+| `1440x900-map.png`              | `f1a0b6aae331d19159878df07043a803ae7b0d0679ecaad27b2ede7396819ff7` |
+| `1440x900-results.png`          | `0956f1191e5cb837c5f2e6591538580e61e45c191c8b17edcbc8076fbaa0f7d3` |
+| `failure-missing.png`           | `fd5ff77b14a7d6fa69c932ae4d4345a2a50b5a1a16c171f92816c646d38be77e` |
+| `failure-manifest-mismatch.png` | `8f0a7f75f1da730d2f2da649f2de9efaf57278d709fb2ff57a5c88387afb9215` |
+| `failure-malformed.png`         | `3c63ce7e21f49a5ace25410e28e8aa77f409816356eb87c98501bddd09a3530e` |
 
 The first development browser pass exposed a collapsed small-screen map caused
 by a percentage-height flex chain; the map now has a tested small-screen height.
