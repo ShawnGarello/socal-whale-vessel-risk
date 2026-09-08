@@ -28,10 +28,10 @@ Node.js 22.16.0 and npm 10.9.2 were used. `npm ci` installed the committed web
 tree before investigation. A fresh `npm audit` then reported exactly two high
 severity findings:
 
-| Advisory | Dependency path | Before | Patched boundary | After |
-|---|---|---:|---:|---:|
-| [`GHSA-2883-xcg3-v3hh`](https://github.com/advisories/GHSA-2883-xcg3-v3hh) | `eslint@9.39.5` -> `@eslint/eslintrc@3.3.6` -> `js-yaml` | 4.3.1 | 4.3.2 | 4.3.2 |
-| [`GHSA-rgj7-g3m4-5g8c`](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c) | `next@16.3.3` -> optional `sharp` | 0.35.3 | 0.35.4 | 0.35.4 |
+| Advisory                                                                   | Dependency path                                          | Before | Patched boundary |  After |
+| -------------------------------------------------------------------------- | -------------------------------------------------------- | -----: | ---------------: | -----: |
+| [`GHSA-2883-xcg3-v3hh`](https://github.com/advisories/GHSA-2883-xcg3-v3hh) | `eslint@9.39.5` -> `@eslint/eslintrc@3.3.6` -> `js-yaml` |  4.3.1 |            4.3.2 |  4.3.2 |
+| [`GHSA-rgj7-g3m4-5g8c`](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c) | `next@16.3.3` -> optional `sharp`                        | 0.35.3 |           0.35.4 | 0.35.4 |
 
 Both parents already allowed the patched releases: `@eslint/eslintrc@3.3.6`
 declares `js-yaml ^4.3.0`, and Next.js 16.3.3 declares optional
@@ -55,18 +55,18 @@ unchanged. No override was added and no forced audit fix was used.
 
 The required clean gate completed successfully from `web/`:
 
-| Check | Result |
-|---|---|
-| `npm run verify:clean` | Passed; `npm ci` installed 554 packages and reported zero vulnerabilities, then all remaining web gates passed |
-| `next typegen` | Passed |
-| `npm run format:check` | Passed |
-| `npm run lint` | Passed |
-| `tsc --noEmit` | Passed |
-| `npm test` | Passed; 91 tests across 11 files |
-| `npm run build` | Passed; `/` and `/_not-found` reported as statically prerendered content |
-| Static-export check | `web/out/index.html` exists after the clean build |
-| Final `npm audit` | Zero vulnerabilities |
-| Final `npm ls js-yaml sharp --all` | `js-yaml@4.3.2` and `sharp@0.35.4` at the expected paths |
+| Check                              | Result                                                                                                         |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `npm run verify:clean`             | Passed; `npm ci` installed 554 packages and reported zero vulnerabilities, then all remaining web gates passed |
+| `next typegen`                     | Passed                                                                                                         |
+| `npm run format:check`             | Passed                                                                                                         |
+| `npm run lint`                     | Passed                                                                                                         |
+| `tsc --noEmit`                     | Passed                                                                                                         |
+| `npm test`                         | Passed; 91 tests across 11 files                                                                               |
+| `npm run build`                    | Passed; `/` and `/_not-found` reported as statically prerendered content                                       |
+| Static-export check                | `web/out/index.html` exists after the clean build                                                              |
+| Final `npm audit`                  | Zero vulnerabilities                                                                                           |
+| Final `npm ls js-yaml sharp --all` | `js-yaml@4.3.2` and `sharp@0.35.4` at the expected paths                                                       |
 
 The dependency and documentation diffs were reviewed, `git diff --check`
 passed, and staged changes were checked for credential-like strings and
