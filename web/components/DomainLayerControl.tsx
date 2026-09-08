@@ -64,6 +64,13 @@ export default function DomainLayerControl({
         <div className={styles.detailsBody}>
           <p>{DOMAIN_SOURCE.attribution}</p>
           <p>{DOMAIN_SOURCE.method}</p>
+          <p>
+            Domain-evidence processing date:{" "}
+            <time dateTime={DOMAIN_SOURCE.evidenceProcessedOn}>
+              {DOMAIN_SOURCE.evidenceProcessedOnLabel}
+            </time>
+            . This date applies to the checksum-bound evidence mask and report below.
+          </p>
           <ul>
             {DOMAIN_SOURCE.statements.map((statement) => (
               <li key={statement}>{statement}</li>

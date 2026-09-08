@@ -12,6 +12,8 @@ export const DOMAIN_SOURCE = {
     "4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77",
   evidenceReportSha256:
     "eb7963f6ccf625b1547d01ae768dadabfb3f47207d29c24fa5df47e387df5d98",
+  evidenceProcessedOn: "2026-08-29",
+  evidenceProcessedOnLabel: "29 August 2026",
   outlineColor: [45, 205, 184, 0.98] as const,
   attribution:
     "Analytical-domain evidence uses NOAA OCM AIS Base Stations and the " +

@@ -1352,8 +1352,8 @@ in the application through the evidence-selected publication route.
 
 ### Progress
 
-**All core input-layer displays implemented and deployed; M5 disclosures remain
-unfinished**
+**All core input-layer displays implemented and deployed; vessel/domain
+source-date disclosures completed locally and await a later release**
 
 - The static client creates an ArcGIS `FeatureLayer` from the publisher's exact
   `WhaleAtlas_2026/FeatureServer/0` URL and applies `FID = 126`. Source identity,
@@ -1483,6 +1483,14 @@ unfinished**
   panel scrolling, keyboard focus, attribution, and responsive containment
   passed. Missing, checksum-mismatched, and ArcGIS-malformed vessel files failed
   in isolation while the other layers remained ready.
+- The vessel disclosure now labels **5 September 2026** as the analytical
+  processing date for its checksum-bound production input and quality report.
+  The domain disclosure labels **29 August 2026** as the evidence-processing
+  date for its checksum-bound mask and report. A focused local browser check on
+  2026-09-07 reached both dates, labels, bound identities, and verified display
+  checksums at the same three responsive viewports without horizontal overflow.
+  These disclosure changes are not in the deployed M4 package and await a later
+  reviewed release.
 - The new files measure 2,720,788 and 867,910 raw bytes, or 385,764 and 199,834
   bytes with Brotli. All three project input files total 6,866,027 raw bytes
   and 982,450 Brotli bytes. The completed local static export contains 899 files
@@ -1500,7 +1508,8 @@ unfinished**
   but M7 integration and deployment remain open.
 - The route-specific Vercel and ArcGIS basemap account checks passed. Esri
   hosted-data capabilities are unselected and are not M4 gates.
-- M5 remains in progress, and its completion criteria are not met.
+- M5 remains in progress because its locally completed source-date disclosure
+  criterion has not yet reached and been verified at the production origin.
 
 **Deliverables**
 
@@ -1553,10 +1562,14 @@ unfinished**
 - Every layer's legend states its units and the meaning of its values.
   **Met locally for the whale, vessel-activity, and analytical-domain layers.**
 - Every layer names its source and its retrieval or processing date somewhere the user can reach.
-  **Met for the whale layer; incomplete for vessel and domain.** The vessel
-  disclosure names its source and analytical period but not a retrieval or
-  processing date. The domain disclosure names its source inputs but not their
-  retrieval or processing date.
+  **Met locally for the whale, vessel, and domain layers; deployed verification
+  remains pending for the vessel/domain change.** The whale disclosure names
+  its 25 August 2026 source-retrieval date. The vessel disclosure labels the
+  5 September 2026 analytical processing date and binds it to the exact
+  production input and quality-report checksums. The domain disclosure labels
+  the 29 August 2026 evidence-processing date and binds it to the exact mask
+  and report checksums. These are not the AIS analytical period, the source
+  product vintage, or the later display-export timestamp.
 - Layer geometry visually aligns across layers; no projection mismatch is visible.
   **Observed among the whale, vessel-activity, analytical-domain, publisher VSR,
   and basemap layers in local and deployed browser checks**, with separate
@@ -1565,9 +1578,10 @@ unfinished**
   project-hosted copy. **Met locally and at the stable production origin.**
 
 The display, legend, provenance, and alignment evidence now covers every core
-input layer locally and at the stable production origin. M5 stays in progress
-because the vessel and domain source disclosures still lack the required
-retrieval or processing dates.
+input layer locally and at the stable production origin. The source-date
+disclosure criterion is also met locally for all three layers. M5 stays in
+progress until the vessel/domain disclosure change passes review and CI, enters
+a later approved release, and is verified at the stable production origin.
 
 **Risks and open questions**
 

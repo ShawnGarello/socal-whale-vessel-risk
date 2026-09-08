@@ -169,6 +169,16 @@ to these exact files and inputs:
 | Domain candidate-mask artifact | `4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77` |
 | Domain evidence report         | `eb7963f6ccf625b1547d01ae768dadabfb3f47207d29c24fa5df47e387df5d98` |
 
+The vessel disclosure labels **5 September 2026** as the analytical processing
+date for the checksum-bound production vessel input and quality report above.
+That is distinct from the 1 July through 30 November 2024 analytical period and
+from the later display export. The domain disclosure labels **29 August 2026**
+as the evidence-processing date for the checksum-bound candidate mask and
+evidence report. That is distinct from the source retrievals, the 2024 station
+product vintage, the later author acceptance, and the display export. The
+browser-visible source modules keep each date beside the identities it
+describes; they do not expose local paths or private lineage records.
+
 The vessel legend uses a separate neutral zero class followed by fixed
 intervals over 0–1, 1–5, 5–20, 20–100, and over 100 vessel-km/km². The
 classes contain 137 / 381 / 674 / 1,019 / 381 / 201 cells respectively. These
@@ -225,6 +235,14 @@ checksum-mismatch runs had no console errors; the forced 404 produced one
 expected resource-log entry. The forced ArcGIS parse failure produced its two
 expected console errors. The ignored browser report SHA-256 is
 `8e9e1395539ccb0d2cdf18dedbb815effb555bf915184abc4a1a3352ee45501a`.
+
+A focused local source-date check on 2026-09-07 used the same exact 390 × 844,
+820 × 1180, and 1440 × 900 viewports and the exact ignored source copies. Both
+layers reached ready state, their display checksums were verified from the
+loaded bytes, and the two processing-date labels, `<time datetime>` values, and
+bound input/report identities were reachable without horizontal overflow. This
+check did not exercise the production origin; the disclosure change is not in
+the deployed M4 package and awaits a later reviewed release.
 
 ## Publisher-hosted VSR boundary
 
