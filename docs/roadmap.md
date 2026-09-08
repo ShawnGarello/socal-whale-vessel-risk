@@ -1812,8 +1812,9 @@ Bring the analysis into the application so a visitor can explore the exposure la
 - M6 (exposure layer and statistics exist).
 
 The M6 display/results artifacts now exist for integration without recomputing
-science, but M5 remains incomplete, the selected static route is not deployed,
-M6 still awaits independent audit and owner acceptance, and M7 has not started.
+science. M4's selected static route is deployed and verified, but M5 remains
+incomplete, M6 still awaits independent audit and owner acceptance, and M7 has
+not started.
 
 **Deliverables**
 
@@ -1931,15 +1932,16 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 
 **Risks and open questions**
 
-- **Public delivery depends on verifying the selected route.** ADR 0021 selects
-  checksum-addressed static files on free Vercel Hobby, which the author
-  confirmed on 2026-09-07. Personal-use eligibility, free capacity, and
-  deployed-browser behavior remain unverified. A failed free check stops
-  deployment; no paid fallback is authorized.
+- **The selected public route passed M4.** ADR 0021's checksum-addressed static
+  files are deployed on the author-confirmed free Vercel Hobby project.
+  Personal-use eligibility, capacity headroom, exact receipt and deployed-browser
+  behavior were verified on 2026-09-07. Later releases must recheck applicable
+  capacity and browser behavior; no paid fallback is authorized.
 - Esri hosted-data services are unselected. Choosing one later requires a
   superseding decision and route-specific evidence; their current account
   capabilities are not M4 prerequisites.
-- Deployment hosting and any ArcGIS credential requirements must be settled before release, not at release.
+- M4 settled deployment hosting and the ArcGIS basemap credential requirements.
+  Later release candidates must retain the exact-origin and free-capacity checks.
 - The external VSR service can change, disappear, be rate-limited, or become
   private. Version 1 uses a documented release-time check rather than an
   automatic monitoring or synchronization service.

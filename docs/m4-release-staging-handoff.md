@@ -184,6 +184,12 @@ deployed map rendering and fresh visitor access remain unverified.
   The web source is unchanged since the rehearsal commit. Final fetch still
   found local main equal to origin/main. Relative documentation file links and
   `git diff --check` passed.
+- The post-deployment audit independently confirmed the resolved 900-of-900
+  public receipt and sampled six matching public resources. It found stale
+  current-status text in development, architecture and later roadmap sections.
+  Those statements now report the completed M4 deployment and route checks;
+  explicitly dated predeployment and first-deployment checkpoints remain as
+  history.
 
 No Python code changed and no analytical run was required. Both `analysis` and
 `web` CI jobs remain mandatory on a future PR head before an authorized merge.

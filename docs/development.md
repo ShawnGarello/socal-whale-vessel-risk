@@ -205,7 +205,8 @@ fallback remains visible while the SDK loads and when map initialization fails.
 If the map becomes ready, the fallback is removed and the ArcGIS SDK retains
 responsibility for its automatic, dynamic data attribution; the application
 does not disable or hide it. The successful local keyed path is verified below;
-deployment-origin service access remains unverified.
+the later M4 production evidence verifies the same behavior from the stable
+deployment origin.
 
 For a keyless project-layer integration check, `topo-vector` can supply the
 public basemap while the configuration notice remains visible. That path was
@@ -1098,10 +1099,11 @@ ArcGIS Pro directory or project to implement.
 
 ## Deploying the application
 
-**Status: not deployed.** Nothing has been published to any host. ADR 0021
-selects Vercel Hobby, and the isolated project and reviewed-main release
-candidate now exist; explicit upload approval and deployed verification remain
-open.
+**Status: deployed and verified.** ADR 0021's selected Vercel Hobby route serves
+the reviewed-main package at `https://socal-whale-vessel-overlap.vercel.app`.
+The approved receipt, all 900 public files, exact project inputs, route-specific
+account constraints and clean-browser behavior passed on 2026-09-07. The
+initial Toolbar mismatch and its receipt-exact redeployment are recorded below.
 
 **Requirements**
 
@@ -1124,14 +1126,16 @@ open.
   host that builds from the Git repository alone would deploy an application
   with no project input layers. See the Vercel path below.
 
-**Vercel, the author's preferred host**
+**Vercel, the selected host**
 
-Vercel is the author's preference and the plan below is written for it. Nothing
-has been deployed, no account has been inspected or created, and no billing or
-paid resource is authorized. Official documentation was checked on 2026-09-06
-against pages carrying their own `last_updated` labels of 2026-09-03 (limits),
-2026-08-31 (Hobby plan), 2026-07-29 (fair use), and 2026-08-25 (project
-configuration); recheck before release, because live pages change.
+Vercel is the selected host and the procedure below is written for it. The
+isolated `Stemry/socal-whale-vessel-overlap` Hobby project is deployed and
+verified without Git integration or a paid resource. The pre-existing
+`stemry-waitlist` project remains separate and unchanged. Official documentation
+was checked on 2026-09-06 against pages carrying their own `last_updated` labels
+of 2026-09-03 (limits), 2026-08-31 (Hobby plan), 2026-07-29 (fair use), and
+2026-08-25 (project configuration); recheck before release, because live pages
+change.
 
 Documented Hobby-plan limits and how this project compares:
 
@@ -1147,10 +1151,10 @@ Documented Hobby-plan limits and how this project compares:
 procedure below builds the static export and assembles Build Output API v3
 output for `vercel deploy --prebuilt`. It needs no Vercel account operation to
 prepare local files. The earlier framework-aware `vercel build` proposal and
-direct `out/` upload are not selected. Provider acceptance of the prepared
-static package remains unverified.
+direct `out/` upload are not selected. Vercel accepted and served the complete
+prepared package; the final deployment matched its receipt exactly.
 
-**An eligibility question the author must settle.** Vercel documents the Hobby
+**Eligibility outcome.** Vercel documents the Hobby
 plan as restricted to non-commercial personal use, defining commercial usage as
 "any Deployment that is used for the purpose of financial gain of anyone
 involved in any part of the production of the project, including a paid
@@ -1159,14 +1163,15 @@ payment, advertising a product or service for sale, being paid to create or
 host the site, affiliate linking as the site's primary purpose, and advertisements
 — do **not** apply to this project. The current guidelines explicitly exclude
 donation requests from commercial usage (rechecked 2026-09-07). The broad
-"financial gain" clause is the open question for a portfolio piece aimed at
-internship reviewers, and Vercel's own guidance is to ask their support team
-when unsure. This is the author's decision. If it resolves unfavourably, the
-choice between a paid plan and another host needs a decision record; neither is
-authorized here. Vercel also documents that exceeding a Hobby usage limit
-generally pauses the feature for 30 days rather than billing, and that a Hobby
-team cannot connect to a Git repository owned by a Git organization — not a
-constraint here, since the repository is under a personal account.
+"financial gain" clause required an author determination for this portfolio
+piece. On 2026-09-07 the author confirmed that it is personal, unpaid and
+non-monetized, with no sales or advertising, and confirmed the Hobby plan. If
+that status changes or eligibility is questioned later, stop rather than select
+a paid plan or another host without a decision record. Vercel also documents
+that exceeding a Hobby usage limit generally pauses the feature for 30 days
+rather than billing, and that a Hobby team cannot connect to a Git repository
+owned by a Git organization — not a constraint here, since the repository is
+under a personal account.
 
 `vercel.json` supports `outputDirectory`, `buildCommand`, `framework`,
 `cleanUrls`, `trailingSlash`, and `headers` if overrides prove necessary. None
@@ -1785,10 +1790,11 @@ credits.
   files. The separate M6 exposure delivery boundary produces a
   measured, locally verified display/manifest pair and a small results
   contract, which uses the same selected static route after M7 integrates it.
-  Nothing has been published. Vercel Hobby eligibility and ArcGIS Location
-  Platform free-tier-only basemap access were verified on 2026-09-07; deployed
-  behavior remains unverified. Esri hosted-data capabilities remain unselected
-  and unverified.
+  The three M5 input representations are published in the receipt-exact M4
+  deployment; the M6 exposure representation is not integrated or published.
+  Vercel Hobby eligibility, ArcGIS Location Platform free-tier-only basemap
+  access and deployed behavior were verified on 2026-09-07. Esri hosted-data
+  capabilities remain unselected and unverified.
 - Generated display layers are never committed. The exporters stage them into
   Git-ignored `web/public/layers/`, and refuse any destination outside this
   checkout's ignored output roots.
