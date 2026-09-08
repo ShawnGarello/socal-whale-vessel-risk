@@ -2,7 +2,7 @@
 
 A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
 
-> **Status: in development.** M1 through M3 are complete; M4 through M6 are in progress.
+> **Status: in development.** M1 through M4 are complete; M5 and M6 are in progress.
 > The ready AIS period contains all 153 dates and 15,458,567 cleaned commercial
 > observations. The exact water grid and modeled-whale transfer are reproducible
 > and visually verified. All four full-period candidate vessel grids were
@@ -28,12 +28,15 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > activity starts hidden, the domain remains visible as an outline, and the
 > interface distinguishes excluded water from low or zero recorded activity.
 >
-> **Nothing has been deployed or published.** There is no public URL, no
-> project-derived layer is hosted anywhere. ADR 0021 selects free Vercel Hobby
-> static delivery; release staging is implemented. Vercel Hobby and ArcGIS
-> pay-as-you-go disabled are author-confirmed, while remaining account and
-> eligibility verification, review and deployment approval remain open.
-> Local rendering is not deployed verification. The exposure method and its distinct
+> **The reviewed M4 input-layer application is deployed at the stable URL below and
+> M4 is complete.** Route-specific plan, eligibility,
+> basemap-capacity and browser-key checks passed on 2026-09-07. The approved
+> checksum-bound package from merged `main` is reachable and its three pinned
+> input files match exactly. Clean Chrome checks passed at all required
+> viewports. After Production Toolbar was disabled for this project and the
+> unchanged approved package was redeployed, all 900 public files matched the
+> approved receipt byte-for-byte.
+> The exposure method and its distinct
 > display/results delivery contracts are implemented and locally verified, but
 > **the results are exploratory and not yet independently reviewed or accepted,
 > and no number from them is a finding of this project yet.** The final
@@ -74,20 +77,20 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 
 ## Current status
 
-| Area | State |
-|---|---|
-| Project scope and roadmap | Documented |
-| Architecture | Accepted and refined; Python/QGIS/Esri responsibilities and the publisher-hosted VSR display exception are recorded |
-| Data sources | **M2 complete** — downloaded and inspected; properties, licensing, limits, and public-use/publication postures recorded with a reproducible provenance manifest. VSR redistribution permission remains unconfirmed, so project-hosted copies are prohibited |
-| Study area | **Accepted with separate roles** — the map/context extent, modeled-whale-support water geometry, and scope-reduced `receivers_50_nautical_miles` analytical domain are distinct; see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md) |
-| Processing workflow | **M3 complete** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; the selected vessel rules of [ADR 0018](docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md) were accepted after real production generation, byte-identical repetition and QGIS validation. See [analysis](analysis/README.md). |
+| Area                        | State                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Project scope and roadmap   | Documented                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Architecture                | Accepted and refined; Python/QGIS/Esri responsibilities and the publisher-hosted VSR display exception are recorded                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Data sources                | **M2 complete** — downloaded and inspected; properties, licensing, limits, and public-use/publication postures recorded with a reproducible provenance manifest. VSR redistribution permission remains unconfirmed, so project-hosted copies are prohibited                                                                                                                                                                                                                                                                                                                             |
+| Study area                  | **Accepted with separate roles** — the map/context extent, modeled-whale-support water geometry, and scope-reduced `receivers_50_nautical_miles` analytical domain are distinct; see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md)                                                                                                                                                                                                                                                                                                                           |
+| Processing workflow         | **M3 complete** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; the selected vessel rules of [ADR 0018](docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md) were accepted after real production generation, byte-identical repetition and QGIS validation. See [analysis](analysis/README.md).                                                                                                                                                                                                                                            |
 | Analysis and derived layers | **M6 in progress** — the water grid, whale grid, fresh current-code exploratory exposure bundles, and distinct exposure display/results contracts are generated, programmatically reconciled, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md), accepted for exploratory execution only; its results await independent review and owner acceptance, one sensitivity comparison is materially non-robust, and no exposure layer or statistic is published or adopted as a headline |
-| Web application | **M4 foundation and M5 input-layer displays built locally** — Next.js and TypeScript with an ArcGIS map shell over Southern California. The filtered publisher-hosted 2026 California VSR boundary and checksum-bound same-origin whale, vessel-activity, and analytical-domain layers render at the required responsive viewports with visibility controls, legends, source/method disclosures, deterministic ordering, and isolated failure behavior. Free Vercel static delivery is selected; account/eligibility checks, exposure display, deployment and public access remain unfinished |
-| Deployment | Local staging implemented; account checks, review, approval and public deployment remain open |
+| Web application             | **M4 foundation and M5 input-layer displays deployed** — Next.js and TypeScript with an ArcGIS map shell over Southern California. The filtered publisher-hosted 2026 California VSR boundary and checksum-bound same-origin whale, vessel-activity, and analytical-domain layers render at the required responsive viewports with visibility controls, legends, source/method disclosures, deterministic ordering, and isolated failure behavior. Exposure display remains unfinished                                                                                                  |
+| Deployment                  | **M4 complete** — the stable free Vercel Hobby production URL is reachable from clean Chrome and serves all 900 public files byte-for-byte from the approved receipt and merged `main`; GitHub remains disconnected and the existing Stemry project remains unchanged                                                                                                                                                                                                                                                                                                                   |
 
 ## Technology direction
 
-The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. [ADR 0021](docs/decisions/0021-propose-vercel-static-input-delivery.md) selects checksum-addressed static same-origin files on free Vercel Hobby for project-derived layers. The whale, vessel-activity, and analytical-domain files are implemented and locally verified; the exposure export and results artifact are implemented and verified as local M7 delivery evidence but are not yet integrated. The author confirmed Vercel Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07. Hobby eligibility, the remaining ArcGIS basemap account and key checks, and deployed-origin behavior remain unverified. Esri hosted-data capabilities are unselected and remain unverified. No project-derived layer has been published. Paid plans, trials, add-ons, pay-as-you-go, and other charged usage are prohibited.
+The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. [ADR 0021](docs/decisions/0021-propose-vercel-static-input-delivery.md) selects checksum-addressed static same-origin files on free Vercel Hobby for project-derived layers. The whale, vessel-activity, and analytical-domain files are implemented and deployed; the exposure export and results artifact are implemented and verified as local M7 delivery evidence but are not yet integrated. On 2026-09-07 the author confirmed Vercel Hobby personal non-commercial eligibility and ArcGIS Location Platform with pay-as-you-go disabled; current basemap headroom and the minimum browser-key scope and exact referrers were verified. The new isolated Vercel project serves the reviewed-main release at the stable URL below. The project-derived files are static same-origin assets, not Esri hosted-data items; Esri hosted-data capabilities are unselected and remain unverified. Paid plans, trials, add-ons, pay-as-you-go, and other charged usage are prohibited.
 
 Python produces the analysis and lineage; QGIS does not replace that production path. The browser displays and filters public results but does not compute exposure. ArcGIS Pro is optional and unnecessary for Version 1. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md) and [ADR 0015](docs/decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md).
 
@@ -103,7 +106,7 @@ Three findings are worth knowing before reading anything else. The AIS records c
 
 ## What this project does not claim
 
-This is an exploratory portfolio spatial analysis, not a regulatory or production decision-support product. It does **not** predict individual whale strikes, calculate validated collision probability, or identify objectively optimal VSR boundaries, and it makes no policy recommendations. Its outputs describe *relative exposure* — where habitat and traffic coincide — not risk in any validated sense.
+This is an exploratory portfolio spatial analysis, not a regulatory or production decision-support product. It does **not** predict individual whale strikes, calculate validated collision probability, or identify objectively optimal VSR boundaries, and it makes no policy recommendations. Its outputs describe _relative exposure_ — where habitat and traffic coincide — not risk in any validated sense.
 
 Any modeled distribution is an estimate, not observed whale locations. AIS limitations identified during data discovery — including the publisher's offshore coverage limit and self-reported vessel attributes — must remain visible through processing and reporting. Analytical choices such as thresholds, weightings, and time windows are documented as choices, with their rationale, wherever their results appear.
 
@@ -115,7 +118,9 @@ owner acceptance, application integration, and release verification remain.
 
 ## Live demo
 
-**Not yet deployed.** A public URL will be added here at release.
+[Open the deployed input-layer application](https://socal-whale-vessel-overlap.vercel.app/).
+
+This is the completed M4/M5-input foundation, not a released exposure result.
 
 ## Screenshots
 
@@ -124,15 +129,15 @@ evidence; public portfolio screenshots have not been selected or committed.
 
 ## Documentation
 
-| Document | Contents |
-|---|---|
-| [docs/project-brief.md](docs/project-brief.md) | Authoritative scope: Version 1 definition, non-goals, success criteria |
-| [docs/roadmap.md](docs/roadmap.md) | Dependency-ordered milestones, progress, and version direction |
-| [docs/architecture.md](docs/architecture.md) | Accepted system design, implemented boundaries, and deferred decisions |
-| [docs/data-sources.md](docs/data-sources.md) | Source register, provenance, and verification status |
-| [docs/development.md](docs/development.md) | Engineering workflow |
-| [docs/decisions/](docs/decisions/README.md) | Architecture decision records |
-| [docs/project-vision-and-learning-plan.md](docs/project-vision-and-learning-plan.md) | Original project vision and GIS learning plan |
-| [AGENTS.md](AGENTS.md) | Instructions for coding agents |
+| Document                                                                             | Contents                                                               |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| [docs/project-brief.md](docs/project-brief.md)                                       | Authoritative scope: Version 1 definition, non-goals, success criteria |
+| [docs/roadmap.md](docs/roadmap.md)                                                   | Dependency-ordered milestones, progress, and version direction         |
+| [docs/architecture.md](docs/architecture.md)                                         | Accepted system design, implemented boundaries, and deferred decisions |
+| [docs/data-sources.md](docs/data-sources.md)                                         | Source register, provenance, and verification status                   |
+| [docs/development.md](docs/development.md)                                           | Engineering workflow                                                   |
+| [docs/decisions/](docs/decisions/README.md)                                          | Architecture decision records                                          |
+| [docs/project-vision-and-learning-plan.md](docs/project-vision-and-learning-plan.md) | Original project vision and GIS learning plan                          |
+| [AGENTS.md](AGENTS.md)                                                               | Instructions for coding agents                                         |
 
 Built as a portfolio project. Target for Version 1: **September 10, 2026**.
