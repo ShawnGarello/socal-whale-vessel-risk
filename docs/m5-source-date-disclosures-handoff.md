@@ -10,10 +10,14 @@ symbology, account state, release package, or deployment.
 - Worktree:
   `C:\Users\teche\socal-whale-vessel-risk-m5-source-dates`
 - Base: `origin/main` at
-  `8b1f65c8556955d6f28ee86426c09d55b7ea71fa`
-- Implementation commit: `ab39136` (`feat: disclose vessel and domain processing dates`)
-- No shared roadmap, deployment, architecture, development, or component-owner
-  document was edited while M4 deployment verification was active.
+  `48e3a4094932f17be0e0c7ae76fd248953ad2806`
+- Implementation commit: `be1d29b` (`feat: disclose vessel and domain processing dates`)
+- On 2026-09-08 the branch was rebased cleanly onto the merge of M4 deployment
+  verification, then the M5 status owner in `docs/roadmap.md` and the web
+  component owner in `web/README.md` were updated sequentially. Architecture
+  and development need no substantive change because no boundary or workflow
+  changed; the public README remains unchanged because this branch is not
+  deployed and does not complete M5.
 - Nothing was published, deployed, pushed, or merged. M5 remains in progress.
 
 ## Date provenance and artifact binding
@@ -121,6 +125,13 @@ Final automated results from `web/`:
 | Keyless integration build with `NEXT_PUBLIC_ARCGIS_BASEMAP=topo-vector` | Passed |
 | `git diff --check` | Passed before the implementation commit |
 
+After the clean rebase on 2026-09-08, `npm run verify:clean` completed
+successfully from `web/`: `npm ci` installed the 554 locked packages with zero
+reported vulnerabilities; route type generation, formatting, linting, generated
+type checking, all 79 tests across 8 files, and the production static build
+passed. The six intervening M4 commits changed only owner/handoff documentation,
+not executable web source, tests, configuration, or displayed artifacts.
+
 During development, one focused-test command used a root-prefixed filter from
 inside `web/` and found no tests; the corrected filter ran the intended file.
 The first new markup assertions expected a lower-case server-rendered React
@@ -149,28 +160,26 @@ deployment origin, release key, account capability, release package, Toolbar
 issue, or broader console/network failure matrix. No account setting or
 deployment resource was accessed or changed.
 
-## Proposed sequential owner-document updates
+## Owner-document integration
 
-After M4 merges and this branch passes independent audit and PR/CI:
-
-1. Update the M5 roadmap completion-criteria entry to say the source/date
-   criterion is met locally for whale, vessel, and domain, naming the vessel
-   analytical processing date and domain-evidence processing date. Keep M5 in
-   progress because public end-to-end delivery remains unfinished.
-2. Update the vessel/domain section of `web/README.md` with the two processing
-   dates and this browser-verification result.
-3. Add only a short cross-reference to this handoff from development or
-   architecture if maintainers find it useful; no workflow or architecture
-   changed, so neither owner requires a substantive update.
-4. Leave the public README status unchanged unless sequential integration needs
-   a visible note; this branch does not complete M5 or deploy anything.
+- `docs/roadmap.md` now records the source/date criterion as met locally for
+  whale, vessel, and domain, names the two processing dates and artifact
+  bindings, and keeps M5 in progress until the change reaches and is verified at
+  the production origin.
+- `web/README.md` now records the two processing dates, distinguishes them from
+  analytical period, source vintage/retrieval, acceptance, and display export,
+  and carries the focused responsive-browser result.
+- `docs/architecture.md` and `docs/development.md` were reviewed after the M4
+  merge and were not changed because this work introduces neither a new system
+  boundary nor a new workflow.
+- The public `README.md` was reviewed and left unchanged because the branch has
+  not been deployed and does not complete M5.
 
 ## Remaining work
 
 - Independent audit of this exact branch.
 - Explicitly authorized push, pull request, both required CI jobs on the current
   PR head, and GitHub merge.
-- Inclusion in a later reviewed and approved release package and deployment,
-  after M4 completes its already-approved package verification.
+- Inclusion in a later reviewed and approved release package and deployment.
 - Deployed-origin verification remains separate. This branch must not be
   treated as deployed or as completing M5.
