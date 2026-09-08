@@ -10,32 +10,41 @@ final public headline.
 - Branch: `feat/m7-exposure-interface`
 - Worktree:
   `C:\Users\teche\socal-whale-vessel-risk-m7-exposure-interface`
-- Base and initial `origin/main`:
+- Original base:
   `8b1f65c8556955d6f28ee86426c09d55b7ea71fa`
+- Current base after the author-requested clean rebase onto `origin/main`:
+  `c524dfc231e28a69f3c58dc39584327e6151d70d`
 - Initial implementation commit:
-  `841fe3d8b495943fb511a056f65c2bde2ff21033`
+  `d6920239f85e916df4501d80065ac0e627e425bb`
   (`feat: add verified exposure results interface`)
 - Initial handoff commit:
-  `ab0617d42bac45310c805bd6b02d1d1acebf40ae`
+  `585105ef4ff7bd49cf7b47a20888ac105686e43e`
   (`docs: record M7 exposure interface handoff`)
 - Approval-correction commit:
-  `d207fb22b95cf0e0e5addd1f7ee9313b185a3155`
+  `5115ce3f846e9ab243175e33b1faa0dad37f8612`
   (`fix: harden exposure results disclosure`)
+- Approval-evidence commit:
+  `a89378d9993689d793dcc904c6fa91c7aa9c7c98`
+  (`docs: update M7 approval evidence`)
 - The current handoff update is committed separately in the commit containing
   this revision.
-- No push, merge, deployment, account operation, key/referrer change, or
-  milestone-status change was performed.
+- No push, merge, deployment, account operation, or key/referrer change was
+  performed. M7's owner status is now **In progress**, not complete.
 
 The session inspected `origin/main` and all worktrees before creating this
 worktree. The original checkout and the retained M6 worktree were clean. No
 suitable unused M7 worktree existed. The branch was created from the then-current
-`origin/main`; no work was performed on `main`.
+`origin/main`; no work was performed on `main`. After M4 and M5 merged, the
+author requested a rebase and owner-document integration. The branch rebased
+without conflicts onto current `origin/main`; all inspected worktrees were clean
+before that operation.
 
 M5-owned vessel/domain modules, controls, focused tests, and shared input-layer
 tests were not edited. M4-owned deployment files, accounts, packages, settings,
-release evidence, and shared deployment documents were not edited. No shared
-utility, dependency, configuration, shared panel style, release script, or
-existing handoff was changed.
+and release evidence were not edited. No shared utility, dependency,
+configuration, shared panel style, release script, or existing M4/M5/M6 handoff
+was changed. After their merges, the author-requested documentation pass updated
+the owning shared documents listed below.
 
 ## Implemented behavior
 
@@ -184,7 +193,11 @@ layers.
 
 The final repository-wide `npm run verify:clean` passed dependency installation,
 type-generation, formatting, lint, generated-type checking, all 91 tests, and the
-static production build in one run. Historically, the initial implementation's
+static production build in one run. The same complete gate passed again after
+the clean rebase onto `c524dfc231e28a69f3c58dc39584327e6151d70d`; `npm ci`
+reported two high-severity audit findings in the committed dependency graph, but
+installation and every required gate passed, and this documentation integration
+did not change dependencies. Historically, the initial implementation's
 first clean-gate build compiled and generated every page but ended with Windows
 `EBUSY` while removing `web/out`, because the local browser-verification server
 still held that directory as its working directory. After stopping that server,
@@ -273,16 +286,13 @@ key was accessed or changed.
 ## Ownership dependencies and remaining work
 
 There is no code-level ownership dependency requiring an overlapping change in
-this branch. Sequential integration still needs to account for:
+this branch. M4's deployment/Toolbar work and M5's source-date disclosures are
+now present through the rebased `origin/main`. Remaining work is:
 
-1. M5's vessel/domain date-metadata and disclosure correction, including any
-   conflict resolution in composed map copy after M5 merges.
-2. M4's Toolbar resolution, deployment verification, release evidence, and
-   shared deployment documentation.
-3. Independent scientific/content audit of the generated values and cautious
+1. Independent scientific/content audit of the generated values and cautious
    interpretation.
-4. Author acceptance of the public wording and headline hierarchy.
-5. Authorized release-staging integration and a fresh configured-browser check.
+2. Author acceptance of the public wording and headline hierarchy.
+3. Authorized release-staging integration and a fresh configured-browser check.
 
 The branch is not deployable through the unchanged approved three-input release
 package. `web/scripts/stage-release.mjs` and
@@ -320,25 +330,27 @@ Do not infer readiness from a normal worktree build: without these changes the
 three-input stage omits the exposure files and staged results input, so the
 release cannot faithfully reproduce this interface.
 
-## Proposed shared-owner document updates
+## Shared-owner documentation integration
 
-No shared owner document was edited while M4/M5 work remained active. After
-sequential integration, owners should consider:
+After M4 and M5 merged and the author requested sequential integration, this
+branch updated each owning document rather than leaving proposed copies here:
 
-- `README.md`: change visible status only after audit/release evidence supports
-  it; describe M7 as implemented/tested but not deployed beforehand.
-- `docs/roadmap.md`: record this branch's implementation and verification under
-  M7 without marking completion until every M7 criterion and author review is
-  satisfied.
-- `docs/architecture.md`: add the checksum-bound static results consumer, paired
-  exposure display/manifest boundary, default visibility, and layer order.
-- `docs/development.md`: document the authorized exposure/results release-stage
-  inputs and their post-build verification after the release implementation is
-  accepted.
-- `analysis/README.md`: link the accepted application consumer and release-stage
-  handoff without changing the analysis-owned contract or interpretation.
-- `web/README.md`: document local M7 staging identities, formula switch, results
-  build input, and failure behavior after M5/M7 composition is settled.
+- `README.md` describes M7 as locally implemented and verified, while keeping
+  the current demo and release explicitly input-only and the results unaccepted.
+- `docs/roadmap.md` marks M7 **In progress**, records the local behavior and
+  evidence, and keeps public delivery, mid-range performance, independent audit,
+  and author acceptance open.
+- `docs/architecture.md` records the static results boundary, exact
+  display/manifest verification, isolated lifecycle, presentation defaults and
+  ordering, plus the distinction between local integration and deployment.
+- `docs/development.md` records the 91-test M7 coverage and the exact later
+  release-stage work needed for the exposure pair and repository-level results
+  build input. It does not authorize or implement that release change.
+- `analysis/README.md` links the downstream local consumer while preserving the
+  analysis-owned contracts and unaccepted interpretation.
+- `web/README.md` records the local artifact identities, formula switch,
+  generated results/sensitivities, limitations, defaults, failure behavior, and
+  browser evidence.
 
 ## Interpretation choices requiring author review
 

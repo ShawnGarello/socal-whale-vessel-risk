@@ -25,8 +25,9 @@ pay-as-you-go and other charged usage are prohibited.
 
 Project-derived layers are delivered here as static same-origin files served
 alongside the export, so they need no layer credential and no hosted service.
-That is what this application implements and what has been verified locally and
-from the stable production origin.
+The three input layers are verified locally and from the stable production
+origin. The relative-exposure layer and results interface are implemented and
+verified locally on M7, but are not in the current public release.
 ADR 0021 selects free Vercel Hobby for these files. The plan and personal,
 unpaid, non-monetized portfolio eligibility are author-confirmed. The isolated
 `socal-whale-vessel-overlap` project now serves the approved reviewed-main
@@ -243,6 +244,83 @@ loaded bytes, and the two processing-date labels, `<time datetime>` values, and
 bound input/report identities were reachable without horizontal overflow. This
 check did not exercise the production origin; the disclosure change is not in
 the deployed M4 package and awaits a later reviewed release.
+
+## Relative exposure and results
+
+M7 adds a local presentation-only consumer for the M6 exposure artifacts. The
+browser does not combine whale and vessel values, derive thresholds, or
+calculate statistics. Static generation reads the tracked
+`results/exposure-results.v1.json` file and validates its contract, schema
+version, required fields, results identity, checksum, and paired display
+identity. Missing, unreadable, malformed, or incompatible results produce one
+fixed public message that contains no exception detail or filesystem path;
+detailed diagnostics remain in build output.
+
+The map independently fetches and verifies the ignored staged exposure manifest
+and GeoJSON before creating an ArcGIS `GeoJSONLayer`. The manifest must bind the
+expected results ID and results SHA-256 to the exact display SHA-256, and the
+display must contain exactly 2,793 qualified-water features. The established
+request, timeout, stale-completion, Blob URL, cleanup, count, and isolated-error
+lifecycle is reused. A failed exposure load removes only that layer and does not
+disable the whale, vessel, domain, or VSR layers.
+
+| Artifact                                                |     Bytes | SHA-256                                                            |
+| ------------------------------------------------------- | --------: | ------------------------------------------------------------------ |
+| `results/exposure-results.v1.json`                      |    31,381 | `ebba5b06ee804d80b34f5714ecb1d100c0b05d3579307e88384886dcbd339e60` |
+| `public/layers/relative-exposure.geojson`               | 2,542,744 | `1ccb605cad9640f42ca5eb2cb1ac3543b3a1341a3375f6e78166dd0fd16e92cb` |
+| `public/layers/relative-exposure.geojson.manifest.json` |     6,803 | `0a1b0dea947b3f96dec9cc6ca5037ffe7af4ce949c4e197d8126818e71c569c0` |
+
+The results ID is `exposure-results-8a0bf6c27e00fb40a13d6870`, paired with
+analytical run `exposure-6dd927974fae959765c9b5c3`. The primary exploratory
+view is the generated 5 km proportional-product scenario: 92.2% of integrated
+relative exposure inside the VSR and 7.8% outside. A separate card reports the
+all-valid p90 high-exposure **water-area** share, 98.5% inside and 1.5% outside,
+at generated threshold 0.2286 over 6,473.8 km². These denominators are not
+interchangeable. The 5 km log-traffic sensitivity remains visible at 74.9%
+inside and 25.1% outside, a generated −17.2741 percentage-point change. An
+expandable section exposes generated all-valid and positive-only p80/p90/p95
+values and the complete product/log 5-to-10 km grid comparisons, including the
+product p80 high-area change of +4.1484 percentage points.
+
+The map's six-class sequential color scale, including a distinct zero class, is
+explicitly a display classification rather than an analytical high-exposure
+cutoff. Users can switch the
+renderer between the proportional-product and log-traffic fields already stored
+in the verified display. Relative exposure starts on, whale and vessel fills
+start off, and the analytical-domain and VSR outlines start on. Deterministic
+bottom-to-top order is whale, vessel, exposure, domain, then VSR, so both
+outlines remain readable while every input can still be inspected.
+
+The interface calls the output “Relative exposure” or “Whale–vessel overlap.”
+It states that habitat is modeled rather than observed individual whales; the
+comparison combines July–November 2024 vessel activity with the 2026 VSR
+boundary; the domain is receiver-qualified rather than empirically complete AIS
+coverage; fractional results assume uniform exposure within each water cell;
+the interpretation materially depends on the selected formula; and speed stays
+separate. Excluded cells mean no analytical coverage, not zero exposure. Outside
+contributors are ranked cell contributions, not validated hotspot clusters or
+collision locations. No collision probability, predicted-strike, effectiveness,
+or optimal-boundary claim is made.
+
+### Verified locally on 2026-09-08
+
+The final clean web gate passed formatting, lint, generated-type checking, all
+91 tests, and the static build. Chrome verification at 390 × 844, 820 × 1180,
+and 1440 × 900 loaded exactly one of each operational layer and exactly 2,793
+exposure features, confirmed layer bounds/alignment and order, exercised
+visibility and product/log changes without duplicates, matched the generated
+results strings, retained keyboard focus and scrolling without horizontal
+overflow, and introduced no visitor sign-in. Missing display, mismatched
+manifest identity, and malformed display cases left all unrelated layers and the
+results panel usable while showing an isolated exposure warning. The exact
+ignored browser report and screenshots are recorded in the
+[M7 handoff](../docs/m7-exposure-interface-handoff.md).
+
+This is local evidence, not public-delivery evidence. The unchanged M4 release
+stage packages only the three input-layer pairs and omits both the exposure pair
+and repository-level results build input. The later release-stage changes and
+deployed verification requirements are owned by
+[development.md](../docs/development.md#m7-exposureresults-release-staging-gap).
 
 ## Publisher-hosted VSR boundary
 

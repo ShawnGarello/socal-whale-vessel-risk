@@ -48,7 +48,8 @@
 > locally for exploratory results, which are unreviewed and unaccepted; exposure
 > display/results contracts are implemented and locally verified. Static
 > delivery is selected by ADR 0021; the input-layer application is deployed,
-> while M7 exposure integration remains unfinished.
+> while the M7 exposure/results interface is implemented and browser-verified
+> locally but not release-staged or deployed.
 > Publisher-hosted VSR display is
 > implemented and locally verified in the web application. Deterministic
 > presentation exports and checksum-bound same-origin display are also
@@ -71,8 +72,9 @@ ADR 0021 selects free Vercel Hobby as the public host for static project-derived
 files. The whale,
 vessel-activity, and accepted analytical-domain layers are exported as WGS 84
 GeoJSON and read as static same-origin files, which is implemented and verified
-locally and at the stable production origin. The exposure delivery contract uses the same selected route when M7
-integrates it. On 2026-09-07 the author confirmed Vercel Hobby eligibility for
+locally and at the stable production origin. The M7 branch consumes the exposure
+delivery contract through the same route locally; the release package does not
+yet include it. On 2026-09-07 the author confirmed Vercel Hobby eligibility for
 this personal, unpaid, non-monetized portfolio and ArcGIS Location Platform with
 pay-as-you-go disabled. Current basemap use was 5,292 of 2,000,000 monthly
 tiles, and the minimum browser key was verified against the exact localhost and
@@ -156,11 +158,12 @@ Static deployment -> visitor's browser
 ```
 
 ADR 0021 selects the project-derived publication branch in this diagram. The
-three M5 input layers are deployed and receipt-verified on that route; the M6
-exposure representation awaits M7 integration. The VSR display source is the
-publisher-hosted exception selected by ADR 0019. Summary statistics follow the
-analysis boundary and may be delivered as a small, versioned file the static
-application reads; the browser does not recompute them.
+three M5 input layers are deployed and receipt-verified on that route. The M7
+branch integrates the M6 exposure representation and versioned results locally,
+but the release stage and public deployment still omit both. The VSR display
+source is the publisher-hosted exception selected by ADR 0019. Summary statistics
+follow the analysis boundary as a small, versioned build input; the browser does
+not recompute them.
 
 ## Component responsibilities
 
@@ -423,10 +426,12 @@ cells are absent, never low or zero. The public properties preserve the primary
 product and required log-traffic sensitivity while keeping speed separate.
 
 This representation passed programmatic reconciliation, deterministic repeat,
-and checksum-bound QGIS inspection. ADR 0021 selects the same static route for
-delivery after M7 integrates it; application integration, result acceptance and
-deployment remain open. A representation change requires a later decision
-supported by measured need, source terms and verified free capability.
+and checksum-bound QGIS inspection. M7 now integrates it locally through ADR
+0021's selected static route: static generation validates the versioned results,
+and the browser validates the fetched display/manifest pair before creating the
+ArcGIS layer. Result acceptance, release-stage support, public deployment, and
+deployed verification remain open. A representation change requires a later
+decision supported by measured need, source terms and verified free capability.
 
 ### Publisher-hosted VSR display exception
 
@@ -571,6 +576,23 @@ The client is responsible for:
 - exposing units, assumptions, limitations, and provenance; and
 - client-side view state and other presentational interactions.
 
+The M7 results boundary reads the tracked application-results artifact during
+static generation and rejects unsupported contracts or versions, missing
+required fields, and incompatible results/display identities. Its public error
+is fixed and path-safe; detailed read/parse diagnostics remain build-side. The
+browser then fetches the exposure manifest and display, verifies the display
+SHA-256 and exact contract/identity/count pairing, and creates the layer from the
+verified bytes through the established independent GeoJSON lifecycle. Exposure
+failure does not disable the four unrelated layers.
+
+Presentation keeps analytical and cartographic choices distinct. The map may
+switch between the proportional-product and log-traffic fields already present
+in the display artifact; it does not calculate either formula. The sequential
+display scale is a legend classification, not the analytical high-exposure
+threshold. Relative exposure starts visible, whale and vessel fills start
+hidden, and domain and VSR outlines remain visible above the fills. Deterministic
+order is whale, vessel, exposure, domain, then VSR.
+
 It does not retrieve raw inputs, transform analytical data, calculate exposure,
 or derive reportable statistics. API-key-backed basemap rendering has been
 observed and verified locally and at the stable deployed origin.
@@ -604,7 +626,9 @@ it belongs in the reproducible Python path.
 [ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md) selects the
 author's preferred Vercel Hobby route for the existing input-layer application.
 Local release staging is implemented to package committed source and exactly
-three pinned GeoJSON/manifest pairs as static Build Output API v3 output.
+three pinned GeoJSON/manifest pairs as static Build Output API v3 output. It has
+not yet been extended for the exposure display/manifest or tracked results build
+input, so the local M7 interface cannot be deployed with that unchanged package.
 On 2026-09-07 the author confirmed Vercel Hobby personal-use eligibility and
 ArcGIS Location Platform with pay-as-you-go disabled. Basemap free-tier
 headroom, minimum key scope and exact origin restrictions were verified. The
@@ -757,6 +781,15 @@ directly as EPSG:4326 GeoJSON and confirmed 2,793 nonempty valid features plus
 the manifest's counts, parts, holes, vertices, area, extent, and threshold
 flags. The local VSR snapshot was inspection context only and was not exported.
 
+The distinct M7 presentation boundary is covered by focused TypeScript tests for
+contract/version/identity rejection, safe public errors, generated result
+selection, null/zero/exclusion semantics, denominator wording, complete
+sensitivity disclosure, and independent exposure lifecycle behavior. Browser
+integration separately verifies the SDK-rendered layer, exact 2,793 count,
+alignment, ordering, controls, generated strings, accessibility, responsive
+overflow, and isolated failures at all three required viewports. Neither kind of
+evidence replaces deployed-route verification.
+
 ## Reproducibility and lineage
 
 Reproducibility rests on four linked practices:
@@ -809,14 +842,16 @@ The exposure display has also been measured locally: 2,542,744 bytes raw,
 528,235 bytes at gzip level 9, and 375,238 bytes at Brotli quality 11 for 2,793
 features. Its paired manifest is 6,803 bytes and the small application-results
 artifact is 31,381 bytes. Static same-origin delivery is selected by ADR 0021;
-M7 integration, browser load/render behavior, combined-layer cost, deployment
-and deployed verification remain unfinished.
+M7 integration and local browser load/render behavior are verified at the three
+required viewports, including exact count, layer alignment and ordering,
+visibility changes without duplication, keyboard access, scrolling, and no
+horizontal overflow. Release staging, deployment, deployed verification, and
+performance on a mid-range connection remain unfinished.
 
 These numbers are local observations of this project's own static assets. They
 are **not** a benchmark of ArcGIS platform services, no ArcGIS
 service timing is reported, and they establish nothing about deployed load time,
-slow connections, low-end devices, or the combined cost once the exposure layer
-is integrated with the three input layers. The Location Platform agreement's benchmarking and
+slow connections, low-end devices, or deployed combined-layer cost. The Location Platform agreement's benchmarking and
 benchmark-publication clauses remain unresolved and must be settled before any
 timing exercise that measures ArcGIS services.
 
@@ -857,15 +892,15 @@ its milestone needs it.
 
 ## Explicitly deferred decisions
 
-| Decision                                                                                    | Deferred until                                                                                              | Selection basis                                                                                                                                                                                                                                                                         |
-| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Exposure formula, normalization, and weighting                                              | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not independently reviewed or accepted, and final headline messaging is still open.                                                                                                                    |
-| High-exposure threshold                                                                     | **Resolved for exploratory use** in ADR 0020                                                                | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits independent review and the owner.                                                                |
-| Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021**                                                                                    | Checksum-addressed static files beside the application on free Vercel Hobby. Input files are integrated, deployed and receipt-verified; exposure integration remains M7 work. Route-specific account and deployed-browser evidence passed for M4.                                       |
-| ArcGIS Location Platform publication route                                                  | Unselected by ADR 0021                                                                                      | Actual hosted-data creation, storage and sharing capabilities remain unverified and are not M4 requirements. The narrower Location Platform basemap account, allowance and key checks passed for the selected static route.                                                             |
-| ArcGIS Online publication route                                                             | Unselected by ADR 0021                                                                                      | Actual organization and publishing capabilities remain unverified.                                                                                                                                                                                                                      |
-| Static application host                                                                     | **Resolved and verified by ADR 0021 / M4**                                                                  | Free Vercel Hobby, author-confirmed and deployed on 2026-09-07. HTTPS, stable origin, static-export limits, exact receipt and clean-browser verification passed. No paid fallback is authorized.                                                                                        |
-| General visual-verification record across spatial outputs                                   | M8 reproducibility work                                                                                     | Layer-specific checksum-bound commands now exist for the three project input displays and exposure evidence. A general record must cover every spatial output's checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage. |
+| Decision                                                                                    | Deferred until                                                                                              | Selection basis                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Exposure formula, normalization, and weighting                                              | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not independently reviewed or accepted, and final headline messaging is still open.                                                                                                                                                      |
+| High-exposure threshold                                                                     | **Resolved for exploratory use** in ADR 0020                                                                | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits independent review and the owner.                                                                                                  |
+| Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021**                                                                                    | Checksum-addressed static files beside the application on free Vercel Hobby. Input files are deployed and receipt-verified; exposure is integrated and browser-verified locally on M7, while its release-stage support, deployment, and deployed verification remain open. Route-specific account evidence passed for M4. |
+| ArcGIS Location Platform publication route                                                  | Unselected by ADR 0021                                                                                      | Actual hosted-data creation, storage and sharing capabilities remain unverified and are not M4 requirements. The narrower Location Platform basemap account, allowance and key checks passed for the selected static route.                                                                                               |
+| ArcGIS Online publication route                                                             | Unselected by ADR 0021                                                                                      | Actual organization and publishing capabilities remain unverified.                                                                                                                                                                                                                                                        |
+| Static application host                                                                     | **Resolved and verified by ADR 0021 / M4**                                                                  | Free Vercel Hobby, author-confirmed and deployed on 2026-09-07. HTTPS, stable origin, static-export limits, exact receipt and clean-browser verification passed. No paid fallback is authorized.                                                                                                                          |
+| General visual-verification record across spatial outputs                                   | M8 reproducibility work                                                                                     | Layer-specific checksum-bound commands now exist for the three project input displays and exposure evidence. A general record must cover every spatial output's checksum, date, GIS tool/version, inspected views/checks, result, and observations without mutating generation lineage.                                   |
 | [ADR 0002](decisions/0002-southern-california-study-area-extent.md) accepts                 |
 | `receivers_50_nautical_miles` as the scope-reduced,                                         |
 | system-performance-qualified AIS analytical domain: 50 nautical miles, exactly              |

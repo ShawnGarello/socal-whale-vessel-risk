@@ -16,7 +16,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 | M4  | GIS application foundation       | Complete    |
 | M5  | Core input layers                | In progress |
 | M6  | Whale–vessel exposure analysis   | In progress |
-| M7  | Application integration          | Not started |
+| M7  | Application integration          | In progress |
 | M8  | Verification and reproducibility | Not started |
 | M9  | Public release                   | Not started |
 
@@ -1504,8 +1504,9 @@ source-date disclosures completed locally and await a later release**
   does not publish or verify the later exposure layer/results contract. The
   resolved first-deployment Toolbar mismatch does not apply to the current
   receipt-exact production deployment.
-- The exposure display/results contract is implemented and locally verified,
-  but M7 integration and deployment remain open.
+- The exposure display/results contract and its M7 application consumer are
+  implemented and locally verified, but release staging and deployment remain
+  open.
 - The route-specific Vercel and ArcGIS basemap account checks passed. Esri
   hosted-data capabilities are unselected and are not M4 gates.
 - M5 remains in progress because its locally completed source-date disclosure
@@ -1528,9 +1529,9 @@ source-date disclosures completed locally and await a later release**
 - A public representation for the project-derived layers. **ADR 0021 selects
   deterministic, checksum-addressed static same-origin files on free Vercel
   Hobby.** The whale, vessel-activity, and accepted analytical-domain exports are
-  verified at the stable production origin. The exposure display/results contract is
-  also locally verified and awaits M7 integration. Esri hosted-data routes are
-  unselected and remain unverified.
+  verified at the stable production origin. The exposure display/results
+  contract and M7 consumer are locally verified but not deployed. Esri
+  hosted-data routes are unselected and remain unverified.
 - The ArcGIS Maps SDK application assembling the public layers with symbology
   chosen for legibility, not decoration.
 - Layer visibility control and legends in the application.
@@ -1613,8 +1614,8 @@ Produce the project's own analytical result: a documented relative exposure laye
 ### Progress
 
 **Method accepted for exploratory execution, computed and locally verified;
-downstream delivery contracts implemented; independent audit, owner acceptance,
-M7 integration, and release remain open**
+downstream delivery contracts and local M7 consumption implemented; independent
+audit, owner acceptance, public delivery, and release remain open**
 
 - [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md)
   defines the calculation: per cell, modeled whale density multiplied by period
@@ -1661,8 +1662,9 @@ M7 integration, and release remain open**
   375,238 Brotli; the small tracked results artifact is 31,381 bytes. The
   manifest binds the exact display checksum to results ID
   `exposure-results-8a0bf6c27e00fb40a13d6870` and its checksum. Static
-  same-origin delivery is selected by ADR 0021; publication, application
-  integration, deployment and deployed verification remain unfinished.
+  same-origin delivery is selected by ADR 0021. The M7 branch consumes this
+  exact pair locally; release staging, publication, deployment, and deployed
+  verification remain unfinished.
 - The exporter verifies pinned source bytes, re-verifies both analytical tables,
   recomputes the accepted summaries from their serialized rows, and reconciles
   the complete supplied report. A matching checksum identifies report bytes but
@@ -1739,9 +1741,10 @@ M7 integration, and release remain open**
     headline findings. Human scientific and cartographic review of the maps is
     also outstanding.
 - Also not done: independent audit, owner conclusion/map review, propagation of
-  native whale uncertainty, M7 application consumption through the static route
-  selected by ADR 0021, browser verification, and the M9 release-time VSR
-  comparison. Analytical execution detail is in the
+  native whale uncertainty, M7 release staging and public delivery through the
+  static route selected by ADR 0021, and the M9 release-time VSR comparison.
+  Local M7 application consumption and browser verification are complete.
+  Analytical execution detail is in the
   [M6 foundation handoff](m6-exposure-foundation-handoff.md); downstream contract,
   artifact, resource, repeat, and final QGIS evidence is in the
   [M6 exposure-results delivery handoff](m6-exposure-results-delivery-handoff.md).
@@ -1782,8 +1785,8 @@ M7 integration, and release remain open**
   and machine-readable results contract** —
   integrated shares are distinguished from high-exposure **water-area** shares,
   and thresholds are qualified-area-weighted observed quantiles including zeros
-  and all ties. Not yet met in application-facing narrative, because M7 has not
-  started.
+  and all ties. The local M7 application also states these bases distinctly; the
+  release application is not yet verified.
 - Fractional boundary statistics with passing synthetic cases and a labelled
   uniformity assumption: **met**.
 - Accepted analytical domain applied exactly: **met** — results use the
@@ -1815,7 +1818,7 @@ stays in progress.
 
 ## M7 — Application integration
 
-**Status:** Not started
+**Status:** In progress
 
 **Objective**
 Bring the analysis into the application so a visitor can explore the exposure layer and read the results without prior GIS knowledge.
@@ -1825,10 +1828,52 @@ Bring the analysis into the application so a visitor can explore the exposure la
 - M5 (input layers publicly delivered and displayed).
 - M6 (exposure layer and statistics exist).
 
-The M6 display/results artifacts now exist for integration without recomputing
-science. M4's selected static route is deployed and verified, but M5 remains
-incomplete, M6 still awaits independent audit and owner acceptance, and M7 has
-not started.
+The M6 display/results artifacts now exist and are consumed locally without
+recomputing science. M4's selected static route is deployed and verified, but
+M5 remains incomplete, M6 still awaits independent audit and owner acceptance,
+and M7 has not been release-staged or deployed.
+
+### Progress
+
+**Local exposure/results interface implemented and verified; public delivery and
+author scientific acceptance remain open**
+
+- Static generation loads `results/exposure-results.v1.json` through a narrow
+  typed boundary. It verifies the supported contract and version, required
+  fields, results ID, results checksum, and expected display-manifest identity.
+  Failures produce a fixed path-safe public message while detailed diagnostics
+  remain build-side.
+- The existing ArcGIS GeoJSON lifecycle now loads the paired relative-exposure
+  display and manifest, verifies the fetched display SHA-256, schema, results
+  identity and checksum, and exact 2,793-feature count before adding the layer.
+  A failed exposure load is isolated so whale, vessel, domain, and VSR layers
+  remain usable.
+- Relative exposure starts visible; whale and vessel fills start hidden; domain
+  and VSR outlines remain visible above the analytical fills. The order is
+  whale, vessel, exposure, domain, then VSR, and users can switch the exposure
+  renderer between the proportional-product measure and required log-traffic
+  sensitivity without duplicating layers.
+- The results panel uses generated presentation strings and distinguishes the
+  primary 5 km product integrated share from the all-valid p90 high-exposure
+  water-area share. The required 5 km log-traffic comparison is visible, while
+  p80/p90/p95, positive-only, and complete product/log 5-to-10 km changes remain
+  reachable in the expandable sensitivity section.
+- Plain-language copy exposes the modeled-habitat, mixed-vintage,
+  receiver-qualified-domain, uniform-within-water-cell, formula-dependence, and
+  separate-speed limitations. Excluded cells mean no analytical coverage, not
+  zero exposure; outside contributors are ranked cells, not validated clusters
+  or collision locations.
+- The rebased implementation passes 91 TypeScript tests plus formatting, lint,
+  type-check, and static-build gates. Chrome verification at 390×844, 820×1180,
+  and 1440×900 confirmed generated values, exact feature count, alignment,
+  ordering, toggles, keyboard access, scrolling, no horizontal overflow, no
+  visitor sign-in, and isolated missing/mismatched/malformed exposure failures.
+  See the [M7 handoff](m7-exposure-interface-handoff.md) for exact artifact and
+  evidence identities.
+- M7 is not deployable through the unchanged M4 release package. A later
+  sequential release change must add the exposure display/manifest, content-
+  addressed URL binding and verification, and the tracked results build input.
+  No deployment or scientific-result acceptance is implied by this local work.
 
 **Deliverables**
 
@@ -1858,11 +1903,22 @@ not started.
 - No wording in the interface violates the project's scientific communication rules.
 - The application remains usable on a mid-range connection.
 
+**Completion criteria status, 2026-09-08**
+
+- Exact generated statistics, first-visit explanation, visible limitations,
+  communication rules, responsive layouts, and local layer behavior are **met
+  on the M7 branch** and recorded in its handoff.
+- Public-route delivery, the later release-staging change, deployed artifact and
+  browser verification, mid-range connection evidence, independent scientific
+  audit, and author acceptance of final interpretation are **not met**. M7 stays
+  in progress.
+
 **Risks and open questions**
 
 - Presenting a single headline percentage invites overinterpretation; the framing needs care.
-- The measured static exposure artifact uses the selected same-origin route,
-  but browser performance with all layers and responsive behavior remain open.
+- Responsive browser behavior with the complete local layer set is verified;
+  performance on a mid-range connection and the deployed public route remain
+  open.
 
 ---
 
