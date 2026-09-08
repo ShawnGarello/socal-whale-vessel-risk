@@ -58,9 +58,16 @@ profiler invocation, checksum-pinned export and rendering routes, and test
 commands are in the
 [analysis README](../analysis/README.md#exposure-display-and-application-results-delivery).
 The ADR is accepted for exploratory execution only: the results still need
-independent review and owner acceptance; no publication route or application
-integration is accepted, and M6 remains in progress. Status lives in the
+independent review and owner acceptance, and M6 remains in progress. Status lives in the
 [roadmap](roadmap.md#m6--whalevessel-exposure-analysis).
+
+**M7 update, 2026-09-08:** the local application now consumes the exact M6
+display/manifest and tracked results artifact through typed, checksum-paired
+boundaries without recomputing analysis. Its results, sensitivity, limitations,
+and independent exposure-layer lifecycle passed focused tests and responsive
+browser verification. This does not accept the scientific interpretation or
+change the deployed three-input release; exact evidence and remaining release
+work are in the [M7 handoff](m7-exposure-interface-handoff.md).
 
 ## Documentation sources of truth
 
@@ -175,7 +182,9 @@ mechanism for generating the ignored route-aware helpers (including
 `LayoutProps`) before TypeScript runs; generated `.next/` types remain local.
 
 The export is roughly 34 MiB on disk with all three generated M5 input layers
-staged, and much of the remainder is ArcGIS Maps SDK chunks.
+staged. Local M7 checks additionally stage the exposure display/manifest and read
+the tracked results artifact at build time; the current release tool does not
+package those inputs. Much of the remaining size is ArcGIS Maps SDK chunks.
 That is the on-disk size, not the download: the SDK is code-split and the
 browser fetches only what the current map needs. Check any host's file-count and
 size limits against this before choosing one.
@@ -1467,6 +1476,33 @@ unchanged. Every applicable M4 completion criterion passes; the later
 final-results geometry comparison remains open because this initial application
 presents no exposure statistics.
 
+### M7 exposure/results release-staging gap
+
+The local M7 interface is not deployable with the unchanged M4 stage. A later
+sequential release change, after the prerequisite audit and authorization, must:
+
+1. add the exact exposure GeoJSON and paired public manifest to the release input
+   inventory without modifying or committing the generated spatial files;
+2. bind the application at build time to content-addressed URLs for both files,
+   replacing M7's local defaults of `/layers/relative-exposure.geojson` and
+   `/layers/relative-exposure.geojson.manifest.json` in the isolated release;
+3. extend release validation to require the exposure manifest's
+   `displaySha256`, results ID, and results SHA-256 to match the application
+   constants and the fetched display bytes;
+4. copy the tracked `results/exposure-results.v1.json` into the isolated staged
+   source before the clean build, because the static loader reads it from the
+   repository-level `results/` directory rather than `web/`;
+5. include the content-addressed exposure display and manifest in the upload
+   allowlist, receipt, `release.json`, size/count limits, and cache/header checks;
+   and
+6. repeat the clean deployed-browser matrix, including exposure count, pairing,
+   ordering, sensitivity selection, results strings, isolated failures, and the
+   release-time VSR comparison required below.
+
+These are requirements for later authorized release work, not authorization to
+edit `web/scripts/stage-release.mjs`, change `release-inputs.json`, publish,
+deploy, or accept a scientific headline in M7.
+
 ### Release-time VSR service and version check
 
 Before final release, use an anonymous browser session or anonymous HTTP
@@ -1787,11 +1823,11 @@ credits.
   `commercial_vessel_display_export_v1` and
   `analytical_domain_display_export_v1` produce separate vessel-activity and
   accepted-domain GeoJSON. ADR 0021 selects free Vercel Hobby for these static
-  files. The separate M6 exposure delivery boundary produces a
-  measured, locally verified display/manifest pair and a small results
-  contract, which uses the same selected static route after M7 integrates it.
-  The three M5 input representations are published in the receipt-exact M4
-  deployment; the M6 exposure representation is not integrated or published.
+  files. The separate M6 exposure delivery boundary produces a measured,
+  locally verified display/manifest pair and a small results contract. M7
+  integrates those exact artifacts locally through the same selected static
+  route. The three M5 input representations are published in the receipt-exact
+  M4 deployment; the exposure representation is not release-staged or published.
   Vercel Hobby eligibility, ArcGIS Location Platform free-tier-only basemap
   access and deployed behavior were verified on 2026-09-07. Esri hosted-data
   capabilities remain unselected and unverified.
@@ -1804,8 +1840,8 @@ credits.
   the publication boundary; see
   [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md).
 - The small `relative_exposure_application_results_v1` JSON artifact is
-  committed so later M7 application code and its numbers stay versioned
-  together. It remains machine-readable delivery data, not an accepted headline.
+  committed so M7 application code and its numbers stay versioned together. It
+  remains machine-readable delivery data, not an accepted headline.
 - A committed generated file must record what produced it and when.
 - Build output, caches, virtual environments, QGIS/ArcGIS scratch data, and
   editor state are ignored, never committed.
@@ -1843,18 +1879,25 @@ In practice:
   tool/version, inspected views/checks, result, and relevant observations.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
-**Application (TypeScript).** `npm test` in `web/` runs Vitest once (79 tests);
+**Application (TypeScript).** `npm test` in `web/` runs Vitest once (91 tests);
 `npm run test:watch` watches. The suite covers configuration logic in
 `web/lib/`, how the map component's reported load failures become interface
 text, the source-level application boundary that keeps fallback attribution
 present until a ready SDK map assumes attribution responsibility, the project
 input layers' artifact bindings and class breaks, checksum verification that
 ties the identity shown in the interface to the bytes the browser loaded, and
-stale async completion/cleanup behavior. Four release-staging tests cover
+stale async completion/cleanup behavior. M7-focused tests additionally cover
+the results contract/version/identity and safe error boundary, display-manifest
+pairing, null/zero/excluded semantics, generated presentation selection,
+integrated-share versus high-area-share wording, complete formula/grid
+sensitivity disclosure, and isolated exposure lifecycle behavior. Four release-staging tests cover
 changed/missing artifacts, unsafe release names, deterministic inventories and
-extra files in an upload package. Rendering,
-the ArcGIS SDK, and ArcGIS Online are not unit-tested; the map is verified by
-building it and looking at it in a browser. Vitest was chosen in
+extra files in an upload package. Rendering, the ArcGIS SDK, and ArcGIS Online
+are not unit-tested; the map is verified by building it and looking at it in a
+browser. The M7 local browser matrix passed at 390 × 844, 820 × 1180, and
+1440 × 900 with exact artifact/count checks and isolated
+missing/mismatched/malformed exposure failures; deployed-route and
+mid-range-connection checks remain open. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
 **Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 647 tests

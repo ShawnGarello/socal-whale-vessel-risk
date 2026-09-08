@@ -27,6 +27,14 @@ import {
   resolveDomainLayerUrl,
   verifyDomainLayerBytes,
 } from "@/lib/domain-source";
+import {
+  EXPOSURE_SOURCE,
+  ExposureLayerPairingError,
+  assertExpectedExposureFeatureCount,
+  exposureMethodConfig,
+  verifyExposureLayerBytes,
+  type ExposureMethod,
+} from "@/lib/exposure-source";
 import { useVerifiedGeoJsonLayer } from "@/lib/use-verified-geojson-layer";
 import {
   VESSEL_SOURCE,
@@ -51,6 +59,7 @@ import {
 } from "@/lib/whale-source";
 import MapLayerPanel from "./MapLayerPanel";
 import DomainLayerControl from "./DomainLayerControl";
+import ExposureLayerControl from "./ExposureLayerControl";
 import VesselLayerControl from "./VesselLayerControl";
 import VsrLayerControl from "./VsrLayerControl";
 import WhaleLayerControl from "./WhaleLayerControl";
@@ -142,6 +151,12 @@ const DOMAIN_CHECKSUM_MESSAGE =
   "match the checksum this build expects.";
 const DOMAIN_MAP_UNAVAILABLE_MESSAGE =
   "The analytical-domain boundary is unavailable because the map could not be initialized.";
+const EXPOSURE_FAILURE_MESSAGE =
+  "The relative-exposure layer could not be loaded. The basemap and independent input layers remain available.";
+const EXPOSURE_PAIRING_MESSAGE =
+  "The relative-exposure layer was not displayed because its display, manifest, and generated results do not match this build.";
+const EXPOSURE_MAP_UNAVAILABLE_MESSAGE =
+  "The relative-exposure layer is unavailable because the map could not be initialized.";
 
 /**
  * Symbology for the modeled density surface.
@@ -364,11 +379,113 @@ function createDomainLayer(objectUrl: string): GeoJSONLayer {
   });
 }
 
+function createExposureRenderer(method: ExposureMethod): ClassBreaksRenderer {
+  const config = exposureMethodConfig(method);
+  return new ClassBreaksRenderer({
+    field: config.valueField,
+    classBreakInfos: config.classes.map((entry) => ({
+      minValue: entry.min,
+      maxValue: entry.max,
+      label: entry.label,
+      symbol: new SimpleFillSymbol({
+        color: [...entry.color],
+        outline: { width: 0 },
+      }),
+    })),
+  });
+}
+
+function createExposurePopupTemplate(method: ExposureMethod): PopupTemplate {
+  const config = exposureMethodConfig(method);
+  return new PopupTemplate({
+    title: `${EXPOSURE_SOURCE.title} — cell {${EXPOSURE_SOURCE.featureIdField}}`,
+    content: [
+      {
+        type: "fields",
+        fieldInfos: [
+          {
+            fieldName: config.valueField,
+            label: `${config.shortLabel} release-relative index`,
+            format: { places: 6, digitSeparator: false },
+          },
+          {
+            fieldName: config.intensityField,
+            label: `${config.shortLabel} intensity (${config.intensityUnit})`,
+            format: { places: 6, digitSeparator: true },
+          },
+          {
+            fieldName: "qualified_area_km2",
+            label: "Receiver-qualified water (km²)",
+            format: { places: 3, digitSeparator: true },
+          },
+          {
+            fieldName: "water_area_km2",
+            label: "Full source-cell water (km²)",
+            format: { places: 3, digitSeparator: true },
+          },
+        ],
+      },
+      {
+        type: "text",
+        text:
+          "The map colors use display classes on a release-relative index. " +
+          "The p90 field is a separate analytical classification. Blank water " +
+          "outside the layer has no analytical coverage, not zero exposure.",
+      },
+    ],
+    outFields: [
+      EXPOSURE_SOURCE.featureIdField,
+      config.valueField,
+      config.intensityField,
+      "qualified_area_km2",
+      "water_area_km2",
+    ],
+  });
+}
+
+function applyExposureMethod(layer: GeoJSONLayer, method: ExposureMethod): void {
+  layer.renderer = createExposureRenderer(method);
+  layer.popupTemplate = createExposurePopupTemplate(method);
+}
+
+function createExposureLayer(objectUrl: string): GeoJSONLayer {
+  const layer = new GeoJSONLayer({
+    id: EXPOSURE_SOURCE.layerId,
+    title: EXPOSURE_SOURCE.title,
+    url: objectUrl,
+    geometryType: "polygon",
+    spatialReference: { wkid: 4326 },
+    objectIdField: EXPOSURE_SOURCE.objectIdField,
+    fields: [
+      { name: "object_id", alias: "Display id", type: "oid" },
+      { name: "cell_id", alias: "Grid cell", type: "string" },
+      { name: "water_area_km2", alias: "Full water area (km²)", type: "double" },
+      {
+        name: "qualified_area_km2",
+        alias: "Qualified water area (km²)",
+        type: "double",
+      },
+      { name: "product_intensity", alias: "Product intensity", type: "double" },
+      { name: "product_index", alias: "Product index", type: "double" },
+      {
+        name: "log_traffic_intensity",
+        alias: "Log-traffic intensity",
+        type: "double",
+      },
+      { name: "log_traffic_index", alias: "Log-traffic index", type: "double" },
+    ],
+    copyright: EXPOSURE_SOURCE.attribution,
+  });
+  applyExposureMethod(layer, "product");
+  return layer;
+}
+
 function reorderProjectLayers(map: Map): void {
   let index = 0;
   for (const layerId of [
     WHALE_SOURCE.layerId,
     VESSEL_SOURCE.layerId,
+    EXPOSURE_SOURCE.layerId,
     DOMAIN_SOURCE.layerId,
     VSR_SOURCE.layerId,
   ]) {
@@ -385,6 +502,8 @@ const isVesselChecksumError = (error: unknown) =>
   error instanceof VesselLayerChecksumError;
 const isDomainChecksumError = (error: unknown) =>
   error instanceof DomainLayerChecksumError;
+const isExposurePairingError = (error: unknown) =>
+  error instanceof ExposureLayerPairingError;
 
 type Status = "initializing" | "ready" | "error";
 
@@ -400,10 +519,10 @@ export default function ArcgisMapFrame({
   const [failures, setFailures] = useState<readonly string[]>([]);
   const [mapIsReady, setMapIsReady] = useState(false);
   const [vsrState, dispatchVsr] = useReducer(mapLayerReducer, INITIAL_MAP_LAYER_STATE);
-  const [whaleState, dispatchWhale] = useReducer(
-    mapLayerReducer,
-    INITIAL_MAP_LAYER_STATE,
-  );
+  const [whaleState, dispatchWhale] = useReducer(mapLayerReducer, {
+    ...INITIAL_MAP_LAYER_STATE,
+    visible: false,
+  });
   const [vesselState, dispatchVessel] = useReducer(mapLayerReducer, {
     ...INITIAL_MAP_LAYER_STATE,
     visible: false,
@@ -412,6 +531,11 @@ export default function ArcgisMapFrame({
     mapLayerReducer,
     INITIAL_MAP_LAYER_STATE,
   );
+  const [exposureState, dispatchExposure] = useReducer(
+    mapLayerReducer,
+    INITIAL_MAP_LAYER_STATE,
+  );
+  const [exposureMethod, setExposureMethod] = useState<ExposureMethod>("product");
   // `null` until a load attempt finishes: true when the bytes were hashed and
   // matched, false when this browser exposes no SubtleCrypto to hash them.
   const [whaleChecksumVerified, setWhaleChecksumVerified] = useState<boolean | null>(
@@ -423,6 +547,9 @@ export default function ArcgisMapFrame({
   const [domainChecksumVerified, setDomainChecksumVerified] = useState<boolean | null>(
     null,
   );
+  const [exposureChecksumVerified, setExposureChecksumVerified] = useState<
+    boolean | null
+  >(null);
   const mapRef = useRef<ArcgisMap | null>(null);
   const vsrLayerRef = useRef<FeatureLayer | null>(null);
   const vsrVisibleRef = useRef(vsrState.visible);
@@ -432,6 +559,8 @@ export default function ArcgisMapFrame({
   const vesselVisibleRef = useRef(vesselState.visible);
   const domainLayerRef = useRef<GeoJSONLayer | null>(null);
   const domainVisibleRef = useRef(domainState.visible);
+  const exposureLayerRef = useRef<GeoJSONLayer | null>(null);
+  const exposureVisibleRef = useRef(exposureState.visible);
   const getMap = useCallback(() => mapRef.current?.map, []);
 
   const handleReadyChange = useCallback(() => {
@@ -470,6 +599,10 @@ export default function ArcgisMapFrame({
       type: "map-unavailable",
       warning: DOMAIN_MAP_UNAVAILABLE_MESSAGE,
     });
+    dispatchExposure({
+      type: "map-unavailable",
+      warning: EXPOSURE_MAP_UNAVAILABLE_MESSAGE,
+    });
   }, [onSdkAttributionChange]);
 
   useEffect(() => {
@@ -497,6 +630,10 @@ export default function ArcgisMapFrame({
         type: "map-unavailable",
         warning: DOMAIN_MAP_UNAVAILABLE_MESSAGE,
       });
+      dispatchExposure({
+        type: "map-unavailable",
+        warning: EXPOSURE_MAP_UNAVAILABLE_MESSAGE,
+      });
     }, INITIALIZATION_TIMEOUT_MS);
     return () => window.clearTimeout(timer);
   }, [onSdkAttributionChange, status]);
@@ -521,6 +658,25 @@ export default function ArcgisMapFrame({
     checksumMessage: WHALE_CHECKSUM_MESSAGE,
     mapUnavailableMessage: WHALE_MAP_UNAVAILABLE_MESSAGE,
     loadTimeoutMs: WHALE_LOAD_TIMEOUT_MS,
+    afterAdd: reorderProjectLayers,
+  });
+
+  useVerifiedGeoJsonLayer({
+    mapIsReady,
+    getMap,
+    source: EXPOSURE_SOURCE,
+    url: EXPOSURE_SOURCE.displayUrl,
+    visibleRef: exposureVisibleRef,
+    layerRef: exposureLayerRef,
+    dispatch: dispatchExposure,
+    setChecksumVerified: setExposureChecksumVerified,
+    createLayer: createExposureLayer,
+    verifyBytes: verifyExposureLayerBytes,
+    assertFeatureCount: assertExpectedExposureFeatureCount,
+    checksumError: isExposurePairingError,
+    failureMessage: EXPOSURE_FAILURE_MESSAGE,
+    checksumMessage: EXPOSURE_PAIRING_MESSAGE,
+    mapUnavailableMessage: EXPOSURE_MAP_UNAVAILABLE_MESSAGE,
     afterAdd: reorderProjectLayers,
   });
 
@@ -675,6 +831,17 @@ export default function ArcgisMapFrame({
     dispatchDomain({ type: "visibility-changed", visible });
   }, []);
 
+  const handleExposureVisibilityChange = useCallback((visible: boolean) => {
+    exposureVisibleRef.current = visible;
+    if (exposureLayerRef.current) exposureLayerRef.current.visible = visible;
+    dispatchExposure({ type: "visibility-changed", visible });
+  }, []);
+
+  const handleExposureMethodChange = useCallback((method: ExposureMethod) => {
+    setExposureMethod(method);
+    if (exposureLayerRef.current) applyExposureMethod(exposureLayerRef.current, method);
+  }, []);
+
   const problems = [...config.warnings, ...failures];
 
   return (
@@ -701,10 +868,17 @@ export default function ArcgisMapFrame({
 
       <MapLayerPanel>
         <p className={styles.layerHint}>
-          Toggle the two filled surfaces to compare them. The dashed boundary marks the
-          receiver-qualified analysis area; blank water beyond it is excluded, not low
-          activity.
+          Relative exposure is shown by default. Whale and vessel fills start off so the
+          result stays readable; turn them on to inspect the inputs. Boundary outlines
+          remain above every filled layer.
         </p>
+        <ExposureLayerControl
+          state={exposureState}
+          method={exposureMethod}
+          checksumVerified={exposureChecksumVerified}
+          onVisibilityChange={handleExposureVisibilityChange}
+          onMethodChange={handleExposureMethodChange}
+        />
         <WhaleLayerControl
           state={whaleState}
           checksumVerified={whaleChecksumVerified}
