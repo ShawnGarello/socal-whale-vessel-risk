@@ -151,4 +151,5 @@ pending. After independent audit and authorized PR integration:
    keyed browser matrix and mid-range connection behavior at the stable origin.
 
 Independent scientific audit, owner conclusion/map review and acceptance of
-public wording remain separate gates. M5, M6, M7, M8 and M9 remain in progress.
+public wording remain separate gates. M5, M6 and M7 remain in progress; M8 and
+M9 are not started.
