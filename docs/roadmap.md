@@ -1505,8 +1505,9 @@ source-date disclosures completed locally and await a later release**
   resolved first-deployment Toolbar mismatch does not apply to the current
   receipt-exact production deployment.
 - The exposure display/results contract and its M7 application consumer are
-  implemented and locally verified, but release staging and deployment remain
-  open.
+  implemented and locally verified. Complete release staging is also locally
+  verified, but independent audit, public deployment and deployed verification
+  remain open.
 - The route-specific Vercel and ArcGIS basemap account checks passed. Esri
   hosted-data capabilities are unselected and are not M4 gates.
 - M5 remains in progress because its locally completed source-date disclosure
@@ -1662,9 +1663,9 @@ audit, owner acceptance, public delivery, and release remain open**
   375,238 Brotli; the small tracked results artifact is 31,381 bytes. The
   manifest binds the exact display checksum to results ID
   `exposure-results-8a0bf6c27e00fb40a13d6870` and its checksum. Static
-  same-origin delivery is selected by ADR 0021. The M7 branch consumes this
-  exact pair locally; release staging, publication, deployment, and deployed
-  verification remain unfinished.
+  same-origin delivery is selected by ADR 0021. The M7 application and complete
+  release stage consume this exact pair locally; independent audit,
+  publication, deployment, and deployed verification remain unfinished.
 - The exporter verifies pinned source bytes, re-verifies both analytical tables,
   recomputes the accepted summaries from their serialized rows, and reconciles
   the complete supplied report. A matching checksum identifies report bytes but
@@ -1741,9 +1742,9 @@ audit, owner acceptance, public delivery, and release remain open**
     headline findings. Human scientific and cartographic review of the maps is
     also outstanding.
 - Also not done: independent audit, owner conclusion/map review, propagation of
-  native whale uncertainty, M7 release staging and public delivery through the
-  static route selected by ADR 0021, and the M9 release-time VSR comparison.
-  Local M7 application consumption and browser verification are complete.
+  native whale uncertainty, M7 public delivery through the static route selected
+  by ADR 0021, and the M9 release-time VSR comparison. Local M7 application
+  consumption, release staging and browser verification are complete.
   Analytical execution detail is in the
   [M6 foundation handoff](m6-exposure-foundation-handoff.md); downstream contract,
   artifact, resource, repeat, and final QGIS evidence is in the
@@ -1831,12 +1832,12 @@ Bring the analysis into the application so a visitor can explore the exposure la
 The M6 display/results artifacts now exist and are consumed locally without
 recomputing science. M4's selected static route is deployed and verified, but
 M5 remains incomplete, M6 still awaits independent audit and owner acceptance,
-and M7 has not been release-staged or deployed.
+and M7 has not been independently audited or deployed.
 
 ### Progress
 
-**Local exposure/results interface implemented and verified; public delivery and
-author scientific acceptance remain open**
+**Local exposure/results interface and release staging implemented and verified;
+public delivery and author scientific acceptance remain open**
 
 - Static generation loads `results/exposure-results.v1.json` through a narrow
   typed boundary. It verifies the supported contract and version, required
@@ -1863,17 +1864,25 @@ author scientific acceptance remain open**
   separate-speed limitations. Excluded cells mean no analytical coverage, not
   zero exposure; outside contributors are ranked cells, not validated clusters
   or collision locations.
-- The rebased implementation passes 91 TypeScript tests plus formatting, lint,
-  type-check, and static-build gates. Chrome verification at 390×844, 820×1180,
+- The complete staged implementation passes 101 TypeScript tests plus
+  formatting, lint, type-check, and static-build gates. Chrome verification at
+  390×844, 820×1180,
   and 1440×900 confirmed generated values, exact feature count, alignment,
   ordering, toggles, keyboard access, scrolling, no horizontal overflow, no
   visitor sign-in, and isolated missing/mismatched/malformed exposure failures.
-  See the [M7 handoff](m7-exposure-interface-handoff.md) for exact artifact and
-  evidence identities.
-- M7 is not deployable through the unchanged M4 release package. A later
-  sequential release change must add the exposure display/manifest, content-
-  addressed URL binding and verification, and the tracked results build input.
-  No deployment or scientific-result acceptance is implied by this local work.
+  See the [M7 release-integration handoff](m7-release-integration-handoff.md) for
+  exact artifact, package and evidence identities.
+- The existing release mechanism now inventories the exposure display/manifest
+  and tracked build-only results artifact, checks their pairing and application
+  bindings, builds content-addressed same-origin URLs, and verifies the exact
+  public inventory and receipt. The verified local rehearsal contains M5's
+  source dates and the complete M7 interface. It used the keyless `topo-vector`
+  basemap and is explicitly not for deployment.
+- Independent audit, both component PR gates on the eventual release head, a
+  fresh keyed main-commit candidate, public-origin receipt/header/browser
+  verification, release-time VSR comparison, mid-range connection evidence and
+  owner scientific acceptance remain open. No deployment or scientific-result
+  acceptance is implied by local staging.
 
 **Deliverables**
 
@@ -1903,15 +1912,17 @@ author scientific acceptance remain open**
 - No wording in the interface violates the project's scientific communication rules.
 - The application remains usable on a mid-range connection.
 
-**Completion criteria status, 2026-09-08**
+**Completion criteria status, 2026-09-09**
 
 - Exact generated statistics, first-visit explanation, visible limitations,
   communication rules, responsive layouts, and local layer behavior are **met
   on the M7 branch** and recorded in its handoff.
-- Public-route delivery, the later release-staging change, deployed artifact and
-  browser verification, mid-range connection evidence, independent scientific
-  audit, and author acceptance of final interpretation are **not met**. M7 stays
-  in progress.
+- Complete release staging and its keyless local candidate/browser verification
+  are **met**.
+- Public-route delivery, keyed/deployed artifact and browser verification,
+  release-time VSR consistency, mid-range connection evidence, independent
+  scientific audit, and author acceptance of final interpretation are **not
+  met**. M7 stays in progress.
 
 **Risks and open questions**
 

@@ -27,7 +27,8 @@ Project-derived layers are delivered here as static same-origin files served
 alongside the export, so they need no layer credential and no hosted service.
 The three input layers are verified locally and from the stable production
 origin. The relative-exposure layer and results interface are implemented and
-verified locally on M7, but are not in the current public release.
+verified locally, and the complete M7 release stage is receipt/browser verified
+locally. They are not in the current public release.
 ADR 0021 selects free Vercel Hobby for these files. The plan and personal,
 unpaid, non-monetized portfolio eligibility are author-confirmed. The isolated
 `socal-whale-vessel-overlap` project now serves the approved reviewed-main
@@ -316,11 +317,31 @@ results panel usable while showing an isolated exposure warning. The exact
 ignored browser report and screenshots are recorded in the
 [M7 handoff](../docs/m7-exposure-interface-handoff.md).
 
-This is local evidence, not public-delivery evidence. The unchanged M4 release
-stage packages only the three input-layer pairs and omits both the exposure pair
-and repository-level results build input. The later release-stage changes and
-deployed verification requirements are owned by
-[development.md](../docs/development.md#m7-exposureresults-release-staging-gap).
+### Release staging verified locally on 2026-09-09
+
+The existing release tool now inventories all four public GeoJSON/manifest
+pairs, binds them to content-addressed same-origin URLs, and copies only the
+tracked `results/exposure-results.v1.json` into the isolated source tree for the
+static build. The results file is build-only and is not a public endpoint.
+Preparation and receipt read-back verify application URL/checksum/result-ID
+bindings, display-manifest-results pairing, exact output allowlists, media/cache
+configuration, release identity, and size/count limits.
+
+The complete keyless rehearsal passed `npm run verify:clean` with all 101 tests
+and generated a 903-file, 38,658,383-byte package. Chrome 152 then passed the
+390 × 844, 820 × 1180 and 1440 × 900 matrix with the M5 dates, exact layer
+counts/order, product/log switching, results text, disclosures, focus/scroll
+checks and isolated missing/mismatched/malformed exposure failures. It used
+`topo-vector`, not the keyed production `arcgis/oceans` configuration.
+
+This remains local evidence, not public-delivery or scientific-acceptance
+evidence. Independent audit, a fresh keyed main-commit candidate, release-time
+VSR consistency, public-origin receipt/header/browser checks, mid-range
+connection evidence, owner review and deployment authorization remain open.
+The procedure is owned by
+[development.md](../docs/development.md#m7-exposureresults-release-staging-implementation),
+with exact evidence in the
+[release-integration handoff](../docs/m7-release-integration-handoff.md).
 
 ## Publisher-hosted VSR boundary
 

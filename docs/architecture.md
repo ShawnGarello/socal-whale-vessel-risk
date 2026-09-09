@@ -48,8 +48,9 @@
 > locally for exploratory results, which are unreviewed and unaccepted; exposure
 > display/results contracts are implemented and locally verified. Static
 > delivery is selected by ADR 0021; the input-layer application is deployed,
-> while the M7 exposure/results interface is implemented and browser-verified
-> locally but not release-staged or deployed.
+> while the M7 exposure/results interface and complete release staging are
+> implemented and browser-verified locally but not independently audited or
+> deployed.
 > Publisher-hosted VSR display is
 > implemented and locally verified in the web application. Deterministic
 > presentation exports and checksum-bound same-origin display are also
@@ -624,17 +625,18 @@ it belongs in the reproducible Python path.
 ## Deployment model
 
 [ADR 0021](decisions/0021-propose-vercel-static-input-delivery.md) selects the
-author's preferred Vercel Hobby route for the existing input-layer application.
-Local release staging is implemented to package committed source and exactly
-three pinned GeoJSON/manifest pairs as static Build Output API v3 output. It has
-not yet been extended for the exposure display/manifest or tracked results build
-input, so the local M7 interface cannot be deployed with that unchanged package.
+author's preferred Vercel Hobby route. Local release staging packages committed
+source, exactly four pinned public GeoJSON/manifest pairs, and the explicitly
+allowlisted tracked results build input as static Build Output API v3 output.
+The results JSON is available only to the isolated static build and is not a
+public endpoint. Release identity and receipt verification bind both public and
+build-only inputs.
 On 2026-09-07 the author confirmed Vercel Hobby personal-use eligibility and
 ArcGIS Location Platform with pay-as-you-go disabled. Basemap free-tier
 headroom, minimum key scope and exact origin restrictions were verified. The
 isolated `socal-whale-vessel-overlap` project serves the approved reviewed-main
-package from the intended stable production hostname; exposure integration
-remains outside this initial deployment. The entire project must remain within free capacity. Paid
+M4 package from the intended stable production hostname; the complete M7
+package has only been rehearsed locally. The entire project must remain within free capacity. Paid
 plans, trials, add-ons, pay-as-you-go and other charged usage are prohibited.
 
 - Next.js produces a static export served over HTTPS from a stable public URL.
@@ -841,12 +843,14 @@ without tiling or geometry simplification.
 The exposure display has also been measured locally: 2,542,744 bytes raw,
 528,235 bytes at gzip level 9, and 375,238 bytes at Brotli quality 11 for 2,793
 features. Its paired manifest is 6,803 bytes and the small application-results
-artifact is 31,381 bytes. Static same-origin delivery is selected by ADR 0021;
-M7 integration and local browser load/render behavior are verified at the three
-required viewports, including exact count, layer alignment and ordering,
-visibility changes without duplication, keyboard access, scrolling, and no
-horizontal overflow. Release staging, deployment, deployed verification, and
-performance on a mid-range connection remain unfinished.
+artifact is 31,381 bytes. Static same-origin delivery is selected by ADR 0021.
+Complete M7 release staging and local browser load/render behavior are verified
+at the three required viewports, including exact counts and order, visibility
+changes without duplication, results pairing/text, keyboard access, scrolling,
+and no horizontal overflow. The rehearsal used the keyless `topo-vector`
+basemap. Independent audit, a fresh keyed main-commit candidate, deployment,
+public-origin and release-time VSR verification, and performance on a mid-range
+connection remain unfinished.
 
 These numbers are local observations of this project's own static assets. They
 are **not** a benchmark of ArcGIS platform services, no ArcGIS
@@ -896,7 +900,7 @@ its milestone needs it.
 | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Exposure formula, normalization, and weighting                                              | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not independently reviewed or accepted, and final headline messaging is still open.                                                                                                                                                      |
 | High-exposure threshold                                                                     | **Resolved for exploratory use** in ADR 0020                                                                | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits independent review and the owner.                                                                                                  |
-| Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021**                                                                                    | Checksum-addressed static files beside the application on free Vercel Hobby. Input files are deployed and receipt-verified; exposure is integrated and browser-verified locally on M7, while its release-stage support, deployment, and deployed verification remain open. Route-specific account evidence passed for M4. |
+| Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021**                                                                                    | Checksum-addressed static files beside the application on free Vercel Hobby. Input files are deployed and receipt-verified; exposure integration and complete release staging are locally verified, while independent audit, deployment, public-origin verification, and release-time VSR consistency remain open. Route-specific account evidence passed for M4. |
 | ArcGIS Location Platform publication route                                                  | Unselected by ADR 0021                                                                                      | Actual hosted-data creation, storage and sharing capabilities remain unverified and are not M4 requirements. The narrower Location Platform basemap account, allowance and key checks passed for the selected static route.                                                                                               |
 | ArcGIS Online publication route                                                             | Unselected by ADR 0021                                                                                      | Actual organization and publishing capabilities remain unverified.                                                                                                                                                                                                                                                        |
 | Static application host                                                                     | **Resolved and verified by ADR 0021 / M4**                                                                  | Free Vercel Hobby, author-confirmed and deployed on 2026-09-07. HTTPS, stable origin, static-export limits, exact receipt and clean-browser verification passed. No paid fallback is authorized.                                                                                                                          |
