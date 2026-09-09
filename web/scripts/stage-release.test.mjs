@@ -9,6 +9,7 @@ import {
   assertPublicOutputInventory,
   digest,
   inventory,
+  releaseBasemap,
   releaseName,
   validateReleaseArtifacts,
   validateReleaseInventory,
@@ -157,7 +158,11 @@ describe("release publication safeguards", () => {
     const release = {
       schemaVersion: 2,
       applicationCommit: "test",
-      mode: "test",
+      mode: "keyless-rehearsal-not-for-deployment",
+      buildConfiguration: {
+        basemap: "topo-vector",
+        arcgisApiKey: "not-configured",
+      },
       publicInputs,
       buildInputs,
       files: inventory(staticRoot),
@@ -190,8 +195,9 @@ describe("release publication safeguards", () => {
     const receiptValue = {
       schemaVersion: 2,
       applicationCommit: "test",
-      mode: "test",
+      mode: "keyless-rehearsal-not-for-deployment",
       bytes: files.reduce((total, file) => total + file.bytes, 0),
+      buildConfiguration: release.buildConfiguration,
       publicInputs,
       buildInputs,
       files,
@@ -223,6 +229,10 @@ describe("release publication safeguards", () => {
       expect(() => releaseName(value)).toThrow();
     }
     expect(releaseName("m4-rehearsal-01")).toBe("m4-rehearsal-01");
+  });
+  it("uses the supported keyless basemap only for non-deployable rehearsals", () => {
+    expect(releaseBasemap(true)).toBe("topo-vector");
+    expect(releaseBasemap(false)).toBe("arcgis/oceans");
   });
   it("inventories nested bytes deterministically without absolute paths", () => {
     const root = mkdtempSync(join(tmpdir(), "m4-inventory-test-"));

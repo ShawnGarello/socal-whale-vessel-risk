@@ -25,6 +25,10 @@ export function releaseName(value) {
   return value;
 }
 
+export function releaseBasemap(rehearsal) {
+  return rehearsal ? "topo-vector" : "arcgis/oceans";
+}
+
 const REQUIRED_PUBLIC_INPUTS = [
   "accepted-analytical-domain.geojson",
   "blue-whale-density.geojson",
@@ -300,6 +304,21 @@ export function verifyReceipt(stage, expectedReceiptSha256) {
   // Preserve verification for retained schema-1 M4 receipts. New M7 receipts
   // carry schema 2 and receive the additional release-identity checks below.
   if (receipt.schemaVersion === 2) {
+    const buildConfiguration = object(
+      receipt.buildConfiguration,
+      "Receipt build configuration",
+    );
+    const expectedBuildConfiguration =
+      receipt.mode === "keyless-rehearsal-not-for-deployment"
+        ? { basemap: "topo-vector", arcgisApiKey: "not-configured" }
+        : {
+            basemap: "arcgis/oceans",
+            arcgisApiKey: "configured-not-recorded",
+          };
+    if (
+      JSON.stringify(buildConfiguration) !== JSON.stringify(expectedBuildConfiguration)
+    )
+      throw new Error("Receipt build configuration mismatch");
     const staticRoot = join(stage, "deploy/.vercel/output/static");
     const release = parsedJson(
       readFileSync(join(staticRoot, "release.json")),
@@ -312,6 +331,8 @@ export function verifyReceipt(stage, expectedReceiptSha256) {
       release.schemaVersion !== 2 ||
       release.applicationCommit !== receipt.applicationCommit ||
       release.mode !== receipt.mode ||
+      JSON.stringify(release.buildConfiguration) !==
+        JSON.stringify(receipt.buildConfiguration) ||
       JSON.stringify(release.files) !== JSON.stringify(publicFiles) ||
       JSON.stringify(release.publicInputs) !== JSON.stringify(receipt.publicInputs) ||
       JSON.stringify(release.buildInputs) !== JSON.stringify(receipt.buildInputs)
@@ -409,7 +430,7 @@ function main() {
   for (const variable of Object.keys(env))
     if (variable.startsWith("NEXT_PUBLIC_")) delete env[variable];
   env.NEXT_PUBLIC_ARCGIS_API_KEY = key ?? "";
-  env.NEXT_PUBLIC_ARCGIS_BASEMAP = "arcgis/oceans";
+  env.NEXT_PUBLIC_ARCGIS_BASEMAP = releaseBasemap(rehearsal);
   for (const { pin, data, manifest } of inputs) {
     const filename = `${pin.sha256}.geojson`;
     writeNew(join(sourceRoot, "public/layers", filename), data);
@@ -538,12 +559,17 @@ function main() {
     resultsId: input.resultsId,
     delivery: "build-only-not-public",
   }));
+  const buildConfiguration = {
+    basemap: releaseBasemap(rehearsal),
+    arcgisApiKey: key?.trim() ? "configured-not-recorded" : "not-configured",
+  };
   const release = {
     schemaVersion: 2,
     applicationCommit: commit,
     mode: rehearsal
       ? "keyless-rehearsal-not-for-deployment"
       : "release-candidate-awaiting-approval",
+    buildConfiguration,
     publicInputs: publicInputIdentities,
     buildInputs: buildInputIdentities,
     files,
@@ -588,6 +614,7 @@ function main() {
     mode: release.mode,
     nodeVersion: process.version,
     bytes,
+    buildConfiguration,
     publicInputs: publicInputIdentities,
     buildInputs: buildInputIdentities,
     files: deploymentFiles,
