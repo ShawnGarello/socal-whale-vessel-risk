@@ -7,6 +7,20 @@ import {
 
 export type ExposureMethod = "product" | "log_traffic";
 
+export const DEFAULT_EXPOSURE_LAYER_URL = "/layers/relative-exposure.geojson";
+export const DEFAULT_EXPOSURE_MANIFEST_URL =
+  "/layers/relative-exposure.geojson.manifest.json";
+
+export function resolveExposureLayerUrl(configured: string | undefined): string {
+  const trimmed = configured?.trim();
+  return trimmed ? trimmed : DEFAULT_EXPOSURE_LAYER_URL;
+}
+
+export function resolveExposureManifestUrl(configured: string | undefined): string {
+  const trimmed = configured?.trim();
+  return trimmed ? trimmed : DEFAULT_EXPOSURE_MANIFEST_URL;
+}
+
 export interface ExposureDisplayClass {
   readonly min: number;
   readonly max: number;
@@ -59,8 +73,6 @@ export const EXPOSURE_SOURCE = {
   objectIdField: "object_id",
   featureIdField: "cell_id",
   expectedFeatureCount: 2793,
-  displayUrl: "/layers/relative-exposure.geojson",
-  manifestUrl: "/layers/relative-exposure.geojson.manifest.json",
   displaySha256: "1ccb605cad9640f42ca5eb2cb1ac3543b3a1341a3375f6e78166dd0fd16e92cb",
   manifestSha256: "0a1b0dea947b3f96dec9cc6ca5037ffe7af4ce949c4e197d8126818e71c569c0",
   resultsId: EXPOSURE_RESULTS_ID,
@@ -205,8 +217,9 @@ export async function verifyExposureLayerBytes(
   displayBytes: ArrayBuffer,
   fetchManifest: FetchLike = (url, options) => fetch(url, options),
   subtle?: DigestLike | null,
+  manifestUrl = DEFAULT_EXPOSURE_MANIFEST_URL,
 ): Promise<boolean> {
-  const response = await fetchManifest(EXPOSURE_SOURCE.manifestUrl, {
+  const response = await fetchManifest(manifestUrl, {
     cache: "no-store",
   });
   if (!response.ok) {

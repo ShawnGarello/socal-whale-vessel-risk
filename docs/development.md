@@ -65,9 +65,12 @@ independent review and owner acceptance, and M6 remains in progress. Status live
 display/manifest and tracked results artifact through typed, checksum-paired
 boundaries without recomputing analysis. Its results, sensitivity, limitations,
 and independent exposure-layer lifecycle passed focused tests and responsive
-browser verification. This does not accept the scientific interpretation or
-change the deployed three-input release; exact evidence and remaining release
-work are in the [M7 handoff](m7-exposure-interface-handoff.md).
+browser verification. On 2026-09-09 the existing release tool was extended and
+locally verified for that complete application; the current public deployment
+is still the earlier three-input release. Neither local staging nor browser
+verification accepts the scientific interpretation. Exact implementation and
+release evidence are in the
+[M7 release-integration handoff](m7-release-integration-handoff.md).
 
 ## Documentation sources of truth
 
@@ -1206,12 +1209,13 @@ bytes match the pinned checksum, that compression and cache headers behave as
 expected, that the layer's source metadata is reachable, and that the deployed
 application commit is the intended one. A local check proves none of these.
 
-### Initial M4 release staging and approval procedure
+### Release staging and approval procedure
 
 The local tool is `web/scripts/stage-release.mjs`. Its committed input inventory
-is `web/scripts/release-inputs.json`; the three layer identities must also match
-the existing application source bindings. Manifest hashes select exact retained
-generation records and do not replace separate spatial-inspection evidence.
+is `web/scripts/release-inputs.json`; all four public layer identities and the
+build-only results identity must also match the existing application source
+bindings. Manifest hashes select exact retained generation records and do not
+replace separate spatial-inspection evidence.
 The selected whale manifest is the September 7 UTC generation retained with
 the vessel/domain display work; its GeoJSON is identical to the inspected whale
 export. No generation manifest is edited.
@@ -1219,38 +1223,44 @@ export. No generation manifest is edited.
 From a clean dedicated checkout's `web/` directory, for a local keyless rehearsal:
 
 ```powershell
-node scripts/stage-release.mjs --rehearsal m4-rehearsal-01 C:/Users/teche/socal-whale-vessel-risk-vessel-domain-display/web/public/layers
+node scripts/stage-release.mjs --rehearsal <unique-release-name> <retained-layer-directory>
 ```
 
-The source directory argument is read-only. Only the six pinned files are read.
-The tool reads tracked `web/` files from the current commit, never from a dirty
-working copy, excludes environment files, and refuses unreviewed public assets
-other than the existing favicon. It creates a new ignored directory under
+The source directory argument is read-only. Only the eight pinned public input
+files are read from it. The tool reads tracked `web/` files and the one
+allowlisted `results/exposure-results.v1.json` build input from the current
+commit, never from a dirty working copy or a copied repository. It excludes
+environment files and refuses unreviewed public assets other than the existing
+favicon. It creates a new ignored directory under
 `data/interim/m4-releases/<name>/`; existing and failed attempts are preserved.
 The isolated source build runs `npm run verify:clean`, including `npm ci`, all
-web checks and the static export. Public layer URLs are fixed to their SHA-256
-filenames. All inherited `NEXT_PUBLIC_` overrides are removed; the default
-`arcgis/oceans` basemap is explicitly selected. Rehearsals have no key and are
-labelled **not for deployment**.
+web checks and the static export. Public layer and manifest URLs are fixed to
+their SHA-256 filenames. The results JSON remains build-only and is baked into
+the generated application rather than exposed as a public endpoint. All
+inherited `NEXT_PUBLIC_` overrides are removed. A keyed candidate explicitly
+uses `arcgis/oceans`; a keyless rehearsal explicitly uses `topo-vector`, records
+that configuration, and is labelled **not for deployment**.
 
 The output has three boundaries:
 
 - `source/`: isolated build and dependencies, private and never uploaded;
 - `deploy/.vercel/output/`: only `config.json` and static application assets,
-  six public input files, and `release.json`;
+  eight public input files, and `release.json`;
 - `receipt.json` and sanitized `verification.log`: local verification records,
   outside the upload directory. The receipt inventories every uploaded file,
   including the public release inventory and routing configuration.
 
 `release.json` records the application commit and hashes/lengths of all static
 files except itself. The local receipt binds that file without a circular hash.
-Generated files remain ignored. The tool refuses changed/missing inputs, stale
-application bindings, symlinks in output, unsupported export file types, extra
-layer files, known source-directory paths in output, and packages exceeding
-100,000,000 bytes or 15,000 files. Exact input hashes are the public-data
-allowlist; this is not a generalized secret detector. Review committed source
-and the actual inventory before approval. No raw data, private generation
-lineage, exposure results or VSR geometry is an input to staging.
+Generated files remain ignored. The tool refuses changed/missing public or
+build inputs; stale URL, checksum, result-ID, or result-checksum bindings;
+incompatible exposure display/manifest/results pairing; symlinks in output;
+unsupported export file types; missing or extra layer files; a public results
+endpoint; known source-directory paths in output; and packages exceeding
+100,000,000 bytes or 15,000 files. Exact input hashes are the public-data and
+build-input allowlists; this is not a generalized secret detector. Review
+committed source and the actual inventory before approval. No raw data, private
+generation lineage, or VSR geometry is an input to staging.
 
 For a release candidate, first independently audit the implementation, obtain
 push/merge authorization, pass both `analysis` and `web` PR checks, merge through
@@ -1261,8 +1271,9 @@ HEAD equal to `origin/main` and a nonempty key; it does not verify the key's
 validity, account rights or referrers. Never put its value on a command line or
 in chat. No deployment tool is invoked by staging.
 
-Before external actions, present the source commit, receipt hash, six artifact
-identities, actual Hobby/account findings, intended project/origin, key scope
+Before external actions, present the source commit, receipt hash, eight public
+artifact identities, the build-only results identity, actual Hobby/account
+findings, intended project/origin, key scope
 and referrers, requested permissions, source-use posture and rollback package.
 Get explicit author approval for project creation/linking, any key/referrer
 change and the exact upload. No GitHub integration is needed. Do not create a
@@ -1303,17 +1314,22 @@ Verify in clean Chrome at 390 × 844, 820 × 1180 and 1440 × 900 CSS pixels:
 
 1. Public HTTPS with no host/ArcGIS visitor sign-in, and `release.json` plus
    fetched application assets matching the approved receipt and main commit.
-2. Default oceans basemap ready, pan/zoom working, attribution visible before
-   and after readiness, and usable responsive controls with no overflow.
-3. Three input layers fetched from the deployed origin with matching decoded
-   SHA-256 bytes, counts 4,516 / 2,793 / 1, and readable citations, units,
-   source/use disclosures, legends, toggles and popups.
+2. Keyed `arcgis/oceans` basemap ready, pan/zoom working, attribution visible
+   before and after readiness, and usable responsive controls with no overflow.
+   The keyless `topo-vector` rehearsal is not evidence for this check.
+3. Four project layers fetched from the deployed origin with matching decoded
+   SHA-256 bytes, counts 4,516 / 2,793 / 2,793 / 1, deterministic order, and
+   readable citations, units, source/use disclosures, legends, toggles and
+   popups. Confirm the processing-date disclosures remain present.
 4. Anonymous publisher item/layer availability and exactly `FID = 126`; visible
    Danielle Alvarez/CMSF/BWBS credit and the non-navigational disclaimer.
-5. Sanitized console/network outcomes and one-at-a-time blocked layer requests:
+5. Exposure/results strings match the verified build input; the exposure
+   display, manifest, result checksum and result ID remain paired; and product
+   and log-traffic controls change the renderer without adding duplicate layers.
+6. Sanitized console/network outcomes and one-at-a-time blocked layer requests:
    only the failed layer is removed, its warning remains, and other layers and
    map interaction continue. Never retain key-bearing URLs or raw HAR files.
-6. Actual GeoJSON `Content-Type`, `Content-Encoding`, cache headers and repeat
+7. Actual GeoJSON `Content-Type`, `Content-Encoding`, cache headers and repeat
    request behavior. The configuration requests year-long immutable caching
    only for checksum-addressed layer/manifest URLs and no-store for release
    identity. Test HTML freshness too. Record project-file transfer and usable
@@ -1476,32 +1492,34 @@ unchanged. Every applicable M4 completion criterion passes; the later
 final-results geometry comparison remains open because this initial application
 presents no exposure statistics.
 
-### M7 exposure/results release-staging gap
+### M7 exposure/results release-staging implementation
 
-The local M7 interface is not deployable with the unchanged M4 stage. A later
-sequential release change, after the prerequisite audit and authorization, must:
+The existing release tool now stages the complete M7 application. Its committed
+inventory contains the exact exposure GeoJSON/manifest pair and the tracked
+repository-level results artifact. The isolated source receives only that
+explicit build input; the results JSON is not copied to the public output.
+Content-addressed exposure URLs, application checksum/result bindings,
+display-manifest-results pairing, exact public output inventory, media types,
+cache routes, size/count limits, release identity and receipt read-back all fail
+closed.
 
-1. add the exact exposure GeoJSON and paired public manifest to the release input
-   inventory without modifying or committing the generated spatial files;
-2. bind the application at build time to content-addressed URLs for both files,
-   replacing M7's local defaults of `/layers/relative-exposure.geojson` and
-   `/layers/relative-exposure.geojson.manifest.json` in the isolated release;
-3. extend release validation to require the exposure manifest's
-   `displaySha256`, results ID, and results SHA-256 to match the application
-   constants and the fetched display bytes;
-4. copy the tracked `results/exposure-results.v1.json` into the isolated staged
-   source before the clean build, because the static loader reads it from the
-   repository-level `results/` directory rather than `web/`;
-5. include the content-addressed exposure display and manifest in the upload
-   allowlist, receipt, `release.json`, size/count limits, and cache/header checks;
-   and
-6. repeat the clean deployed-browser matrix, including exposure count, pairing,
-   ordering, sensitivity selection, results strings, isolated failures, and the
-   release-time VSR comparison required below.
+The 2026-09-09 keyless rehearsal from application commit
+`71247070663a954fe7e424f05ce2194ee7f1614d` passed the clean build and receipt
+verification: 903 package files, 38,658,383 bytes, receipt SHA-256
+`ad9f530ea63e64fe661b7ae6fb431e14c200f57ace42327eeecfcf5949955942`.
+Chrome 152 repeated the complete local matrix at the three required viewports,
+including the M5 dates, exact five-layer order/counts, results strings,
+sensitivity switching and isolated exposure failures. The rehearsal used the
+unkeyed `topo-vector` basemap and is not deployable evidence.
 
-These are requirements for later authorized release work, not authorization to
-edit `web/scripts/stage-release.mjs`, change `release-inputs.json`, publish,
-deploy, or accept a scientific headline in M7.
+Independent audit, both PR component gates on the eventual release head, a
+fresh keyed `origin/main` candidate, public-origin receipt/header/browser
+verification, the release-time VSR check below, mid-range connection evidence,
+scientific/owner review and explicit deployment authorization remain required.
+See the
+[M7 release-integration handoff](m7-release-integration-handoff.md) for exact
+commands and retained local evidence. This implementation does not authorize
+publication or accept a scientific headline.
 
 ### Release-time VSR service and version check
 
@@ -1826,8 +1844,9 @@ credits.
   files. The separate M6 exposure delivery boundary produces a measured,
   locally verified display/manifest pair and a small results contract. M7
   integrates those exact artifacts locally through the same selected static
-  route. The three M5 input representations are published in the receipt-exact
-  M4 deployment; the exposure representation is not release-staged or published.
+  route, and the complete M7 release stage is locally verified. The three M5
+  input representations are published in the receipt-exact M4 deployment; the
+  exposure representation is not published.
   Vercel Hobby eligibility, ArcGIS Location Platform free-tier-only basemap
   access and deployed behavior were verified on 2026-09-07. Esri hosted-data
   capabilities remain unselected and unverified.
@@ -1879,7 +1898,7 @@ In practice:
   tool/version, inspected views/checks, result, and relevant observations.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
-**Application (TypeScript).** `npm test` in `web/` runs Vitest once (91 tests);
+**Application (TypeScript).** `npm test` in `web/` runs Vitest once (101 tests);
 `npm run test:watch` watches. The suite covers configuration logic in
 `web/lib/`, how the map component's reported load failures become interface
 text, the source-level application boundary that keeps fallback attribution
@@ -1890,14 +1909,18 @@ stale async completion/cleanup behavior. M7-focused tests additionally cover
 the results contract/version/identity and safe error boundary, display-manifest
 pairing, null/zero/excluded semantics, generated presentation selection,
 integrated-share versus high-area-share wording, complete formula/grid
-sensitivity disclosure, and isolated exposure lifecycle behavior. Four release-staging tests cover
-changed/missing artifacts, unsafe release names, deterministic inventories and
-extra files in an upload package. Rendering, the ArcGIS SDK, and ArcGIS Online
+sensitivity disclosure, and isolated exposure lifecycle behavior. Thirteen
+release-staging tests cover changed/missing public and build inputs, exposure
+pairing and application bindings, unsafe release names, deterministic
+inventories, receipt read-back, and missing/extra files in an upload package.
+Rendering, the ArcGIS SDK, and ArcGIS Online
 are not unit-tested; the map is verified by building it and looking at it in a
-browser. The M7 local browser matrix passed at 390 × 844, 820 × 1180, and
-1440 × 900 with exact artifact/count checks and isolated
-missing/mismatched/malformed exposure failures; deployed-route and
-mid-range-connection checks remain open. Vitest was chosen in
+browser. The complete M7 release rehearsal passed at 390 × 844, 820 × 1180,
+and 1440 × 900 with exact artifact/count/order checks, M5 processing dates,
+generated results text, controls, accessibility/scroll checks and isolated
+missing/mismatched/malformed exposure failures. It used keyless `topo-vector`;
+keyed production-origin, release-time VSR and mid-range-connection checks remain
+open. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
 **Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 647 tests

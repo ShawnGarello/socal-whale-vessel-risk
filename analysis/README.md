@@ -2780,15 +2780,17 @@ for its manifest, and
 `ebba5b06ee804d80b34f5714ecb1d100c0b05d3579307e88384886dcbd339e60`
 for the results. The display is 2,542,744 bytes raw, 528,235 bytes at gzip
 level 9, and 375,238 bytes at Brotli quality 11. Static same-origin delivery is
-selected by ADR 0021; deployment and deployed verification remain unfinished.
+selected by ADR 0021; complete local release staging is verified, while
+deployment and deployed verification remain unfinished.
 
-The local M7 application now consumes these exact three public-artifact
+The local M7 application now consumes these exact three delivery-artifact
 identities. Static generation verifies the results contract, version, checksum,
 identity, and required presentation fields; browser loading then verifies the
 manifest/display pairing and 2,793-feature count before creating the ArcGIS
 layer. This is downstream presentation only: it does not recalculate or alter
-the analytical result. The release package still omits these artifacts; see the
-[M7 handoff](../docs/m7-exposure-interface-handoff.md).
+the analytical result. The complete local release stage now includes the public
+exposure pair and the tracked results file as a build-only input; see the
+[M7 release-integration handoff](../docs/m7-release-integration-handoff.md).
 
 Inspect the exact final display independently in QGIS:
 

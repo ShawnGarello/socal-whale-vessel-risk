@@ -5,6 +5,11 @@ interface slice. It records implementation and verification, not deployment,
 milestone completion, independent scientific audit, or author acceptance of a
 final public headline.
 
+The release-staging gap recorded here was implemented and locally verified on
+2026-09-09. Current release evidence and remaining gates are in the
+[M7 release-integration handoff](m7-release-integration-handoff.md); the records
+below remain historical evidence for the interface slice.
+
 ## Checkout, base, and scope
 
 - Branch: `feat/m7-exposure-interface`

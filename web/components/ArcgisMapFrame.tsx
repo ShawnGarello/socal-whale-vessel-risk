@@ -32,6 +32,8 @@ import {
   ExposureLayerPairingError,
   assertExpectedExposureFeatureCount,
   exposureMethodConfig,
+  resolveExposureLayerUrl,
+  resolveExposureManifestUrl,
   verifyExposureLayerBytes,
   type ExposureMethod,
 } from "@/lib/exposure-source";
@@ -82,6 +84,14 @@ const config = resolveArcgisConfig({
 const whaleLayerUrl = resolveWhaleLayerUrl(process.env.NEXT_PUBLIC_WHALE_LAYER_URL);
 const vesselLayerUrl = resolveVesselLayerUrl(process.env.NEXT_PUBLIC_VESSEL_LAYER_URL);
 const domainLayerUrl = resolveDomainLayerUrl(process.env.NEXT_PUBLIC_DOMAIN_LAYER_URL);
+const exposureLayerUrl = resolveExposureLayerUrl(
+  process.env.NEXT_PUBLIC_EXPOSURE_LAYER_URL,
+);
+const exposureManifestUrl = resolveExposureManifestUrl(
+  process.env.NEXT_PUBLIC_EXPOSURE_MANIFEST_URL,
+);
+const verifyConfiguredExposureLayerBytes = (bytes: ArrayBuffer) =>
+  verifyExposureLayerBytes(bytes, undefined, undefined, exposureManifestUrl);
 
 // This is an anonymous public application: nobody signs in, and it reads only
 // publicly shared content. Left at its default, the SDK answers a rejected
@@ -665,13 +675,13 @@ export default function ArcgisMapFrame({
     mapIsReady,
     getMap,
     source: EXPOSURE_SOURCE,
-    url: EXPOSURE_SOURCE.displayUrl,
+    url: exposureLayerUrl,
     visibleRef: exposureVisibleRef,
     layerRef: exposureLayerRef,
     dispatch: dispatchExposure,
     setChecksumVerified: setExposureChecksumVerified,
     createLayer: createExposureLayer,
-    verifyBytes: verifyExposureLayerBytes,
+    verifyBytes: verifyConfiguredExposureLayerBytes,
     assertFeatureCount: assertExpectedExposureFeatureCount,
     checksumError: isExposurePairingError,
     failureMessage: EXPOSURE_FAILURE_MESSAGE,

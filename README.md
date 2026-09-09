@@ -42,15 +42,17 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > responsive browser verification at all three required viewports. However,
 > **the results are exploratory and not yet independently reviewed or accepted,
 > and no number from them is a finding of this project yet.** The final
-> scientific review, M7 release staging, public delivery, and deployment remain
-> unfinished. See
+> scientific review, public delivery, and deployment remain unfinished. The
+> complete M7 release stage is implemented and locally receipt/browser verified,
+> but it has not been independently audited or deployed. See
 > the [roadmap](docs/roadmap.md), the
 > [M5 whale display handoff](docs/m5-whale-display-handoff.md), the
 > [M5 vessel/domain display handoff](docs/m5-vessel-domain-display-handoff.md), the
 > [M3 handoff](docs/m3-completion-handoff.md), the
 > [M6 exposure handoff](docs/m6-exposure-foundation-handoff.md), the
 > [M6 exposure-results delivery handoff](docs/m6-exposure-results-delivery-handoff.md), and the
-> [M7 exposure-interface handoff](docs/m7-exposure-interface-handoff.md).
+> [M7 exposure-interface handoff](docs/m7-exposure-interface-handoff.md), and the
+> [M7 release-integration handoff](docs/m7-release-integration-handoff.md).
 
 ## Why
 
@@ -88,12 +90,12 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Study area                  | **Accepted with separate roles** — the map/context extent, modeled-whale-support water geometry, and scope-reduced `receivers_50_nautical_miles` analytical domain are distinct; see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md)                                                                                                                                                                                                                                                                                                                           |
 | Processing workflow         | **M3 complete** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; the selected vessel rules of [ADR 0018](docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md) were accepted after real production generation, byte-identical repetition and QGIS validation. See [analysis](analysis/README.md).                                                                                                                                                                                                                                            |
 | Analysis and derived layers | **M6 in progress** — the water grid, whale grid, fresh current-code exploratory exposure bundles, and distinct exposure display/results contracts are generated, programmatically reconciled, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md), accepted for exploratory execution only; its results await independent review and owner acceptance, one sensitivity comparison is materially non-robust, and no exposure layer or statistic is published or adopted as a headline |
-| Web application             | **M4 foundation and M5 input-layer displays deployed; M7 exposure interface implemented locally** — the M7 branch adds a contract-verified relative-exposure layer, results and required sensitivity disclosures while preserving the existing input-layer lifecycles. It passed focused tests and responsive browser checks, but the current public release still contains only the three input-layer pairs and is not an exposure release                                                                                                                                             |
+| Web application             | **M4 foundation and M5 input-layer displays deployed; M7 exposure interface and release staging implemented locally** — the complete M7 candidate preserves existing input lifecycles, adds the checksum-paired exposure/results interface, and passed clean receipt and responsive browser checks. The current public release still contains only the three input-layer pairs and is not an exposure release                                                                                                                                                                           |
 | Deployment                  | **M4 complete** — the stable free Vercel Hobby production URL is reachable from clean Chrome and serves all 900 public files byte-for-byte from the approved receipt and merged `main`; GitHub remains disconnected and the existing Stemry project remains unchanged                                                                                                                                                                                                                                                                                                                   |
 
 ## Technology direction
 
-The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. [ADR 0021](docs/decisions/0021-propose-vercel-static-input-delivery.md) selects checksum-addressed static same-origin files on free Vercel Hobby for project-derived layers. The whale, vessel-activity, and analytical-domain files are implemented and deployed. The exposure export and results artifact are integrated and verified locally on the M7 branch, but the unchanged release stage does not yet package them. On 2026-09-07 the author confirmed Vercel Hobby personal non-commercial eligibility and ArcGIS Location Platform with pay-as-you-go disabled; current basemap headroom and the minimum browser-key scope and exact referrers were verified. The new isolated Vercel project serves the reviewed-main release at the stable URL below. The project-derived files are static same-origin assets, not Esri hosted-data items; Esri hosted-data capabilities are unselected and remain unverified. Paid plans, trials, add-ons, pay-as-you-go, and other charged usage are prohibited.
+The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. [ADR 0021](docs/decisions/0021-propose-vercel-static-input-delivery.md) selects checksum-addressed static same-origin files on free Vercel Hobby for project-derived layers. The whale, vessel-activity, and analytical-domain files are implemented and deployed. The exposure export/results interface and complete release stage are implemented and verified locally, but no M7 package is deployed. On 2026-09-07 the author confirmed Vercel Hobby personal non-commercial eligibility and ArcGIS Location Platform with pay-as-you-go disabled; current basemap headroom and the minimum browser-key scope and exact referrers were verified for M4. The isolated Vercel project serves the reviewed-main M4 release at the stable URL below. The project-derived files are static same-origin assets, not Esri hosted-data items; Esri hosted-data capabilities are unselected and remain unverified. Paid plans, trials, add-ons, pay-as-you-go, and other charged usage are prohibited.
 
 Python produces the analysis and lineage; QGIS does not replace that production path. The browser displays and filters public results but does not compute exposure. ArcGIS Pro is optional and unnecessary for Version 1. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md) and [ADR 0015](docs/decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md).
 
@@ -117,8 +119,9 @@ Any modeled distribution is an estimate, not observed whale locations. AIS limit
 
 **No reviewed headline result is available yet.** The local M7 interface now
 consumes the versioned machine-readable M6 results artifact without recomputing
-it, but independent audit, owner acceptance, release staging, deployment, and
-release verification remain.
+it, and complete release staging is locally verified. Independent audit, owner
+acceptance, keyed candidate verification, deployment, and public release
+verification remain.
 
 ## Live demo
 
@@ -142,6 +145,7 @@ evidence; public portfolio screenshots have not been selected or committed.
 | [docs/development.md](docs/development.md)                                           | Engineering workflow                                                   |
 | [docs/decisions/](docs/decisions/README.md)                                          | Architecture decision records                                          |
 | [docs/m7-exposure-interface-handoff.md](docs/m7-exposure-interface-handoff.md)       | Local M7 implementation, artifact, test, and browser evidence          |
+| [docs/m7-release-integration-handoff.md](docs/m7-release-integration-handoff.md)     | M7 release tooling, candidate verification, and remaining gates        |
 | [docs/project-vision-and-learning-plan.md](docs/project-vision-and-learning-plan.md) | Original project vision and GIS learning plan                          |
 | [AGENTS.md](AGENTS.md)                                                               | Instructions for coding agents                                         |
 
