@@ -68,6 +68,12 @@ The required clean gate completed successfully from `web/`:
 | Final `npm audit`                  | Zero vulnerabilities                                                                                           |
 | Final `npm ls js-yaml sharp --all` | `js-yaml@4.3.2` and `sharp@0.35.4` at the expected paths                                                       |
 
+One later bookkeeping invocation mistakenly ran `npm audit` from the repository
+root and failed with `ENOLOCK`, because this repository intentionally keeps its
+npm lockfile under `web/`. The command was immediately rerun from `web/` and
+again reported zero vulnerabilities; this was a command-location error, not a
+dependency or gate failure.
+
 The dependency and documentation diffs were reviewed, `git diff --check`
 passed, and staged changes were checked for credential-like strings and
 generated or analytical data. No application source, Next.js configuration,
