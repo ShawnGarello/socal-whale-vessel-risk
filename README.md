@@ -43,8 +43,9 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > **the results are exploratory and not yet independently reviewed or accepted,
 > and no number from them is a finding of this project yet.** The final
 > scientific review, public delivery, and deployment remain unfinished. The
-> complete M7 release stage is implemented and locally receipt/browser verified,
-> but it has not been independently audited or deployed. See
+> complete keyed M5/M7 production package from merged `main` is locally
+> receipt/browser verified, and its release-time VSR snapshot comparison passes,
+> but it is not upload-approved or deployed. See
 > the [roadmap](docs/roadmap.md), the
 > [M5 whale display handoff](docs/m5-whale-display-handoff.md), the
 > [M5 vessel/domain display handoff](docs/m5-vessel-domain-display-handoff.md), the
@@ -52,7 +53,8 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > [M6 exposure handoff](docs/m6-exposure-foundation-handoff.md), the
 > [M6 exposure-results delivery handoff](docs/m6-exposure-results-delivery-handoff.md), and the
 > [M7 exposure-interface handoff](docs/m7-exposure-interface-handoff.md), and the
-> [M7 release-integration handoff](docs/m7-release-integration-handoff.md).
+> [M7 release-integration handoff](docs/m7-release-integration-handoff.md), and the
+> [M5/M7 production candidate handoff](docs/m7-production-candidate-handoff.md).
 
 ## Why
 
@@ -90,7 +92,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Study area                  | **Accepted with separate roles** — the map/context extent, modeled-whale-support water geometry, and scope-reduced `receivers_50_nautical_miles` analytical domain are distinct; see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md)                                                                                                                                                                                                                                                                                                                           |
 | Processing workflow         | **M3 complete** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; the selected vessel rules of [ADR 0018](docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md) were accepted after real production generation, byte-identical repetition and QGIS validation. See [analysis](analysis/README.md).                                                                                                                                                                                                                                            |
 | Analysis and derived layers | **M6 in progress** — the water grid, whale grid, fresh current-code exploratory exposure bundles, and distinct exposure display/results contracts are generated, programmatically reconciled, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md), accepted for exploratory execution only; its results await independent review and owner acceptance, one sensitivity comparison is materially non-robust, and no exposure layer or statistic is published or adopted as a headline |
-| Web application             | **M4 foundation and M5 input-layer displays deployed; M7 exposure interface and release staging implemented locally** — the complete M7 candidate preserves existing input lifecycles, adds the checksum-paired exposure/results interface, and passed clean receipt and responsive browser checks. The current public release still contains only the three input-layer pairs and is not an exposure release                                                                                                                                                                           |
+| Web application             | **M4 foundation and M5 input-layer displays deployed; keyed M5/M7 production candidate verified locally** — the complete merged-main candidate preserves existing input lifecycles, adds the checksum-paired exposure/results interface, and passed clean receipt, keyed responsive-browser, and release-time VSR comparison checks. The current public release still contains only the three input-layer pairs and is not an exposure release                                                                                                                                          |
 | Deployment                  | **M4 complete** — the stable free Vercel Hobby production URL is reachable from clean Chrome and serves all 900 public files byte-for-byte from the approved receipt and merged `main`; GitHub remains disconnected and the existing Stemry project remains unchanged                                                                                                                                                                                                                                                                                                                   |
 
 ## Technology direction
@@ -119,9 +121,9 @@ Any modeled distribution is an estimate, not observed whale locations. AIS limit
 
 **No reviewed headline result is available yet.** The local M7 interface now
 consumes the versioned machine-readable M6 results artifact without recomputing
-it, and complete release staging is locally verified. Independent audit, owner
-acceptance, keyed candidate verification, deployment, and public release
-verification remain.
+it, and the complete keyed merged-main package and release-time VSR comparison
+are locally verified. Independent scientific/content review, owner acceptance,
+upload authorization, deployment, and public release verification remain.
 
 ## Live demo
 

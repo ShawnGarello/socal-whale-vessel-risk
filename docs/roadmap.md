@@ -1505,9 +1505,10 @@ source-date disclosures completed locally and await a later release**
   resolved first-deployment Toolbar mismatch does not apply to the current
   receipt-exact production deployment.
 - The exposure display/results contract and its M7 application consumer are
-  implemented and locally verified. Complete release staging is also locally
-  verified, but independent audit, public deployment and deployed verification
-  remain open.
+  implemented and locally verified. A complete keyed production package from
+  merged `main` is also locally receipt/browser verified, but independent
+  scientific/content audit, author acceptance, public deployment and deployed
+  verification remain open.
 - The route-specific Vercel and ArcGIS basemap account checks passed. Esri
   hosted-data capabilities are unselected and are not M4 gates.
 - M5 remains in progress because its locally completed source-date disclosure
@@ -1581,9 +1582,10 @@ source-date disclosures completed locally and await a later release**
 
 The display, legend, provenance, and alignment evidence now covers every core
 input layer locally and at the stable production origin. The source-date
-disclosure criterion is also met locally for all three layers. M5 stays in
-progress until the vessel/domain disclosure change passes review and CI, enters
-a later approved release, and is verified at the stable production origin.
+disclosure criterion is met locally for all three layers, has passed review and
+CI, and is included in the keyed production candidate. M5 stays in progress
+until that exact candidate receives upload approval and the disclosures are
+verified at the stable production origin.
 
 **Risks and open questions**
 
@@ -1875,14 +1877,20 @@ public delivery and author scientific acceptance remain open**
 - The existing release mechanism now inventories the exposure display/manifest
   and tracked build-only results artifact, checks their pairing and application
   bindings, builds content-addressed same-origin URLs, and verifies the exact
-  public inventory and receipt. The verified local rehearsal contains M5's
-  source dates and the complete M7 interface. It used the keyless `topo-vector`
-  basemap and is explicitly not for deployment.
-- Independent audit, both component PR gates on the eventual release head, a
-  fresh keyed main-commit candidate, public-origin receipt/header/browser
-  verification, release-time VSR comparison, mid-range connection evidence and
-  owner scientific acceptance remain open. No deployment or scientific-result
-  acceptance is implied by local staging.
+  public inventory and receipt. The fresh keyed production candidate from
+  merged-main commit `3dfedc1faab1dd830a79ab5fa0efce3b07c9db25` contains
+  M5's source dates and the complete M7 interface. Its 903-file,
+  38,658,688-byte package and receipt
+  `e6532385fd3641275f38d9f203e75aa64fed0a1739ff3c29799113208f958ede`
+  passed read-back and the complete local keyed browser matrix. The anonymous
+  release-time VSR identity/version and zero-tolerance snapshot geometry
+  comparison also passed. See the
+  [production candidate handoff](m7-production-candidate-handoff.md).
+- Public-origin receipt/header/browser verification, mid-range connection
+  evidence, independent scientific/content audit, author result/wording
+  acceptance, current private account confirmations, and explicit upload
+  approval remain open. No deployment or scientific-result acceptance is
+  implied by local staging.
 
 **Deliverables**
 
@@ -1919,10 +1927,12 @@ public delivery and author scientific acceptance remain open**
   on the M7 branch** and recorded in its handoff.
 - Complete release staging and its keyless local candidate/browser verification
   are **met**.
-- Public-route delivery, keyed/deployed artifact and browser verification,
-  release-time VSR consistency, mid-range connection evidence, independent
-  scientific audit, and author acceptance of final interpretation are **not
-  met**. M7 stays in progress.
+- A fresh keyed merged-main candidate, local keyed browser verification, and
+  release-time VSR consistency are **met**.
+- Public-route delivery, deployed receipt/header/browser verification,
+  mid-range connection evidence, independent scientific/content audit, and
+  author acceptance of final interpretation are **not met**. M7 stays in
+  progress.
 
 **Risks and open questions**
 

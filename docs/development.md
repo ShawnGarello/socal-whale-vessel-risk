@@ -1521,6 +1521,34 @@ See the
 commands and retained local evidence. This implementation does not authorize
 publication or accept a scientific headline.
 
+### M5/M7 production candidate, 2026-09-09
+
+A fresh production-mode package was built from clean, freshly fetched
+`origin/main` commit `3dfedc1faab1dd830a79ab5fa0efce3b07c9db25`, after
+dependency PR #31 and release-integration PR #32 merged with passing `analysis`
+and `web` checks. Release `m7-production-candidate-20260909-01` contains 903
+files and 38,658,688 bytes. Its receipt SHA-256 is
+`e6532385fd3641275f38d9f203e75aa64fed0a1739ff3c29799113208f958ede`.
+Receipt read-back, the exact public/build-input identities, output allowlists,
+content-addressed URLs, media/cache configuration, static-only boundary, and a
+keyed local Chrome matrix passed. The browser used the authorized localhost
+origin and verified Oceans, all five layer lifecycles, product/log switching,
+generated results and sensitivities, M5 dates, VSR text, focus, scrolling, and
+isolated failures. This is local evidence, not deployed-origin header,
+compression, freshness, or mid-range-network evidence.
+
+The release-time anonymous VSR identity/version and zero-tolerance geometry
+comparison passed against the exact immutable snapshot. Current read-only
+checks also resolved the intended `stemry/socal-whale-vessel-overlap` project,
+stable production origin, and key access from the exact localhost/production
+referrers while refusing an unrelated origin. Historical Hobby eligibility,
+pay-as-you-go-disabled, capacity, and minimum key-privilege observations still
+require private author confirmation that they have not changed. Independent
+scientific/content review and author acceptance remain unrecorded and block
+upload. No deployment command or account change was performed. The complete
+approval packet and retained evidence identities are in the
+[M5/M7 production candidate handoff](m7-production-candidate-handoff.md).
+
 ### Release-time VSR service and version check
 
 Before final release, use an anonymous browser session or anonymous HTTP
