@@ -981,6 +981,23 @@ omitted from the release. A warning alone is insufficient. The publisher may
 change, remove, rate-limit, or privatize the service, and no automatic
 synchronization or monitoring service is planned for Version 1.
 
+**Release-candidate comparison, 2026-09-09.** Anonymous HTTP returned 200 for
+the expected item, Feature Layer 0, and the `FID = 126` GeoJSON query. The item
+remained `WhaleAtlas_2026`, owner `danielle_cmsf`, with source modification time
+`2026-06-01T19:24:22Z`; the layer reported version 12 and `Query` capability.
+The current one-feature Polygon and complete attribute object were compared in
+memory with the exact ignored 2026-08-25 snapshot, whose SHA-256 remains
+`2358bd39df3f3ca084b8ef8c3ea3321c7d93fe9bec76f5a2d61e01370549c783`.
+Ordered coordinate arrays and sorted complete properties matched exactly with
+zero tolerance. Both canonical geometry serializations hashed to
+`bf50488078ed558029d1ead6676b4f4d33e5ed20b2e560b4dc564f8e5615f196`;
+both property serializations hashed to
+`55b6affd5fd816e2e16c912975338a0a92bace3f6791d478fb76ddf574f8eeed`.
+The live geometry was not retained or copied into the candidate. This closes
+ADR 0019's comparison gate for the exact candidate recorded in the
+[M5/M7 production candidate handoff](m7-production-candidate-handoff.md); it
+does not authorize upload or replace a later check if the candidate changes.
+
 ### Considered and not selected
 
 | Candidate | Why not selected |
