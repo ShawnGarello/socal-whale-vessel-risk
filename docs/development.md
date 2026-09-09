@@ -57,8 +57,10 @@ display both passed, including checksum-bound QGIS inspection. The guarded
 profiler invocation, checksum-pinned export and rendering routes, and test
 commands are in the
 [analysis README](../analysis/README.md#exposure-display-and-application-results-delivery).
-The ADR is accepted for exploratory execution only: the results still need
-independent review and owner acceptance, and M6 remains in progress. Status lives in the
+The ADR is accepted for exploratory execution only. On 2026-09-09 the author
+accepted the current exploratory results and limitations wording for public
+display; independent scientific/content review remains pending, so M6 remains
+in progress. Status lives in the
 [roadmap](roadmap.md#m6--whalevessel-exposure-analysis).
 
 **M7 update, 2026-09-08:** the local application now consumes the exact M6
@@ -1541,11 +1543,18 @@ The release-time anonymous VSR identity/version and zero-tolerance geometry
 comparison passed against the exact immutable snapshot. Current read-only
 checks also resolved the intended `stemry/socal-whale-vessel-overlap` project,
 stable production origin, and key access from the exact localhost/production
-referrers while refusing an unrelated origin. Historical Hobby eligibility,
-pay-as-you-go-disabled, capacity, and minimum key-privilege observations still
-require private author confirmation that they have not changed. Independent
-scientific/content review and author acceptance remain unrecorded and block
-upload. No deployment command or account change was performed. The complete
+referrers while refusing an unrelated origin. On 2026-09-09 the author confirmed
+that Hobby/free-only use, disabled pay-as-you-go, available allowance, and the
+restricted valid browser key remain current. This is author-provided
+account-administration evidence; the read-only session independently verified
+the project/origin and exact key-referrer behavior, not the private billing UI.
+The author also accepted the current exploratory results, limitations wording,
+and prominent log-traffic sensitivity for public display, while expressly
+retaining the ban on collision-probability, observed-encounter, or
+VSR-effectiveness claims. Independent scientific/content review remains
+unrecorded, does not follow from owner acceptance, and blocks upload. No upload
+authorization, deployment command, or account change was provided or performed.
+The complete
 approval packet and retained evidence identities are in the
 [M5/M7 production candidate handoff](m7-production-candidate-handoff.md).
 

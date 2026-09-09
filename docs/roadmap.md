@@ -1507,8 +1507,9 @@ source-date disclosures completed locally and await a later release**
 - The exposure display/results contract and its M7 application consumer are
   implemented and locally verified. A complete keyed production package from
   merged `main` is also locally receipt/browser verified, but independent
-  scientific/content audit, author acceptance, public deployment and deployed
-  verification remain open.
+  scientific/content audit, public deployment and deployed verification remain
+  open. The author accepted the current exploratory public interpretation and
+  limitations on 2026-09-09; that does not replace independent review.
 - The route-specific Vercel and ArcGIS basemap account checks passed. Esri
   hosted-data capabilities are unselected and are not M4 gates.
 - M5 remains in progress because its locally completed source-date disclosure
@@ -1617,8 +1618,9 @@ Produce the project's own analytical result: a documented relative exposure laye
 ### Progress
 
 **Method accepted for exploratory execution, computed and locally verified;
-downstream delivery contracts and local M7 consumption implemented; independent
-audit, owner acceptance, public delivery, and release remain open**
+downstream delivery contracts and local M7 consumption implemented; author
+public-display acceptance recorded; independent audit, public delivery, and
+release remain open**
 
 - [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md)
   defines the calculation: per cell, modeled whale density multiplied by period
@@ -1738,12 +1740,12 @@ audit, owner acceptance, public delivery, and release remain open**
     [review workflow](development.md#pull-request-and-continuous-integration-workflow),
     covering units, the full-water-intensity versus qualified-integration
     split, complete-support admission, fractional joint geometry, quantiles and
-    ties, coarsening and retained source evidence. Then owner acceptance of the
-    results and of the final messaging — the 2026-09-06 authorization permits
-    the calculation, it does not settle which statements, if any, become
-    headline findings. Human scientific and cartographic review of the maps is
-    also outstanding.
-- Also not done: independent audit, owner conclusion/map review, propagation of
+    ties, coarsening and retained source evidence. Human scientific and
+    cartographic review of the maps is also outstanding. On 2026-09-09 the
+    owner accepted the current exploratory results, limitations wording and
+    prominent log-traffic sensitivity for public display; that acceptance does
+    not replace or predetermine the independent review.
+- Also not done: independent audit, propagation of
   native whale uncertainty, M7 public delivery through the static route selected
   by ADR 0021, and the M9 release-time VSR comparison. Local M7 application
   consumption, release staging and browser verification are complete.
@@ -1806,9 +1808,10 @@ audit, owner acceptance, public delivery, and release remain open**
   and the final display passed QGIS inspection, but no exposure layer is
   published and the publisher-hosted VSR comparison still belongs to M9.
 
-Independent review of the exact commit and artifacts, and owner acceptance of
-the results, sensitivity, maps and final messaging, are also outstanding, so M6
-stays in progress.
+Owner acceptance of the current exploratory results, sensitivity, maps and
+limitations wording for public display is recorded on 2026-09-09. Independent
+review of the exact commit and artifacts remains outstanding, so M6 stays in
+progress.
 
 **Risks and open questions**
 
@@ -1833,13 +1836,15 @@ Bring the analysis into the application so a visitor can explore the exposure la
 
 The M6 display/results artifacts now exist and are consumed locally without
 recomputing science. M4's selected static route is deployed and verified, but
-M5 remains incomplete, M6 still awaits independent audit and owner acceptance,
-and M7 has not been independently audited or deployed.
+M5 remains incomplete, M6 still awaits independent scientific/content audit,
+and M7 has not been independently audited or deployed. The author's 2026-09-09
+public-display acceptance does not replace that review.
 
 ### Progress
 
 **Local exposure/results interface and release staging implemented and verified;
-public delivery and author scientific acceptance remain open**
+author exploratory public-display acceptance recorded; independent review and
+public delivery remain open**
 
 - Static generation loads `results/exposure-results.v1.json` through a narrow
   typed boundary. It verifies the supported contract and version, required
@@ -1887,10 +1892,10 @@ public delivery and author scientific acceptance remain open**
   comparison also passed. See the
   [production candidate handoff](m7-production-candidate-handoff.md).
 - Public-origin receipt/header/browser verification, mid-range connection
-  evidence, independent scientific/content audit, author result/wording
-  acceptance, current private account confirmations, and explicit upload
-  approval remain open. No deployment or scientific-result acceptance is
-  implied by local staging.
+  evidence, independent scientific/content audit, and explicit upload approval
+  remain open. The author confirmed the current private account controls and
+  accepted the exploratory result/limitations wording on 2026-09-09; neither
+  confirmation implies independent review or deployment authorization.
 
 **Deliverables**
 
@@ -1930,9 +1935,10 @@ public delivery and author scientific acceptance remain open**
 - A fresh keyed merged-main candidate, local keyed browser verification, and
   release-time VSR consistency are **met**.
 - Public-route delivery, deployed receipt/header/browser verification,
-  mid-range connection evidence, independent scientific/content audit, and
-  author acceptance of final interpretation are **not met**. M7 stays in
-  progress.
+  mid-range connection evidence, and independent scientific/content audit are
+  **not met**. Author acceptance of the current exploratory interpretation and
+  limitations is **met**, but does not replace independent review or constitute
+  upload authorization. M7 stays in progress.
 
 **Risks and open questions**
 

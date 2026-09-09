@@ -6,20 +6,22 @@ Session: 2026-09-09. Branch: `chore/m7-production-candidate`. Worktree:
 ## Status and approval boundary
 
 The complete keyed M5/M7 production package is prepared and locally verified.
-It is a **release candidate awaiting author approval**, not a deployed release.
-No upload, Vercel link, deployment, GitHub push, pull request, merge, account
-change, key/referrer change, billing change, or publisher-content change was
-performed.
+It is a **release candidate with author public-display acceptance, awaiting
+independent scientific/content review and separate upload authorization**, not
+a deployed release. Evidence-only PR #33 was pushed and merged after both CI
+jobs passed. No package upload, Vercel link, deployment, account change,
+key/referrer change, billing change, or publisher-content change was performed.
 
 The package was built before this branch received documentation-only evidence
 commits. Its application source is immutable merged-main commit
 `3dfedc1faab1dd830a79ab5fa0efce3b07c9db25`; later branch commits only record
 release evidence and do not change the source inside the package.
 
-Technical package checks pass. Upload approval remains gated on explicit owner
-acceptance of the proposed public results and wording, and private confirmation
-that the historical free-tier/account and minimum-key-privilege facts below
-remain current.
+Technical package checks pass. On 2026-09-09 the author accepted the current
+exploratory public results, limitations wording and prominent log-traffic
+sensitivity, and confirmed the account controls below. Independent
+scientific/content review remains pending and separate explicit upload
+authorization has not been provided.
 
 ## Merged source and CI
 
@@ -32,6 +34,10 @@ worktree was clean.
   passed, and post-merge main CI passed.
 - Release-integration PR #32 merged as the candidate source commit above; its
   `analysis` and `web` jobs passed, and post-merge main CI passed.
+- Evidence-only PR #33 merged as
+  `c3e39b7ac4a64eb8ee794c211faaa7723f15cd93`; its exact PR head and post-merge
+  `main` both passed `analysis` and `web`. Per author instruction, this
+  documentation-only merge did not require rebuilding the verified package.
 - GitHub records no review or comment accepting the scientific results or
   public wording on PRs #26, #30, or #32. CI is not scientific review.
 
@@ -210,9 +216,12 @@ Platform with pay-as-you-go disabled; 5,292 of 2,000,000 monthly basemap tiles
 used; and a browser key with no item, analysis, publishing, general,
 administrator, billing, or account-management privilege. Those administrative
 facts were not re-read from account settings in this read-only session. Before
-upload, the author must confirm privately that Hobby eligibility, free-tier
-posture/headroom, pay-as-you-go-disabled state, key expiry, exact referrers, and
-minimum privileges remain unchanged.
+upload, the author confirmed on 2026-09-09 that Hobby/free-only use, disabled
+pay-as-you-go, available allowance, and the restricted valid browser key remain
+current. The account-administration facts are therefore current author-provided
+evidence; the session's independent current evidence remains limited to the
+project/origin lookup and exact allowed/disallowed key-referrer behavior. No
+credential was supplied in chat or recorded.
 
 The verified rollback package remains:
 `C:/Users/teche/socal-whale-vessel-risk-m4-release/data/interim/m4-releases/m4-initial-production-01`.
@@ -224,12 +233,18 @@ read-back again returned source
 
 ## Remaining approval gates and exact proposed action
 
-Independent scientific/content review and owner acceptance of the result maps,
+On 2026-09-09 the author accepted the current exploratory result maps,
 92.2/7.8 primary framing, 98.5/1.5 high-area framing, material 74.9/25.1 formula
-sensitivity, complete sensitivity disclosures, and final public wording are not
-recorded. This is an upload blocker, not a reason to alter the package silently.
+sensitivity, complete limitations, prominent log-traffic sensitivity, and final
+public wording. The acceptance expressly prohibits describing the results as
+collision probability, observed encounters, or VSR effectiveness.
 
-After those acceptances and the private account confirmations above, the exact
+Independent scientific/content review remains pending. Author acceptance does
+not replace it, and no explicit upload authorization has been given. Both the
+review and later authorization remain upload gates; neither is a reason to alter
+the verified package silently.
+
+After independent review and separate explicit upload authorization, the exact
 proposed external action is:
 
 1. From this candidate's `deploy/` directory, use Vercel CLI 59.11.7 to run an

@@ -40,9 +40,10 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > implemented and locally verified. The M7 branch now consumes those exact
 > artifacts in a typed, checksum-paired exposure map and results interface, with
 > responsive browser verification at all three required viewports. However,
-> **the results are exploratory and not yet independently reviewed or accepted,
-> and no number from them is a finding of this project yet.** The final
-> scientific review, public delivery, and deployment remain unfinished. The
+> **the results are exploratory and author-accepted for public display, but
+> independent scientific/content review is still pending, and no number from
+> them is a validated finding.** The independent review, public delivery, and
+> deployment remain unfinished. The
 > complete keyed M5/M7 production package from merged `main` is locally
 > receipt/browser verified, and its release-time VSR snapshot comparison passes,
 > but it is not upload-approved or deployed. See
@@ -91,7 +92,7 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Data sources                | **M2 complete** — downloaded and inspected; properties, licensing, limits, and public-use/publication postures recorded with a reproducible provenance manifest. VSR redistribution permission remains unconfirmed, so project-hosted copies are prohibited                                                                                                                                                                                                                                                                                                                             |
 | Study area                  | **Accepted with separate roles** — the map/context extent, modeled-whale-support water geometry, and scope-reduced `receivers_50_nautical_miles` analytical domain are distinct; see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md)                                                                                                                                                                                                                                                                                                                           |
 | Processing workflow         | **M3 complete** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; the selected vessel rules of [ADR 0018](docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md) were accepted after real production generation, byte-identical repetition and QGIS validation. See [analysis](analysis/README.md).                                                                                                                                                                                                                                            |
-| Analysis and derived layers | **M6 in progress** — the water grid, whale grid, fresh current-code exploratory exposure bundles, and distinct exposure display/results contracts are generated, programmatically reconciled, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md), accepted for exploratory execution only; its results await independent review and owner acceptance, one sensitivity comparison is materially non-robust, and no exposure layer or statistic is published or adopted as a headline |
+| Analysis and derived layers | **M6 in progress** — the water grid, whale grid, fresh current-code exploratory exposure bundles, and distinct exposure display/results contracts are generated, programmatically reconciled, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md); the author accepts the current results and limitations wording for exploratory public display, but independent scientific/content review remains pending, one sensitivity comparison is materially non-robust, and no exposure layer or statistic is published |
 | Web application             | **M4 foundation and M5 input-layer displays deployed; keyed M5/M7 production candidate verified locally** — the complete merged-main candidate preserves existing input lifecycles, adds the checksum-paired exposure/results interface, and passed clean receipt, keyed responsive-browser, and release-time VSR comparison checks. The current public release still contains only the three input-layer pairs and is not an exposure release                                                                                                                                          |
 | Deployment                  | **M4 complete** — the stable free Vercel Hobby production URL is reachable from clean Chrome and serves all 900 public files byte-for-byte from the approved receipt and merged `main`; GitHub remains disconnected and the existing Stemry project remains unchanged                                                                                                                                                                                                                                                                                                                   |
 
@@ -113,17 +114,19 @@ Three findings are worth knowing before reading anything else. The AIS records c
 
 ## What this project does not claim
 
-This is an exploratory portfolio spatial analysis, not a regulatory or production decision-support product. It does **not** predict individual whale strikes, calculate validated collision probability, or identify objectively optimal VSR boundaries, and it makes no policy recommendations. Its outputs describe _relative exposure_ — where habitat and traffic coincide — not risk in any validated sense.
+This is an exploratory portfolio spatial analysis, not a regulatory or production decision-support product. It does **not** predict individual whale strikes, calculate collision probability, identify observed encounters, measure VSR effectiveness, or identify objectively optimal VSR boundaries, and it makes no policy recommendations. Its outputs describe _relative exposure_ — where habitat and traffic coincide — not risk in any validated sense.
 
 Any modeled distribution is an estimate, not observed whale locations. AIS limitations identified during data discovery — including the publisher's offshore coverage limit and self-reported vessel attributes — must remain visible through processing and reporting. Analytical choices such as thresholds, weightings, and time windows are documented as choices, with their rationale, wherever their results appear.
 
 ## Results
 
-**No reviewed headline result is available yet.** The local M7 interface now
+**No independently reviewed headline result is available yet.** The author has
+accepted the current exploratory results, limitations wording, and prominent
+log-traffic sensitivity for public display. The local M7 interface
 consumes the versioned machine-readable M6 results artifact without recomputing
 it, and the complete keyed merged-main package and release-time VSR comparison
-are locally verified. Independent scientific/content review, owner acceptance,
-upload authorization, deployment, and public release verification remain.
+are locally verified. Independent scientific/content review, explicit upload
+authorization, deployment, and public release verification remain.
 
 ## Live demo
 
