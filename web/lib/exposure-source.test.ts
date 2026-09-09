@@ -3,8 +3,12 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import ExposureLayerControl from "../components/ExposureLayerControl";
 import {
+  DEFAULT_EXPOSURE_LAYER_URL,
+  DEFAULT_EXPOSURE_MANIFEST_URL,
   EXPOSURE_SOURCE,
   assertExpectedExposureFeatureCount,
+  resolveExposureLayerUrl,
+  resolveExposureManifestUrl,
   validateExposureManifest,
   verifyExposureLayerBytes,
 } from "./exposure-source";
@@ -52,6 +56,18 @@ function validManifest(): Record<string, unknown> {
 }
 
 describe("relative-exposure display source", () => {
+  it("resolves paired local defaults and release overrides independently", () => {
+    expect(resolveExposureLayerUrl(undefined)).toBe(DEFAULT_EXPOSURE_LAYER_URL);
+    expect(resolveExposureLayerUrl("  ")).toBe(DEFAULT_EXPOSURE_LAYER_URL);
+    expect(resolveExposureManifestUrl(undefined)).toBe(DEFAULT_EXPOSURE_MANIFEST_URL);
+    expect(resolveExposureManifestUrl(" /layers/manifest-hash.manifest.json ")).toBe(
+      "/layers/manifest-hash.manifest.json",
+    );
+    expect(resolveExposureLayerUrl("/layers/display-hash.geojson")).toBe(
+      "/layers/display-hash.geojson",
+    );
+  });
+
   it("pins the exact display, manifest, results, and feature identities", () => {
     expect(EXPOSURE_SOURCE.displaySha256).toBe(
       "1ccb605cad9640f42ca5eb2cb1ac3543b3a1341a3375f6e78166dd0fd16e92cb",
