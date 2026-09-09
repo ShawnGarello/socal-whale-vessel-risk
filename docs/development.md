@@ -59,19 +59,21 @@ commands are in the
 [analysis README](../analysis/README.md#exposure-display-and-application-results-delivery).
 The ADR is accepted for exploratory execution only. On 2026-09-09 the author
 accepted the current exploratory results and limitations wording for public
-display; independent scientific/content review remains pending, so M6 remains
-in progress. Status lives in the
+display, and separate independent numerical/scientific-content review passed
+for exploratory public presentation. Neither validates collision probability,
+observed encounters, or VSR effectiveness. M6 remains in progress pending an
+explicit milestone-closure decision. Status lives in the
 [roadmap](roadmap.md#m6--whalevessel-exposure-analysis).
 
-**M7 update, 2026-09-08:** the local application now consumes the exact M6
+**M7 update, 2026-09-09:** the application consumes the exact M6
 display/manifest and tracked results artifact through typed, checksum-paired
 boundaries without recomputing analysis. Its results, sensitivity, limitations,
 and independent exposure-layer lifecycle passed focused tests and responsive
-browser verification. On 2026-09-09 the existing release tool was extended and
-locally verified for that complete application; the current public deployment
-is still the earlier three-input release. Neither local staging nor browser
-verification accepts the scientific interpretation. Exact implementation and
-release evidence are in the
+browser verification. On 2026-09-09 the existing release tool produced the
+exact keyed package from merged `main`; after separate review, acceptance, and
+authorization, that package was deployed and passed public receipt, header,
+browser, mid-range-network, and VSR checks. M7 remains in progress pending
+explicit milestone closure. Exact implementation and release evidence are in the
 [M7 release-integration handoff](m7-release-integration-handoff.md).
 
 ## Documentation sources of truth
@@ -1558,6 +1560,89 @@ The complete
 approval packet and retained evidence identities are in the
 [M5/M7 production candidate handoff](m7-production-candidate-handoff.md).
 
+### M5/M7 production deployment and public verification, 2026-09-09
+
+The independent numerical/scientific-content review passed for exploratory
+public presentation. It verified the retained analytical tables, all 24
+threshold/area comparisons, and all 2,793 candidate display cells; no package
+change was required. The author separately accepted the current exploratory
+results, limitations wording, and prominent log-traffic sensitivity. Neither
+record validates collision probability, observed encounters, or VSR
+effectiveness.
+
+The author then authorized only release
+`m7-production-candidate-20260909-01`, application source
+`3dfedc1faab1dd830a79ab5fa0efce3b07c9db25`, and receipt SHA-256
+`e6532385fd3641275f38d9f203e75aa64fed0a1739ff3c29799113208f958ede`
+for the existing `stemry/socal-whale-vessel-overlap` project. Immediately before
+upload, receipt read-back returned the same 903 files and 38,658,688 bytes; the
+project, scope, stable origin, current key-referrer behavior, and exact
+zero-tolerance VSR comparison were reverified. The rollback package remained
+untouched. The exact candidate `deploy/` directory was linked to that existing
+project; the CLI-created private `.env.local`, `.gitignore`, and `.vercel/`
+metadata remained outside `.vercel/output` and the receipt inventory. No secret
+value was printed or retained in evidence.
+
+Vercel CLI 59.11.7 uploaded the prebuilt static package with no server build or
+runtime. Deployment `dpl_FBbvuGPotSTLnbs1sJ1SRqaxXbXw` reached `Ready` at
+`https://socal-whale-vessel-overlap-damh21m5i-stemry.vercel.app` and received
+the stable alias `https://socal-whale-vessel-overlap.vercel.app`. A separate
+read-only inspection confirmed the exact production target and aliases. The
+interactive CLI spinner did not exit after it had reported completion; it was
+interrupted only after the independent `Ready` inspection and stable-origin
+receipt read-back passed. That local CLI process therefore returned 1 even
+though the deployment itself was already `Ready`.
+
+Post-deployment verification fetched all 902 public files and 38,657,035
+decoded bytes from the stable origin with zero identity mismatches. The
+self-inventoried public manifest contains 901 files because it excludes itself;
+the full receipt contains those 902 public files plus private build
+`config.json`. Content-addressed GeoJSON responses used the required media type,
+compression and immutable one-year cache policy; manifests used JSON media;
+`release.json` was `no-store`; and HTML was revalidating. The public inventory
+contains all four GeoJSON/manifest pairs and no results endpoint, raw data,
+private lineage, local path, credential, copied VSR geometry, or server runtime.
+
+Chrome 152 passed at 390×844, 820×1180, and 1440×900 on the exact HTTPS origin:
+Oceans and attribution, pan/zoom, five single-instance layers in the required
+order, visibility controls, product/log switching, generated result and
+sensitivity strings, M5 dates, legends, limitations, VSR credit/disclaimer,
+responsive scrolling, keyboard controls, focus, and five isolated layer-failure
+cases. There were no application console or request failures. One tablet
+pan/zoom run cancelled an ArcGIS tile request with `net::ERR_ABORTED`; a
+sanitized follow-up identified it as the only external request cancellation,
+not an application asset failure. The 820×1180 mid-range model used 4× CPU
+slowdown plus 100 ms latency and conservative 10 Mbps transfer delay on the
+project GeoJSON files, and passed without retaining external-service timing.
+
+The post-deployment anonymous publisher check again returned the expected
+public item, service layer version 12, Query capability, and exactly one
+`FID = 126`. Live and immutable-snapshot properties and geometry compared
+exactly, including full geometry-object SHA-256
+`bf50488078ed558029d1ead6676b4f4d33e5ed20b2e560b4dc564f8e5615f196`
+and coordinate-array SHA-256
+`24c486e3f05e8e15a855ba98845893597edf6c25c64c56d396e6b8af09da2693`.
+No VSR geometry was committed or retained.
+
+Sanitized reports are retained below the ignored candidate directory in
+`public-verification-20260909-01/`: full HTTP inventory
+`f33cb60e6d013c8a8a03e4c984d9fb211a0e484e5248e84c47ff78c5cec6c48b`,
+browser matrix
+`2a2373e7f04704bddf6934449b828cc64694ede43f8e762e506c747cab3efadb`,
+keyboard check
+`8ed4b9a514a99a0c73b38b2e4d47c51b2f0f71634ff91f71fa24a85fb717a34a`,
+network-cancellation classification
+`8a570434c8a2eb6546be054374b67c7ea48e622005082ba27101d9ed92db678f`,
+mid-range check
+`4a1154e6935bb3bf49b54efe08281b9f5e8ec3df2a4d8b79abebfc569ed9ca76`,
+and post-deployment VSR comparison
+`fec03cdf37c533517b43b83844121c25ad5298c7726093919cc6ac65e97e66fa`.
+No raw HAR, credential, or key-bearing URL was retained. Account billing,
+permissions, Git integration, project settings, and unrelated projects were
+not changed. M5, M6, and M7 statuses remain `In progress` pending an explicit
+milestone-closure decision; successful deployment does not close them
+automatically.
+
 ### Release-time VSR service and version check
 
 Before final release, use an anonymous browser session or anonymous HTTP
@@ -1879,14 +1964,16 @@ credits.
   `analytical_domain_display_export_v1` produce separate vessel-activity and
   accepted-domain GeoJSON. ADR 0021 selects free Vercel Hobby for these static
   files. The separate M6 exposure delivery boundary produces a measured,
-  locally verified display/manifest pair and a small results contract. M7
-  integrates those exact artifacts locally through the same selected static
-  route, and the complete M7 release stage is locally verified. The three M5
-  input representations are published in the receipt-exact M4 deployment; the
-  exposure representation is not published.
-  Vercel Hobby eligibility, ArcGIS Location Platform free-tier-only basemap
-  access and deployed behavior were verified on 2026-09-07. Esri hosted-data
-  capabilities remain unselected and unverified.
+  verified display/manifest pair and a small build-only results contract. M7
+  integrates those exact artifacts through the same selected static route. The
+  exact authorized M5/M7 package publishes all four project display
+  representations and passed deployed receipt, header, browser, and mid-range
+  checks on 2026-09-09; the results JSON remains build-only and has no public
+  endpoint. The author confirmed Hobby/free-only eligibility, disabled
+  pay-as-you-go, allowance, and the restricted browser key remained current;
+  release checks independently verified project/origin identity and exact
+  allowed/disallowed key-referrer behavior, not private billing UI state. Esri
+  hosted-data capabilities remain unselected and unverified.
 - Generated display layers are never committed. The exporters stage them into
   Git-ignored `web/public/layers/`, and refuse any destination outside this
   checkout's ignored output roots.

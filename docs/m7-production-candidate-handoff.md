@@ -5,23 +5,25 @@ Session: 2026-09-09. Branch: `chore/m7-production-candidate`. Worktree:
 
 ## Status and approval boundary
 
-The complete keyed M5/M7 production package is prepared and locally verified.
-It is a **release candidate with author public-display acceptance, awaiting
-independent scientific/content review and separate upload authorization**, not
-a deployed release. Evidence-only PR #33 was pushed and merged after both CI
-jobs passed. No package upload, Vercel link, deployment, account change,
-key/referrer change, billing change, or publisher-content change was performed.
+The exact keyed M5/M7 production package was independently reviewed, explicitly
+authorized, deployed, and publicly verified on 2026-09-09. Evidence-only PRs
+#33 and #34 were merged after both CI jobs passed. The deployment used only the
+existing `stemry/socal-whale-vessel-overlap` project and did not change account,
+key/referrer, billing, Git-integration, or publisher-content settings.
 
 The package was built before this branch received documentation-only evidence
 commits. Its application source is immutable merged-main commit
 `3dfedc1faab1dd830a79ab5fa0efce3b07c9db25`; later branch commits only record
 release evidence and do not change the source inside the package.
 
-Technical package checks pass. On 2026-09-09 the author accepted the current
-exploratory public results, limitations wording and prominent log-traffic
-sensitivity, and confirmed the account controls below. Independent
-scientific/content review remains pending and separate explicit upload
-authorization has not been provided.
+Technical package and public-origin checks pass. On 2026-09-09 the author
+accepted the current exploratory public results, limitations wording and
+prominent log-traffic sensitivity, and confirmed the account controls below.
+Independent numerical/scientific-content review separately passed for
+exploratory public presentation without a package change. Neither record
+validates collision probability, observed encounters, or VSR effectiveness.
+M5, M6, and M7 remain `In progress`; this deployment does not automatically
+mark them complete.
 
 ## Merged source and CI
 
@@ -38,16 +40,20 @@ worktree was clean.
   `c3e39b7ac4a64eb8ee794c211faaa7723f15cd93`; its exact PR head and post-merge
   `main` both passed `analysis` and `web`. Per author instruction, this
   documentation-only merge did not require rebuilding the verified package.
-- GitHub records no review or comment accepting the scientific results or
-  public wording on PRs #26, #30, or #32. CI is not scientific review.
+- Evidence-only PR #34 merged as current documentation main
+  `276d8238008414910030a5b0cf2c61a9b49b7f75`; its exact PR head and post-merge
+  `main` both passed `analysis` and `web`. It recorded author acceptance and
+  current account confirmation, not source changes, so the package remained
+  bound to application commit `3dfedc1faab1dd830a79ab5fa0efce3b07c9db25`.
+- CI is not scientific review. The independent numerical/scientific-content
+  review is the separate author-reported record below.
 
 ## Exact candidate
 
 - Release name: `m7-production-candidate-20260909-01`
 - Candidate directory:
   `C:/Users/teche/socal-whale-vessel-risk-m7-production-candidate/data/interim/m4-releases/m7-production-candidate-20260909-01`
-- Approved upload boundary if later authorized:
-  `deploy/.vercel/output/` only
+- Authorized and uploaded boundary: `deploy/.vercel/output/` only
 - Receipt SHA-256:
   `e6532385fd3641275f38d9f203e75aa64fed0a1739ff3c29799113208f958ede`
 - Upload package: 903 files, 38,658,688 bytes
@@ -55,9 +61,13 @@ worktree was clean.
 - Build configuration: `arcgis/oceans`; browser key
   `configured-not-recorded`
 
-`node scripts/stage-release.mjs --verify` re-read the finished receipt twice
-after staging and once after browser verification. Every invocation returned
-the exact application commit, mode, 903 files, and 38,658,688 bytes above.
+The documented `node scripts/stage-release.mjs --verify` command, with the
+release name and receipt SHA-256 above as positional arguments, re-read the
+finished receipt twice after staging and once after browser verification. Every
+invocation returned the exact application commit, mode, 903 files, and
+38,658,688 bytes above.
+It returned those same values immediately before and after linking the deploy
+directory. The package was not rebuilt after the evidence-only commits.
 
 ## Public artifacts and build input
 
@@ -197,15 +207,15 @@ this candidate.
 
 ## Account, key, target, and rollback evidence
 
-Current read-only checks on 2026-09-09 established:
+Pre-upload read-only checks on 2026-09-09 established:
 
 - existing cached Vercel CLI 59.11.7 authenticated and resolved team scope
   `stemry` and project `stemry/socal-whale-vessel-overlap`;
 - the stable production origin is
   `https://socal-whale-vessel-overlap.vercel.app`;
-- its public `release.json` returned HTTP 200 and still identified the M4 source
-  commit `8b1f65c8556955d6f28ee86426c09d55b7ea71fa`, proving the new candidate was
-  not uploaded; and
+- before authorization, its public `release.json` returned HTTP 200 and still
+  identified the M4 source commit
+  `8b1f65c8556955d6f28ee86426c09d55b7ea71fa`; and
 - the candidate key returned Basemap Styles HTTP 200 from the exact localhost
   and production referrers and HTTP 401 from an unrelated origin. No key value,
   identifier, or key-bearing URL was retained.
@@ -223,6 +233,14 @@ evidence; the session's independent current evidence remains limited to the
 project/origin lookup and exact allowed/disallowed key-referrer behavior. No
 credential was supplied in chat or recorded.
 
+Immediately before upload, the receipt, exact project/scope, key-referrer
+behavior, and VSR comparison were reverified without changing any account or
+key setting. Post-deployment `release.json` identifies application source
+`3dfedc1faab1dd830a79ab5fa0efce3b07c9db25` and mode
+`release-candidate-awaiting-approval`, as expected for the immutable approved
+package. The CLI-created private linking metadata remains outside the upload
+inventory; no secret value is in this record.
+
 The verified rollback package remains:
 `C:/Users/teche/socal-whale-vessel-risk-m4-release/data/interim/m4-releases/m4-initial-production-01`.
 Its receipt SHA-256 is
@@ -231,7 +249,7 @@ read-back again returned source
 `8b1f65c8556955d6f28ee86426c09d55b7ea71fa`, mode
 `release-candidate-awaiting-approval`, and 901 files.
 
-## Remaining approval gates and exact proposed action
+## Independent review, authorization, and deployment outcome
 
 On 2026-09-09 the author accepted the current exploratory result maps,
 92.2/7.8 primary framing, 98.5/1.5 high-area framing, material 74.9/25.1 formula
@@ -239,24 +257,78 @@ sensitivity, complete limitations, prominent log-traffic sensitivity, and final
 public wording. The acceptance expressly prohibits describing the results as
 collision probability, observed encounters, or VSR effectiveness.
 
-Independent scientific/content review remains pending. Author acceptance does
-not replace it, and no explicit upload authorization has been given. Both the
-review and later authorization remain upload gates; neither is a reason to alter
-the verified package silently.
+The independent numerical/scientific-content review passed for exploratory
+public presentation. It verified the retained analytical tables, all 24
+threshold/area comparisons, and all 2,793 candidate display cells. No package
+change was required. This review is not validation of collision probability or
+VSR effectiveness, and author acceptance did not substitute for it.
 
-After independent review and separate explicit upload authorization, the exact
-proposed external action is:
+The author explicitly authorized linking only this candidate's deploy directory
+to the existing `stemry/socal-whale-vessel-overlap` project and uploading the
+exact release, source, and receipt above. After successful pre-upload read-back,
+the commands executed from the candidate deploy directory were:
 
-1. From this candidate's `deploy/` directory, use Vercel CLI 59.11.7 to run an
-   author-reviewed `vercel link --project socal-whale-vessel-overlap --scope stemry`.
-2. Read the linked scope/project back, then rerun receipt verification from this
-   worktree's `web/` directory with the release name and receipt SHA-256 above.
-3. From the linked `deploy/` directory, run
-   `vercel deploy --prebuilt --prod --scope stemry`.
+1. `vercel link --project socal-whale-vessel-overlap --scope stemry --yes`
+2. a second exact receipt and linked-target verification;
+3. `vercel deploy --prebuilt --prod --scope stemry`.
 
-None of these commands was executed. After any authorized upload, the full
-public receipt/header/browser matrix and mid-range-connection behavior remain
-mandatory deployed-origin checks before M5 or M7 can be completed.
+Vercel CLI 59.11.7 created production deployment
+`dpl_FBbvuGPotSTLnbs1sJ1SRqaxXbXw`, which reached `Ready` at
+`https://socal-whale-vessel-overlap-damh21m5i-stemry.vercel.app` and was aliased
+to `https://socal-whale-vessel-overlap.vercel.app`. The prebuilt build took 0 ms
+and introduced no server runtime. The CLI spinner remained active after
+reporting completion and was interrupted only after a separate read-only
+inspection confirmed `Ready`, production target, aliases, and stable-origin
+receipt. Its local exit 1 is therefore a CLI-process artifact, not a deployment
+failure.
+
+## Public verification
+
+- All 902 public files, totalling 38,657,035 decoded bytes, were fetched from
+  the stable origin and matched the receipt with zero missing, unexpected, size,
+  or SHA-256 mismatches. The receipt's 903rd file is private build
+  `config.json`; the self-inventoried `release.json` lists 901 other public
+  files.
+- Content-addressed GeoJSON used the GeoJSON media type, compression, and
+  immutable one-year caching. Manifests used JSON media, `release.json` used
+  `no-store`, and HTML revalidated. The public tree contains all four layer
+  data/manifest pairs and no public results endpoint, raw data, private lineage,
+  local path, credential, copied VSR geometry, or server runtime.
+- Chrome 152 passed at 390×844, 820×1180, and 1440×900: keyed Oceans and
+  attribution, pan/zoom, five layers in the required order and count, visibility
+  controls, isolated failures, product/log switching with no duplicate layer,
+  generated results and sensitivities, M5 dates, legends, limitations, VSR
+  credit/disclaimer, responsive scrolling, and keyboard/focus behavior. No
+  project request or application console failure occurred. One tablet pan/zoom
+  run cancelled one ArcGIS tile request with `net::ERR_ABORTED`; a sanitized
+  follow-up confirmed it was the only external cancellation.
+- Visual inspection of the sanitized phone, tablet, desktop, mid-range, blocked-
+  exposure, and blocked-VSR screenshots found no release-blocking hierarchy,
+  responsive-layout, legibility, or failure-state defect. No application source
+  was changed during this production audit.
+- The 820×1180 mid-range model passed with 4× CPU slowdown and project-only
+  GeoJSON delay of 100 ms plus conservative 10 Mbps transfer. External services
+  were not throttled or timed in retained evidence.
+- Post-deployment anonymous VSR identity/version and zero-tolerance comparison
+  passed again: the expected public item and version 12 Query layer returned
+  exactly one `FID = 126`, with live properties and geometry exactly matching
+  the immutable analytical snapshot. No geometry was retained.
+
+Sanitized evidence under ignored
+`public-verification-20260909-01/` has SHA-256 identities:
+
+| Report | SHA-256 |
+|---|---|
+| Full public HTTP inventory | `f33cb60e6d013c8a8a03e4c984d9fb211a0e484e5248e84c47ff78c5cec6c48b` |
+| Deployed browser matrix | `2a2373e7f04704bddf6934449b828cc64694ede43f8e762e506c747cab3efadb` |
+| Keyboard/focus | `8ed4b9a514a99a0c73b38b2e4d47c51b2f0f71634ff91f71fa24a85fb717a34a` |
+| Network-cancellation classification | `8a570434c8a2eb6546be054374b67c7ea48e622005082ba27101d9ed92db678f` |
+| Mid-range model | `4a1154e6935bb3bf49b54efe08281b9f5e8ec3df2a4d8b79abebfc569ed9ca76` |
+| Public VSR comparison | `fec03cdf37c533517b43b83844121c25ad5298c7726093919cc6ac65e97e66fa` |
+
+No raw HAR or key-bearing URL was retained. The package and rollback remain
+unchanged. M5, M6, and M7 remain `In progress` pending explicit milestone
+closure; neither review nor deployment marked them automatically complete.
 
 ## Non-candidate command outcomes
 
@@ -272,3 +344,8 @@ mandatory deployed-origin checks before M5 or M7 can be completed.
   rejected; after exact path validation, the dedicated temporary profile was
   deleted through the .NET directory API. These were tooling constraints, not
   application or candidate failures.
+- Two initial inline Node VSR-check attempts failed locally because Windows
+  command quoting altered the script before any request or state change. The
+  retained file-based comparison then passed. A later receipt command used
+  unsupported named options, printed usage, and performed no verification; the
+  documented positional command immediately afterward passed the exact receipt.

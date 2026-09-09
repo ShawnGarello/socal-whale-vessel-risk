@@ -427,12 +427,15 @@ cells are absent, never low or zero. The public properties preserve the primary
 product and required log-traffic sensitivity while keeping speed separate.
 
 This representation passed programmatic reconciliation, deterministic repeat,
-and checksum-bound QGIS inspection. M7 now integrates it locally through ADR
-0021's selected static route: static generation validates the versioned results,
-and the browser validates the fetched display/manifest pair before creating the
-ArcGIS layer. Result acceptance, release-stage support, public deployment, and
-deployed verification remain open. A representation change requires a later
-decision supported by measured need, source terms and verified free capability.
+checksum-bound QGIS inspection, independent numerical/scientific-content review
+for exploratory public presentation, and author acceptance. M7 integrates it
+through ADR 0021's selected static route: static generation validates the
+versioned results, and the browser validates the fetched display/manifest pair
+before creating the ArcGIS layer. The exact authorized package is deployed and
+passed public receipt, header, keyed browser, mid-range-model, and VSR checks.
+The build-only results JSON is not public and no server runtime was added. A
+representation change requires a later decision supported by measured need,
+source terms and verified free capability.
 
 ### Publisher-hosted VSR display exception
 

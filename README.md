@@ -37,16 +37,14 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > unchanged approved package was redeployed, all 900 public files matched the
 > approved receipt byte-for-byte.
 > The exposure method and its distinct display/results delivery contracts are
-> implemented and locally verified. The M7 branch now consumes those exact
-> artifacts in a typed, checksum-paired exposure map and results interface, with
-> responsive browser verification at all three required viewports. However,
-> **the results are exploratory and author-accepted for public display, but
-> independent scientific/content review is still pending, and no number from
-> them is a validated finding.** The independent review, public delivery, and
-> deployment remain unfinished. The
-> complete keyed M5/M7 production package from merged `main` is locally
-> receipt/browser verified, and its release-time VSR snapshot comparison passes,
-> but it is not upload-approved or deployed. See
+> implemented, independently reviewed for exploratory public presentation, and
+> author-accepted with their limitations and prominent log-traffic sensitivity.
+> **That review is not validation of collision probability, observed encounters,
+> or VSR effectiveness.** The exact checksum-paired M5/M7 package from merged
+> `main` was deployed on 2026-09-09 and passed public receipt, header, keyed
+> responsive-browser, mid-range-network, and release-time VSR checks. M5, M6,
+> and M7 remain in progress pending explicit milestone closure; deployment did
+> not mark them complete. See
 > the [roadmap](docs/roadmap.md), the
 > [M5 whale display handoff](docs/m5-whale-display-handoff.md), the
 > [M5 vessel/domain display handoff](docs/m5-vessel-domain-display-handoff.md), the
@@ -92,13 +90,13 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Data sources                | **M2 complete** — downloaded and inspected; properties, licensing, limits, and public-use/publication postures recorded with a reproducible provenance manifest. VSR redistribution permission remains unconfirmed, so project-hosted copies are prohibited                                                                                                                                                                                                                                                                                                                             |
 | Study area                  | **Accepted with separate roles** — the map/context extent, modeled-whale-support water geometry, and scope-reduced `receivers_50_nautical_miles` analytical domain are distinct; see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md)                                                                                                                                                                                                                                                                                                                           |
 | Processing workflow         | **M3 complete** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; the selected vessel rules of [ADR 0018](docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md) were accepted after real production generation, byte-identical repetition and QGIS validation. See [analysis](analysis/README.md).                                                                                                                                                                                                                                            |
-| Analysis and derived layers | **M6 in progress** — the water grid, whale grid, fresh current-code exploratory exposure bundles, and distinct exposure display/results contracts are generated, programmatically reconciled, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md); the author accepts the current results and limitations wording for exploratory public display, but independent scientific/content review remains pending, one sensitivity comparison is materially non-robust, and no exposure layer or statistic is published |
-| Web application             | **M4 foundation and M5 input-layer displays deployed; keyed M5/M7 production candidate verified locally** — the complete merged-main candidate preserves existing input lifecycles, adds the checksum-paired exposure/results interface, and passed clean receipt, keyed responsive-browser, and release-time VSR comparison checks. The current public release still contains only the three input-layer pairs and is not an exposure release                                                                                                                                          |
-| Deployment                  | **M4 complete** — the stable free Vercel Hobby production URL is reachable from clean Chrome and serves all 900 public files byte-for-byte from the approved receipt and merged `main`; GitHub remains disconnected and the existing Stemry project remains unchanged                                                                                                                                                                                                                                                                                                                   |
+| Analysis and derived layers | **M6 in progress** — the water grid, whale grid, fresh current-code exploratory exposure bundles, and distinct exposure display/results contracts are generated, programmatically reconciled, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md); independent numerical/scientific-content review passed for exploratory public presentation, the author accepts the results and limitations wording, and the materially non-robust log-traffic sensitivity remains prominent. This is not validation of collision probability, observed encounters, or VSR effectiveness |
+| Web application             | **Complete M5/M7 candidate deployed and publicly verified; milestone still in progress** — the exact merged-main package preserves existing input lifecycles, adds the checksum-paired exposure/results interface, and passed public receipt, header, keyed responsive-browser, mid-range-network, and release-time VSR checks. Deployment did not automatically close M5, M6, or M7                                                                                                                                                                                                                      |
+| Deployment                  | **M4 complete; authorized M5/M7 candidate live** — the existing `stemry/socal-whale-vessel-overlap` free-Hobby project serves the exact approved production package at the stable URL. All 902 public files matched the receipt inventory byte-for-byte; GitHub remains disconnected, no server runtime was introduced, and billing or unrelated project settings were not changed                                                                                                                                                                                                         |
 
 ## Technology direction
 
-The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. [ADR 0021](docs/decisions/0021-propose-vercel-static-input-delivery.md) selects checksum-addressed static same-origin files on free Vercel Hobby for project-derived layers. The whale, vessel-activity, and analytical-domain files are implemented and deployed. The exposure export/results interface and complete release stage are implemented and verified locally, but no M7 package is deployed. On 2026-09-07 the author confirmed Vercel Hobby personal non-commercial eligibility and ArcGIS Location Platform with pay-as-you-go disabled; current basemap headroom and the minimum browser-key scope and exact referrers were verified for M4. The isolated Vercel project serves the reviewed-main M4 release at the stable URL below. The project-derived files are static same-origin assets, not Esri hosted-data items; Esri hosted-data capabilities are unselected and remain unverified. Paid plans, trials, add-ons, pay-as-you-go, and other charged usage are prohibited.
+The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. [ADR 0021](docs/decisions/0021-propose-vercel-static-input-delivery.md) selects checksum-addressed static same-origin files on free Vercel Hobby for project-derived layers. The whale, vessel-activity, analytical-domain, and exposure files are implemented and deployed as static same-origin assets; the build-only results JSON is not public. On 2026-09-09 the author confirmed the existing Hobby/free-only setup, disabled pay-as-you-go, available allowance, and restricted browser key remained current. Read-only release checks independently verified the current Vercel identity/project and the key's exact approved local and production origins plus rejection of an unrelated origin; they did not independently inspect billing UI state. The isolated existing Vercel project serves the approved package at the stable URL below. Esri hosted-data capabilities are unselected and remain unverified. Paid plans, trials, add-ons, pay-as-you-go, and other charged usage are prohibited.
 
 Python produces the analysis and lineage; QGIS does not replace that production path. The browser displays and filters public results but does not compute exposure. ArcGIS Pro is optional and unnecessary for Version 1. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md) and [ADR 0015](docs/decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md).
 
@@ -120,19 +118,17 @@ Any modeled distribution is an estimate, not observed whale locations. AIS limit
 
 ## Results
 
-**No independently reviewed headline result is available yet.** The author has
-accepted the current exploratory results, limitations wording, and prominent
-log-traffic sensitivity for public display. The local M7 interface
-consumes the versioned machine-readable M6 results artifact without recomputing
-it, and the complete keyed merged-main package and release-time VSR comparison
-are locally verified. Independent scientific/content review, explicit upload
-authorization, deployment, and public release verification remain.
+The exploratory public presentation passed independent numerical/scientific-
+content review of the retained analytical tables, all 24 threshold/area
+comparisons, and all 2,793 candidate display cells. The author accepted the
+current results, limitations wording, and prominent log-traffic sensitivity.
+The deployed M7 interface consumes the versioned machine-readable M6 results
+artifact without recomputing it. These findings describe relative exposure;
+they are not collision probability, observed encounters, or VSR effectiveness.
 
 ## Live demo
 
-[Open the deployed input-layer application](https://socal-whale-vessel-overlap.vercel.app/).
-
-This is the completed M4/M5-input foundation, not a released exposure result.
+[Open the deployed exploratory exposure application](https://socal-whale-vessel-overlap.vercel.app/).
 
 ## Screenshots
 
