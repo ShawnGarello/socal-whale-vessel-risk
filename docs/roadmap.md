@@ -1352,8 +1352,8 @@ in the application through the evidence-selected publication route.
 
 ### Progress
 
-**All core input-layer displays implemented and deployed; vessel/domain
-source-date disclosures completed locally and await a later release**
+**All core input-layer displays and source-date disclosures deployed and
+publicly verified; milestone closure remains explicit**
 
 - The static client creates an ArcGIS `FeatureLayer` from the publisher's exact
   `WhaleAtlas_2026/FeatureServer/0` URL and applies `FID = 126`. Source identity,
@@ -1505,15 +1505,17 @@ source-date disclosures completed locally and await a later release**
   resolved first-deployment Toolbar mismatch does not apply to the current
   receipt-exact production deployment.
 - The exposure display/results contract and its M7 application consumer are
-  implemented and locally verified. A complete keyed production package from
-  merged `main` is also locally receipt/browser verified, but independent
-  scientific/content audit, public deployment and deployed verification remain
-  open. The author accepted the current exploratory public interpretation and
-  limitations on 2026-09-09; that does not replace independent review.
+  implemented and locally verified. The exact keyed package from merged `main`
+  also passed independent numerical/scientific-content review for exploratory
+  public presentation, explicit authorization, public deployment, and deployed
+  verification on 2026-09-09. The review and author acceptance are separate;
+  neither validates collision probability, observed encounters, or VSR
+  effectiveness.
 - The route-specific Vercel and ArcGIS basemap account checks passed. Esri
   hosted-data capabilities are unselected and are not M4 gates.
-- M5 remains in progress because its locally completed source-date disclosure
-  criterion has not yet reached and been verified at the production origin.
+- M5's source-date disclosure criterion is verified at the production origin.
+  Its status remains in progress pending explicit milestone closure; successful
+  deployment did not mark it complete automatically.
 
 **Deliverables**
 
@@ -1533,7 +1535,7 @@ source-date disclosures completed locally and await a later release**
   deterministic, checksum-addressed static same-origin files on free Vercel
   Hobby.** The whale, vessel-activity, and accepted analytical-domain exports are
   verified at the stable production origin. The exposure display/results
-  contract and M7 consumer are locally verified but not deployed. Esri
+  contract and M7 consumer are deployed and publicly verified. Esri
   hosted-data routes are unselected and remain unverified.
 - The ArcGIS Maps SDK application assembling the public layers with symbology
   chosen for legibility, not decoration.
@@ -1564,10 +1566,11 @@ source-date disclosures completed locally and await a later release**
   same-origin files with checksum verification; the separately keyed basemap
   required no visitor sign-in.
 - Every layer's legend states its units and the meaning of its values.
-  **Met locally for the whale, vessel-activity, and analytical-domain layers.**
+  **Met locally and at the production origin for the whale, vessel-activity,
+  analytical-domain, and exposure layers.**
 - Every layer names its source and its retrieval or processing date somewhere the user can reach.
-  **Met locally for the whale, vessel, and domain layers; deployed verification
-  remains pending for the vessel/domain change.** The whale disclosure names
+  **Met locally and at the production origin for the whale, vessel, and domain
+  layers.** The whale disclosure names
   its 25 August 2026 source-retrieval date. The vessel disclosure labels the
   5 September 2026 analytical processing date and binds it to the exact
   production input and quality-report checksums. The domain disclosure labels
@@ -1581,12 +1584,11 @@ source-date disclosures completed locally and await a later release**
 - The VSR feature loads anonymously from the publisher's service and is not a
   project-hosted copy. **Met locally and at the stable production origin.**
 
-The display, legend, provenance, and alignment evidence now covers every core
-input layer locally and at the stable production origin. The source-date
-disclosure criterion is met locally for all three layers, has passed review and
-CI, and is included in the keyed production candidate. M5 stays in progress
-until that exact candidate receives upload approval and the disclosures are
-verified at the stable production origin.
+The display, legend, provenance, alignment, and source-date evidence now covers
+every core input layer locally and at the stable production origin. The exact
+candidate was authorized, deployed, and verified. M5 remains in progress only
+because the author directed that the deployment not automatically close the
+remaining milestones; an explicit milestone-closure decision is still needed.
 
 **Risks and open questions**
 
@@ -1618,9 +1620,8 @@ Produce the project's own analytical result: a documented relative exposure laye
 ### Progress
 
 **Method accepted for exploratory execution, computed and locally verified;
-downstream delivery contracts and local M7 consumption implemented; author
-public-display acceptance recorded; independent audit, public delivery, and
-release remain open**
+downstream delivery contracts deployed and publicly verified; author acceptance
+and independent numerical/scientific-content review recorded**
 
 - [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md)
   defines the calculation: per cell, modeled whale density multiplied by period
@@ -1668,8 +1669,8 @@ release remain open**
   manifest binds the exact display checksum to results ID
   `exposure-results-8a0bf6c27e00fb40a13d6870` and its checksum. Static
   same-origin delivery is selected by ADR 0021. The M7 application and complete
-  release stage consume this exact pair locally; independent audit,
-  publication, deployment, and deployed verification remain unfinished.
+  release stage consume this exact pair, and the authorized package is deployed
+  and publicly verified at the stable production origin.
 - The exporter verifies pinned source bytes, re-verifies both analytical tables,
   recomputes the accepted summaries from their serialized rows, and reconciles
   the complete supplied report. A matching checksum identifies report bytes but
@@ -1706,7 +1707,7 @@ release remain open**
   validated hotspot clusters: the product method's leading outside cells are
   `r015_c079`, `r015_c078` and `r016_c054`, whose top ten contribute 9.4717% of
   outside exposure.
-- **Proposed interpretation, pending owner review:** under the proportional
+- **Accepted and independently reviewed exploratory interpretation:** under the proportional
   product, most modeled blue-whale-habitat and commercial-vessel-activity
   co-occurrence in receiver-qualified Southern California water is concentrated
   inside the current VSR zone. This is not formula-invariant: the required
@@ -1716,8 +1717,10 @@ release remain open**
   effectiveness, an optimal boundary, or a policy recommendation. The mixed
   vintages — modeled multi-year whale density, July–November 2024 traffic, and
   the 2026 VSR boundary — and the uniform-within-water-cell assumption must
-  remain visible. These sentences are interpretation for review, distinct from
-  the computed observations above, and are not accepted website copy.
+  remain visible. The author accepted this framing for public display, and the
+  separate numerical/scientific-content review passed it for exploratory public
+  presentation. Neither action validates collision probability, observed
+  encounters, or VSR effectiveness.
 - QGIS 4.2.1 rendered the exact first-bundle checksums with the pinned local VSR
   and domain. Coastline and island holes, curved receiver clipping, absence of
   colored geometry outside qualification, and VSR boundaries crossing cells
@@ -1735,20 +1738,15 @@ release remain open**
     report against the verified tables, sanitizes typed public projections,
     reproduces exact bytes from independent current-code bundles, and has its
     own checksum-bound final-display QGIS evidence.
-  - **Pending.** Independent review of the implementation and the results by
-    another session, per the
-    [review workflow](development.md#pull-request-and-continuous-integration-workflow),
-    covering units, the full-water-intensity versus qualified-integration
-    split, complete-support admission, fractional joint geometry, quantiles and
-    ties, coarsening and retained source evidence. Human scientific and
-    cartographic review of the maps is also outstanding. On 2026-09-09 the
-    owner accepted the current exploratory results, limitations wording and
-    prominent log-traffic sensitivity for public display; that acceptance does
-    not replace or predetermine the independent review.
-- Also not done: independent audit, propagation of
-  native whale uncertainty, M7 public delivery through the static route selected
-  by ADR 0021, and the M9 release-time VSR comparison. Local M7 application
-  consumption, release staging and browser verification are complete.
+  - **Done.** Independent numerical/scientific-content review verified the
+    retained analytical tables, all 24 threshold/area comparisons, and all
+    2,793 candidate display cells for exploratory public presentation. No
+    package change was required. This is distinct from the owner's acceptance
+    and is not validation of collision probability or VSR effectiveness.
+- Native whale uncertainty was not propagated and remains a disclosed
+  limitation rather than an added claim. M7 public delivery through ADR 0021's
+  static route and the release-time anonymous VSR identity/version and exact
+  geometry comparison have now passed.
   Analytical execution detail is in the
   [M6 foundation handoff](m6-exposure-foundation-handoff.md); downstream contract,
   artifact, resource, repeat, and final QGIS evidence is in the
@@ -1781,37 +1779,37 @@ release remain open**
   or reconciled so they match, or the remote boundary is omitted. A warning
   alone does not satisfy this release gate.
 
-**Completion criteria status, 2026-09-06**
+**Completion criteria status, 2026-09-09**
 
 - Reproducible from the derived inputs: **met for the exploratory bundle** —
   first and repeat runs produced byte-identical deterministic files from pinned,
   checksum-verified retained inputs.
-- Every statistic states its basis and threshold: **met in the retained report
-  and machine-readable results contract** —
+- Every statistic states its basis and threshold: **met in the retained report,
+  machine-readable results contract, and deployed application** —
   integrated shares are distinguished from high-exposure **water-area** shares,
   and thresholds are qualified-area-weighted observed quantiles including zeros
-  and all ties. The local M7 application also states these bases distinctly; the
-  release application is not yet verified.
+  and all ties. The deployed M7 application states these bases distinctly.
 - Fractional boundary statistics with passing synthetic cases and a labelled
   uniformity assumption: **met**.
 - Accepted analytical domain applied exactly: **met** — results use the
   `receivers_50_nautical_miles` qualified geometry, and outside-domain cells are
   excluded rather than reclassified.
 - Brief-compliant vocabulary with no risk or probability language: **met in the
-  handoff and this record**; unverified for release text.
+  handoff, this record, and publicly verified release text**.
 - Sensitivity documented, including non-robust conclusions: **met** — the
   log-traffic result is recorded as materially non-robust.
 - Layer and statistics consistent, with the pre-release comparison of the
   publisher-hosted display geometry against the local snapshot: **met locally
-  for the checksum-bound delivery artifacts; release criterion not met** — the
-  exporter verifies every public numerical field against the analytical bundle
-  and the final display passed QGIS inspection, but no exposure layer is
-  published and the publisher-hosted VSR comparison still belongs to M9.
+  and at the production origin** — the exporter verifies every public numerical
+  field against the analytical bundle, the final display passed QGIS
+  inspection, the exposure layer is deployed, and the publisher-hosted VSR
+  comparison passed immediately before and after deployment.
 
 Owner acceptance of the current exploratory results, sensitivity, maps and
-limitations wording for public display is recorded on 2026-09-09. Independent
-review of the exact commit and artifacts remains outstanding, so M6 stays in
-progress.
+limitations wording for public display and the separate independent
+numerical/scientific-content review are recorded on 2026-09-09. M6 remains in
+progress pending explicit milestone closure, as directed; neither successful
+review nor deployment marked it complete automatically.
 
 **Risks and open questions**
 
@@ -1834,17 +1832,17 @@ Bring the analysis into the application so a visitor can explore the exposure la
 - M5 (input layers publicly delivered and displayed).
 - M6 (exposure layer and statistics exist).
 
-The M6 display/results artifacts now exist and are consumed locally without
-recomputing science. M4's selected static route is deployed and verified, but
-M5 remains incomplete, M6 still awaits independent scientific/content audit,
-and M7 has not been independently audited or deployed. The author's 2026-09-09
-public-display acceptance does not replace that review.
+The M6 display/results artifacts are consumed without recomputing science. The
+exact M5/M7 package passed separate independent numerical/scientific-content
+review and author acceptance, was explicitly authorized, and is deployed and
+publicly verified through the selected static route. Those actions remain
+distinct, and none automatically closes M5, M6, or M7.
 
 ### Progress
 
-**Local exposure/results interface and release staging implemented and verified;
-author exploratory public-display acceptance recorded; independent review and
-public delivery remain open**
+**Exposure/results interface deployed and publicly verified; author exploratory
+public-display acceptance and independent numerical/scientific-content review
+recorded**
 
 - Static generation loads `results/exposure-results.v1.json` through a narrow
   typed boundary. It verifies the supported contract and version, required
@@ -1891,11 +1889,19 @@ public delivery remain open**
   release-time VSR identity/version and zero-tolerance snapshot geometry
   comparison also passed. See the
   [production candidate handoff](m7-production-candidate-handoff.md).
-- Public-origin receipt/header/browser verification, mid-range connection
-  evidence, independent scientific/content audit, and explicit upload approval
-  remain open. The author confirmed the current private account controls and
-  accepted the exploratory result/limitations wording on 2026-09-09; neither
-  confirmation implies independent review or deployment authorization.
+- The independent numerical/scientific-content review verified the retained
+  tables, all 24 threshold/area comparisons, and all 2,793 display cells for
+  exploratory public presentation. The author separately accepted the
+  result/limitations wording and then explicitly authorized only the exact
+  candidate. Deployment `dpl_FBbvuGPotSTLnbs1sJ1SRqaxXbXw` reached `Ready` at
+  the existing stable production origin.
+- All 902 public files matched the receipt. Media, compression and cache headers,
+  the complete keyed three-viewport Chrome matrix, keyboard/focus behavior,
+  isolated failures, a project-only mid-range network model, and the
+  post-deployment VSR identity/version/zero-tolerance comparison passed. One
+  ArcGIS tile request was cancelled during tablet pan/zoom; no application
+  request or console failure occurred. See the
+  [production candidate handoff](m7-production-candidate-handoff.md).
 
 **Deliverables**
 
@@ -1928,24 +1934,25 @@ public delivery remain open**
 **Completion criteria status, 2026-09-09**
 
 - Exact generated statistics, first-visit explanation, visible limitations,
-  communication rules, responsive layouts, and local layer behavior are **met
-  on the M7 branch** and recorded in its handoff.
-- Complete release staging and its keyless local candidate/browser verification
+  communication rules, responsive layouts, and layer behavior are **met locally
+  and at the stable production origin** and recorded in its handoff.
+- Complete release staging and its keyed local candidate/browser verification
   are **met**.
 - A fresh keyed merged-main candidate, local keyed browser verification, and
   release-time VSR consistency are **met**.
 - Public-route delivery, deployed receipt/header/browser verification,
-  mid-range connection evidence, and independent scientific/content audit are
-  **not met**. Author acceptance of the current exploratory interpretation and
-  limitations is **met**, but does not replace independent review or constitute
-  upload authorization. M7 stays in progress.
+  mid-range connection evidence, independent numerical/scientific-content
+  review, and separate author acceptance are **met**. The review is only for
+  exploratory public presentation and does not validate collision probability
+  or VSR effectiveness. M7 stays in progress pending explicit milestone closure
+  because the author directed that deployment not close it automatically.
 
 **Risks and open questions**
 
 - Presenting a single headline percentage invites overinterpretation; the framing needs care.
-- Responsive browser behavior with the complete local layer set is verified;
-  performance on a mid-range connection and the deployed public route remain
-  open.
+- Responsive browser behavior with the complete layer set and the documented
+  mid-range model is verified at the deployed public route. Low-end real-device
+  performance remains unmeasured.
 
 ---
 
@@ -2002,6 +2009,19 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 
 - M7 (application integrated).
 - M8 (results verified).
+
+### Pre-milestone release evidence
+
+On 2026-09-09 the exact author-approved M5/M7 candidate was deployed to the
+existing stable production origin and passed full public inventory, header,
+keyed browser, mid-range-model, and release-time VSR checks. Independent
+numerical/scientific-content review passed for exploratory public presentation,
+separately from author acceptance. This early evidence does not start or
+complete M9 automatically: M7 and M8 are not closed, public portfolio
+screenshots have not been selected, the final documentation/link audit has not
+been recorded, and the remaining Version 1 closure decision has not been made.
+The exact deployment and evidence identities are in the
+[production candidate handoff](m7-production-candidate-handoff.md).
 
 **Deliverables**
 
