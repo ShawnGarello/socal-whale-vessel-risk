@@ -2,16 +2,22 @@
 
 ## Status and branch
 
-M8 is **partially addressed, not complete**. No shared milestone status was
-changed. The separate M5–M7 closure session owns shared status documentation.
+M8 is **In progress, not complete**. The initial parallel session left shared
+status untouched. On 2026-09-10 the author authorized this branch to integrate
+M8 documentation after PR #36's M5–M7 closure merge; those updates are now included.
 
 - Branch: `feat/m8-verification`.
-- Base: fetched `origin/main`, `3a9d8028a670d2c06687c9839739dd3fdac7f0b3`.
+- Current base: fetched `origin/main`,
+  `65e12e7dc995339bfdaa4a9e41cf83c87ccab216` (merge of PR #36).
+- Historical initial base: `3a9d8028a670d2c06687c9839739dd3fdac7f0b3`.
 - Worktree: `C:/Users/teche/socal-whale-vessel-risk-m8-verification`.
-- Implementation/tests/procedures and initial handoff commit:
-  `00495356ab15d97f0e91720811f0a25baecce205`.
-  The following documentation-only commit pins this identity; its own ID is
-  available from this file's Git history and the final session handoff.
+- Historical audited head: `c4d3fba5450f97554c6b876502f3eb47449aa95e`;
+  original implementation commit `00495356ab15d97f0e91720811f0a25baecce205`.
+- Rebased implementation: `d642fdbad08002dba84793485ce51b719a3c7cd1`;
+  identity documentation: `28a6ef32d8047805f9c4b8344c9029381c1268f3`;
+  resource correction: `5ccd32773cf2420e5c407150e37c10c6bad6ab29`
+  (original correction `de2574f186d2db125f447d23948df6ad0bd419e1`).
+  The final integration commit is identified in Git history and the final handoff.
 - Original checkout was clean; branch/path names were checked before creation.
   Other worktrees were inspected read-only, never repurposed. No push, PR,
   merge, publication, deployment, credential access, or dependency upgrade.
@@ -19,8 +25,54 @@ changed. The separate M5–M7 closure session owns shared status documentation.
 The [production handoff](m7-production-candidate-handoff.md) is the authority for
 the deployed package and acceptance. Its application source is
 `3dfedc1faab1dd830a79ab5fa0efce3b07c9db25`. Relevant analysis, application,
-results and release code had no changes between that source and this branch's
-base. This branch adds a later verifier, not a new analytical method or release.
+results and release code had no changes between that source and the historical
+initial base. PR #36 subsequently merged a local acceptance-wording correction
+and web regression test; its production release is still pending, as recorded
+in the [closure handoff](m5-m7-closure-handoff.md). M5/M6 remain complete, and
+M7's whole-connection check remains passed. This branch adds a later verifier
+and documentation, not a new analytical method or release.
+
+## Integration and audit preparation, 2026-09-10
+
+Started from a clean `feat/m8-verification` at the audited head above. The
+resource correction was committed before the explicitly authorized fetch/rebase.
+Rebase onto the actual remote PR #36 merge replayed all three commits without
+conflicts; no scientific decision or code conflict resolution was required.
+Only this branch was rebased; primary `main` and other branches were not changed.
+Analysis source/tests/lock/manifests are byte-identical across this rebase.
+
+Roadmap now records M8 In progress, its narrow implemented record boundary and
+the remaining fresh chain/documentation checks, without weakening criteria.
+Development and architecture distinguish generation lineage from later records,
+link to the workload-specific procedure, and retain actual GIS inspection as a
+separate requirement. README and project-brief summaries reflect this status.
+Historical test counts, M5/M6 completion, M7 whole-connection outcomes, production
+identity and pending release of corrected local wording remain distinct.
+
+All real-artifact records and commands in the matrix/tables below are **historical
+pre-rebase evidence**, not new-head execution. The M8 request/inventory identify
+initial base HEAD `3a9d802...` and the actual verifier source fingerprint later
+committed in `0049535...`; older upstream and release evidence retain their own
+recorded source identities.
+No record, profile, refusal, accepted input/output or production/rollback package
+was rewritten. No real-data processing or public check was repeated for this
+documentation correction, and no full five-month rerun was started.
+
+Correction checks: profiler `--help` and 41 focused profiler/verifier tests
+passed (9.50 s). Post-rebase `python -m uv run pytest -q` passed **674 tests in
+105.08 s**. `python -m uv lock --check`, `ruff format --check .`, `ruff check .`,
+`mypy src/whale_vessel_analysis` and `python -m uv build` also passed through
+the documented uv environment (25 packages, 105 formatted files, 48 typed
+sources). No web dependencies were installed or web suite rerun for this
+documentation-only continuation; PR #36's 102-test web result remains its own
+historical evidence, and both CI jobs are still required on an eventual PR head.
+
+Final review checked 223 relative file/heading links in the seven affected
+documents, whitespace, scoped diffs and secrets/data boundaries. All 11 retained
+evidence hashes in the table below were rechecked unchanged. No new test/check
+failures occurred in this continuation; earlier preflight refusals and test
+attempts remain recorded as history. This branch is ready for independent local
+audit, not for declaring M8 complete or starting the full-chain run automatically.
 
 ## Implemented and reused
 
@@ -64,7 +116,7 @@ period loading, M6 input-lineage checks, M5 exporters, and native release
 | Analytical → display/results → deployed package | M5/M6 exporter and release evidence | M5 three GeoJSONs and complete manifests reproduced in memory; M6 display/manifest/results reproduced exactly; receipt inventory and ten anonymous public requests match | No new full compiled-asset HTTP sweep, browser/performance check, or live VSR check; use historical production evidence |
 | Every published number traceable | Typed results and public manifests bind methods/input artifacts | Existing exporter reconstruction and application source tracing described below | Scientific validity/observational completeness are not established by reproducibility |
 | Reusable later evidence | Earlier checksum-bound documentation/QGIS records | New versioned write-once command and successful real record; failure/preservation tests | No retrofit of every historical layer's inspection; author decides sufficiency for carried-forward milestone wording |
-| Documentation reflects implementation | Owners, ADRs and retained handoffs available | Owned analysis procedures corrected and new command documented | Shared-owner corrections below remain sequential work; full cross-document criterion not closed |
+| Documentation reflects implementation | Owners, ADRs and retained handoffs available | Analysis procedures corrected; shared M8 summaries integrated after rebase | Independent cross-document verification remains; full criterion not closed |
 | Retrieval dates / versions; centralized limitations | Source register and analytical/results limitation fields | Retained metadata distinguished from processing/export clocks | Exact AccessAIS historical retrieval UTC timestamps unavailable; no invented timestamps; source-model season and completeness caveats remain |
 | End-to-end rerun | Successful component repeats | Targeted read-back and reproduction only | One coordinated fresh raw-to-public processing chain is still required; plan below |
 
@@ -421,20 +473,18 @@ and still pass the downstream 20 GiB gate. Per-stage documented gates and
 runtime stop conditions are authoritative. Do not free space by removing
 accepted/failed/rollback evidence or clear caches to manufacture a result.
 
-## Shared-owner proposals and next steps
+## Integration outcomes and remaining next steps
 
-- Roadmap: record M8 work in progress and this evidence, not completion. The
+- Roadmap now records M8 work in progress and this evidence, not completion. The
   end-to-end and full documentation criteria remain open despite component repeats.
-- Development/architecture: replace broad statements that no reusable later
-  evidence exists with this narrow M6 record boundary; keep actual GIS inspection
-  separate. Update the analysis test count to 674 after sequential integration.
-- Shared summaries still containing pre-deployment/no-exposure/pending-review
-  wording should point to the exact production handoff and distinguish independent
-  content review, author acceptance and M8 reproducibility. Coordinate with closure
-  owner rather than editing those documents here.
-- Application artifact-identity text still says independent audit/author acceptance
-  are pending despite recorded production acceptance. Report to the application
-  owner for a separately authorized change/release; no application edits here.
+- Development/architecture now describe the narrow M6 record boundary and keep
+  actual GIS inspection separate. The current analysis count is 674; historical
+  counts remain historical. Shared summaries preserve PR #36's completed review
+  and acceptance, rather than restoring obsolete pre-deployment claims.
+- Application artifact-identity wording is corrected locally by merged PR #36,
+  with 102 web tests recorded by that work. The deployed package still has the
+  old sentence. A separately reviewed, authorized release is still required;
+  no application edit or deployment was performed in this M8 continuation.
 - Source register: retain the missing AccessAIS retrieval timestamps as unavailable
   unless independent contemporaneous records are supplied. Do not infer model
   temporal representativeness, transfer/observational completeness, collision risk
@@ -445,7 +495,7 @@ accepted/failed/rollback evidence or clear caches to manufacture a result.
   inputs, not infer verification from this prose alone.
 
 Ready for independent local review of the scoped change, not a claim that M8 is
-closed. No PR was opened. After author-directed sequential integration/review,
+closed. No PR was opened. After independent review and author authorization,
 both analysis and web CI must pass on the eventual PR head before any separately
 authorized merge. Next substantive M8 step is the coordinated fresh chain above;
 neither unsafe preflight conditions nor parallel browser work justify relaxing it.

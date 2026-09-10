@@ -764,8 +764,8 @@ evidence:
    `visual_inspection_status: not_completed` remains truthful for that
    generation. Under the current implementation, an explicitly authorized
    overwrite replaces both the output and sidecar; prior run evidence is not
-   retained automatically. Append-only or versioned lineage remains future
-   work.
+   retained automatically. M8's separate versioned exposure-verification
+   records do not change that generation-time overwrite behavior.
 2. **Post-generation visual verification is separate evidence tied to the exact
    output SHA-256.** It records the checksum, date, GIS tool and version,
    inspected views and checks, result, and relevant observations. It does not
@@ -824,7 +824,19 @@ Reproducibility rests on four linked practices:
 
 The intended end-to-end test is to rerun from unchanged raw inputs, reproduce
 the validated derived outputs, repeat spatial verification where required, and
-compare them with what the deployed application serves. M8 owns that gate.
+compare them with what the deployed application serves. M8 owns that gate and
+is in progress; it has not yet performed the fresh raw-to-public chain.
+
+The implemented `exposure_verification` boundary loads checksum-pinned retained
+M6 tables/report through existing validators and reconstructs display, manifest
+and application results entirely in memory. It creates only fresh ignored
+request/result records, with artifact/check/tool/time identities and outcomes;
+failures and earlier records are preserved. Generation lineage is untouched.
+Evidence-reference hashes establish byte identity, not visual or scientific
+approval. This is not a general workflow or GIS-inspection framework. See the
+[procedure and workload-specific reserves](../analysis/README.md#post-generation-exposure-verification)
+and [criterion/evidence handoff](m8-verification-handoff.md). Its small-record
+disk reserves must not be applied to analytical generation or the full-chain run.
 
 ## Performance and publication-format verification
 

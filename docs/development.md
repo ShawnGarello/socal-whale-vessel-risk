@@ -83,6 +83,16 @@ remains in progress until that correction is reviewed, authorized, and deployed.
 Exact implementation and release evidence is in the
 [M7 release-integration handoff](m7-release-integration-handoff.md).
 
+**M8 update, 2026-09-10:** reusable later exposure verification and its focused
+tests are implemented. The command reuses existing validators/exporters and
+writes new checksum-bound request/result records without changing generation
+lineage. The [analysis procedure](../analysis/README.md#post-generation-exposure-verification)
+owns invocation and verifier-specific resource reserves; heavier stages retain
+their own gates. The [M8 handoff](m8-verification-handoff.md) separates historical
+checks from post-rebase documentation work and lists the remaining coordinated
+fresh raw-to-public rerun and independent documentation audit. M8 is in progress,
+not complete; automated reproduction is not visual or scientific validation.
+
 ## Documentation sources of truth
 
 Each kind of information has exactly one owning document. When information changes, update the owner. Other documents may link to it; they must not restate it in a way that can drift.
@@ -898,9 +908,12 @@ current implementation, an explicitly authorized overwrite replaces both the
 output and sidecar, and prior run evidence is not retained automatically. The
 later QGIS report and the documentation above are separate evidence for output
 SHA-256 `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031`.
-A formal reusable verification-record command and append-only or versioned
-lineage are not implemented; the [roadmap](roadmap.md) carries that M3/M8
-follow-up.
+M8 now supplies a narrow
+[exposure verification command](../analysis/README.md#post-generation-exposure-verification)
+with separate versioned, write-once request/result records. It does not retrofit
+this historical water-grid lineage or certify visual inspection. The
+[M8 handoff](m8-verification-handoff.md) identifies its scope and remaining
+raw-to-public reproducibility work.
 
 QGIS is not a production transformation boundary. If inspection or exploration
 reveals a needed clip, repair, field calculation, reprojection, classification,
@@ -2060,9 +2073,11 @@ In practice:
 - Visual inspection evidence is recorded separately from generation-time
   lineage and tied to the exact output SHA-256. The generated sidecar is not
   manually edited; an explicitly authorized overwrite currently replaces it
-  and does not retain prior run evidence. Until a reusable record or command
-  exists, documentation must explicitly record the checksum, date, GIS
-  tool/version, inspected views/checks, result, and relevant observations.
+  and does not retain prior run evidence automatically. Separate visual
+  documentation must explicitly record the checksum, date, GIS tool/version,
+  inspected views/checks, result, and relevant observations. M8's reusable
+  exposure record fingerprints evidence references but does not assess those
+  visual claims or alter generation lineage.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
 **Application (TypeScript).** `npm test` in `web/` runs Vitest once (102 tests);
@@ -2091,7 +2106,7 @@ report covers only project GeoJSON routes plus CPU throttling; the broader
 whole-connection functional check above subsequently passed. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
-**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 647 tests
+**Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 674 tests
 over project logic with values known by construction: accepted and rejected
 spatial configuration, the exact AIS header and documented sentinels, invalid
 source values, whale schema and abundance consistency, VSR source schema,
@@ -2155,7 +2170,9 @@ exposure-delivery known answers, full report-to-table numerical reconciliation,
 checksum-matched inconsistent summaries, denominators, nulls, thresholds,
 presentation rounding, typed public allowlists, private/debug injection,
 deterministic export and timestamp-independent results identity,
-and all CLI boundaries.
+and all CLI boundaries. Twenty-seven M8 tests additionally cover versioned later
+verification, mismatch/failure/interruption recording, preservation of prior
+evidence, changed inputs/implementation, and output/path safeguards.
 Tests create temporary CSVs and geometry or use data in memory; the ignored M2
 artifacts are not test prerequisites. Third-party libraries are not themselves
 unit-tested.

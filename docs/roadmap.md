@@ -17,7 +17,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 | M5  | Core input layers                | Complete    |
 | M6  | Whale–vessel exposure analysis   | Complete    |
 | M7  | Application integration          | In progress |
-| M8  | Verification and reproducibility | Not started |
+| M8  | Verification and reproducibility | In progress |
 | M9  | Public release                   | Not started |
 
 ---
@@ -642,7 +642,9 @@ non-spatial rule evidence exercised with the real ready 153-date input**
   checksum. An explicitly authorized overwrite currently replaces the output
   and sidecar without automatically retaining prior run evidence. A formal
   reusable verification record or command, plus append-only or versioned
-  lineage, is **not implemented** and remains M3/M8 follow-up work.
+  lineage, was **not implemented at that M3 checkpoint** and was carried to M8.
+  See M8's current progress for the later narrow exposure-verification command;
+  the historical generation sidecar remains unchanged.
 - The real whale-transfer run used the selected 12,257-feature NOAA layer and
   verified the target grid SHA-256 before processing. It produced 4,516 unique
   ordered cells from 9,981 positive-area intersections. Three projected-source
@@ -1986,7 +1988,7 @@ in the [M5–M7 closure audit handoff](m5-m7-closure-handoff.md).
 
 ## M8 — Verification and reproducibility
 
-**Status:** Not started
+**Status:** In progress
 
 **Objective**
 Confirm that the results are correct, that the process can be rerun, and that the documentation matches what was actually built.
@@ -2006,8 +2008,39 @@ Confirm that the results are correct, that the process can be rerun, and that th
 - Recorded source retrieval dates and dataset versions used for the published results.
 - **Carried forward from M3:** a formal reusable verification record or command,
   plus append-only or versioned lineage. Generation-time lineage is written once
-  and must not be hand-edited, so a later verification currently lives only in
-  documentation tied to an output checksum. This did not gate M3.
+  and must not be hand-edited. At M3 closure, later verification lived in
+  checksum-bound documentation; this did not gate M3. The narrow M8 command
+  below now records later verification separately, not by changing that lineage.
+
+### Current progress, 2026-09-10
+
+- `exposure_verification` reuses the existing analytical table/report validators
+  and delivery exporter. Fresh write-once request/result records bind artifacts,
+  actual implementation/tool versions, check times, outcomes and evidence hashes;
+  failed and earlier records are preserved. Automated checks do not certify
+  visual inspection, scientific validity or a raw-to-public rerun.
+- Retained-artifact checks matched all 459 cleaned-bundle files, both production
+  vessel inputs, the three M5 exports, and the M6 display/manifest/results.
+  Local receipt and targeted anonymous public-byte checks passed. These historical
+  pre-rebase checks are identified in the [M8 handoff](m8-verification-handoff.md),
+  not claimed as execution on a later head.
+- The analysis suite passed 674 tests, including 27 focused evidence-record tests.
+  The verifier-specific resource procedure now distinguishes observed usage from
+  operational reserves; generation and full-chain gates are unchanged.
+
+### Remaining work
+
+- Run one coordinated fresh chain from retained raw inputs through fresh derived
+  outputs to comparison with public representations. Component repeats and the
+  new retained-table verification do not satisfy this end-to-end criterion.
+  The handoff gives ordered inputs/commands, resource gates and acceptance checks;
+  no five-month rerun was executed in this parallel/documentation work.
+- Complete independent audit and cross-document verification against implemented
+  behavior. Preserve missing historical retrieval timestamps as unavailable;
+  do not infer observational completeness or propagated model uncertainty.
+- Assess the separate exact-artifact visual evidence and remaining M3 carry-forward
+  coverage; the new command is not a general GIS inspection framework. M7's
+  corrected wording still requires its separately authorized public release.
 
 **Completion criteria**
 
