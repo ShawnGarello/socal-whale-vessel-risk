@@ -171,9 +171,10 @@ candidate, review record, deployment authorization, or public verification.
 ## Verification and next steps
 
 The initial documentation verification passed. Follow-up verification added the
-complete clean web gate and direct optimized-HTML inspection described above.
-Final diff, link/anchor, secret, and staged-scope checks remain required after
-the owner documents are updated.
+complete clean web gate, direct optimized-HTML inspection, and isolated release
+rehearsal described above. Final `git diff --check`, changed-document
+link/anchor validation, staged secret-pattern/scope inspection, and staged-diff
+review passed; the worktree was clean after the evidence commit.
 
 Dependency-ordered next steps:
 
