@@ -14,8 +14,8 @@ A milestone is not "in progress" because work has been thought about. It is in p
 | M2  | Data discovery and validation    | Complete    |
 | M3  | Processing workflow              | Complete    |
 | M4  | GIS application foundation       | Complete    |
-| M5  | Core input layers                | In progress |
-| M6  | Whale–vessel exposure analysis   | In progress |
+| M5  | Core input layers                | Complete    |
+| M6  | Whale–vessel exposure analysis   | Complete    |
 | M7  | Application integration          | In progress |
 | M8  | Verification and reproducibility | Not started |
 | M9  | Public release                   | Not started |
@@ -938,7 +938,7 @@ calculation is M6 and is not an M3 criterion.
 
 ## M4 — GIS application foundation
 
-**Status:** In progress
+**Status:** Complete
 
 **Objective**
 Stand up the web application shell — the framework, the map, and the deployment
@@ -1339,7 +1339,7 @@ this repository's own. Disabled with `agentRules: false`.
 
 ## M5 — Core input layers
 
-**Status:** In progress
+**Status:** Complete
 
 **Objective**
 Prepare the validated input datasets for public delivery and make them visible
@@ -1352,8 +1352,8 @@ in the application through the evidence-selected publication route.
 
 ### Progress
 
-**All core input-layer displays and source-date disclosures deployed and
-publicly verified; milestone closure remains explicit**
+**All core input-layer displays and source-date disclosures deployed, publicly
+verified, and closure-audited**
 
 - The static client creates an ArcGIS `FeatureLayer` from the publisher's exact
   `WhaleAtlas_2026/FeatureServer/0` URL and applies `FID = 126`. Source identity,
@@ -1489,8 +1489,8 @@ publicly verified; milestone closure remains explicit**
   date for its checksum-bound mask and report. A focused local browser check on
   2026-09-07 reached both dates, labels, bound identities, and verified display
   checksums at the same three responsive viewports without horizontal overflow.
-  These disclosure changes are not in the deployed M4 package and await a later
-  reviewed release.
+  The later M5/M7 production package included both disclosures, and the deployed
+  three-viewport check reached them at the stable origin.
 - The new files measure 2,720,788 and 867,910 raw bytes, or 385,764 and 199,834
   bytes with Brotli. All three project input files total 6,866,027 raw bytes
   and 982,450 Brotli bytes. The completed local static export contains 899 files
@@ -1514,8 +1514,9 @@ publicly verified; milestone closure remains explicit**
 - The route-specific Vercel and ArcGIS basemap account checks passed. Esri
   hosted-data capabilities are unselected and are not M4 gates.
 - M5's source-date disclosure criterion is verified at the production origin.
-  Its status remains in progress pending explicit milestone closure; successful
-  deployment did not mark it complete automatically.
+  The 2026-09-09 closure audit verified the exact receipt, deployed reports,
+  public artifacts, and retained spatial evidence before marking M5 complete;
+  deployment alone did not close it.
 
 **Deliverables**
 
@@ -1584,11 +1585,11 @@ publicly verified; milestone closure remains explicit**
 - The VSR feature loads anonymously from the publisher's service and is not a
   project-hosted copy. **Met locally and at the stable production origin.**
 
-The display, legend, provenance, alignment, and source-date evidence now covers
-every core input layer locally and at the stable production origin. The exact
-candidate was authorized, deployed, and verified. M5 remains in progress only
-because the author directed that the deployment not automatically close the
-remaining milestones; an explicit milestone-closure decision is still needed.
+The display, legend, provenance, alignment, source-date, and anonymous-access
+evidence covers every core input layer locally and at the stable production
+origin. The exact candidate was authorized, deployed, and verified. A separate
+criterion-by-criterion audit on 2026-09-09 found every M5 completion criterion
+met, so M5 is complete.
 
 **Risks and open questions**
 
@@ -1607,7 +1608,7 @@ remaining milestones; an explicit milestone-closure decision is still needed.
 
 ## M6 — Whale–vessel exposure analysis
 
-**Status:** In progress
+**Status:** Complete
 
 **Objective**
 Produce the project's own analytical result: a documented relative exposure layer, and the inside-versus-outside VSR statistics derived from it. This is the milestone that makes the project an analysis rather than a viewer.
@@ -1807,9 +1808,14 @@ and independent numerical/scientific-content review recorded**
 
 Owner acceptance of the current exploratory results, sensitivity, maps and
 limitations wording for public display and the separate independent
-numerical/scientific-content review are recorded on 2026-09-09. M6 remains in
-progress pending explicit milestone closure, as directed; neither successful
-review nor deployment marked it complete automatically.
+numerical/scientific-content review are recorded on 2026-09-09. The closure
+audit independently rehashed the retained current-code bundles and delivery
+artifacts, recomputed the primary formula, fractional totals, p90 area statistic,
+and outside-cell ranking from the serialized 5 km table, and matched all 2,793
+display cells to the analytical rows. Every listed M6 completion criterion is
+met, so M6 is complete. This accepts the bounded exploratory result and its
+limitations; it does not validate collision probability, observed encounters,
+causal effectiveness, compliance, or a policy conclusion.
 
 **Risks and open questions**
 
@@ -1941,18 +1947,33 @@ recorded**
 - A fresh keyed merged-main candidate, local keyed browser verification, and
   release-time VSR consistency are **met**.
 - Public-route delivery, deployed receipt/header/browser verification,
-  mid-range connection evidence, independent numerical/scientific-content
-  review, and separate author acceptance are **met**. The review is only for
-  exploratory public presentation and does not validate collision probability
-  or VSR effectiveness. M7 stays in progress pending explicit milestone closure
-  because the author directed that deployment not close it automatically.
+  independent numerical/scientific-content review, and separate author
+  acceptance are **met**. The review is only for exploratory public presentation
+  and does not validate collision probability or VSR effectiveness.
+- Mid-range-connection usability is **not yet fully evidenced**. The retained
+  run applied 4× CPU slowdown and a 100 ms plus 10 Mbps delay only to the four
+  project GeoJSON responses. It did not throttle the application shell, SDK, or
+  external ArcGIS basemap/VSR requests, record full-connection behavior, or use
+  a real low-end device. A coordinated clean-browser run must apply the same
+  network profile to all requests before navigation and repeat the existing
+  load, interaction, layer, results, overflow, and error checks. No new timing
+  threshold is required. That run was deferred because the parallel M8 session
+  was active and a quiet measurement window was not coordinated.
+- The deployed results panel also retains a stale pre-acceptance sentence saying
+  the generated values await independent audit and author acceptance. The
+  review and acceptance are in fact recorded. Correct that bounded content
+  defect in a later application release; this closure session does not change
+  production code.
+
+The criterion-by-criterion evidence and independent recalculation are retained
+in the [M5–M7 closure audit handoff](m5-m7-closure-handoff.md).
 
 **Risks and open questions**
 
 - Presenting a single headline percentage invites overinterpretation; the framing needs care.
-- Responsive browser behavior with the complete layer set and the documented
-  mid-range model is verified at the deployed public route. Low-end real-device
-  performance remains unmeasured.
+- Responsive browser behavior with the complete layer set is verified at the
+  deployed public route. The project-file/CPU model above is useful partial
+  evidence but is not a full-connection or real-device test.
 
 ---
 

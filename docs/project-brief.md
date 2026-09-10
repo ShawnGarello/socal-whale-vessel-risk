@@ -2,13 +2,14 @@
 
 **Owns:** the authoritative product scope for this repository. If another document describes scope differently, this document is correct and the other should be updated.
 
-**Status:** Version 1 is defined and partially implemented. The application and
-processing foundations exist, and the deterministic whale-grid transfer is
-implemented, tested, reproducible, and visually verified. Cleaned AIS inputs
-cover the whole accepted period, and the production vessel-activity input and
-its separate descriptive speed summaries are implemented, reproducible and
-visually verified under the accepted ADR 0018 method. Version 1 remains
-incomplete: exposure analysis, publication, and deployment are unfinished.
+**Status:** Version 1 is defined and partially complete. M1 through M6 are
+complete: the inputs, reproducible exploratory exposure analysis, public display
+contracts, independent numerical/content review, and author acceptance are
+recorded. The complete application is deployed and publicly verified, while M7
+remains in progress pending a coordinated whole-connection browser check and a
+later correction to one stale pre-acceptance sentence in the deployed results
+panel. M8 verification/reproducibility closure and M9 public-release work remain
+open. See the [roadmap](roadmap.md) for criterion status.
 
 ---
 
@@ -51,11 +52,10 @@ Version 1 is complete when the research question above has a defensible, documen
 
 ## Version 1 functional scope
 
-Version 1 must ultimately include all of the following. Supporting foundations
-and both grid-aligned inputs are implemented, but the complete functional scope
-is not: the accepted period's cleaned AIS inputs are assembled and aggregated
-into the verified production vessel input, but exposure analysis, publication,
-and deployment remain unfinished.
+Version 1 must ultimately include all of the following. The analytical inputs,
+derived exploratory analysis, and deployed application now exist. Remaining
+work is verification and release closure rather than a reduction of this scope;
+the roadmap records the precise M7, M8, and M9 gaps.
 
 **Analytical inputs**
 

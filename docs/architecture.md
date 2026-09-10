@@ -432,7 +432,12 @@ for exploratory public presentation, and author acceptance. M7 integrates it
 through ADR 0021's selected static route: static generation validates the
 versioned results, and the browser validates the fetched display/manifest pair
 before creating the ArcGIS layer. The exact authorized package is deployed and
-passed public receipt, header, keyed browser, mid-range-model, and VSR checks.
+passed public receipt, header, keyed-browser, and VSR checks. Its retained
+performance run combined 4× CPU throttling with delay/bandwidth controls on the
+four project GeoJSON requests; it did not throttle the full page connection or
+measure external ArcGIS requests. A whole-connection functional check therefore
+remains an M7 closure condition, and the retained run is not a real-device
+benchmark.
 The build-only results JSON is not public and no server runtime was added. A
 representation change requires a later decision supported by measured need,
 source terms and verified free capability.
@@ -448,9 +453,10 @@ the publisher's public `WhaleAtlas_2026` Feature Service:
 `https://services5.arcgis.com/4biRnCjZju47bNvA/arcgis/rest/services/WhaleAtlas_2026/FeatureServer/0`
 
 The application shows that remote layer inside its own map and does not
-redirect the visitor. This is implemented and locally verified; it has not been
-served from a deployed origin. It must attribute Danielle Alvarez, CMSF, and
-BWBS according to ArcGIS item `b400c7f418b04dc5a9d7ce5015adae32` and preserve
+redirect the visitor. This is implemented, deployed, and anonymously verified
+against the analytical snapshot at the production origin. It attributes
+Danielle Alvarez, CMSF, and BWBS according to ArcGIS item
+`b400c7f418b04dc5a9d7ce5015adae32` and preserves
 the publisher's non-navigational disclaimer. The project must not commit or publish the local
 snapshot or any copied, clipped, simplified, converted, or derived VSR
 geometry.
@@ -637,9 +643,11 @@ build-only inputs.
 On 2026-09-07 the author confirmed Vercel Hobby personal-use eligibility and
 ArcGIS Location Platform with pay-as-you-go disabled. Basemap free-tier
 headroom, minimum key scope and exact origin restrictions were verified. The
-isolated `socal-whale-vessel-overlap` project serves the approved reviewed-main
-M4 package from the intended stable production hostname; the complete M7
-package has only been rehearsed locally. The entire project must remain within free capacity. Paid
+isolated `socal-whale-vessel-overlap` project serves the accepted M7 package
+from application source commit `3dfedc1faab1dd830a79ab5fa0efce3b07c9db25`
+at the intended stable production hostname. Later commits on `main` record
+review, acceptance, and deployment evidence without changing that application
+source. The entire project must remain within free capacity. Paid
 plans, trials, add-ons, pay-as-you-go and other charged usage are prohibited.
 
 - Next.js produces a static export served over HTTPS from a stable public URL.
@@ -847,18 +855,21 @@ The exposure display has also been measured locally: 2,542,744 bytes raw,
 528,235 bytes at gzip level 9, and 375,238 bytes at Brotli quality 11 for 2,793
 features. Its paired manifest is 6,803 bytes and the small application-results
 artifact is 31,381 bytes. Static same-origin delivery is selected by ADR 0021.
-Complete M7 release staging and local browser load/render behavior are verified
-at the three required viewports, including exact counts and order, visibility
-changes without duplication, results pairing/text, keyboard access, scrolling,
-and no horizontal overflow. The rehearsal used the keyless `topo-vector`
-basemap. Independent audit, a fresh keyed main-commit candidate, deployment,
-public-origin and release-time VSR verification, and performance on a mid-range
-connection remain unfinished.
+The M7 package is deployed and its public receipt, keyed browser behavior,
+results pairing/text, layer order and visibility, failure isolation, keyboard
+access, scrolling, responsive layouts, and VSR identity were verified. The
+retained three-viewport browser run includes exact counts and order, visibility
+changes without duplication, and no horizontal overflow. Independent numerical
+and content review and author acceptance are recorded. The retained performance
+run is narrower than the roadmap criterion: it applied 4× CPU throttling and a
+100 ms / 10 Mbps model only to project GeoJSON routes, while external service
+throttling was disabled. A coordinated all-request functional run remains open.
 
-These numbers are local observations of this project's own static assets. They
-are **not** a benchmark of ArcGIS platform services, no ArcGIS
-service timing is reported, and they establish nothing about deployed load time,
-slow connections, low-end devices, or deployed combined-layer cost. The Location Platform agreement's benchmarking and
+These measurements are observations of this project's static assets and the
+deployed functional checks described above. They are **not** a benchmark of
+ArcGIS platform services, no ArcGIS service timing is reported, and the partial
+throttling model does not establish whole-connection performance or low-end
+device behavior. The Location Platform agreement's benchmarking and
 benchmark-publication clauses remain unresolved and must be settled before any
 timing exercise that measures ArcGIS services.
 
@@ -901,9 +912,9 @@ its milestone needs it.
 
 | Decision                                                                                    | Deferred until                                                                                              | Selection basis                                                                                                                                                                                                                                                                                                           |
 | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Exposure formula, normalization, and weighting                                              | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06 and computed; the results are not independently reviewed or accepted, and final headline messaging is still open.                                                                                                                                                      |
-| High-exposure threshold                                                                     | **Resolved for exploratory use** in ADR 0020                                                                | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded and one comparison is materially non-robust; acceptance awaits independent review and the owner.                                                                                                  |
-| Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021**                                                                                    | Checksum-addressed static files beside the application on free Vercel Hobby. Input files are deployed and receipt-verified; exposure integration and complete release staging are locally verified, while independent audit, deployment, public-origin verification, and release-time VSR consistency remain open. Route-specific account evidence passed for M4. |
+| Exposure formula, normalization, and weighting                                              | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06, computed reproducibly, independently reviewed, and accepted by the owner for the public exploratory presentation. Limitations and proxy language remain mandatory.                                                                                                     |
+| High-exposure threshold                                                                     | **Resolved for exploratory use** in ADR 0020                                                                | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded, including the materially non-robust comparison, and the owner accepted the bounded public wording.                                                                                               |
+| Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021**                                                                                    | Checksum-addressed static files beside the application on free Vercel Hobby. The accepted M7 package is deployed and passed receipt, public-origin, keyed-browser, and release-time VSR verification. The remaining M7 performance gap is the broader all-request mid-range-connection functional check.                      |
 | ArcGIS Location Platform publication route                                                  | Unselected by ADR 0021                                                                                      | Actual hosted-data creation, storage and sharing capabilities remain unverified and are not M4 requirements. The narrower Location Platform basemap account, allowance and key checks passed for the selected static route.                                                                                               |
 | ArcGIS Online publication route                                                             | Unselected by ADR 0021                                                                                      | Actual organization and publishing capabilities remain unverified.                                                                                                                                                                                                                                                        |
 | Static application host                                                                     | **Resolved and verified by ADR 0021 / M4**                                                                  | Free Vercel Hobby, author-confirmed and deployed on 2026-09-07. HTTPS, stable origin, static-export limits, exact receipt and clean-browser verification passed. No paid fallback is authorized.                                                                                                                          |

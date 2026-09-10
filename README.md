@@ -2,7 +2,7 @@
 
 A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
 
-> **Status: in development.** M1 through M4 are complete; M5, M6, and M7 are in progress.
+> **Status: in development.** M1 through M6 are complete; M7 is in progress.
 > The ready AIS period contains all 153 dates and 15,458,567 cleaned commercial
 > observations. The exact water grid and modeled-whale transfer are reproducible
 > and visually verified. All four full-period candidate vessel grids were
@@ -42,10 +42,13 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > **That review is not validation of collision probability, observed encounters,
 > or VSR effectiveness.** The exact checksum-paired M5/M7 package from merged
 > `main` was deployed on 2026-09-09 and passed public receipt, header, keyed
-> responsive-browser, mid-range-network, and release-time VSR checks. M5, M6,
-> and M7 remain in progress pending explicit milestone closure; deployment did
-> not mark them complete. See
+> responsive-browser, project-file/CPU performance-model, and release-time VSR
+> checks. A separate criterion audit closed M5 and M6. M7 remains in progress:
+> its retained performance run did not throttle the whole connection or every
+> external ArcGIS request, and the deployed results panel still carries one
+> stale pre-acceptance status sentence. See
 > the [roadmap](docs/roadmap.md), the
+> [M5–M7 closure audit](docs/m5-m7-closure-handoff.md), the
 > [M5 whale display handoff](docs/m5-whale-display-handoff.md), the
 > [M5 vessel/domain display handoff](docs/m5-vessel-domain-display-handoff.md), the
 > [M3 handoff](docs/m3-completion-handoff.md), the
@@ -90,8 +93,8 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Data sources                | **M2 complete** — downloaded and inspected; properties, licensing, limits, and public-use/publication postures recorded with a reproducible provenance manifest. VSR redistribution permission remains unconfirmed, so project-hosted copies are prohibited                                                                                                                                                                                                                                                                                                                             |
 | Study area                  | **Accepted with separate roles** — the map/context extent, modeled-whale-support water geometry, and scope-reduced `receivers_50_nautical_miles` analytical domain are distinct; see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md)                                                                                                                                                                                                                                                                                                                           |
 | Processing workflow         | **M3 complete** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; the selected vessel rules of [ADR 0018](docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md) were accepted after real production generation, byte-identical repetition and QGIS validation. See [analysis](analysis/README.md).                                                                                                                                                                                                                                            |
-| Analysis and derived layers | **M6 in progress** — the water grid, whale grid, fresh current-code exploratory exposure bundles, and distinct exposure display/results contracts are generated, programmatically reconciled, reproducible, and visually verified in QGIS 4.2.1. The exposure method is [ADR 0020](docs/decisions/0020-propose-area-integrated-relative-exposure.md); independent numerical/scientific-content review passed for exploratory public presentation, the author accepts the results and limitations wording, and the materially non-robust log-traffic sensitivity remains prominent. This is not validation of collision probability, observed encounters, or VSR effectiveness |
-| Web application             | **Complete M5/M7 candidate deployed and publicly verified; milestone still in progress** — the exact merged-main package preserves existing input lifecycles, adds the checksum-paired exposure/results interface, and passed public receipt, header, keyed responsive-browser, mid-range-network, and release-time VSR checks. Deployment did not automatically close M5, M6, or M7                                                                                                                                                                                                                      |
+| Analysis and derived layers | **M6 complete** — the water grid, whale grid, current-code exploratory exposure bundles, and distinct exposure display/results contracts are generated, reconciled, reproducible, and visually verified in QGIS 4.2.1. Independent numerical/scientific-content review and author acceptance are recorded, and the closure audit independently matched the primary calculation, fractional accounting, p90 statistic, outside-cell ranking, and all 2,793 display rows. The materially non-robust log-traffic sensitivity remains prominent. This is not validation of collision probability, observed encounters, or VSR effectiveness |
+| Web application             | **M5 complete; M7 in progress** — the exact merged-main package is deployed and passed public receipt, header, keyed responsive-browser, failure-isolation, accessibility, and release-time VSR checks. The retained 4× CPU/10 Mbps model delayed only project GeoJSON responses, so a coordinated whole-connection browser run remains. The deployed results panel also retains one stale sentence saying review and acceptance are pending; a later application release must correct it                                                                                                                                               |
 | Deployment                  | **M4 complete; authorized M5/M7 candidate live** — the existing `stemry/socal-whale-vessel-overlap` free-Hobby project serves the exact approved production package at the stable URL. All 902 public files matched the receipt inventory byte-for-byte; GitHub remains disconnected, no server runtime was introduced, and billing or unrelated project settings were not changed                                                                                                                                                                                                         |
 
 ## Technology direction
@@ -125,6 +128,9 @@ current results, limitations wording, and prominent log-traffic sensitivity.
 The deployed M7 interface consumes the versioned machine-readable M6 results
 artifact without recomputing it. These findings describe relative exposure;
 they are not collision probability, observed encounters, or VSR effectiveness.
+The analysis identifies the largest outside-zone concentrations conservatively
+as ranked contributing cells; it does not claim that those cells form validated
+hotspot clusters.
 
 ## Live demo
 

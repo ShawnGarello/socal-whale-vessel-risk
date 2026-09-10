@@ -25,17 +25,17 @@ pay-as-you-go and other charged usage are prohibited.
 
 Project-derived layers are delivered here as static same-origin files served
 alongside the export, so they need no layer credential and no hosted service.
-The three input layers are verified locally and from the stable production
-origin. The relative-exposure layer and results interface are implemented and
-verified locally, and the complete M7 release stage is receipt/browser verified
-locally. They are not in the current public release.
+All three input layers and the relative-exposure layer/results interface are
+deployed and verified from the stable production origin. The M7 release stage
+is receipt- and browser-verified locally and publicly.
 ADR 0021 selects free Vercel Hobby for these files. The plan and personal,
 unpaid, non-monetized portfolio eligibility are author-confirmed. The isolated
-`socal-whale-vessel-overlap` project now serves the approved reviewed-main
-package at `https://socal-whale-vessel-overlap.vercel.app`. The three public
-project files loaded token-free with exact decoded hashes. After Production
-Toolbar was disabled for this project and the unchanged package was redeployed,
-all 900 public files matched the approved receipt byte-for-byte and M4 completed.
+`socal-whale-vessel-overlap` project now serves the accepted M7 package at
+`https://socal-whale-vessel-overlap.vercel.app`. The four public project files
+load token-free with exact decoded hashes; the build-only results artifact has
+no public endpoint. The package contains application source commit
+`3dfedc1faab1dd830a79ab5fa0efce3b07c9db25`; later evidence-only commits record
+review, author acceptance, and deployment without changing that source.
 
 ## Modeled blue-whale density layer
 
@@ -243,12 +243,12 @@ A focused local source-date check on 2026-09-07 used the same exact 390 × 844,
 layers reached ready state, their display checksums were verified from the
 loaded bytes, and the two processing-date labels, `<time datetime>` values, and
 bound input/report identities were reachable without horizontal overflow. This
-check did not exercise the production origin; the disclosure change is not in
-the deployed M4 package and awaits a later reviewed release.
+check did not exercise the production origin. The disclosure change was
+subsequently included in the accepted M7 package and verified after deployment.
 
 ## Relative exposure and results
 
-M7 adds a local presentation-only consumer for the M6 exposure artifacts. The
+M7 adds a presentation-only consumer for the M6 exposure artifacts. The
 browser does not combine whale and vessel values, derive thresholds, or
 calculate statistics. Static generation reads the tracked
 `results/exposure-results.v1.json` file and validates its contract, schema
@@ -334,14 +334,35 @@ counts/order, product/log switching, results text, disclosures, focus/scroll
 checks and isolated missing/mismatched/malformed exposure failures. It used
 `topo-vector`, not the keyed production `arcgis/oceans` configuration.
 
-This remains local evidence, not public-delivery or scientific-acceptance
-evidence. Independent audit, a fresh keyed main-commit candidate, release-time
-VSR consistency, public-origin receipt/header/browser checks, mid-range
-connection evidence, owner review and deployment authorization remain open.
+This paragraph records the local rehearsal state at that point; it was not then
+public-delivery or scientific-acceptance evidence. The subsequent production
+candidate and deployed checks below supersede those open release steps.
 The procedure is owned by
 [development.md](../docs/development.md#m7-exposureresults-release-staging-implementation),
 with exact evidence in the
 [release-integration handoff](../docs/m7-release-integration-handoff.md).
+
+### Verified at the production origin on 2026-09-09
+
+The accepted 903-file package from application source commit
+`3dfedc1faab1dd830a79ab5fa0efce3b07c9db25` was deployed after independent
+numerical/content review, separate author acceptance, and explicit deployment
+authorization. All 902 public files matched the receipt, all four project
+GeoJSON/manifest pairs matched their approved bytes, and the build-only results
+JSON remained private. Clean Chrome at 390 × 844, 820 × 1180, and 1440 × 900
+verified Oceans, all five layer lifecycles, ordering/visibility, generated
+results and sensitivities, M5 dates, responsive scrolling, keyboard focus,
+horizontal containment, and isolated layer failures. The anonymous VSR service
+and exact snapshot comparison also passed.
+
+The retained “mid-range” report is only partial evidence: it applied 4× CPU
+slowdown and 100 ms / 10 Mbps delay to project GeoJSON routes, with external
+service throttling disabled. It is not a full-connection or real-device test;
+the repeatable all-request functional procedure is in
+[development.md](../docs/development.md#remaining-m7-whole-connection-functional-check).
+The deployed results panel also contains one stale sentence saying independent
+review and author acceptance are pending, although both are recorded. That
+bounded content defect and the whole-connection check keep M7 in progress.
 
 ## Publisher-hosted VSR boundary
 
