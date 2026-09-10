@@ -245,8 +245,10 @@ export default function ExposureResultsPanel({
             Results SHA-256: <span>{load.sha256}</span>
           </p>
           <p>
-            These generated values remain pending independent audit and author
-            acceptance as final public wording.
+            These generated values passed independent numerical/scientific-content
+            review and were accepted by the author for this exploratory public
+            presentation. Review and acceptance do not change the limitations above or
+            turn this exploratory overlap proxy into a causal or policy result.
           </p>
         </div>
       </details>

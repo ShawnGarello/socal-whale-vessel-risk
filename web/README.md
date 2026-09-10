@@ -355,14 +355,22 @@ results and sensitivities, M5 dates, responsive scrolling, keyboard focus,
 horizontal containment, and isolated layer failures. The anonymous VSR service
 and exact snapshot comparison also passed.
 
-The retained “mid-range” report is only partial evidence: it applied 4× CPU
-slowdown and 100 ms / 10 Mbps delay to project GeoJSON routes, with external
-service throttling disabled. It is not a full-connection or real-device test;
-the repeatable all-request functional procedure is in
-[development.md](../docs/development.md#remaining-m7-whole-connection-functional-check).
-The deployed results panel also contains one stale sentence saying independent
-review and author acceptance are pending, although both are recorded. That
-bounded content defect and the whole-connection check keep M7 in progress.
+The retained first “mid-range” report is only partial evidence: it applied 4×
+CPU slowdown and 100 ms / 10 Mbps delay to project GeoJSON routes, with external
+service throttling disabled. A later clean-browser run applied that network
+profile globally before navigation and passed with page HTML/JavaScript, project
+layers, Oceans basemap, and publisher VSR requests all observed. This remains a
+functional simulation, not a real-device or ArcGIS-service benchmark; the
+repeatable procedure and exact report identity are in
+[development.md](../docs/development.md#m7-whole-connection-functional-check).
+
+The deployed results panel contains one stale sentence saying independent
+review and author acceptance are pending, although both are recorded. This
+branch corrects it while preserving the exploratory, non-causal framing. The
+focused regression, formatting, lint, strict type check, all 102 tests, and the
+static build pass, and the optimized HTML contains the corrected sentence. M7
+remains in progress until a reviewed, authorized release replaces the public
+copy and passes targeted verification.
 
 ## Publisher-hosted VSR boundary
 

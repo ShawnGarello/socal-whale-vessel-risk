@@ -1940,8 +1940,10 @@ recorded**
 **Completion criteria status, 2026-09-09**
 
 - Exact generated statistics, first-visit explanation, visible limitations,
-  communication rules, responsive layouts, and layer behavior are **met locally
-  and at the stable production origin** and recorded in its handoff.
+  scientific proxy/caveat rules, responsive layouts, and layer behavior are
+  **met locally and at the stable production origin**. The public wording
+  criterion remains open only for the factually stale review/acceptance status
+  described below; corrected source passes locally.
 - Complete release staging and its keyed local candidate/browser verification
   are **met**.
 - A fresh keyed merged-main candidate, local keyed browser verification, and
@@ -1950,20 +1952,24 @@ recorded**
   independent numerical/scientific-content review, and separate author
   acceptance are **met**. The review is only for exploratory public presentation
   and does not validate collision probability or VSR effectiveness.
-- Mid-range-connection usability is **not yet fully evidenced**. The retained
-  run applied 4× CPU slowdown and a 100 ms plus 10 Mbps delay only to the four
-  project GeoJSON responses. It did not throttle the application shell, SDK, or
-  external ArcGIS basemap/VSR requests, record full-connection behavior, or use
-  a real low-end device. A coordinated clean-browser run must apply the same
-  network profile to all requests before navigation and repeat the existing
-  load, interaction, layer, results, overflow, and error checks. No new timing
-  threshold is required. That run was deferred because the parallel M8 session
-  was active and a quiet measurement window was not coordinated.
-- The deployed results panel also retains a stale pre-acceptance sentence saying
-  the generated values await independent audit and author acceptance. The
-  review and acceptance are in fact recorded. Correct that bounded content
-  defect in a later application release; this closure session does not change
-  production code.
+- Mid-range-connection usability is **met**. A clean Chrome 152 run at 820 ×
+  1180 disabled cache and applied 4× CPU slowdown plus the existing 100 ms / 10
+  Mbps profile globally before navigation. It observed successful application
+  HTML, 87 JavaScript, five project-layer, 96 Oceans-basemap, and four
+  publisher-VSR responses. All five layers loaded once; results, formula and
+  visibility controls, pan/zoom, scrolling, horizontal containment, keyboard
+  toggling and 3 px focus passed without application errors. One superseded
+  basemap tile was cancelled during interaction while the map remained ready.
+  No external-service timings were retained, and this is not a real-device or
+  ArcGIS-service benchmark.
+- The deployed results panel retains a stale pre-acceptance sentence saying the
+  generated values await independent audit and author acceptance. The source is
+  corrected on the closure branch to state that both occurred for exploratory
+  public presentation without turning the proxy into a causal or policy result.
+  The focused regression, full 102-test suite, formatting, lint, strict type
+  check, and static build pass. M7 remains in progress until that source change
+  is reviewed, explicitly authorized, deployed, and verified at the public
+  origin.
 
 The criterion-by-criterion evidence and independent recalculation are retained
 in the [M5–M7 closure audit handoff](m5-m7-closure-handoff.md).
@@ -1971,9 +1977,9 @@ in the [M5–M7 closure audit handoff](m5-m7-closure-handoff.md).
 **Risks and open questions**
 
 - Presenting a single headline percentage invites overinterpretation; the framing needs care.
-- Responsive browser behavior with the complete layer set is verified at the
-  deployed public route. The project-file/CPU model above is useful partial
-  evidence but is not a full-connection or real-device test.
+- Responsive browser behavior with the complete layer set and the global
+  whole-connection functional model is verified at the deployed public route.
+  This is not a real-device test.
 
 ---
 
@@ -2035,7 +2041,8 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 
 On 2026-09-09 the exact author-approved M5/M7 candidate was deployed to the
 existing stable production origin and passed full public inventory, header,
-keyed browser, mid-range-model, and release-time VSR checks. Independent
+keyed browser, initial project-only performance modeling, and release-time VSR
+checks. The later whole-connection functional check also passed. Independent
 numerical/scientific-content review passed for exploratory public presentation,
 separately from author acceptance. This early evidence does not start or
 complete M9 automatically: M7 and M8 are not closed, public portfolio

@@ -5,11 +5,12 @@
 **Status:** Version 1 is defined and partially complete. M1 through M6 are
 complete: the inputs, reproducible exploratory exposure analysis, public display
 contracts, independent numerical/content review, and author acceptance are
-recorded. The complete application is deployed and publicly verified, while M7
-remains in progress pending a coordinated whole-connection browser check and a
-later correction to one stale pre-acceptance sentence in the deployed results
-panel. M8 verification/reproducibility closure and M9 public-release work remain
-open. See the [roadmap](roadmap.md) for criterion status.
+recorded. The complete application is deployed and publicly verified, and the
+whole-connection browser criterion has passed. M7 remains in progress only
+because the corrected review/acceptance sentence is implemented and fully
+tested locally but is not yet in a reviewed, authorized public release. M8
+verification/reproducibility closure and M9 public-release work remain open. See
+the [roadmap](roadmap.md) for criterion status.
 
 ---
 

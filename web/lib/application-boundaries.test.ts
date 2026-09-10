@@ -26,6 +26,10 @@ const faviconSource = readFileSync(
   new URL("../public/favicon.svg", import.meta.url),
   "utf8",
 );
+const exposureResultsPanelSource = readFileSync(
+  new URL("../components/ExposureResultsPanel.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("static application boundaries", () => {
   it("keeps the production build as a directory-friendly static export", () => {
@@ -90,5 +94,25 @@ describe("Esri attribution boundary", () => {
 
   it("clips the interactive SDK surface to the map frame", () => {
     expect(mapFrameStyles).toMatch(/\.frame\s*\{[\s\S]*?contain:\s*paint;/);
+  });
+});
+
+describe("accepted exploratory results wording", () => {
+  it("records completed review and acceptance without overstating their meaning", () => {
+    expect(exposureResultsPanelSource).toContain(
+      "passed independent numerical/scientific-content",
+    );
+    expect(exposureResultsPanelSource).toContain(
+      "accepted by the author for this exploratory public",
+    );
+    expect(exposureResultsPanelSource).toContain(
+      "Review and acceptance do not change the limitations above",
+    );
+    expect(exposureResultsPanelSource).toContain(
+      "exploratory overlap proxy into a causal or policy result",
+    );
+    expect(exposureResultsPanelSource).not.toMatch(
+      /pending independent audit|pending[^.]+author acceptance/,
+    );
   });
 });

@@ -11,7 +11,10 @@ This is the execution handoff for the closure audit. The
 [roadmap](roadmap.md) owns milestone status; the
 [project brief](project-brief.md) owns scope; and the existing M5, M6, and M7
 handoffs retain detailed run history. No analysis or application source, test,
-data, deployment, account setting, or M8-owned file was changed.
+data, deployment, account setting, or M8-owned file was changed by the initial
+audit commit. At the author's follow-up request, this branch now also corrects
+the results-panel acceptance sentence and adds one focused web regression test;
+analysis, M8-owned files, data, and external state remain unchanged.
 The M4 section's stale `In progress` label was also aligned with its already
 `Complete` roadmap-table status; no M4 criterion was re-audited here.
 
@@ -21,7 +24,7 @@ The M4 section's stale `In progress` label was also aligned with its already
 | ---------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | M5 — Core input layers       | **Complete**    | All six completion criteria have exact retained local and deployed evidence.                                                                                 |
 | M6 — Exposure analysis       | **Complete**    | All seven criteria are supported by deterministic artifacts, known-answer tests, independent recomputation, review, acceptance, and deployed reconciliation. |
-| M7 — Application integration | **In progress** | Four criteria pass. The mid-range-connection criterion is not fully evidenced because the retained run throttled only project GeoJSON requests plus CPU.     |
+| M7 — Application integration | **In progress** | The whole-connection criterion now passes. Corrected review/acceptance wording passes locally but is not yet in a reviewed, authorized public release.       |
 
 M8 and M9 remain unchanged. “Largest outside concentrations” is satisfied by a
 reproducible ranking of contributing outside cells; those cells are **not**
@@ -117,44 +120,55 @@ VSR effectiveness.
 
 ## M7 criterion assessment
 
-| Criterion                                      | Exact evidence inspected                                                                                                                                                                                                                                       | Result   |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| Displayed statistics exactly match analysis    | The release receipt binds results ID `exposure-results-8a0b…`; direct recomputation and the all-row comparison above match the deployed values and layer.                                                                                                      | **Pass** |
-| First-time visitor can understand the display  | Deployed three-viewport report and screenshots show an immediately visible results summary, layer names/legends, source/method disclosures, and responsive controls without requiring repository context.                                                      | **Pass** |
-| Limitations are visible in the interface       | Mixed vintages, modeled habitat, receiver-qualified domain, fractional uniformity assumption, formula sensitivity, separate speed treatment, and excluded-cell meaning are visible in the panel; detailed sensitivity remains reachable in-page.               | **Pass** |
-| Wording follows scientific-communication rules | Direct public HTML/screenshot inspection found no collision-probability, strike-prediction, optimal-boundary, or policy claim. Ranked outside contributor cells are not presented as clusters.                                                                 | **Pass** |
-| Usable on a mid-range connection               | Report `4a1154…ca76` and its script apply 4× CPU slowdown plus 100 ms / 10 Mbps delay only to `/layers/*.geojson`; `externalServiceThrottling` is false. HTML, JavaScript/SDK, basemap, and publisher VSR requests were not subjected to the connection model. | **Gap**  |
+| Criterion                                      | Exact evidence inspected                                                                                                                                                                                                                                      | Result                   |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Displayed statistics exactly match analysis    | The release receipt binds results ID `exposure-results-8a0b…`; direct recomputation and the all-row comparison above match the deployed values and layer.                                                                                                     | **Pass**                 |
+| First-time visitor can understand the display  | Deployed three-viewport report and screenshots show an immediately visible results summary, layer names/legends, source/method disclosures, and responsive controls without requiring repository context.                                                     | **Pass**                 |
+| Limitations are visible in the interface       | Mixed vintages, modeled habitat, receiver-qualified domain, fractional uniformity assumption, formula sensitivity, separate speed treatment, and excluded-cell meaning are visible in the panel; detailed sensitivity remains reachable in-page.              | **Pass**                 |
+| Wording follows scientific-communication rules | Scientific proxy and limitation wording passes. The public build still has the factually stale review/acceptance sentence; corrected source passes locally but awaits release.                                                                                | **Gap at public origin** |
+| Usable on a mid-range connection               | Whole-connection report `77ecd86b…509f` applied cache-disabled 4× CPU and 100 ms / 10 Mbps network emulation globally before navigation. HTML, 87 JavaScript, five project-layer, 96 basemap, and four VSR responses succeeded; all functional checks passed. | **Pass**                 |
 
-The broader test was not run because the dedicated M8 worktree/session was
-active and no quiet coordinated window was available. The repeatable,
-read-only all-request procedure is owned by
-[development.md](development.md#remaining-m7-whole-connection-functional-check).
-It is a functional pass/fail check with no new timing threshold and must not be
-described as a real low-end-device benchmark.
+The successful run used Chrome 152 at 820 × 1180. All five layers loaded once;
+results, formula and visibility controls, pan/zoom, scrolling, horizontal
+containment, keyboard toggling and 3 px focus passed. There were no non-empty
+alerts, console/page errors, or unexpected failures. One superseded basemap tile
+was cancelled during interaction while the map remained ready. The report and
+harness hashes are:
 
-Direct inspection also found a bounded content defect outside the formal
-criterion accounting: the deployed results panel says, “These generated values
-remain pending independent audit and author acceptance as final public
-wording.” Both events are recorded. Correcting it requires an application-source
-change, a fresh candidate, review, authorization, deployment, and targeted
-public verification; this documentation-only audit did not alter the app.
+- report: `77ecd86bfec9c34effac2d7150dd4a8ca80425df7f27cefebcbdd56b7ba9509f`;
+- harness: `438a36c0b5e62d0d0c7cd3d164e98545a33e3fb6d674c5c9453f8850a1840c21`;
+- screenshot: `2eff4e92d0ca2a340bd3e1c470997f641e123823ab3a3097ce3011d158a29c01`.
+
+The ignored evidence is under
+`data/interim/m7-whole-connection-20260909-01/`. Two failed reports are
+preserved: attempt 1 exposed a focus-modality harness error, and attempt 2
+exposed an empty `role="alert"` element that was not an application warning.
+Neither report contains an application failure. The procedure is owned by
+[development.md](development.md#m7-whole-connection-functional-check). No raw
+HAR, URL, credential, key, or external-service timing was retained, and this is
+not an ArcGIS benchmark or real-device claim.
+
+The stale results-panel sentence is corrected in source to say that independent
+numerical/scientific-content review passed and the author accepted the values for
+exploratory public presentation. It also says those actions do not change the
+limitations or turn the overlap proxy into a causal or policy result. A focused
+regression and the complete clean web gate pass: formatting, lint, strict
+TypeScript, 102 tests in 11 files, and the static build. The optimized HTML
+contains the corrected sentence and no pending-review sentence.
 
 ## Verification and next steps
 
-Documentation verification passed: `git diff --check` was clean; a read-only
-relative-link/heading-anchor check resolved every link in all seven changed
-Markdown files; and the final staged-diff review confirmed that no M8-owned,
-analysis, test, application-source, data, or deployment file was included. The
-new handoff also passes the repository's configured Prettier formatter.
+The initial documentation verification passed. Follow-up verification added the
+complete clean web gate and direct optimized-HTML inspection described above.
+Final diff, link/anchor, secret, and staged-scope checks remain required after
+the owner documents are updated.
 
 Dependency-ordered next steps:
 
-1. Let the M8 owner finish or coordinate a quiet window; run the documented
-   all-request M7 functional check and retain a sanitized categorical report.
-2. Correct the stale status sentence in a dedicated web-source change; run the
-   focused and required web gates, create a fresh release candidate, obtain
-   review/authorization, and verify the exact public replacement.
-3. Re-audit the one remaining M7 criterion. Mark M7 complete only if the
-   all-request check passes and the accepted package remains otherwise exact.
+1. Review and merge this source correction through the normal PR and CI path.
+2. From the merged clean `origin/main`, create a fresh keyed candidate, verify
+   its receipt and browser behavior, obtain explicit authorization, deploy only
+   that package, and verify the corrected public text plus release-time VSR.
+3. Mark M7 complete only after the corrected public release passes.
 4. Continue M8 and then M9 in roadmap dependency order. Do not infer M8/M9
    completion from this audit.

@@ -435,9 +435,11 @@ before creating the ArcGIS layer. The exact authorized package is deployed and
 passed public receipt, header, keyed-browser, and VSR checks. Its retained
 performance run combined 4× CPU throttling with delay/bandwidth controls on the
 four project GeoJSON requests; it did not throttle the full page connection or
-measure external ArcGIS requests. A whole-connection functional check therefore
-remains an M7 closure condition, and the retained run is not a real-device
-benchmark.
+measure external ArcGIS requests. A later clean-browser run applied the same
+100 ms / 10 Mbps profile globally before navigation, with cache disabled and 4×
+CPU throttling. It exercised application HTML/JavaScript, all project layers,
+the Oceans basemap, and publisher VSR service without recording external-service
+timings. The functional criterion passed; neither run is a real-device benchmark.
 The build-only results JSON is not public and no server runtime was added. A
 representation change requires a later decision supported by measured need,
 source terms and verified free capability.
@@ -863,13 +865,15 @@ changes without duplication, and no horizontal overflow. Independent numerical
 and content review and author acceptance are recorded. The retained performance
 run is narrower than the roadmap criterion: it applied 4× CPU throttling and a
 100 ms / 10 Mbps model only to project GeoJSON routes, while external service
-throttling was disabled. A coordinated all-request functional run remains open.
+throttling was disabled. The later globally applied run passed with all required
+request classes observed, five ready single-instance layers, working controls,
+pan/zoom, scrolling and keyboard focus, and no application error.
 
 These measurements are observations of this project's static assets and the
 deployed functional checks described above. They are **not** a benchmark of
-ArcGIS platform services, no ArcGIS service timing is reported, and the partial
-throttling model does not establish whole-connection performance or low-end
-device behavior. The Location Platform agreement's benchmarking and
+ArcGIS platform services, no ArcGIS service timing is reported, and the global
+functional model does not establish real-device or low-end-device behavior. The
+Location Platform agreement's benchmarking and
 benchmark-publication clauses remain unresolved and must be settled before any
 timing exercise that measures ArcGIS services.
 
@@ -914,7 +918,7 @@ its milestone needs it.
 | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Exposure formula, normalization, and weighting                                              | **Resolved for exploratory use** in [ADR 0020](decisions/0020-propose-area-integrated-relative-exposure.md) | Accepted for bounded local execution on 2026-09-06, computed reproducibly, independently reviewed, and accepted by the owner for the public exploratory presentation. Limitations and proxy language remain mandatory.                                                                                                     |
 | High-exposure threshold                                                                     | **Resolved for exploratory use** in ADR 0020                                                                | The qualified-area-weighted 90th percentile, reported with 80/95 and a positive-only reference. Sensitivity is recorded, including the materially non-robust comparison, and the owner accepted the bounded public wording.                                                                                               |
-| Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021**                                                                                    | Checksum-addressed static files beside the application on free Vercel Hobby. The accepted M7 package is deployed and passed receipt, public-origin, keyed-browser, and release-time VSR verification. The remaining M7 performance gap is the broader all-request mid-range-connection functional check.                      |
+| Final public representation and host for project-derived whale, vessel, and exposure layers | **Resolved by ADR 0021**                                                                                    | Checksum-addressed static files beside the application on free Vercel Hobby. The accepted package passed receipt, public-origin, keyed-browser, release-time VSR, and whole-connection functional verification. The corrected review/acceptance copy awaits a reviewed, authorized public release.                            |
 | ArcGIS Location Platform publication route                                                  | Unselected by ADR 0021                                                                                      | Actual hosted-data creation, storage and sharing capabilities remain unverified and are not M4 requirements. The narrower Location Platform basemap account, allowance and key checks passed for the selected static route.                                                                                               |
 | ArcGIS Online publication route                                                             | Unselected by ADR 0021                                                                                      | Actual organization and publishing capabilities remain unverified.                                                                                                                                                                                                                                                        |
 | Static application host                                                                     | **Resolved and verified by ADR 0021 / M4**                                                                  | Free Vercel Hobby, author-confirmed and deployed on 2026-09-07. HTTPS, stable origin, static-export limits, exact receipt and clean-browser verification passed. No paid fallback is authorized.                                                                                                                          |
