@@ -8,8 +8,10 @@ changed. The separate M5–M7 closure session owns shared status documentation.
 - Branch: `feat/m8-verification`.
 - Base: fetched `origin/main`, `3a9d8028a670d2c06687c9839739dd3fdac7f0b3`.
 - Worktree: `C:/Users/teche/socal-whale-vessel-risk-m8-verification`.
-- Implementation and handoff commit: identified by this file's Git history;
-  the final local commit IDs are supplied in the session handoff.
+- Implementation/tests/procedures and initial handoff commit:
+  `00495356ab15d97f0e91720811f0a25baecce205`.
+  The following documentation-only commit pins this identity; its own ID is
+  available from this file's Git history and the final session handoff.
 - Original checkout was clean; branch/path names were checked before creation.
   Other worktrees were inspected read-only, never repurposed. No push, PR,
   merge, publication, deployment, credential access, or dependency upgrade.
