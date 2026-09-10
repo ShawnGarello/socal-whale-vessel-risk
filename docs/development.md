@@ -2065,7 +2065,7 @@ In practice:
   tool/version, inspected views/checks, result, and relevant observations.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
-**Application (TypeScript).** `npm test` in `web/` runs Vitest once (101 tests);
+**Application (TypeScript).** `npm test` in `web/` runs Vitest once (102 tests);
 `npm run test:watch` watches. The suite covers configuration logic in
 `web/lib/`, how the map component's reported load failures become interface
 text, the source-level application boundary that keeps fallback attribution
