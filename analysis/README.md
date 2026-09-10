@@ -23,7 +23,8 @@ descriptors under ignored `data/derived/`. A separate period vessel-rule
 evidence boundary reuses the same whole-period adjacency stream to summarize
 all four ADR 0018 candidate combinations without spatial allocation. That
 boundary is implemented, synthetically tested, and exercised twice on the
-ready 153-date input with byte-identical deterministic evidence. It does not
+ready 153-date input with byte-identical deterministic evidence. These intake
+and vessel-rule evidence commands do not
 submit AccessAIS orders, download AIS,
 process a season implicitly, calculate relative
 exposure, or report inside-versus-outside statistics. A distinct production
@@ -31,6 +32,15 @@ vessel-input command uses the accepted ADR 0018 rules and the shared allocation
 engine with separate descriptive speed fields. Its real production generation,
 byte-identical repetition, independent verification and QGIS validation passed
 on 2026-09-05, as recorded below.
+
+The separate exposure analysis and display/results exporters are implemented
+below. The exact M5/M7 package was deployed and publicly verified on 2026-09-09;
+its source and artifact identities are recorded in the
+[production handoff](../docs/m7-production-candidate-handoff.md). Later
+verification can now be recorded through the narrow
+[exposure verification command](#post-generation-exposure-verification), without
+editing generation lineage. The end-to-end M8 raw-input rerun remains open;
+see the [M8 handoff](../docs/m8-verification-handoff.md).
 
 Run all commands below from this directory.
 
@@ -2338,11 +2348,12 @@ QGIS inspection, so that value remains truthful for that generation. Under the
 current implementation, an explicitly authorized overwrite replaces the output
 and sidecar, and prior run evidence is not retained automatically. The later
 QGIS report and documentation are separate verification evidence tied to the
-output SHA-256 above. Future reusable verification evidence is planned to
-record the checksum, date, GIS tool/version, inspected views/checks, result, and
-relevant observations. No formal verification record or command and no
-append-only/versioned lineage are implemented yet; [the roadmap](../docs/roadmap.md)
-carries that follow-up.
+output SHA-256 above. The later
+[exposure verification command](#post-generation-exposure-verification) adds
+separate versioned, write-once request/result records for the existing M6
+analytical-to-delivery boundary. It does not retrofit earlier water-grid
+generation lineage or automatically certify visual inspection. The historical
+water-grid check remains the checksum-bound documentation above.
 
 QGIS is an inspection and visual-verification tool, not a production processing
 path. Any result-changing transformation discovered during review must be
@@ -2641,14 +2652,17 @@ are retained in the
 
 Implemented under `exploratory_relative_exposure_v1` / method version `1.0.0`,
 following [ADR 0020](../docs/decisions/0020-propose-area-integrated-relative-exposure.md).
-The ADR is **accepted for bounded exploratory execution only**: the method may
-be run locally, but its results still need independent review and owner
-acceptance, and must not be quoted as headline findings. Historical bundle
+The ADR selects the method for bounded exploratory execution. Owner acceptance
+of the resulting exploratory public framing and a separate independent
+numerical/scientific-content review were recorded on 2026-09-09 in the
+[production handoff](../docs/m7-production-candidate-handoff.md). Those records
+do not validate collision probability, observed encounters, or VSR effectiveness.
+Historical bundle
 identities remain recorded in the foundation handoff. Fresh current-code
 bundles and the downstream display/results delivery evidence are recorded in
 the [delivery handoff](../docs/m6-exposure-results-delivery-handoff.md). The
-analytical bundle remains ignored local evidence; a public route is not yet
-accepted and nothing has been published.
+analytical bundle remains ignored local evidence. ADR 0021's static route now
+serves its separate public display representation in the verified M5/M7 package.
 
 Four analytical modules make up the exploratory analysis boundary. The
 downstream `exposure_delivery` module is a separate delivery boundary.
@@ -2780,8 +2794,8 @@ for its manifest, and
 `ebba5b06ee804d80b34f5714ecb1d100c0b05d3579307e88384886dcbd339e60`
 for the results. The display is 2,542,744 bytes raw, 528,235 bytes at gzip
 level 9, and 375,238 bytes at Brotli quality 11. Static same-origin delivery is
-selected by ADR 0021; complete local release staging is verified, while
-deployment and deployed verification remain unfinished.
+selected by ADR 0021; the exact package was deployed and publicly verified on
+2026-09-09, as recorded in the production handoff.
 
 The local M7 application now consumes these exact three delivery-artifact
 identities. Static generation verifies the results contract, version, checksum,
@@ -2816,8 +2830,80 @@ inconsistent checksum-matched summaries, strict provenance and public-field
 allowlists, private/debug injection, deterministic repetition, identity
 stability, output guards, and CLI behavior. Resource-profile evidence for the
 two fresh analytical runs and all exact ignored artifact locations are recorded
-in the delivery handoff. Independent audit and owner conclusion/map review are
-still required.
+in the delivery handoff. The later independent review and owner acceptance are
+recorded in the production handoff; neither substitutes for M8's end-to-end rerun.
+
+## Post-generation exposure verification
+
+`exposure_verification` checks the existing analytical-to-delivery boundary and
+writes `exposure_delivery_verification_v1`, schema 1, verifier version `1.0.0`.
+Supply one retained M6 bundle, pins for its three deterministic files, the
+existing display/manifest/results files with their pins, and a fresh ignored
+attempt directory. Input files may remain in their owning worktrees.
+
+For real artifacts use the existing profiler's conservative small-grid gates:
+
+```text
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.exposure_verification --output ../data/interim/<fresh-profile>/profile.json --label m8-exposure-verification --disk-root ../data/interim/<fresh-attempt> --minimum-free-memory-gib 2 --minimum-free-disk-gib 20 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 12 --runtime-maximum-application-rss-gib 1.75 -- --bundle <retained-bundle> --expected-5km-sha256 <sha256> --expected-10km-sha256 <sha256> --expected-report-sha256 <sha256> --display <existing.geojson> <sha256> --manifest <existing.geojson.manifest.json> <sha256> --results <existing-results.json> <sha256> --evidence <retained-report-or-document> <sha256> --output-dir ../data/interim/<fresh-attempt>
+```
+
+`--evidence PATH SHA256` is optional and repeatable. References are checked for
+byte identity only. For visual evidence, separately establish that the report
+names the exact artifact, that its sheets match their recorded hashes, that the
+relevant renderer/export implementation is applicable, and that the documented
+views were actually inspected. Attaching a render report does not establish any
+of those claims automatically.
+
+The command performs these checks in order:
+
+1. Hash all six artifacts and each supplied evidence reference against the pins.
+2. Reuse `exposure_delivery.load_bundle`, including existing table read-back and
+   full report reconciliation against the accepted calculations.
+3. Reuse `build_delivery_export` entirely in memory. Compare every byte of the
+   display, manifest, and results with the retained files. This also checks
+   public geometry serialization, values, typed projections, and exact pairing.
+   Reuse the recorded delivery time and original output name for this comparison;
+   they are reproduction parameters, not the time of this verification.
+4. Rehash inputs, evidence, and implementation to reject changes during the check.
+
+The command writes only a fresh directory beneath this checkout's ignored
+`data/interim/`. Existing destinations, input overlap, raw/Git locations, and
+resolved paths outside that root are refused. There is no overwrite switch.
+`request.json` records the actual UTC start, expected hashes, local references,
+verifier version, Git HEAD, actual package-source hashes, lock hash and software
+versions. `result.json` binds that request by SHA-256 and records completion time,
+observed hashes, checks performed, reproduced delivery hashes, and outcome.
+Both use exclusive creation; generation-time lineage is untouched. Keep both
+files together and record their hashes in the handoff. Keep failed attempts and
+earlier successful records when running again in a new directory.
+
+A valid invocation that encounters a mismatch or validator exception records
+`failed`; a handled keyboard interruption records `interrupted`. A killed
+process or write failure can leave a request without a complete result: that is
+incomplete evidence. Rejected arguments or unsafe destinations fail before a
+record can be created and must be noted in the execution log. Exit 0 means all
+implemented checks passed; exit 2 means failure/refusal. Missing check entries
+were not completed. Records retain the failing check and exception type, not
+untrusted exception text. Use the original validator for detailed diagnostics.
+
+All records explicitly state that this command performed no visual inspection,
+scientific validation, or raw-to-public rerun. Byte reproduction from retained
+analytical tables does not prove the upstream raw processing path, observational
+completeness, or propagation of model uncertainty. It also does not fetch or
+verify a deployed package; receipt/public-origin verification is separate.
+
+Focused synthetic verification:
+
+```text
+python -m uv run pytest tests/test_exposure_verification.py
+python -m uv run python -m whale_vessel_analysis.exposure_verification --help
+```
+
+The [M8 handoff](../docs/m8-verification-handoff.md) maps the complete chain,
+distinguishes historical evidence from checks actually run, and gives the
+remaining coordinated raw-input rerun procedure. Do not rerun the five months
+or compete with another session's browser measurements merely to create a
+verification record.
 
 ## Re-running the large-tabular benchmark
 
