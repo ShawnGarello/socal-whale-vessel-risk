@@ -156,6 +156,18 @@ regression and the complete clean web gate pass: formatting, lint, strict
 TypeScript, 102 tests in 11 files, and the static build. The optimized HTML
 contains the corrected sentence and no pending-review sentence.
 
+Application-source commit `9831c6ea0a2a1344ec5e706e1d6117ecee298888`
+also passed the existing isolated release packager as keyless rehearsal
+`m7-acceptance-copy-rehearsal-20260909-01`: 903 files, 38,659,273 bytes,
+receipt SHA-256
+`b6d19fd8fc2641d2c9d85f9028df884519a1f50be0351d4d82d5e690819d7ee2`.
+Independent receipt read-back returned the same commit, mode, file count and
+bytes. The packaged HTML has two serialized corrected-text occurrences and zero
+pending-review matches. Sanitized `verification.log` SHA-256 is
+`3b7b6c9577698bd8a2a6bf600a2ce81eac287b504b88895dd1cff24c296b37ea`.
+The package is `keyless-rehearsal-not-for-deployment`; it is not a production
+candidate, review record, deployment authorization, or public verification.
+
 ## Verification and next steps
 
 The initial documentation verification passed. Follow-up verification added the

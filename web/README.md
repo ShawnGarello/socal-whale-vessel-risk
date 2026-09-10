@@ -368,9 +368,11 @@ The deployed results panel contains one stale sentence saying independent
 review and author acceptance are pending, although both are recorded. This
 branch corrects it while preserving the exploratory, non-causal framing. The
 focused regression, formatting, lint, strict type check, all 102 tests, and the
-static build pass, and the optimized HTML contains the corrected sentence. M7
-remains in progress until a reviewed, authorized release replaces the public
-copy and passes targeted verification.
+static build pass, and the optimized HTML contains the corrected sentence. The
+committed source also passed a 903-file keyless isolated release rehearsal and
+receipt read-back. That rehearsal is not deployable evidence. M7 remains in
+progress until a reviewed, authorized release replaces the public copy and
+passes targeted verification.
 
 ## Publisher-hosted VSR boundary
 

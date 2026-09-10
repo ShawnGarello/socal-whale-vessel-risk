@@ -1967,9 +1967,10 @@ recorded**
   corrected on the closure branch to state that both occurred for exploratory
   public presentation without turning the proxy into a causal or policy result.
   The focused regression, full 102-test suite, formatting, lint, strict type
-  check, and static build pass. M7 remains in progress until that source change
-  is reviewed, explicitly authorized, deployed, and verified at the public
-  origin.
+  check, static build, and isolated 903-file keyless release rehearsal pass. M7
+  remains in progress until that source change is reviewed, explicitly
+  authorized, deployed, and verified at the public origin. The rehearsal is not
+  a production candidate or deployment authorization.
 
 The criterion-by-criterion evidence and independent recalculation are retained
 in the [M5–M7 closure audit handoff](m5-m7-closure-handoff.md).

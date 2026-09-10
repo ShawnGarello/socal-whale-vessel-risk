@@ -78,9 +78,10 @@ performance model did not throttle the whole connection or external ArcGIS
 requests. The later whole-connection functional check defined below passed. The
 deployed interface retains one stale sentence saying review and acceptance are
 pending; corrected source and its regression test pass the complete clean web
-gate on the closure branch, but M7 remains in progress until that correction is
-reviewed, authorized, and deployed. Exact implementation and release evidence
-is in the [M7 release-integration handoff](m7-release-integration-handoff.md).
+gate and a keyless isolated release rehearsal on the closure branch, but M7
+remains in progress until that correction is reviewed, authorized, and deployed.
+Exact implementation and release evidence is in the
+[M7 release-integration handoff](m7-release-integration-handoff.md).
 
 ## Documentation sources of truth
 
