@@ -264,7 +264,8 @@ The exact successful exposure invocation, from `analysis/`, was:
 python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.exposure_verification --output ../data/interim/m8-verification/exposure-profile-02/profile.json --label m8-exposure-verification --disk-root ../data/interim/m8-verification/exposure-02 --minimum-free-memory-gib 2 --minimum-free-disk-gib 20 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 12 --runtime-maximum-application-rss-gib 1.75 -- --bundle C:/Users/teche/socal-whale-vessel-risk-exposure-results-delivery/data/derived/m6-exposure-results-first --expected-5km-sha256 a8e65b6d0019a24122f16feb7d847e5e5a31ce1670a2eaa9ebfbb64fe4835a29 --expected-10km-sha256 cff427ae54b3660389cc8abe7a547ea060ee39038b542b9ee819d00c53eaf194 --expected-report-sha256 520afde75f34a0293feef17376d44be12e9b96dcfe1b4dac9bee56747b0504ff --display ../data/interim/m8-verification/public-01/relative-exposure.geojson 1ccb605cad9640f42ca5eb2cb1ac3543b3a1341a3375f6e78166dd0fd16e92cb --manifest ../data/interim/m8-verification/public-01/relative-exposure.geojson.manifest.json 0a1b0dea947b3f96dec9cc6ca5037ffe7af4ce949c4e197d8126818e71c569c0 --results ../results/exposure-results.v1.json ebba5b06ee804d80b34f5714ecb1d100c0b05d3579307e88384886dcbd339e60 --evidence ../data/interim/m8-verification/public-01/report.json 3463243babc288949dbdfd5fd8b5f0020d32a2e72f0ab492ea46d775ccbffd33 --evidence C:/Users/teche/socal-whale-vessel-risk-exposure-results-delivery/data/interim/m6-exposure-results-qgis-final-v2/render-report.json 5c5eadc6d000c85981593d2ac53f004b9162a093acb944908447dff5736bd9c1 --output-dir ../data/interim/m8-verification/exposure-02
 ```
 
-Exposure used the README profiler command with fresh `exposure-profile-02` and
+Historically, exposure used the initial 20/12 GiB disk profiler command above
+with fresh `exposure-profile-02` and
 `exposure-02`, bundle `E/derived/m6-exposure-results-first`, three analytical
 pins above, fetched `S/public-01/relative-exposure.geojson` and its manifest,
 tracked results and their pins. Evidence arguments were `S/public-01/report.json`
@@ -297,6 +298,25 @@ Verifier source SHA-256 at execution:
 `8d14441056c1b7ecd0226a5d479a5b6f2a98dc442512a8b77ced20d281c3e66c`.
 The request records every package-source hash and locked/geospatial version.
 
+## Resource-guidance correction, 2026-09-10
+
+The initial verifier procedure inherited generation-sized disk gates without
+workload-specific rationale. Inspection of the verifier, its in-memory loader/
+export builder and profiler publication, plus the unchanged retained profile,
+supports the [verifier-specific resource profile](../analysis/README.md#verifier-specific-resource-profile).
+It documents the six inputs (3,843,772 bytes), two evidence references (8,520
+bytes), 8,808 record bytes and separate 3,776-byte profiler report. There is no
+verifier spill workflow; null profiler spill fields are not a measured zero.
+
+For these exact pins, the corrected prospective disk reserves are 1 GiB
+preflight / 0.5 GiB runtime. They are explicit operational headroom for tiny
+record writes, atomic profiler publication and filesystem activity, not measured
+demand or a forecast for arbitrary inputs. All memory gates remain unchanged.
+No command has been executed under the corrected thresholds in this correction;
+the supporting real run is historical and used 20/12 GiB. Historical files,
+commands, hashes and refusal outcomes above remain unchanged. Do not apply this
+profile to the session-wide retained-chain audit or any generation stage.
+
 ## Smallest justified later end-to-end run
 
 **Not run or authorized by this handoff.** Coordinate through the author after
@@ -325,9 +345,12 @@ or downloads are needed or authorized.
    domain_evidence_cli --config evidence/domain-candidates.toml --grid <N/water.parquet> --shoreline-archive <D/raw/noaa-ngs-cusp-west/West.zip> --station-archive <D/raw/noaa-ais-base-stations/AISBaseStation.zip> --vsr <D/raw/bwbs-vsr-2026/bwbs_ca_vsr_zone_2026.geojson> --report <N/domain-evidence-report.json> --masks <N/domain-candidate-masks.parquet>
    ```
 
-   Module names above are beneath `whale_vessel_analysis`; use the profiler
-   small-grid wrapper from the new README procedure (preflight 2 GiB memory /
-   20 GiB disk; runtime minimum 0.5 GiB memory / 12 GiB disk; maximum RSS 1.75 GiB).
+   Module names above are beneath `whale_vessel_analysis`. These are generation
+   stages, not the verifier. Their full-chain wrapper remains explicit:
+   preflight 2 GiB memory / 20 GiB disk; runtime minimum 0.5 GiB memory /
+   12 GiB disk; maximum RSS 1.75 GiB. Use `resource_profile` with each module,
+   a fresh profile and that stage's output disk root; do not use the new
+   verifier-specific disk reserves.
    Compare water/whale/mask/report deterministic identities before downstream use.
 3. Execute `accessais_period_intake_cli` through `resource_profile` sequentially
    for each table row, with that month's exact inclusive requested start/end:
@@ -362,7 +385,9 @@ or downloads are needed or authorized.
 5. Run `exposure_run` with `--water <N/water.parquet> --whale <N/whale.parquet>
    --vessel <N/production/vessel-grid.parquet>
    --domain <N/domain-candidate-masks.parquet> --vsr <immutable-snapshot>
-   --output <N/exposure>` under the small-grid gates. Compare all three
+   --output <N/exposure>` under generation gates: preflight 2 GiB memory /
+   20 GiB disk; runtime minimum 0.5 GiB memory / 12 GiB disk; maximum RSS
+   1.75 GiB, with a fresh profile and exposure output disk root. Compare all three
    deterministic files and the current exposure ID above. Preserve new lineage.
 6. Run `exposure_delivery_cli --bundle <N/exposure>
    --expected-5km-sha256 <5km-pin> --expected-10km-sha256 <10km-pin>
@@ -371,7 +396,9 @@ or downloads are needed or authorized.
    --results-output <N/delivery/exposure-results.v1.json> --generated-at-utc
    2026-09-07T00:24:32.351855Z` **only as an explicit historical byte-comparison
    parameter**, not as a claim of the new run's actual time. Compare all three
-   public identities. Run M5 whale/vessel/domain exporters with the exact
+   public identities. Retain the generation/export 2/20 GiB preflight,
+   0.5/12 GiB runtime minima and 1.75 GiB RSS maximum, not verifier reserves.
+   Run M5 whale/vessel/domain exporters with the exact
    arguments/pins in their README procedures against fresh upstream outputs.
    Public GeoJSON must match. New real export times and generation-lineage
    references can differ in manifests; compare other fields explicitly, retaining

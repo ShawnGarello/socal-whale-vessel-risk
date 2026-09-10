@@ -2841,10 +2841,59 @@ Supply one retained M6 bundle, pins for its three deterministic files, the
 existing display/manifest/results files with their pins, and a fresh ignored
 attempt directory. Input files may remain in their owning worktrees.
 
-For real artifacts use the existing profiler's conservative small-grid gates:
+### Verifier-specific resource profile
+
+For the exact retained M6/public artifacts identified in the
+[M8 handoff](../docs/m8-verification-handoff.md#checks-actually-run-and-new-evidence),
+use the following verifier-specific reserves. This corrects the initial
+20 GiB preflight / 12 GiB runtime free-disk guidance, which was inherited from
+generation procedures without a verifier-specific justification. Historical
+commands, profiles and refusals retain their original thresholds unchanged.
+
+The retained `exposure-profile-02` run measured 4.2739 operation seconds,
+135,921,664 bytes peak sampled application RSS (499,818,496 bytes peak sampled
+private memory), and 8,808 bytes of request/result records. Its six inputs were
+716,487 and 458,115 bytes of Parquet, 88,242 bytes of analytical report,
+2,542,744 bytes of display, 6,803 bytes of manifest, and 31,381 bytes of results:
+3,843,772 bytes total, plus two evidence references totaling 8,520 bytes.
+Source/lock fingerprints are additional small reads. These are file sizes,
+not an estimate of expanded Arrow, geometry or Python-object memory.
+
+Code inspection establishes that `load_bundle` reads both tables with
+`use_threads=False` and reconciles the report in memory; `build_delivery_export`
+constructs and validates geometry/JSON in memory. The verifier never calls
+`write_delivery` or analytical generation. Checksums stream in 1 MiB chunks;
+the display/results comparisons also read complete byte payloads. Its only
+explicit data writes are exclusive `request.json` and `result.json` (6,923 and
+1,885 bytes in this run). There is no verifier temporary dataset, DuckDB session,
+spill directory or network operation. The profiler buffers stdout/stderr in
+memory and atomically publishes its report using a temporary file beside that
+report; the retained report was 3,776 bytes, outside the measured record root.
+The profile's null spill fields mean unmeasured/not configured, not a measured
+zero. Normal interpreter/cache/OS activity is not included in record-byte totals.
+
+Operational choice for this exact workload: **1 GiB free disk before starting,
+0.5 GiB minimum free disk during execution**, on the same volume for records and
+profile. This leaves substantial room for small records, profiler publication,
+filesystem overhead and unrelated short-term disk activity; it is not a claim
+that the verifier needs 1 GiB. The 0.5 GiB difference is headroom, not a spill
+budget. Keep the **2 GiB available-memory preflight, 0.5 GiB runtime available
+memory minimum and 1.75 GiB application-RSS maximum** unchanged: one small run
+does not justify weaker memory protection. Existing profiler stop conditions
+and fresh-output safeguards still apply.
+
+This is a procedural profile, not an input-size limit enforced by the verifier.
+Use it only with the exact pinned artifacts and bounded evidence references
+above in the already-installed locked environment. Larger/different artifacts,
+more complex geometry, extra references or a changed implementation require a
+new workload assessment before execution; do not extrapolate the timing/memory
+measurement. Dependency installation needs its own space. These reserves do
+**not** apply to intake, spatial generation, vessel processing, exposure
+generation, export writing or the full-chain rerun, whose explicit stage gates
+remain in their existing procedures and the handoff.
 
 ```text
-python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.exposure_verification --output ../data/interim/<fresh-profile>/profile.json --label m8-exposure-verification --disk-root ../data/interim/<fresh-attempt> --minimum-free-memory-gib 2 --minimum-free-disk-gib 20 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 12 --runtime-maximum-application-rss-gib 1.75 -- --bundle <retained-bundle> --expected-5km-sha256 <sha256> --expected-10km-sha256 <sha256> --expected-report-sha256 <sha256> --display <existing.geojson> <sha256> --manifest <existing.geojson.manifest.json> <sha256> --results <existing-results.json> <sha256> --evidence <retained-report-or-document> <sha256> --output-dir ../data/interim/<fresh-attempt>
+python -m uv run python -m whale_vessel_analysis.resource_profile --module whale_vessel_analysis.exposure_verification --output ../data/interim/<fresh-profile>/profile.json --label m8-exposure-verification --disk-root ../data/interim/<fresh-attempt> --minimum-free-memory-gib 2 --minimum-free-disk-gib 1 --runtime-minimum-available-memory-gib 0.5 --runtime-minimum-free-disk-gib 0.5 --runtime-maximum-application-rss-gib 1.75 -- --bundle <retained-bundle> --expected-5km-sha256 <sha256> --expected-10km-sha256 <sha256> --expected-report-sha256 <sha256> --display <existing.geojson> <sha256> --manifest <existing.geojson.manifest.json> <sha256> --results <existing-results.json> <sha256> --evidence <retained-report-or-document> <sha256> --output-dir ../data/interim/<fresh-attempt>
 ```
 
 `--evidence PATH SHA256` is optional and repeatable. References are checked for
