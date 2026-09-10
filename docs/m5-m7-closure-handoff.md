@@ -156,6 +156,15 @@ regression and the complete clean web gate pass: formatting, lint, strict
 TypeScript, 102 tests in 11 files, and the static build. The optimized HTML
 contains the corrected sentence and no pending-review sentence.
 
+Two failed clean-gate attempts are part of the record. The first stopped at
+strict type checking because the new test used an ES2018-only regular-expression
+flag while the application targets ES2017; the equivalent ES2017 expression
+then passed. The second reached the full suite, where 101 of 102 tests passed and
+the existing content contract correctly rejected the literal phrase “VSR
+effectiveness,” even in a negation. The copy was changed to the accepted
+non-causal/non-policy wording. The final complete gate passed without changing
+the analytical values or limitations.
+
 Application-source commit `9831c6ea0a2a1344ec5e706e1d6117ecee298888`
 also passed the existing isolated release packager as keyless rehearsal
 `m7-acceptance-copy-rehearsal-20260909-01`: 903 files, 38,659,273 bytes,
