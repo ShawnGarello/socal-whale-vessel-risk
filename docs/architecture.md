@@ -825,7 +825,11 @@ Reproducibility rests on four linked practices:
 The intended end-to-end test is to rerun from unchanged raw inputs, reproduce
 the validated derived outputs, repeat spatial verification where required, and
 compare them with what the deployed application serves. M8 owns that gate and
-is in progress; it has not yet performed the fresh raw-to-public chain.
+is in progress. Its 2026-09-10 fresh run reproduced source/spatial identities and
+the complete cleaned AIS period, then stopped at the production-vessel runtime
+memory gate before producing an accepted vessel bundle. The dependent exposure,
+export, public-comparison and final-verifier stages therefore remain unexecuted
+for that fresh chain.
 
 The implemented `exposure_verification` boundary loads checksum-pinned retained
 M6 tables/report through existing validators and reconstructs display, manifest

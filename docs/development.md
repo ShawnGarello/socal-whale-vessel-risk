@@ -89,9 +89,15 @@ writes new checksum-bound request/result records without changing generation
 lineage. The [analysis procedure](../analysis/README.md#post-generation-exposure-verification)
 owns invocation and verifier-specific resource reserves; heavier stages retain
 their own gates. The [M8 handoff](m8-verification-handoff.md) separates historical
-checks from post-rebase documentation work and lists the remaining coordinated
-fresh raw-to-public rerun and independent documentation audit. M8 is in progress,
+checks from post-rebase documentation work and records the coordinated fresh
+run plus its remaining production-to-public and independent-audit gaps. M8 is in progress,
 not complete; automated reproduction is not visual or scientific validation.
+The authorized fresh run on 2026-09-10 passed source/spatial checks and rebuilt
+all five AIS months into the accepted 153-date, 15,458,567-row period. The next
+production-vessel command passed preflight but the profiler stopped it when
+available system memory fell below 0.5 GiB. The failed profile and spill remain
+preserved; dependent stages were not run or treated as passes. See the handoff
+for exact identities, resources, commands and the safe continuation boundary.
 
 ## Documentation sources of truth
 

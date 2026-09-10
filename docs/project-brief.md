@@ -9,8 +9,10 @@ recorded. The complete application is deployed and publicly verified, and the
 whole-connection browser criterion has passed. M7 remains in progress only
 because the corrected review/acceptance sentence is implemented and fully
 tested locally but is not yet in a reviewed, authorized public release. M8 is
-in progress: later exposure-verification records are implemented, while a fresh
-raw-to-public rerun and independent documentation verification remain open.
+in progress: later exposure-verification records are implemented, and a fresh
+run reproduced source/spatial identities plus the complete 153-date cleaned AIS
+period. The production-vessel stage then reached its documented system-memory
+stop, so the fresh raw-to-public chain and independent audit remain open.
 M9 public-release work remains open. See
 the [roadmap](roadmap.md) for criterion status.
 

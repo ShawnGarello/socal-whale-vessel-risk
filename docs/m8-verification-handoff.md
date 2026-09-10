@@ -2,9 +2,11 @@
 
 ## Status and branch
 
-M8 is **In progress, not complete**. The initial parallel session left shared
-status untouched. On 2026-09-10 the author authorized this branch to integrate
-M8 documentation after PR #36's M5–M7 closure merge; those updates are now included.
+M8 is **In progress, not complete**. On 2026-09-10 the authorized fresh chain
+reproduced source/spatial identities and the complete cleaned AIS period, then
+stopped at the documented production-vessel runtime memory gate. No fresh
+production output was accepted, so exposure, export, public comparison and final
+verification remain open. Earlier integration after PR #36 remains included.
 
 - Branch: `feat/m8-verification`.
 - Current base: fetched `origin/main`,
@@ -55,8 +57,9 @@ initial base HEAD `3a9d802...` and the actual verifier source fingerprint later
 committed in `0049535...`; older upstream and release evidence retain their own
 recorded source identities.
 No record, profile, refusal, accepted input/output or production/rollback package
-was rewritten. No real-data processing or public check was repeated for this
-documentation correction, and no full five-month rerun was started.
+was rewritten. No real-data processing or public check was repeated during that
+documentation correction; the separately authorized fresh execution is recorded
+in the next section.
 
 Correction checks: profiler `--help` and 41 focused profiler/verifier tests
 passed (9.50 s). Post-rebase `python -m uv run pytest -q` passed **674 tests in
@@ -70,9 +73,119 @@ historical evidence, and both CI jobs are still required on an eventual PR head.
 Final review checked 223 relative file/heading links in the seven affected
 documents, whitespace, scoped diffs and secrets/data boundaries. All 11 retained
 evidence hashes in the table below were rechecked unchanged. No new test/check
-failures occurred in this continuation; earlier preflight refusals and test
-attempts remain recorded as history. This branch is ready for independent local
-audit, not for declaring M8 complete or starting the full-chain run automatically.
+failures occurred in that continuation; earlier preflight refusals and test
+attempts remain recorded as history. This was the pre-execution audit state; the
+subsequent authorized fresh run and resource stop are recorded next.
+
+## Fresh chain execution, 2026-09-10
+
+This run started from clean branch `feat/m8-verification` at exact source commit
+`c32e706e1e46d60cb9cbce04a8b1deba197b6819`. `python -m uv sync --locked` and
+`python -m uv lock --check` passed, and every target CLI's `--help` loaded before
+heavy execution. The new ignored root is
+`T/data/interim/m8-fresh-chain-20260910-01`; the production CLI's owning output
+guard required its unique bundle under
+`T/data/derived/m8-fresh-chain-20260910-01/production-01`. The exact command
+record is preserved at `N/commands.md`, SHA-256
+`035a6aec6d8893e874348cedce49f39eb5bf0581c6cbf580a80365b5797102a2`.
+No raw, retained, public, production-package or rollback artifact was modified.
+
+Initial execution resources were 3,388,092,416 bytes available RAM and
+73,436,286,976 bytes free disk. Every heavy stage performed its own immediate
+preflight and ran sequentially. The source inventory passed all recorded sizes
+and hashes for the five raw monthly files, the model archive and extracted GDB
+tree, shoreline/station archives, and immutable VSR snapshot. ZIP CRC, member
+set, and every member size/hash matched the extracted 124-file, 69,753,763-byte
+tree. Inventory SHA-256:
+`583d5e543ef633746c9208e2e904342e03449d342db5116073cfef66dcec318e`.
+
+Fresh deterministic spatial outputs matched accepted bytes:
+
+| Output | Rows/bytes | SHA-256 | Result |
+|---|---:|---|---|
+| Water grid | 4,516 rows / 437,466 bytes | `7229098c7460d42ddf0e0377413859fa12e9f7c7bf1d2308beedfc655c087031` | accepted pin matched |
+| Whale grid | 4,516 rows / 523,986 bytes | `421dc7bf837de1b328328d61944bfb7fa0c7e3c77ac0489ab47506a060520c62` | accepted pin matched |
+| Domain masks | 887,833 bytes | `4dbb7be45a55d948f820982fcc2e124bf6777b60446692d6e406895a024a9a77` | accepted pin matched |
+| Domain report | 6,752 bytes | `eb7963f6ccf625b1547d01ae768dadabfb3f47207d29c24fa5df47e387df5d98` | accepted pin matched |
+
+New real generation paths/times correctly changed the water lineage to
+`7f2b831bdab35ba7d352223e8bd4f88a76622a44bd89185e4a427170b992dd58`
+and whale lineage to
+`93e9db454b4b440e1cccfed2cd75dc2a3c78a7e54b641e48ab0ab1a795892182`;
+those files were not edited to reproduce historical lineage. Domain evidence ID
+`domain-evidence-0b3b7aa4ce0c050303886751` and accepted
+`receivers_50_nautical_miles` facts matched. Because the deterministic spatial
+bytes, relevant implementation and inspected views remain the exact accepted
+ones, their historical checksum-bound QGIS inspection remains applicable; no
+fresh visual inspection is claimed. No fresh M5/M6 display existed to inspect.
+
+All five raw deliveries then ran sequentially into one new cleaned root. No
+existing date was skipped and no old cleaned output was copied. July through
+October returned the documented expected incomplete-period exit 3; November
+returned 0 and made the period ready.
+
+| Month | Raw rows, all assigned to requested dates | Fresh cleaned rows | Dates | Delivery ID | Comparison report SHA-256 |
+|---|---:|---:|---:|---|---|
+| July | 17,998,955 | 3,384,056 | 31 | `accessais-period-c718fbfe6a3eb2d200ace41e` | `cec75c5f56025328c9c90a041a3b7978d15f26b3b263924ce2f169eaeef52f51` |
+| August | 18,284,354 | 3,501,843 | 31 | `accessais-period-9d5c80e7843e2ad9b8b2af2b` | `fa959a91d79dc163763d6bace36d0e6afb8c8b6dcc3e8c2908ea43395dc13cfc` |
+| September | 15,638,516 | 2,861,837 | 30 | `accessais-period-1babd48139b3b00e3b9f6d43` | `51095f95fcd108e652faa5d50579ae760388783404a3e5f15b6daa55c3239014` |
+| October | 16,355,292 | 2,889,605 | 31 | `accessais-period-bb0ffdedb948398fa753c3d2` | `2efa9c172cd2c776885627efd6ad9e2bf08fc2585c0fb40cc4386a73bfc5213d` |
+| November | 14,342,365 | 2,821,226 | 30 | `accessais-period-bad86e685077a002810360e2` | `0239d45d71e481112bd4d712bc3e985d70769bba7e56b830ced857b13f6b8a1b` |
+
+Every month had zero malformed/unassignable and zero valid out-of-request rows.
+The final comparison validated all 153 fresh Parquet hashes, row counts, schemas,
+cleaner IDs and sidecars and matched the retained stable period contract. Total
+cleaned rows are 15,458,567, period ID is
+`multiday-ais-17e982f999f7093945193378`, and readiness is `ready`. Report SHA-256:
+`6391c7f8ef82fe48de5e084ddefec68b53af617b3f30a477f023bbb4af6c9e4e`.
+Successful processing and readiness do not establish independent transfer or
+observational completeness; both remain explicitly unverified.
+
+| Profile | Target outcome / exit | Seconds | Minimum available RAM | Minimum free disk | Peak app RSS | Peak spill |
+|---|---|---:|---:|---:|---:|---:|
+| source inventory | completed / 0 | 14.44 | 3,280,363,520 | 73,436,274,688 | 90,558,464 | n/a |
+| water | completed / 0 | 14.17 | 3,731,927,040 | 73,434,628,096 | 111,153,152 | n/a |
+| whale | completed / 0 | 59.51 | 3,632,635,904 | 73,431,363,584 | 130,011,136 | n/a |
+| domain | completed / 0 | 28.37 | 3,603,263,488 | 73,426,714,624 | 337,174,528 | n/a |
+| July intake | completed / 3 expected | 987.73 | 2,634,870,784 | 67,595,907,072 | 617,353,216 | 781,549,568 |
+| August intake | completed / 3 expected | 1,287.48 | 2,285,096,960 | 67,044,737,024 | 614,744,064 | 796,262,400 |
+| September intake | completed / 3 expected | 709.66 | 2,788,536,320 | 66,057,814,016 | 635,355,136 | 764,346,368 |
+| October intake | completed / 3 expected | 675.62 | 2,451,197,952 | 63,698,739,200 | 619,319,296 | 705,036,288 |
+| November intake | completed / 0 | 710.75 | 1,742,209,024 | 61,028,192,256 | 623,935,488 | 677,806,080 |
+| production vessel | **resource abort / 1** | 132.70 | **440,987,648** | 61,296,238,592 | 1,274,908,672 | 1,167,753,216 |
+
+Profile SHA-256 values, in the same order through the successful November row,
+are `504908515a7f345d31690472bcde9a3ca7c46775ca81a3794044e893a9d5deab`,
+`08e346f75ccb471d9b62c0643d30d6a92aa59bc84951ee5cff096402965f0707`,
+`a1e74fd299f43d02d22a55d15592c952b96431dc959c4371ab58644a4d8596b4`,
+`4b36da6a53f0db82e46e16c8a2af29d08621ae61f3fc58f438c6561a8f9c398e`,
+`83ccd3b286f9dd20cb0ae91fc9003f3207472fbe47eb2ed6ca57248be16ff145`,
+`fdd393a305a9ce15c6e3e799634720bd83126e64e1694935fff93f4631f19478`,
+`cce9698dbc4753dceadd68801e56171e22ead4d3208d23869949b4758af24adc`,
+`4f0a465626f0faf453e172f70e50cf242aade8ce66521a2c950c484b412f1214`
+and `4d52cc6018acb18e4a30ea8b55150bea96cc8325adc4f080cb7ad0359ac926e5`.
+
+The production attempt passed preflight with 3,791,642,624 bytes available RAM
+and 62,502,359,040 bytes free disk. The profiler stopped it when available RAM
+fell below the 536,870,912-byte runtime minimum; application RSS remained below
+the 1.75 GiB cap, spill below 12 GiB, and disk above 12 GiB. Profile SHA-256:
+`d779b0fae35a73f57b424fb1243433c25abfcd21f93f13f75aa88f45197a9ac2`.
+The output directory contains no accepted bundle. Five spill files totaling
+1,167,753,216 bytes remain preserved. The failed attempt was not rerun.
+
+Two non-heavy invocation errors are also retained accurately. An October
+comparison launched from the repository root lacked the analysis environment
+and exited before reading/writing comparison data; its corrected invocation
+passed. The first November launch omitted the `run` subcommand and exited during
+argument parsing; profile SHA-256
+`9eb47418fb344b94ff9ffc99726be710e580a43dff0ded6817eadba8e21cd49b`.
+The successful launch used a new profile and did not overwrite evidence.
+
+The production read-back, exposure generation, M5/M6 fresh exports, public-byte
+comparison and reusable final verification were not run because each depends on
+an accepted fresh production vessel input. Historical export timestamps were not
+used. Accepted domain/rules/formulas/sensitivities and public artifacts were not
+changed, and no VSR geometry was copied into a public output.
 
 ## Implemented and reused
 
@@ -108,17 +221,17 @@ period loading, M6 input-lineage checks, M5 exporters, and native release
 
 | M8 boundary or criterion | Proven by retained evidence | Independently checked this session | Remaining check / unavailable evidence |
 |---|---|---|---|
-| Raw deliveries → canonical intake | Five monthly intake manifests, repeat/identical-retry histories; July overlap repeat | All five raw files and 153 canonical slices exist with recorded sizes; manifests rehashed | Raw/canonical bytes were not freshly rehashed; retries skip existing cleaned dates and are not a fresh five-month rerun |
-| Canonical → cleaned period | Successful monthly processing and period readiness | All 459 cleaned Parquet/quality/lineage files rehashed; accepted sidecar/schema validators; source/date/run/row links checked; 153 dates, 15,458,567 rows | Fresh cleaner execution from all five deliveries remains required for end-to-end criterion |
-| Raw spatial → water/whale/domain | Water byte-identical overwrite repeat; whale a/b/c repeat; retained domain run and QGIS checks | Current spatial artifact hashes and M6 compatibility; retained QGIS applicability where specified below | Raw archive/tree integrity not freshly checked; no independently retained fresh domain repeat identified; earlier overwritten generation lineage is not recoverable from current file |
-| Period/grid → production vessel | Two accepted production runs and separate candidate-matrix evidence | Both production bundles pass existing M3 verifier; all 153 input partition hashes link to period; M6 join/lineage checks pass | Fresh production generation from fresh cleaned period remains required |
+| Raw deliveries → canonical intake | Five monthly intake manifests, repeat/identical-retry histories; July overlap repeat | Fresh inventory matched five raw identities; fresh sequential intake reproduced all 153 canonical slices and row accounting without skips | Independent transfer and observational completeness remain unverified |
+| Canonical → cleaned period | Successful monthly processing and period readiness | Fresh cleaning reproduced all 153 deterministic Parquet files, cleaner IDs and 15,458,567 rows; schemas/sidecars and final period identity validate | No remaining generation gap at this boundary; independent audit remains |
+| Raw spatial → water/whale/domain | Water byte-identical overwrite repeat; whale a/b/c repeat; retained domain run and QGIS checks | Fresh archive/tree correspondence passed; fresh deterministic water, whale, domain masks/report match accepted bytes; exact historical QGIS evidence remains applicable | No new visual inspection claimed; independent audit must confirm reuse applicability |
+| Period/grid → production vessel | Two accepted production runs and separate candidate-matrix evidence | Fresh command used the fresh ready period/grid and passed preflight | Runtime memory guard stopped the attempt; no accepted fresh production bundle or read-back comparison |
 | Analytical inputs → exposure | Current first/repeat deterministic files match; retained numerical review | Both bundles' four files rehashed; first bundle tables and entire report reconciled by accepted validator | New verification starts at retained analytical tables; it is not exposure generation from raw |
 | Analytical → display/results → deployed package | M5/M6 exporter and release evidence | M5 three GeoJSONs and complete manifests reproduced in memory; M6 display/manifest/results reproduced exactly; receipt inventory and ten anonymous public requests match | No new full compiled-asset HTTP sweep, browser/performance check, or live VSR check; use historical production evidence |
 | Every published number traceable | Typed results and public manifests bind methods/input artifacts | Existing exporter reconstruction and application source tracing described below | Scientific validity/observational completeness are not established by reproducibility |
 | Reusable later evidence | Earlier checksum-bound documentation/QGIS records | New versioned write-once command and successful real record; failure/preservation tests | No retrofit of every historical layer's inspection; author decides sufficiency for carried-forward milestone wording |
 | Documentation reflects implementation | Owners, ADRs and retained handoffs available | Analysis procedures corrected; shared M8 summaries integrated after rebase | Independent cross-document verification remains; full criterion not closed |
 | Retrieval dates / versions; centralized limitations | Source register and analytical/results limitation fields | Retained metadata distinguished from processing/export clocks | Exact AccessAIS historical retrieval UTC timestamps unavailable; no invented timestamps; source-model season and completeness caveats remain |
-| End-to-end rerun | Successful component repeats | Targeted read-back and reproduction only | One coordinated fresh raw-to-public processing chain is still required; plan below |
+| End-to-end rerun | Successful component repeats | Fresh raw/spatial processing through the complete cleaned period passed | Production resource stop leaves vessel, exposure, export, public comparison and final verifier open |
 
 ## Exact retained chain
 
@@ -369,20 +482,24 @@ the supporting real run is historical and used 20/12 GiB. Historical files,
 commands, hashes and refusal outcomes above remain unchanged. Do not apply this
 profile to the session-wide retained-chain audit or any generation stage.
 
-## Smallest justified later end-to-end run
+## Continuation procedure after the stopped fresh run
 
-**Not run or authorized by this handoff.** Coordinate through the author after
-browser-performance measurement finishes. One fresh five-month chain, one
-production-vessel generation and one exposure generation are sufficient to test
-the missing uninterrupted path against the retained/public pins. Do not rerun
-the four-candidate matrix or automatically do another five-month repeat.
+Steps 1 through 3 below completed in `m8-fresh-chain-20260910-01`; step 4 stopped
+at its runtime memory gate. Preserve and reuse the successful fresh upstream
+artifacts after identity checks. Do not repeat five-month cleaning blindly, rerun
+the four-candidate matrix, overwrite the stopped attempt, or remove its spill and
+profile. When resources again satisfy the documented conditions, resume at step
+4 with new production output/profile/spill destinations, then continue only if
+the fresh production comparison passes.
 
-Use the committed locked environment and a new ignored run root N under this
-checkout. Do not reuse P or any accepted destination. Every command needs a
-unique profiler/output/spill directory; never add `--overwrite`. Preserve
-failed runs. Copying old cleaned bundles or accepting skip/retry outcomes does
-not fulfill fresh execution. Historical acquisition is not repeated: no orders
-or downloads are needed or authorized.
+Use the committed locked environment and existing ignored run root N under this
+checkout. Do not reuse P or any accepted destination. Every resumed command needs
+a unique profiler/output/spill directory; never add `--overwrite`. Preserve
+failed runs. Historical acquisition is not repeated: no orders or downloads are
+needed or authorized. The production and exposure CLIs require derived bundles
+under ignored `data/derived`; use
+`Q = T/data/derived/m8-fresh-chain-20260910-01` for those outputs while keeping
+profiles, spill and comparison evidence under N.
 
 1. Before processing, hash the five exact raw files against the table; hash
    the spatial archives, snapshot and .gdb tree using existing `sha256_file` /
@@ -392,9 +509,9 @@ or downloads are needed or authorized.
    evidence procedures, unchanged defaults and config. Target arguments are:
 
    ```text
-   spatial_cli --input <D/raw/.../swfsc_cce_becker_et_al_2020b.gdb> --layer Blue_whale_summer_fall --source-crs EPSG:4326 --output <N/water.parquet>
-   whale_grid_cli --whale-input <same.gdb> --whale-layer Blue_whale_summer_fall --grid-input <N/water.parquet> --expected-grid-sha256 <water-pin-above> --output <N/whale.parquet>
-   domain_evidence_cli --config evidence/domain-candidates.toml --grid <N/water.parquet> --shoreline-archive <D/raw/noaa-ngs-cusp-west/West.zip> --station-archive <D/raw/noaa-ais-base-stations/AISBaseStation.zip> --vsr <D/raw/bwbs-vsr-2026/bwbs_ca_vsr_zone_2026.geojson> --report <N/domain-evidence-report.json> --masks <N/domain-candidate-masks.parquet>
+   spatial_cli --input <D/raw/.../swfsc_cce_becker_et_al_2020b.gdb> --layer Blue_whale_summer_fall --source-crs EPSG:4326 --output <N/water-01/water.parquet>
+   whale_grid_cli --whale-input <same.gdb> --whale-layer Blue_whale_summer_fall --grid-input <N/water-01/water.parquet> --expected-grid-sha256 <water-pin-above> --output <N/whale-01/whale.parquet>
+   domain_evidence_cli --config evidence/domain-candidates.toml --grid <N/water-01/water.parquet> --shoreline-archive <D/raw/noaa-ngs-cusp-west/West.zip> --station-archive <D/raw/noaa-ais-base-stations/AISBaseStation.zip> --vsr <D/raw/bwbs-vsr-2026/bwbs_ca_vsr_zone_2026.geojson> --report <N/domain-01/domain-evidence-report.json> --masks <N/domain-01/domain-candidate-masks.parquet>
    ```
 
    Module names above are beneath `whale_vessel_analysis`. These are generation
@@ -421,27 +538,30 @@ or downloads are needed or authorized.
    compatible sidecars and period ID against retained P; completeness stays
    explicitly separate from readiness.
 4. Run `vessel_input_cli` once with
-   `--manifest <N/run/period.json> --grid-input <N/water.parquet>
-   --expected-grid-sha256 <water-pin> --output-dir <N/production>
+   `--manifest <N/run/period.json> --grid-input <N/water-01/water.parquet>
+   --expected-grid-sha256 <water-pin> --output-dir <Q/production-02>
    --memory-limit 1GB --threads 1 --batch-size 50000
-   --temp-directory <N/production-spill>`.
+   --temp-directory <N/production-spill-02>`.
    Use 2/20 GiB preflight, 0.5/12 GiB runtime minimum, 1.75 GiB RSS maximum,
    12 GiB spill maximum, and separate disk/spill roots. Run the existing
    `scripts/verify_production_vessel_input.py` read-back procedure with
-   `--first <N/production> --repeat <V/derived/m3-production-vessel-repeat-attempt2>
-   --grid <N/water.parquet> --expected-grid-sha256 <water-pin>
+   `--first <Q/production-02> --repeat <V/derived/m3-production-vessel-repeat-attempt2>
+   --grid <N/water-01/water.parquet> --expected-grid-sha256 <water-pin>
    --candidate <V/derived/m3-full-period-matrix/g300-s30-first/vessel-grid.parquet>
-   --expected-candidate-sha256 <candidate-pin> --output <N/production-check.json>`;
+   --expected-candidate-sha256 <candidate-pin>
+   --output <N/production-check-02/report.json>`;
    compare
    deterministic grid/quality bytes and identity, not path/time sidecar bytes.
-5. Run `exposure_run` with `--water <N/water.parquet> --whale <N/whale.parquet>
-   --vessel <N/production/vessel-grid.parquet>
-   --domain <N/domain-candidate-masks.parquet> --vsr <immutable-snapshot>
-   --output <N/exposure>` under generation gates: preflight 2 GiB memory /
+5. Run `exposure_run` with `--water <N/water-01/water.parquet>
+   --whale <N/whale-01/whale.parquet>
+   --vessel <Q/production-02/vessel-grid.parquet>
+   --domain <N/domain-01/domain-candidate-masks.parquet>
+   --vsr <immutable-snapshot>
+   --output <Q/exposure-01>` under generation gates: preflight 2 GiB memory /
    20 GiB disk; runtime minimum 0.5 GiB memory / 12 GiB disk; maximum RSS
    1.75 GiB, with a fresh profile and exposure output disk root. Compare all three
    deterministic files and the current exposure ID above. Preserve new lineage.
-6. Run `exposure_delivery_cli --bundle <N/exposure>
+6. Run `exposure_delivery_cli --bundle <Q/exposure-01>
    --expected-5km-sha256 <5km-pin> --expected-10km-sha256 <10km-pin>
    --expected-report-sha256 <report-pin>
    --display-output <N/delivery/relative-exposure.geojson>
@@ -475,8 +595,9 @@ accepted/failed/rollback evidence or clear caches to manufacture a result.
 
 ## Integration outcomes and remaining next steps
 
-- Roadmap now records M8 work in progress and this evidence, not completion. The
-  end-to-end and full documentation criteria remain open despite component repeats.
+- Roadmap now records M8 work in progress and the fresh upstream evidence plus
+  production resource stop, not completion. The raw-to-cleaned and spatial
+  boundaries passed; the production-to-public chain and independent audit remain.
 - Development/architecture now describe the narrow M6 record boundary and keep
   actual GIS inspection separate. The current analysis count is 674; historical
   counts remain historical. Shared summaries preserve PR #36's completed review
@@ -494,8 +615,9 @@ accepted/failed/rollback evidence or clear caches to manufacture a result.
   here for independent audit; a new reviewer without them must obtain the retained
   inputs, not infer verification from this prose alone.
 
-Ready for independent local review of the scoped change, not a claim that M8 is
-closed. No PR was opened. After independent review and author authorization,
-both analysis and web CI must pass on the eventual PR head before any separately
-authorized merge. Next substantive M8 step is the coordinated fresh chain above;
-neither unsafe preflight conditions nor parallel browser work justify relaxing it.
+Ready for independent local review of the documented partial execution, not a
+claim that M8 is closed or execution-complete. No PR was opened. The next
+substantive M8 step is a new production attempt only when the documented resource
+conditions can be satisfied, followed on success by the dependent comparisons
+above. After full execution and independent review, both analysis and web CI must
+pass on the eventual PR head before any separately authorized merge.

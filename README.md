@@ -47,8 +47,14 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > including JavaScript, basemap, and publisher VSR requests, and passed. A
 > separate criterion audit closed M5 and M6. M7 remains in progress only because
 > the corrected review/acceptance sentence is implemented and fully tested on
-> this branch but is not yet in a reviewed, authorized public release. See
-> the [roadmap](docs/roadmap.md), the
+> this branch but is not yet in a reviewed, authorized public release.
+> M8 also remains in progress. A fresh 2026-09-10 verification run reproduced
+> the registered raw identities, spatial inputs, water/whale/domain outputs, and
+> all 153 cleaned AIS dates (15,458,567 rows). Its production-vessel stage was
+> stopped by the documented system-memory guard before an output was accepted,
+> so fresh exposure and public-representation comparisons remain open. See the
+> [M8 verification handoff](docs/m8-verification-handoff.md), the
+> [roadmap](docs/roadmap.md), the
 > [M5–M7 closure audit](docs/m5-m7-closure-handoff.md), the
 > [M5 whale display handoff](docs/m5-whale-display-handoff.md), the
 > [M5 vessel/domain display handoff](docs/m5-vessel-domain-display-handoff.md), the
@@ -100,7 +106,9 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 
 **M8 verification is in progress.** A reusable exposure-verification command
 records later checks without changing generation lineage. Retained-artifact
-and public-byte checks passed; the fresh raw-to-public rerun and independent
+and public-byte checks passed. A fresh run reproduced all source/spatial inputs
+and the complete cleaned period, then stopped at the documented production
+runtime memory gate. Fresh production-to-public comparison and independent
 documentation verification remain open. See the
 [M8 evidence and next steps](docs/m8-verification-handoff.md).
 
