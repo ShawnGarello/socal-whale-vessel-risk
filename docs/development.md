@@ -61,8 +61,9 @@ The ADR is accepted for exploratory execution only. On 2026-09-09 the author
 accepted the current exploratory results and limitations wording for public
 display, and separate independent numerical/scientific-content review passed
 for exploratory public presentation. Neither validates collision probability,
-observed encounters, or VSR effectiveness. M6 remains in progress pending an
-explicit milestone-closure decision. Status lives in the
+observed encounters, or VSR effectiveness. The 2026-09-09 closure audit verified
+the retained calculations, fractional accounting, sensitivities, limitations,
+and public delivery and marked M6 complete. Status lives in the
 [roadmap](roadmap.md#m6--whalevessel-exposure-analysis).
 
 **M7 update, 2026-09-09:** the application consumes the exact M6
@@ -72,8 +73,14 @@ and independent exposure-layer lifecycle passed focused tests and responsive
 browser verification. On 2026-09-09 the existing release tool produced the
 exact keyed package from merged `main`; after separate review, acceptance, and
 authorization, that package was deployed and passed public receipt, header,
-browser, mid-range-network, and VSR checks. M7 remains in progress pending
-explicit milestone closure. Exact implementation and release evidence are in the
+browser, project-GeoJSON/CPU performance-model, and VSR checks. The retained
+performance model did not throttle the whole connection or external ArcGIS
+requests. The later whole-connection functional check defined below passed. The
+deployed interface retains one stale sentence saying review and acceptance are
+pending; corrected source and its regression test pass the complete clean web
+gate and a keyless isolated release rehearsal on the closure branch, but M7
+remains in progress until that correction is reviewed, authorized, and deployed.
+Exact implementation and release evidence is in the
 [M7 release-integration handoff](m7-release-integration-handoff.md).
 
 ## Documentation sources of truth
@@ -1639,9 +1646,43 @@ and post-deployment VSR comparison
 `fec03cdf37c533517b43b83844121c25ad5298c7726093919cc6ac65e97e66fa`.
 No raw HAR, credential, or key-bearing URL was retained. Account billing,
 permissions, Git integration, project settings, and unrelated projects were
-not changed. M5, M6, and M7 statuses remain `In progress` pending an explicit
-milestone-closure decision; successful deployment does not close them
-automatically.
+not changed. The closure audit marks M5 and M6 `Complete`. M7 remains `In
+progress`: successful deployment does not close it automatically.
+
+### M7 whole-connection functional check
+
+Run this read-only check only in a coordinated quiet window so it does not
+overlap the M8 verification session or another production verification run. Use
+a clean anonymous Chrome profile at 820 × 1180, disable cache, and apply the
+existing 4× CPU slowdown plus the existing 100 ms / 10 Mbps network model to
+**all** requests before navigation, including application HTML/JavaScript,
+project files, the ArcGIS SDK, basemap, and publisher-hosted VSR service.
+
+Repeat the existing functional assertions: the map becomes ready; the five
+layers load once in the required order; result text, formula/sensitivity switch,
+visibility controls, pan/zoom, keyboard focus, scrolling, and horizontal-overflow
+behavior remain usable; and no application error or unisolated layer failure is
+introduced. Record only sanitized categorical outcomes and report identities;
+do not retain raw HAR, credential-bearing URLs, keys, or external-service
+timings. This is a functional pass/fail check, not an ArcGIS benchmark or a
+real-device/low-end-device claim. It adds no new numeric timing threshold.
+
+This procedure passed on 2026-09-09 after the M8 worktree was confirmed clean
+and the author requested the run. Chrome 152 returned HTTP 200 for the page, 87
+JavaScript responses, all five project-layer requests, 96 Oceans-basemap
+responses, and four publisher-VSR responses under the globally applied profile.
+All five layers loaded once; results, product/log switching, visibility,
+pan/zoom, scrolling, horizontal containment, keyboard toggling and the 3 px
+focus outline passed. There were no non-empty alerts, console/page errors, or
+unexpected failures. One superseded basemap tile was cancelled with
+`net::ERR_ABORTED` during interaction while the map remained ready. The
+sanitized report SHA-256 is
+`77ecd86bfec9c34effac2d7150dd4a8ca80425df7f27cefebcbdd56b7ba9509f`;
+the harness SHA-256 is
+`438a36c0b5e62d0d0c7cd3d164e98545a33e3fb6d674c5c9453f8850a1840c21`.
+Both remain in ignored
+`data/interim/m7-whole-connection-20260909-01/`. Two preserved failed reports
+record harness-assertion refinement rather than application failure.
 
 ### Release-time VSR service and version check
 
@@ -1967,9 +2008,10 @@ credits.
   verified display/manifest pair and a small build-only results contract. M7
   integrates those exact artifacts through the same selected static route. The
   exact authorized M5/M7 package publishes all four project display
-  representations and passed deployed receipt, header, browser, and mid-range
-  checks on 2026-09-09; the results JSON remains build-only and has no public
-  endpoint. The author confirmed Hobby/free-only eligibility, disabled
+  representations and passed deployed receipt, header, browser, VSR, and later
+  whole-connection functional checks on 2026-09-09; the results JSON remains
+  build-only and has no public endpoint. The author confirmed Hobby/free-only
+  eligibility, disabled
   pay-as-you-go, allowance, and the restricted browser key remained current;
   release checks independently verified project/origin identity and exact
   allowed/disallowed key-referrer behavior, not private billing UI state. Esri
@@ -1984,7 +2026,8 @@ credits.
   [ADR 0019](decisions/0019-reference-the-publisher-hosted-vsr-service.md).
 - The small `relative_exposure_application_results_v1` JSON artifact is
   committed so M7 application code and its numbers stay versioned together. It
-  remains machine-readable delivery data, not an accepted headline.
+  remains machine-readable delivery data; the owner separately accepted its
+  bounded exploratory public wording and limitations.
 - A committed generated file must record what produced it and when.
 - Build output, caches, virtual environments, QGIS/ArcGIS scratch data, and
   editor state are ignored, never committed.
@@ -2022,7 +2065,7 @@ In practice:
   tool/version, inspected views/checks, result, and relevant observations.
 - Any statistic that appears in the application must be traceable to a processing step, and the displayed value must match the documented one.
 
-**Application (TypeScript).** `npm test` in `web/` runs Vitest once (101 tests);
+**Application (TypeScript).** `npm test` in `web/` runs Vitest once (102 tests);
 `npm run test:watch` watches. The suite covers configuration logic in
 `web/lib/`, how the map component's reported load failures become interface
 text, the source-level application boundary that keeps fallback attribution
@@ -2039,12 +2082,13 @@ pairing and application bindings, unsafe release names, deterministic
 inventories, receipt read-back, and missing/extra files in an upload package.
 Rendering, the ArcGIS SDK, and ArcGIS Online
 are not unit-tested; the map is verified by building it and looking at it in a
-browser. The complete M7 release rehearsal passed at 390 × 844, 820 × 1180,
-and 1440 × 900 with exact artifact/count/order checks, M5 processing dates,
-generated results text, controls, accessibility/scroll checks and isolated
-missing/mismatched/malformed exposure failures. It used keyless `topo-vector`;
-keyed production-origin, release-time VSR and mid-range-connection checks remain
-open. Vitest was chosen in
+browser. The M7 release rehearsal and deployed-origin matrix passed at 390 ×
+844, 820 × 1180, and 1440 × 900 with exact artifact/count/order checks, M5
+processing dates, generated results text, controls, accessibility/scroll checks,
+and isolated missing/mismatched/malformed exposure failures. Keyed
+production-origin and release-time VSR checks passed. The existing mid-range
+report covers only project GeoJSON routes plus CPU throttling; the broader
+whole-connection functional check above subsequently passed. Vitest was chosen in
 [ADR 0010](decisions/0010-use-vitest-for-typescript-tests.md).
 
 **Analysis (Python).** `python -m uv run pytest` in `analysis/` runs 647 tests
