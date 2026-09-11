@@ -8,8 +8,16 @@ contracts, independent numerical/content review, and author acceptance are
 recorded. The complete application is deployed and publicly verified, and the
 whole-connection browser criterion has passed. M7 remains in progress only
 because the corrected review/acceptance sentence is implemented and fully
-tested locally but is not yet in a reviewed, authorized public release. M8
-verification/reproducibility closure and M9 public-release work remain open. See
+tested locally but is not yet in a reviewed, authorized public release. M8 is
+complete: later exposure-verification records are implemented, and a resumed
+fresh run reproduced source/spatial identities, the
+complete 153-date cleaned AIS period, production vessel and exposure artifacts,
+M5/M6 deliveries and receipt-bound anonymous public bytes. The initial
+production-vessel system-memory stop remains preserved; the successful
+continuation did not rerun cleaning or erase the interruption. Independent
+retained-evidence and documentation audit passed on 2026-09-11 after one
+pre-rebase wording qualifier was narrowed; no implementation changed.
+M9 public-release work remains open. See
 the [roadmap](roadmap.md) for criterion status.
 
 ---
@@ -55,8 +63,8 @@ Version 1 is complete when the research question above has a defensible, documen
 
 Version 1 must ultimately include all of the following. The analytical inputs,
 derived exploratory analysis, and deployed application now exist. Remaining
-work is verification and release closure rather than a reduction of this scope;
-the roadmap records the precise M7, M8, and M9 gaps.
+work is release closure rather than a reduction of this scope; the roadmap
+records M8 completion evidence and the precise M7 and M9 gaps.
 
 **Analytical inputs**
 
