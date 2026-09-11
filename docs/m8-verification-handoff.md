@@ -2,11 +2,14 @@
 
 ## Status and branch
 
-M8 is **In progress, not complete**. On 2026-09-10 the authorized fresh chain
-reproduced source/spatial identities and the complete cleaned AIS period, then
-stopped at the documented production-vessel runtime memory gate. No fresh
-production output was accepted, so exposure, export, public comparison and final
-verification remain open. Earlier integration after PR #36 remains included.
+**M8 execution complete, pending independent audit.** The milestone remains
+**In progress, not complete** until that audit and its documentation review are
+accepted. The original 2026-09-10 execution reproduced source/spatial identities
+and the complete cleaned AIS period, then stopped at the documented
+production-vessel runtime memory gate. The authorized continuation reused those
+fresh inputs, passed one new production attempt and completed exposure, M5/M6
+exports, public comparison, retained-spatial-evidence applicability checks and
+the reusable verifier. This was a resumed chain, not one uninterrupted process.
 
 - Branch: `feat/m8-verification`.
 - Current base: fetched `origin/main`,
@@ -20,6 +23,8 @@ verification remain open. Earlier integration after PR #36 remains included.
   resource correction: `5ccd32773cf2420e5c407150e37c10c6bad6ab29`
   (original correction `de2574f186d2db125f447d23948df6ad0bd419e1`).
   The final integration commit is identified in Git history and the final handoff.
+- Previously audited continuation head and exact continuation execution source:
+  `3cf2382aa9275a976dd7e431520fc93c94ddb63c`.
 - Original checkout was clean; branch/path names were checked before creation.
   Other worktrees were inspected read-only, never repurposed. No push, PR,
   merge, publication, deployment, credential access, or dependency upgrade.
@@ -187,6 +192,138 @@ an accepted fresh production vessel input. Historical export timestamps were not
 used. Accepted domain/rules/formulas/sensitivities and public artifacts were not
 changed, and no VSR geometry was copied into a public output.
 
+## Authorized continuation, 2026-09-10 local / 2026-09-11 UTC
+
+The continuation started from a clean `feat/m8-verification` at exact source
+commit `3cf2382aa9275a976dd7e431520fc93c94ddb63c`. No other heavy project process
+or active owner was found. The locked environment check passed. Immediately
+before the single production retry, the author-side check observed
+5,824,057,344 bytes available RAM and 59,645,689,856 bytes free disk. Every
+target then performed its own unchanged preflight/runtime checks. No cache,
+accepted artifact, failed profile or spill file was removed or overwritten.
+
+The new continuation validator rehashed the fresh inventory, period, water,
+whale, domain, the stopped profile and all five preserved spill files. It also
+validated every one of the 153 fresh cleaned artifacts, schemas and sidecars
+against the retained accepted period. The period remained ready with ID
+`multiday-ais-17e982f999f7093945193378`, 15,458,567 rows and fresh manifest hash
+`04a06bf909afee8a0f6f90c86aef3a7e062dfa45403a7a31bcb6c60ca3cf8d26`.
+Report hash: `891a0a4d5849c3112bca69d72eff5214381f0a323aa65fc889f33c2a54bf3a23`.
+This check reused the successfully regenerated inputs; it did not repeat spatial
+generation, any monthly cleaning, source retrieval or the candidate matrix.
+
+The one authorized retry wrote new `production-02`, `production-profile-02`
+and `production-spill-02` destinations. It used the fresh period and water grid,
+`1GB`, one thread and 50,000-row batches. It completed in 2,069.14 seconds.
+Preflight observed 5,753,266,176 bytes available RAM and 59,645,689,856 bytes
+free disk; runtime minima were 3,402,756,096 bytes RAM and 56,648,577,024 bytes
+disk. Peak application RSS was 1,426,382,848 bytes and peak spill was
+1,109,164,032 bytes, both below their unchanged caps; final spill was zero.
+Profile hash: `96edd31546221121fbff1a015cd83501d5d4ecb598693d0459a4c0ca9415916c`.
+The preserved `production-01` stop remains a failed attempt, not superseded
+history.
+
+| Fresh production-02 artifact | Bytes | SHA-256 / identity |
+|---|---:|---|
+| `vessel-grid.parquet` | 1,346,787 | `5d3b12982f093e637ebda4a0fbd7ac4a1bb4756c6d1c1c2d3a696d2a0ef688c0` |
+| `quality-report.json` | 36,512 | `4d0565af16c15fc9dc176db7b5b14cef99848e7bd48f1a3986dbaca1a5bc9de7` |
+| `run-metadata.json` | 51,754 | `2b2b1c9dd42b3f64f4b98d42b5d452862392422ffac3425ab64fd65246a71822` |
+| Production identity | 4,516 rows | `vessel-input-5e590ff3d85ee7acb16e2fd1` |
+
+The existing production read-back compared the fresh bundle with the accepted
+repeat and accepted candidate. It passed exact deterministic grid/quality
+identity, stable production identity, candidate parity, counts, arithmetic and
+all invariants. Its report hash is
+`4c03fd5acc1a7419d6bf1b794240c2bc5fdef05db579dd76ab46582fe64a10e1`.
+The familiar totals remain 14,946,183 retained and 510,916 excluded segments,
+2,084,502.4960694166 all-commercial vessel-km, 11.395766592421975-knot
+distance-weighted reported SOG and 11.562730708184821-knot implied speed.
+They remain descriptive exploratory values, not coverage or compliance claims.
+
+Fresh exposure generation then used only the fresh water, whale, domain and
+production-02 inputs plus the immutable local VSR snapshot. It reproduced ID
+`exposure-6dd927974fae959765c9b5c3` and all three accepted deterministic files:
+5 km `a8e65b6d0019a24122f16feb7d847e5e5a31ce1670a2eaa9ebfbb64fe4835a29`,
+10 km `cff427ae54b3660389cc8abe7a547ea060ee39038b542b9ee819d00c53eaf194`,
+and report `520afde75f34a0293feef17376d44be12e9b96dcfe1b4dac9bee56747b0504ff`.
+Its truthful new lineage hash is
+`2403b5fb902952116366f538037d25c21817c12ecaf1c3ef2a077bb696d83d80`.
+Generation completed in 34.59 seconds; its preflight was 5,844,336,640 bytes
+RAM / 59,062,046,720 bytes disk, runtime minima were 5,688,168,448 /
+59,060,629,504, and peak application RSS was 165,744,640 bytes. Profile hash:
+`a573cf896c365ff00963659f57d81fad5563b24da9b3639a8f7ea9f98f6b09e9`.
+
+The M6 export reproduced `relative-exposure.geojson`, its manifest and
+`exposure-results.v1.json` byte-for-byte. Its explicit historical
+`2026-09-07T00:24:32.351855Z` argument was used only as the documented
+deterministic reproduction parameter; actual execution is established by the
+2026-09-11 UTC profile and this record. The fresh M5 exports reproduced all
+three GeoJSON data files exactly. Their manifests retained actual fresh export
+times; the whale manifest also retained the fresh whale-generation lineage.
+Recursive comparisons found no other differences.
+
+| Delivery representation | Fresh data SHA-256 | Fresh manifest SHA-256 | Accepted comparison |
+|---|---|---|---|
+| Whale | `831a5412e9f414d5e4c7011d1b1687a89b8089826f8925f31e737b974662e154` | `4ece189b6e100c1885fc1d03b70974b19d42f019c6663b9415e58916ccb755a2` | data exact; only export time and generation lineage differ |
+| Vessel | `3a7f2deeaa1899ac8fc5ecec7e7f522dd058adce667333ba33f8d32d930d3288` | `3621c99742c21bb4f9461b05b45191151ce64e091b4be3b8553ed353805fe1a7` | data exact; only export time differs |
+| Domain | `7020ca8dfa27953a24a9db4ad2b0a25fb321c4edbecd383a01c62efb4b3bc7bf` | `8be33147caa3d2767455a9af968917b18595c2e9e597a335c7fbe506f3a40131` | data exact; only export time differs |
+| Exposure | `1ccb605cad9640f42ca5eb2cb1ac3543b3a1341a3375f6e78166dd0fd16e92cb` | `0a1b0dea947b3f96dec9cc6ca5037ffe7af4ce949c4e197d8126818e71c569c0` | both exact |
+| Application results | `ebba5b06ee804d80b34f5714ecb1d100c0b05d3579307e88384886dcbd339e60` | n/a | exact |
+
+The exposure, M6 export, whale export and vessel/domain export profile hashes
+are respectively
+`a573cf896c365ff00963659f57d81fad5563b24da9b3639a8f7ea9f98f6b09e9`,
+`51bde7ed7024cc75e849c0acb09cca4569b85834367829aef5358a99ea1a4b23`,
+`26c5b5027da77bd2c4dd14f26ba7b1718cd8c2e747ef86d777b17c7d13d00f60`
+and `68adcb6e8295805b99975882a11c328728184950a034ca9201fcd02d450d6d89`.
+All completed under the unchanged
+2 GiB / 20 GiB generation preflight, 0.5 GiB / 12 GiB runtime minima and
+1.75 GiB RSS cap. Their operation times were 34.59, 1.60, 0.85 and 4.82
+seconds; peak application RSS values were 165,744,640, 132,063,232,
+114,855,936 and 144,945,152 bytes. No generation stage used the verifier's
+smaller disk profile.
+
+The fresh anonymous comparison revalidated the accepted 903-file,
+38,658,688-byte receipt, application commit
+`3dfedc1faab1dd830a79ab5fa0efce3b07c9db25`, fresh results build
+input, release and index, and all four public data/manifest pairs. All ten HTTP
+requests passed. Its report is 4,658 bytes with hash
+`ad9dec11195ff791db4417354b35dd1a6aafaec6188ea449e8c75900bfa7ba30`.
+It used no credentials, authenticated API or deployment mutation.
+
+The compact chain audit established exact-byte applicability of the retained
+QGIS evidence for the water grid, whale grid, production vessel grid, whale,
+vessel, domain and exposure displays, plus the analytical-domain inspection
+document/image. It did not claim new human inspection. Attempt 1 was preserved
+after rejecting a mistyped expected production-QGIS-report checksum; no project
+artifact differed. After correcting that local pin and selecting a new output,
+attempt 2 passed. Failed/passed report hashes are
+`1bb9b994030798fbe2525d031ebbe89988d13f30fcb9e5d23e95bfbf0808cfe2` and
+`2fe21e6d4bea461963e10f68a0ce3ce3a1f88c396d64f1d3f703f847f92a96d8`.
+
+Finally, `exposure_verification` ran against the fresh analytical bundle and
+fresh exact M6 delivery, attaching the passed chain and public reports. It used
+its documented smaller 2 GiB / 1 GiB preflight and 0.5 GiB / 0.5 GiB runtime
+disk profile, not the generation profile. The verifier passed all seven checks
+in 3.35 seconds. Preflight observed 5,328,285,696 bytes RAM and
+58,583,502,848 bytes disk; runtime minima were 5,198,303,232 and
+58,583,486,464; peak application RSS was 135,962,624 bytes. Request, result and
+profile hashes are
+`bf755022d3085f386b6c86421209f1675222866c9a3203d69af167b30716286f`,
+`5f11d387798a532092b2e9f9a52f9c6c8b7c6f1ac3ab63979493f0039580553b`
+and `c0924118eb601761a7d5befaca24118cdaaf11282f9a065a72671edc45ea2987`.
+
+Exact continuation commands are retained in `N/continuation-commands.md`,
+8,916 bytes, SHA-256
+`786ab9c3bd61f65cbb9fe12dfec5e5d25b852a81630a0cc4e056795d8c070ac7`.
+Session-only continuation-validation, chain-audit and public-comparison script
+hashes are `45c892294afc20bb3b9743bb93a488ff278500d34a6c9fd3b83a33ca7243b45c`,
+`22b2d39e3c0304e6729f50a917cd4be8cd55d3575889415c5992355eef02bf46`
+and `fe9c206a2f74753612bb3aea756fbc32ea5ef302cda109b70ddd05dcc0e2cffc`.
+These ignored scripts compose existing validators; they are evidence helpers,
+not a new pipeline or supported analytical method. No VSR geometry was copied,
+published or placed in a public output.
+
 ## Implemented and reused
 
 `analysis/src/whale_vessel_analysis/exposure_verification.py` adds the narrow
@@ -212,10 +349,11 @@ escape, incomplete writes, version identity and CLI behavior. The
 [analysis procedure](../analysis/README.md#post-generation-exposure-verification)
 documents the command and gates. No accepted output or public pin changed.
 
-Two ignored session-only audit scripts compose existing APIs: M3
+Two historical pre-continuation ignored audit scripts compose existing APIs: M3
 `verify_production_vessel_input.verify_bundle`, cleaned sidecar/schema validators,
 period loading, M6 input-lineage checks, M5 exporters, and native release
-`verifyReceipt`. They are retained with hashes below, not a new supported API.
+`verifyReceipt`. They are retained with hashes below. The three continuation
+helpers and their hashes are recorded above. None is a new supported API.
 
 ## Criterion/evidence matrix
 
@@ -223,15 +361,15 @@ period loading, M6 input-lineage checks, M5 exporters, and native release
 |---|---|---|---|
 | Raw deliveries → canonical intake | Five monthly intake manifests, repeat/identical-retry histories; July overlap repeat | Fresh inventory matched five raw identities; fresh sequential intake reproduced all 153 canonical slices and row accounting without skips | Independent transfer and observational completeness remain unverified |
 | Canonical → cleaned period | Successful monthly processing and period readiness | Fresh cleaning reproduced all 153 deterministic Parquet files, cleaner IDs and 15,458,567 rows; schemas/sidecars and final period identity validate | No remaining generation gap at this boundary; independent audit remains |
-| Raw spatial → water/whale/domain | Water byte-identical overwrite repeat; whale a/b/c repeat; retained domain run and QGIS checks | Fresh archive/tree correspondence passed; fresh deterministic water, whale, domain masks/report match accepted bytes; exact historical QGIS evidence remains applicable | No new visual inspection claimed; independent audit must confirm reuse applicability |
-| Period/grid → production vessel | Two accepted production runs and separate candidate-matrix evidence | Fresh command used the fresh ready period/grid and passed preflight | Runtime memory guard stopped the attempt; no accepted fresh production bundle or read-back comparison |
-| Analytical inputs → exposure | Current first/repeat deterministic files match; retained numerical review | Both bundles' four files rehashed; first bundle tables and entire report reconciled by accepted validator | New verification starts at retained analytical tables; it is not exposure generation from raw |
-| Analytical → display/results → deployed package | M5/M6 exporter and release evidence | M5 three GeoJSONs and complete manifests reproduced in memory; M6 display/manifest/results reproduced exactly; receipt inventory and ten anonymous public requests match | No new full compiled-asset HTTP sweep, browser/performance check, or live VSR check; use historical production evidence |
+| Raw spatial → water/whale/domain | Water byte-identical overwrite repeat; whale a/b/c repeat; retained domain run and QGIS checks | Fresh archive/tree correspondence and deterministic generation passed; compact audit rechecked exact retained QGIS bindings | No new visual inspection claimed; independent audit must assess applicability |
+| Period/grid → production vessel | Two accepted production runs and separate candidate-matrix evidence | One resumed fresh retry passed unchanged gates and reproduced grid, quality, identity, counts and candidate parity | Independent audit remains; the first failed attempt stays preserved |
+| Analytical inputs → exposure | Current first/repeat deterministic files match; retained numerical review | Fresh exposure from fresh upstream inputs reproduced ID and all deterministic files; new lineage is truthful | Independent audit remains; successful reproduction is not scientific validation |
+| Analytical → display/results → deployed package | M5/M6 exporter and release evidence | Fresh M5 data bytes and M6 bundle reproduced; only documented M5 provenance fields changed; receipt plus ten anonymous public requests passed | No new full compiled-asset HTTP sweep, browser/performance check, or live VSR check; historical production evidence remains applicable to the unchanged package |
 | Every published number traceable | Typed results and public manifests bind methods/input artifacts | Existing exporter reconstruction and application source tracing described below | Scientific validity/observational completeness are not established by reproducibility |
-| Reusable later evidence | Earlier checksum-bound documentation/QGIS records | New versioned write-once command and successful real record; failure/preservation tests | No retrofit of every historical layer's inspection; author decides sufficiency for carried-forward milestone wording |
-| Documentation reflects implementation | Owners, ADRs and retained handoffs available | Analysis procedures corrected; shared M8 summaries integrated after rebase | Independent cross-document verification remains; full criterion not closed |
+| Reusable later evidence | Earlier checksum-bound documentation/QGIS records | New versioned write-once command passed on fresh M6 artifacts with chain/public references; failure/preservation tests also pass | Independent reviewer must verify record and retained-evidence sufficiency |
+| Documentation reflects implementation | Owners, ADRs and retained handoffs available | Analysis procedures and shared status owners now describe the completed execution and remaining audit boundary | Independent cross-document verification remains; full criterion not closed |
 | Retrieval dates / versions; centralized limitations | Source register and analytical/results limitation fields | Retained metadata distinguished from processing/export clocks | Exact AccessAIS historical retrieval UTC timestamps unavailable; no invented timestamps; source-model season and completeness caveats remain |
-| End-to-end rerun | Successful component repeats | Fresh raw/spatial processing through the complete cleaned period passed | Production resource stop leaves vessel, exposure, export, public comparison and final verifier open |
+| End-to-end rerun | Successful component repeats | Resumed fresh chain now spans retained raw identities through fresh deterministic analytics/exports and exact public comparison; interruption is explicit | Independent audit remains; the two-session execution is not represented as uninterrupted |
 
 ## Exact retained chain
 
@@ -477,20 +615,20 @@ For these exact pins, the corrected prospective disk reserves are 1 GiB
 preflight / 0.5 GiB runtime. They are explicit operational headroom for tiny
 record writes, atomic profiler publication and filesystem activity, not measured
 demand or a forecast for arbitrary inputs. All memory gates remain unchanged.
-No command has been executed under the corrected thresholds in this correction;
-the supporting real run is historical and used 20/12 GiB. Historical files,
-commands, hashes and refusal outcomes above remain unchanged. Do not apply this
-profile to the session-wide retained-chain audit or any generation stage.
+At the correction point no command had executed under these thresholds; the
+authorized continuation later ran the bounded verifier with the corrected
+profile and is recorded above. Historical files, commands, hashes and refusal
+outcomes remain unchanged. Do not apply this profile to the session-wide
+retained-chain audit or any generation stage.
 
-## Continuation procedure after the stopped fresh run
+## Recorded continuation procedure used after the stopped fresh run
 
-Steps 1 through 3 below completed in `m8-fresh-chain-20260910-01`; step 4 stopped
-at its runtime memory gate. Preserve and reuse the successful fresh upstream
-artifacts after identity checks. Do not repeat five-month cleaning blindly, rerun
-the four-candidate matrix, overwrite the stopped attempt, or remove its spill and
-profile. When resources again satisfy the documented conditions, resume at step
-4 with new production output/profile/spill destinations, then continue only if
-the fresh production comparison passes.
+Steps 1 through 3 completed in the original session; the first step 4 attempt
+stopped at its runtime memory gate. The authorized continuation followed this
+procedure and completed steps 4 through 7 as recorded above. This section is
+retained as the executed operational route, not remaining instructions. It reused
+the successful fresh upstream artifacts after identity checks and did not repeat
+five-month cleaning, the four-candidate matrix or matching spatial generation.
 
 Use the committed locked environment and existing ignored run root N under this
 checkout. Do not reuse P or any accepted destination. Every resumed command needs
@@ -593,11 +731,41 @@ and still pass the downstream 20 GiB gate. Per-stage documented gates and
 runtime stop conditions are authoritative. Do not free space by removing
 accepted/failed/rollback evidence or clear caches to manufacture a result.
 
+## Continuation verification gates
+
+The installed locked analysis environment passed the following checks after the
+fresh chain and documentation updates:
+
+```text
+python -m uv lock --check
+python -m uv run ruff format --check .       # 105 files
+python -m uv run ruff check .
+python -m uv run mypy src/whale_vessel_analysis  # 48 source files
+python -m uv run pytest -q                   # 674 passed in 66.19 s
+python -m uv build
+git diff --check
+```
+
+The relevant production, exposure, M5/M6 and verifier help boundaries also
+loaded through `uv`. A relative Markdown file/heading audit checked 224 links
+across the seven changed documents with no errors. Web source, lock and package
+inputs did not change, and this checkout has no installed `web/node_modules`;
+the web suite/build was therefore not reinstalled or rerun for this
+documentation-only commit. That is a recorded skip, not a pass. Both analysis
+and web CI remain required on the eventual PR head before merge authorization.
+
+One early non-heavy help attempt used bare system Python from the repository
+root and failed immediately because `pyarrow` was unavailable. It read or wrote
+no data; the locked-environment invocation passed. The separate compact-audit
+pin failure and the initial production resource stop are preserved above. No
+other continuation check failed or was skipped.
+
 ## Integration outcomes and remaining next steps
 
-- Roadmap now records M8 work in progress and the fresh upstream evidence plus
-  production resource stop, not completion. The raw-to-cleaned and spatial
-  boundaries passed; the production-to-public chain and independent audit remain.
+- Roadmap now records **M8 execution complete, pending independent audit**,
+  while retaining milestone status as In progress. The resumed fresh chain passed
+  from registered inputs through deterministic production/exposure/exports and
+  public comparison; the first production resource stop remains preserved.
 - Development/architecture now describe the narrow M6 record boundary and keep
   actual GIS inspection separate. The current analysis count is 674; historical
   counts remain historical. Shared summaries preserve PR #36's completed review
@@ -615,9 +783,10 @@ accepted/failed/rollback evidence or clear caches to manufacture a result.
   here for independent audit; a new reviewer without them must obtain the retained
   inputs, not infer verification from this prose alone.
 
-Ready for independent local review of the documented partial execution, not a
-claim that M8 is closed or execution-complete. No PR was opened. The next
-substantive M8 step is a new production attempt only when the documented resource
-conditions can be satisfied, followed on success by the dependent comparisons
-above. After full execution and independent review, both analysis and web CI must
-pass on the eventual PR head before any separately authorized merge.
+Ready for independent local audit of the completed execution chain and updated
+documentation. This is not a claim that M8 is closed: milestone acceptance is
+still pending that review. No PR was opened. The next substantive M8 action is
+independent audit, including retained-evidence applicability and cross-document
+verification. Both analysis and web CI must pass on the eventual PR head before
+any separately authorized merge. M7's corrected wording still needs its own
+reviewed, authorized release; no deployment occurred here.

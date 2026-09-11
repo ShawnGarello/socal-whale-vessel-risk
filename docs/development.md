@@ -89,15 +89,17 @@ writes new checksum-bound request/result records without changing generation
 lineage. The [analysis procedure](../analysis/README.md#post-generation-exposure-verification)
 owns invocation and verifier-specific resource reserves; heavier stages retain
 their own gates. The [M8 handoff](m8-verification-handoff.md) separates historical
-checks from post-rebase documentation work and records the coordinated fresh
-run plus its remaining production-to-public and independent-audit gaps. M8 is in progress,
-not complete; automated reproduction is not visual or scientific validation.
-The authorized fresh run on 2026-09-10 passed source/spatial checks and rebuilt
-all five AIS months into the accepted 153-date, 15,458,567-row period. The next
-production-vessel command passed preflight but the profiler stopped it when
-available system memory fell below 0.5 GiB. The failed profile and spill remain
-preserved; dependent stages were not run or treated as passes. See the handoff
-for exact identities, resources, commands and the safe continuation boundary.
+checks from fresh execution and records both the original resource stop and its
+authorized continuation. M8 remains in progress pending independent audit;
+automated reproduction is not visual or scientific validation. The resumed
+fresh chain passed source/spatial checks, rebuilt all five AIS months into the
+accepted 153-date, 15,458,567-row period, and reproduced production vessel,
+exposure, M5/M6 delivery and receipt-bound public identities. The initial
+production-vessel attempt's failed profile and spill remain preserved. The
+continuation reused the validated fresh upstream files, ran every heavy stage
+sequentially under its owning unchanged gates, and did not claim an uninterrupted
+run or new human visual inspection. See the handoff for exact identities,
+resources, commands and the remaining independent-audit boundary.
 
 ## Documentation sources of truth
 
@@ -918,8 +920,8 @@ M8 now supplies a narrow
 [exposure verification command](../analysis/README.md#post-generation-exposure-verification)
 with separate versioned, write-once request/result records. It does not retrofit
 this historical water-grid lineage or certify visual inspection. The
-[M8 handoff](m8-verification-handoff.md) identifies its scope and remaining
-raw-to-public reproducibility work.
+[M8 handoff](m8-verification-handoff.md) identifies its scope, completed resumed
+raw-to-public execution and remaining independent-audit work.
 
 QGIS is not a production transformation boundary. If inspection or exploration
 reveals a needed clip, repair, field calculation, reprojection, classification,

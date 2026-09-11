@@ -2014,6 +2014,9 @@ Confirm that the results are correct, that the process can be rerun, and that th
 
 ### Current progress, 2026-09-10
 
+**M8 execution complete, pending independent audit.** Milestone status remains
+In progress until that review and cross-document verification are accepted.
+
 - `exposure_verification` reuses the existing analytical table/report validators
   and delivery exporter. Fresh write-once request/result records bind artifacts,
   actual implementation/tool versions, check times, outcomes and evidence hashes;
@@ -2033,28 +2036,38 @@ Confirm that the results are correct, that the process can be rerun, and that th
   November sequentially. All 153 cleaned Parquet files and accepted identities
   match, total 15,458,567 rows, and the period is ready. This processing success
   does not establish transfer or observational completeness.
-- The fresh production-vessel stage passed its 2 GiB / 20 GiB preflight, then the
-  resource profiler terminated it when available system memory reached
-  440,987,648 bytes, below the 0.5 GiB runtime minimum. Application RSS
-  (1,274,908,672 bytes) and spill (1,167,753,216 bytes) remained below their
-  caps. The failed profile/spill are preserved and no production output was
-  accepted; dependent exposure, export, public-comparison and verifier stages
-  were not run.
+- The first fresh production-vessel attempt passed its 2 GiB / 20 GiB preflight,
+  then the resource profiler terminated it when available system memory reached
+  440,987,648 bytes, below the 0.5 GiB runtime minimum. Its failed profile and
+  five spill files remain preserved; no output from that attempt was accepted.
+- An authorized continuation at exact source
+  `3cf2382aa9275a976dd7e431520fc93c94ddb63c` first revalidated all
+  fresh upstream identities, then made one new production attempt with the
+  unchanged 1 GB / one-thread / 50,000-row settings and unchanged resource
+  gates. It passed and reproduced the accepted production ID, grid, quality,
+  counts and candidate parity. Runtime minimum available memory was
+  3,402,756,096 bytes; peak application RSS was 1,426,382,848 bytes and peak
+  spill 1,109,164,032 bytes.
+- Fresh exposure from those fresh inputs reproduced ID
+  `exposure-6dd927974fae959765c9b5c3` and all deterministic files. M5 data files
+  and the complete M6 delivery reproduced accepted bytes; M5 manifests differed
+  only in truthful new export-time/generation-lineage fields. The accepted
+  receipt and ten anonymous public requests matched. Exact-byte checks bound
+  retained QGIS evidence to every fresh spatial artifact without claiming a new
+  visual inspection. The final write-once verifier passed with fresh chain and
+  public reports attached. The two execution sessions remain explicitly
+  separate, and no VSR geometry was copied or published.
 
 ### Remaining work
 
-- Continue the preserved fresh chain only after the production stage can again
-  satisfy its documented resource conditions. Use a new production output,
-  profile and spill destination; do not overwrite or delete the stopped attempt.
-  If production passes and matches, run the still-dependent exposure, M5/M6
-  export, public comparison and reusable verifier stages. The successful fresh
-  source, spatial and five-month stages need not be repeated blindly.
 - Complete independent audit and cross-document verification against implemented
-  behavior. Preserve missing historical retrieval timestamps as unavailable;
-  do not infer observational completeness or propagated model uncertainty.
-- Assess the separate exact-artifact visual evidence and remaining M3 carry-forward
-  coverage; the new command is not a general GIS inspection framework. M7's
-  corrected wording still requires its separately authorized public release.
+  behavior and retained-evidence applicability. Preserve missing historical
+  retrieval timestamps as unavailable; do not infer observational completeness
+  or propagated model uncertainty. The new command remains a bounded
+  analytical-to-delivery verifier, not a general GIS inspection framework.
+- Run both analysis and web CI on the eventual PR head before any separately
+  authorized merge. M7's corrected wording still requires its separately
+  authorized public release; this M8 execution did not deploy anything.
 
 **Completion criteria**
 

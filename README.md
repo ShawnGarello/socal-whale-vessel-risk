@@ -48,11 +48,13 @@ A GIS analysis of where modeled blue-whale habitat and commercial vessel activit
 > separate criterion audit closed M5 and M6. M7 remains in progress only because
 > the corrected review/acceptance sentence is implemented and fully tested on
 > this branch but is not yet in a reviewed, authorized public release.
-> M8 also remains in progress. A fresh 2026-09-10 verification run reproduced
-> the registered raw identities, spatial inputs, water/whale/domain outputs, and
-> all 153 cleaned AIS dates (15,458,567 rows). Its production-vessel stage was
-> stopped by the documented system-memory guard before an output was accepted,
-> so fresh exposure and public-representation comparisons remain open. See the
+> M8 also remains in progress pending independent audit. Its resumed fresh
+> verification chain reproduced the registered raw identities, spatial inputs,
+> all 153 cleaned AIS dates (15,458,567 rows), production vessel grid, exposure
+> artifacts and M5/M6 delivery bytes. All accepted deterministic identities and
+> ten receipt-bound anonymous public requests matched. The initial production
+> memory stop remains preserved; the continuation did not rerun the five-month
+> cleaning or represent the two sessions as uninterrupted. See the
 > [M8 verification handoff](docs/m8-verification-handoff.md), the
 > [roadmap](docs/roadmap.md), the
 > [M5–M7 closure audit](docs/m5-m7-closure-handoff.md), the
@@ -104,12 +106,13 @@ Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison
 | Web application             | **M5 complete; M7 in progress** — the deployed package passed public receipt, headers, keyed responsive-browser, failure-isolation, accessibility, release-time VSR, and whole-connection functional checks. The stale sentence saying review and acceptance are pending is corrected and fully tested on this branch; M7 awaits a reviewed, authorized public release of that correction                                                                                                                                                                                                                                                            |
 | Deployment                  | **M4 complete; authorized M5/M7 candidate live** — the existing `stemry/socal-whale-vessel-overlap` free-Hobby project serves the exact approved production package at the stable URL. All 902 public files matched the receipt inventory byte-for-byte; GitHub remains disconnected, no server runtime was introduced, and billing or unrelated project settings were not changed                                                                                                                                                                                                         |
 
-**M8 verification is in progress.** A reusable exposure-verification command
-records later checks without changing generation lineage. Retained-artifact
-and public-byte checks passed. A fresh run reproduced all source/spatial inputs
-and the complete cleaned period, then stopped at the documented production
-runtime memory gate. Fresh production-to-public comparison and independent
-documentation verification remain open. See the
+**M8 execution is complete, pending independent audit; the milestone remains in
+progress.** A reusable exposure-verification command records later checks
+without changing generation lineage. The resumed fresh run reproduced the
+source/spatial inputs, complete cleaned period, production vessel and exposure
+artifacts, delivery representations and anonymous public identities under the
+documented resource gates. Independent retained-evidence and cross-document
+verification remain open. See the
 [M8 evidence and next steps](docs/m8-verification-handoff.md).
 
 ## Technology direction

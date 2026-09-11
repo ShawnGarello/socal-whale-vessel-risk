@@ -39,8 +39,9 @@ its source and artifact identities are recorded in the
 [production handoff](../docs/m7-production-candidate-handoff.md). Later
 verification can now be recorded through the narrow
 [exposure verification command](#post-generation-exposure-verification), without
-editing generation lineage. The end-to-end M8 raw-input rerun remains open;
-see the [M8 handoff](../docs/m8-verification-handoff.md).
+editing generation lineage. The resumed M8 raw-to-public execution is complete
+and pending independent audit; see the
+[M8 handoff](../docs/m8-verification-handoff.md).
 
 Run all commands below from this directory.
 
@@ -2859,6 +2860,16 @@ private memory), and 8,808 bytes of request/result records. Its six inputs were
 Source/lock fingerprints are additional small reads. These are file sizes,
 not an estimate of expanded Arrow, geometry or Python-object memory.
 
+The later fresh-chain invocation attached the same two-reference shape with
+6,441-byte chain and 4,658-byte public reports (11,099 bytes total). The
+2,579-byte increase is less than 0.1% of the six artifact bytes, and evidence
+content is streamed only for identity; it is not parsed or materialized by the
+verifier. That bounded assessment kept the same operational profile. The run
+measured 3.3534 seconds, 135,962,624 bytes peak application RSS, minimum
+5,198,303,232 bytes available RAM and minimum 58,583,486,464 bytes free disk.
+Its result hash is
+`5f11d387798a532092b2e9f9a52f9c6c8b7c6f1ac3ab63979493f0039580553b`.
+
 Code inspection establishes that `load_bundle` reads both tables with
 `use_threads=False` and reconciles the report in memory; `build_delivery_export`
 constructs and validates geometry/JSON in memory. The verifier never calls
@@ -2948,11 +2959,12 @@ python -m uv run pytest tests/test_exposure_verification.py
 python -m uv run python -m whale_vessel_analysis.exposure_verification --help
 ```
 
-The [M8 handoff](../docs/m8-verification-handoff.md) maps the complete chain,
-distinguishes historical evidence from checks actually run, and gives the
-remaining coordinated raw-input rerun procedure. Do not rerun the five months
-or compete with another session's browser measurements merely to create a
-verification record.
+The [M8 handoff](../docs/m8-verification-handoff.md) maps the completed resumed
+chain, distinguishes historical evidence from checks actually run, and retains
+the executed continuation procedure. Do not rerun the five months or compete
+with another session's browser measurements merely to create a verification
+record. Independent audit, not another production attempt, is the remaining M8
+boundary.
 
 ## Re-running the large-tabular benchmark
 
