@@ -83,23 +83,23 @@ remains in progress until that correction is reviewed, authorized, and deployed.
 Exact implementation and release evidence is in the
 [M7 release-integration handoff](m7-release-integration-handoff.md).
 
-**M8 update, 2026-09-10:** reusable later exposure verification and its focused
+**M8 update, 2026-09-11:** reusable later exposure verification and its focused
 tests are implemented. The command reuses existing validators/exporters and
 writes new checksum-bound request/result records without changing generation
 lineage. The [analysis procedure](../analysis/README.md#post-generation-exposure-verification)
 owns invocation and verifier-specific resource reserves; heavier stages retain
 their own gates. The [M8 handoff](m8-verification-handoff.md) separates historical
 checks from fresh execution and records both the original resource stop and its
-authorized continuation. M8 remains in progress pending independent audit;
-automated reproduction is not visual or scientific validation. The resumed
-fresh chain passed source/spatial checks, rebuilt all five AIS months into the
-accepted 153-date, 15,458,567-row period, and reproduced production vessel,
-exposure, M5/M6 delivery and receipt-bound public identities. The initial
+authorized continuation. M8 is complete after independent audit passed on
+2026-09-11; automated reproduction is not visual or scientific validation. The
+resumed fresh chain passed source/spatial checks, rebuilt all five AIS months
+into the accepted 153-date, 15,458,567-row period, and reproduced production
+vessel, exposure, M5/M6 delivery and receipt-bound public identities. The initial
 production-vessel attempt's failed profile and spill remain preserved. The
 continuation reused the validated fresh upstream files, ran every heavy stage
 sequentially under its owning unchanged gates, and did not claim an uninterrupted
 run or new human visual inspection. See the handoff for exact identities,
-resources, commands and the remaining independent-audit boundary.
+resources, commands and the passed audit boundary.
 
 ## Documentation sources of truth
 
@@ -921,7 +921,7 @@ M8 now supplies a narrow
 with separate versioned, write-once request/result records. It does not retrofit
 this historical water-grid lineage or certify visual inspection. The
 [M8 handoff](m8-verification-handoff.md) identifies its scope, completed resumed
-raw-to-public execution and remaining independent-audit work.
+raw-to-public execution and passed independent audit.
 
 QGIS is not a production transformation boundary. If inspection or exploration
 reveals a needed clip, repair, field calculation, reprojection, classification,

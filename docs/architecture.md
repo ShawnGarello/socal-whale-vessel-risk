@@ -825,14 +825,15 @@ Reproducibility rests on four linked practices:
 The intended end-to-end test is to rerun from unchanged raw inputs, reproduce
 the validated derived outputs, establish whether retained spatial verification
 still binds or repeat it where required, and compare outputs with what the
-deployed application serves. M8 owns that gate and remains in progress pending
-independent audit. Its resumed 2026-09-10/11 UTC execution reproduced
-source/spatial identities, the complete cleaned AIS period, production vessel
-and exposure artifacts, M5/M6 deliveries and receipt-bound anonymous public
-bytes. The first production runtime-memory stop remains preserved; the
-continuation reused validated fresh upstream inputs and is not represented as
-one uninterrupted process. Exact-byte checks established applicability of the
-retained QGIS reports without claiming a new human inspection.
+deployed application serves. M8 owns that gate and is complete after its
+2026-09-11 independent audit passed. Its resumed 2026-09-10/11 UTC execution
+reproduced source/spatial identities, the complete cleaned AIS period,
+production vessel and exposure artifacts, M5/M6 deliveries and receipt-bound
+anonymous public bytes. The first production runtime-memory stop remains
+preserved; the continuation reused validated fresh upstream inputs and is not
+represented as one uninterrupted process. Exact-byte checks established applicability of the
+retained QGIS reports without claiming a new human inspection. The audit
+accepted that applicability boundary and the explicit two-session history.
 
 The implemented `exposure_verification` boundary loads checksum-pinned retained
 M6 tables/report through existing validators and reconstructs display, manifest

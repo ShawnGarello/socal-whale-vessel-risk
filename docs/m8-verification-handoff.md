@@ -2,14 +2,17 @@
 
 ## Status and branch
 
-**M8 execution complete, pending independent audit.** The milestone remains
-**In progress, not complete** until that audit and its documentation review are
-accepted. The original 2026-09-10 execution reproduced source/spatial identities
-and the complete cleaned AIS period, then stopped at the documented
-production-vessel runtime memory gate. The authorized continuation reused those
-fresh inputs, passed one new production attempt and completed exposure, M5/M6
-exports, public comparison, retained-spatial-evidence applicability checks and
-the reusable verifier. This was a resumed chain, not one uninterrupted process.
+**M8 is Complete.** Execution completed on 2026-09-10 local / 2026-09-11 UTC,
+and independent audit passed on 2026-09-11. The original 2026-09-10 execution
+reproduced source/spatial identities and the complete cleaned AIS period, then
+stopped at the documented production-vessel runtime memory gate. The authorized
+continuation reused those fresh inputs, passed one new production attempt and
+completed exposure, M5/M6 exports, public comparison, retained-spatial-evidence
+applicability checks and the reusable verifier. This was a resumed chain, not
+one uninterrupted process.
+The audit accepted that boundary and requested one wording correction: commit
+`add736936a6657d33421b99ab1603e0255611641` narrowed the pre-rebase qualifier
+to the initial verification records. It changed no implementation or evidence.
 
 - Branch: `feat/m8-verification`.
 - Current base: fetched `origin/main`,
@@ -23,8 +26,10 @@ the reusable verifier. This was a resumed chain, not one uninterrupted process.
   resource correction: `5ccd32773cf2420e5c407150e37c10c6bad6ab29`
   (original correction `de2574f186d2db125f447d23948df6ad0bd419e1`).
   The final integration commit is identified in Git history and the final handoff.
-- Previously audited continuation head and exact continuation execution source:
+- Exact continuation execution source:
   `3cf2382aa9275a976dd7e431520fc93c94ddb63c`.
+- Passed-audit documentation head:
+  `add736936a6657d33421b99ab1603e0255611641`.
 - Original checkout was clean; branch/path names were checked before creation.
   Other worktrees were inspected read-only, never repurposed. No push, PR,
   merge, publication, deployment, credential access, or dependency upgrade.
@@ -48,8 +53,9 @@ conflicts; no scientific decision or code conflict resolution was required.
 Only this branch was rebased; primary `main` and other branches were not changed.
 Analysis source/tests/lock/manifests are byte-identical across this rebase.
 
-Roadmap now records M8 In progress, its narrow implemented record boundary and
-the remaining fresh chain/documentation checks, without weakening criteria.
+At that preparation checkpoint, the roadmap recorded M8 In progress, its narrow
+implemented record boundary and remaining fresh chain/documentation checks,
+without weakening criteria.
 Development and architecture distinguish generation lineage from later records,
 link to the workload-specific procedure, and retain actual GIS inspection as a
 separate requirement. README and project-brief summaries reflect this status.
@@ -358,19 +364,19 @@ helpers and their hashes are recorded above. None is a new supported API.
 
 ## Criterion/evidence matrix
 
-| M8 boundary or criterion | Proven by retained evidence | Independently checked this session | Remaining check / unavailable evidence |
+| M8 boundary or criterion | Proven by retained evidence | Independently checked this session | Audit result / unavailable limitation |
 |---|---|---|---|
 | Raw deliveries → canonical intake | Five monthly intake manifests, repeat/identical-retry histories; July overlap repeat | Fresh inventory matched five raw identities; fresh sequential intake reproduced all 153 canonical slices and row accounting without skips | Independent transfer and observational completeness remain unverified |
-| Canonical → cleaned period | Successful monthly processing and period readiness | Fresh cleaning reproduced all 153 deterministic Parquet files, cleaner IDs and 15,458,567 rows; schemas/sidecars and final period identity validate | No remaining generation gap at this boundary; independent audit remains |
-| Raw spatial → water/whale/domain | Water byte-identical overwrite repeat; whale a/b/c repeat; retained domain run and QGIS checks | Fresh archive/tree correspondence and deterministic generation passed; compact audit rechecked exact retained QGIS bindings | No new visual inspection claimed; independent audit must assess applicability |
-| Period/grid → production vessel | Two accepted production runs and separate candidate-matrix evidence | One resumed fresh retry passed unchanged gates and reproduced grid, quality, identity, counts and candidate parity | Independent audit remains; the first failed attempt stays preserved |
-| Analytical inputs → exposure | Current first/repeat deterministic files match; retained numerical review | Fresh exposure from fresh upstream inputs reproduced ID and all deterministic files; new lineage is truthful | Independent audit remains; successful reproduction is not scientific validation |
+| Canonical → cleaned period | Successful monthly processing and period readiness | Fresh cleaning reproduced all 153 deterministic Parquet files, cleaner IDs and 15,458,567 rows; schemas/sidecars and final period identity validate | Audit passed; no remaining M8 generation gap at this boundary |
+| Raw spatial → water/whale/domain | Water byte-identical overwrite repeat; whale a/b/c repeat; retained domain run and QGIS checks | Fresh archive/tree correspondence and deterministic generation passed; compact audit rechecked exact retained QGIS bindings | Audit accepted exact-byte applicability; no new visual inspection is claimed |
+| Period/grid → production vessel | Two accepted production runs and separate candidate-matrix evidence | One resumed fresh retry passed unchanged gates and reproduced grid, quality, identity, counts and candidate parity | Audit passed; the first failed attempt stays preserved |
+| Analytical inputs → exposure | Current first/repeat deterministic files match; retained numerical review | Fresh exposure from fresh upstream inputs reproduced ID and all deterministic files; new lineage is truthful | Audit passed; successful reproduction is not scientific validation |
 | Analytical → display/results → deployed package | M5/M6 exporter and release evidence | Fresh M5 data bytes and M6 bundle reproduced; only documented M5 provenance fields changed; receipt plus ten anonymous public requests passed | No new full compiled-asset HTTP sweep, browser/performance check, or live VSR check; historical production evidence remains applicable to the unchanged package |
 | Every published number traceable | Typed results and public manifests bind methods/input artifacts | Existing exporter reconstruction and application source tracing described below | Scientific validity/observational completeness are not established by reproducibility |
-| Reusable later evidence | Earlier checksum-bound documentation/QGIS records | New versioned write-once command passed on fresh M6 artifacts with chain/public references; failure/preservation tests also pass | Independent reviewer must verify record and retained-evidence sufficiency |
-| Documentation reflects implementation | Owners, ADRs and retained handoffs available | Analysis procedures and shared status owners now describe the completed execution and remaining audit boundary | Independent cross-document verification remains; full criterion not closed |
+| Reusable later evidence | Earlier checksum-bound documentation/QGIS records | New versioned write-once command passed on fresh M6 artifacts with chain/public references; failure/preservation tests also pass | Audit accepted the record and retained-evidence sufficiency |
+| Documentation reflects implementation | Owners, ADRs and retained handoffs available | Analysis procedures and shared status owners describe the completed execution and audit boundary | Cross-document audit passed after one qualifier was narrowed |
 | Retrieval dates / versions; centralized limitations | Source register and analytical/results limitation fields | Retained metadata distinguished from processing/export clocks | Exact AccessAIS historical retrieval UTC timestamps unavailable; no invented timestamps; source-model season and completeness caveats remain |
-| End-to-end rerun | Successful component repeats | Resumed fresh chain now spans retained raw identities through fresh deterministic analytics/exports and exact public comparison; interruption is explicit | Independent audit remains; the two-session execution is not represented as uninterrupted |
+| End-to-end rerun | Successful component repeats | Resumed fresh chain spans retained raw identities through fresh deterministic analytics/exports and exact public comparison; interruption is explicit | Audit passed and accepted the two-session representation |
 
 ## Exact retained chain
 
@@ -720,7 +726,8 @@ profiles, spill and comparison evidence under N.
    across all stages. Reuse exact historical QGIS evidence only after artifact,
    implementation and inspected-view applicability checks; obtain new actual
    inspection when needed. Finish with anonymous public/receipt comparison,
-   not deployment. Independent reviewer and shared owner assess M8 criteria.
+   not deployment. The independent reviewer and shared owner later accepted
+   the M8 criteria as recorded below.
 
 Historical resource evidence: five monthly first runs total about 47.6 minutes;
 production about 28–31 minutes; exposure about 38–40 seconds. Allow roughly
@@ -761,12 +768,35 @@ no data; the locked-environment invocation passed. The separate compact-audit
 pin failure and the initial production resource stop are preserved above. No
 other continuation check failed or was skipped.
 
-## Integration outcomes and remaining next steps
+## Independent audit outcome, 2026-09-11
 
-- Roadmap now records **M8 execution complete, pending independent audit**,
-  while retaining milestone status as In progress. The resumed fresh chain passed
-  from registered inputs through deterministic production/exposure/exports and
-  public comparison; the first production resource stop remains preserved.
+Independent audit passed against the retained execution evidence and the status
+documentation at `add736936a6657d33421b99ab1603e0255611641`. The audit accepted
+the raw-to-public reproduction, deterministic identities, resource-guard
+handling, preserved failed attempt, two-session execution boundary, retained
+spatial-evidence applicability, reusable verifier and documented limitations.
+It requested one documentation correction: the pre-rebase qualifier now applies
+only to the initial verification records, while the fresh-run records are
+correctly identified as post-rebase. That correction did not change code,
+generated artifacts, profiles or evidence identities.
+
+All four roadmap completion criteria are satisfied. M8 is therefore Complete.
+This status does not validate collision probability, observational completeness,
+VSR effectiveness or propagated model uncertainty, and does not authorize a
+merge, release or deployment.
+
+This closure update changes documentation only. `git diff --check` and a scan of
+264 relative file/heading links across the nine affected Markdown files passed.
+Analysis and web tests were not rerun because implementation, dependencies,
+analytical artifacts and application inputs did not change; the previously
+recorded gates remain the applicable execution evidence.
+
+## Integration outcomes and downstream next steps
+
+- Roadmap now records **M8 Complete** after the passed independent audit. The
+  resumed fresh chain passed from registered inputs through deterministic
+  production/exposure/exports and public comparison; the first production
+  resource stop remains preserved.
 - Development/architecture now describe the narrow M6 record boundary and keep
   actual GIS inspection separate. The current analysis count is 674; historical
   counts remain historical. Shared summaries preserve PR #36's completed review
@@ -780,14 +810,11 @@ other continuation check failed or was skipped.
   temporal representativeness, transfer/observational completeness, collision risk
   or propagated CV uncertainty from successful runs. Keep limitations centralized
   in their owner and referenced by the application; sensitivity is not a CI.
-- Ignored audit evidence is local-only. Preserve the exact files and scripts listed
-  here for independent audit; a new reviewer without them must obtain the retained
-  inputs, not infer verification from this prose alone.
+- Ignored audit evidence is local-only. Preserve the exact files and scripts
+  listed here; a later reviewer without them must obtain the retained inputs,
+  not infer verification from this prose alone.
 
-Ready for independent local audit of the completed execution chain and updated
-documentation. This is not a claim that M8 is closed: milestone acceptance is
-still pending that review. No PR was opened. The next substantive M8 action is
-independent audit, including retained-evidence applicability and cross-document
-verification. Both analysis and web CI must pass on the eventual PR head before
-any separately authorized merge. M7's corrected wording still needs its own
-reviewed, authorized release; no deployment occurred here.
+M8 is closed as Complete. No PR was opened. Both analysis and web CI must pass
+on the eventual PR head before any separately authorized merge. M7's corrected
+wording still needs its own reviewed, authorized release; no deployment occurred
+here.

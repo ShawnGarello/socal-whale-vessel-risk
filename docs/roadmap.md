@@ -17,7 +17,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 | M5  | Core input layers                | Complete    |
 | M6  | Whale–vessel exposure analysis   | Complete    |
 | M7  | Application integration          | In progress |
-| M8  | Verification and reproducibility | In progress |
+| M8  | Verification and reproducibility | Complete    |
 | M9  | Public release                   | Not started |
 
 ---
@@ -1988,7 +1988,7 @@ in the [M5–M7 closure audit handoff](m5-m7-closure-handoff.md).
 
 ## M8 — Verification and reproducibility
 
-**Status:** In progress
+**Status:** Complete
 
 **Objective**
 Confirm that the results are correct, that the process can be rerun, and that the documentation matches what was actually built.
@@ -2012,10 +2012,14 @@ Confirm that the results are correct, that the process can be rerun, and that th
   checksum-bound documentation; this did not gate M3. The narrow M8 command
   below now records later verification separately, not by changing that lineage.
 
-### Current progress, 2026-09-10
+### Completion and independent audit, 2026-09-11
 
-**M8 execution complete, pending independent audit.** Milestone status remains
-In progress until that review and cross-document verification are accepted.
+**M8 is Complete.** The resumed execution completed on 2026-09-10 local /
+2026-09-11 UTC. Independent audit then passed on 2026-09-11 against the retained
+evidence and status documentation. Its one requested documentation correction
+narrowed a pre-rebase qualifier to the initial verification records in commit
+`add736936a6657d33421b99ab1603e0255611641`; the later fresh-run records are
+post-rebase. That correction changed no implementation or evidence identity.
 
 - `exposure_verification` reuses the existing analytical table/report validators
   and delivery exporter. Fresh write-once request/result records bind artifacts,
@@ -2058,16 +2062,17 @@ In progress until that review and cross-document verification are accepted.
   public reports attached. The two execution sessions remain explicitly
   separate, and no VSR geometry was copied or published.
 
-### Remaining work
+The audit accepted the explicit two-session execution boundary, preservation of
+the first production resource stop, exact-byte applicability of retained spatial
+evidence, fresh analytical/delivery/public comparisons, reusable verification
+record and cross-document status. It did not convert reproducibility into
+scientific validation, observational completeness or propagated model
+uncertainty. Missing historical retrieval timestamps remain unavailable.
 
-- Complete independent audit and cross-document verification against implemented
-  behavior and retained-evidence applicability. Preserve missing historical
-  retrieval timestamps as unavailable; do not infer observational completeness
-  or propagated model uncertainty. The new command remains a bounded
-  analytical-to-delivery verifier, not a general GIS inspection framework.
-- Run both analysis and web CI on the eventual PR head before any separately
-  authorized merge. M7's corrected wording still requires its separately
-  authorized public release; this M8 execution did not deploy anything.
+Both analysis and web CI are still required on an eventual PR head before any
+separately authorized merge. That branch workflow does not reopen M8. M7's
+corrected wording still requires its separately authorized public release; M8
+did not deploy anything.
 
 **Completion criteria**
 
@@ -2076,6 +2081,10 @@ In progress until that review and cross-document verification are accepted.
 - No documented capability is absent from the implementation, and no implemented capability is undocumented.
 - Every published number is traceable to an input and a step.
 - Known limitations are recorded in one place and referenced from the application.
+
+All four completion criteria are satisfied by the execution and passed audit
+above. Exact records and limitations remain in the
+[M8 handoff](m8-verification-handoff.md).
 
 **Risks and open questions**
 
@@ -2106,7 +2115,7 @@ keyed browser, initial project-only performance modeling, and release-time VSR
 checks. The later whole-connection functional check also passed. Independent
 numerical/scientific-content review passed for exploratory public presentation,
 separately from author acceptance. This early evidence does not start or
-complete M9 automatically: M7 and M8 are not closed, public portfolio
+complete M9 automatically: M7 is not closed, public portfolio
 screenshots have not been selected, the final documentation/link audit has not
 been recorded, and the remaining Version 1 closure decision has not been made.
 The exact deployment and evidence identities are in the

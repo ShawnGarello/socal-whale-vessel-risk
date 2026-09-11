@@ -39,8 +39,8 @@ its source and artifact identities are recorded in the
 [production handoff](../docs/m7-production-candidate-handoff.md). Later
 verification can now be recorded through the narrow
 [exposure verification command](#post-generation-exposure-verification), without
-editing generation lineage. The resumed M8 raw-to-public execution is complete
-and pending independent audit; see the
+editing generation lineage. The resumed M8 raw-to-public execution and its
+2026-09-11 independent audit passed; M8 is complete. See the
 [M8 handoff](../docs/m8-verification-handoff.md).
 
 Run all commands below from this directory.
@@ -2963,8 +2963,8 @@ The [M8 handoff](../docs/m8-verification-handoff.md) maps the completed resumed
 chain, distinguishes historical evidence from checks actually run, and retains
 the executed continuation procedure. Do not rerun the five months or compete
 with another session's browser measurements merely to create a verification
-record. Independent audit, not another production attempt, is the remaining M8
-boundary.
+record. The independent audit passed on 2026-09-11; no further production
+attempt is an M8 requirement.
 
 ## Re-running the large-tabular benchmark
 

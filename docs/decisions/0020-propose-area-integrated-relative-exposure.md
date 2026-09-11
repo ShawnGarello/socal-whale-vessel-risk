@@ -1,7 +1,7 @@
 # 0020 — Propose area-integrated relative exposure
 
-**Status:** Accepted for exploratory execution — results pending independent audit
-and owner review before final headlines
+**Status:** Accepted — exploratory results independently reviewed and
+owner-accepted for the bounded public framing
 **Date:** 2026-09-06
 
 ## Owner authorization, 2026-09-06
@@ -16,6 +16,17 @@ publication, pushing, merging, rebasing or shared-owner documentation edits.
 The choices below were proposed in the foundation commit and are now selected
 for that bounded exploratory execution. The threshold family is run as written;
 no cutoff is tuned to a preferred inside/outside result.
+
+## Review closure, 2026-09-09
+
+The independent numerical/scientific-content review and separate owner
+acceptance subsequently passed for exploratory public presentation. The review
+covered the retained analytical tables, all 24 threshold/area comparisons and
+all 2,793 display cells; no package change was required. The accepted framing
+and its limitations are recorded in the
+[production candidate handoff](../m7-production-candidate-handoff.md#independent-review-authorization-and-deployment-outcome).
+This closure does not validate collision probability, observed encounters or
+VSR effectiveness.
 
 ## Context and verified inputs
 
@@ -237,11 +248,13 @@ the 35°N context truncation constrain interpretation. Uniform allocation may be
 especially poor along shipping lanes and on small water slivers. Do not remove
 small cells or anomalous dates without a separately justified decision.
 
-The owner's authorization above selects these choices for exploratory execution.
-Independent audit and owner review of the actual findings remain required before
-final headlines. M6 remains incomplete; the handoff records execution, exact
-output identities, validation, sensitivity and visual evidence. No application
-integration, publication route, deployment, or final headline is selected here.
+At this decision checkpoint, the owner's authorization selected these choices
+for exploratory execution while independent audit and owner review of the actual
+findings still remained required before final headlines. The later review
+closure above supersedes that then-open gate. At this checkpoint M6 was still
+incomplete; the handoff recorded execution, exact output identities, validation,
+sensitivity and visual evidence. No application integration, publication route,
+deployment, or final headline was selected here.
 
 ## Downstream delivery implementation, 2026-09-06
 
