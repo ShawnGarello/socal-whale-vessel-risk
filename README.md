@@ -111,13 +111,20 @@ served with the application on Vercel; the browser loads the VSR boundary from
 the publisher's ArcGIS service. There is no custom backend, database, live AIS
 feed, or browser-side exposure calculation.
 
-![The deployed application showing the 5 km proportional-product exposure surface, 92.2% inside and 7.8% outside integrated shares, the distinct 98.5% inside and 1.5% outside p90 high-exposure-area shares, and the log-traffic sensitivity.](docs/assets/exposure-results-overview-2026-09-11.png)
+![The deployed application showing pink relative-exposure shading, the orange 2026 VSR boundary, the dashed teal receiver-qualified analytical-domain boundary, 92.2% inside and 7.8% outside integrated shares, distinct p90 high-exposure-area shares, and the log-traffic sensitivity.](docs/assets/exposure-results-overview-2026-09-11.png)
 
 *Current deployed build captured from the public application on 11 September
 2026; results generated 7 September 2026 from the accepted 2024 traffic period,
-multi-year whale model, and 2026 VSR context. Esri and source attribution remain
-visible in the image. The capture does not show the merged but not-yet-deployed
-review/acceptance wording correction.*
+multi-year whale model, and 2026 VSR context. Pink shading is relative exposure;
+the orange outline is the 2026 VSR boundary; and the dashed teal outline is the
+receiver-qualified analytical domain. VSR source:
+[Danielle Alvarez / California Marine Sanctuary Foundation / Protecting Blue
+Whales and Blue Skies](https://www.arcgis.com/home/item.html?id=b400c7f418b04dc5a9d7ce5015adae32).
+The publisher marks the layer as non-navigational: mariners retain responsibility
+for navigation, and the displayed measures may not be comprehensive. Esri and
+map-data attribution remain visible along the image's lower edge. The capture
+does not show the merged but not-yet-deployed review/acceptance wording
+correction.*
 
 ## Run and reproduce
 

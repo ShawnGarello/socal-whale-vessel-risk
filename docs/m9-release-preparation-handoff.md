@@ -57,18 +57,25 @@ was changed or removed.
 
 The image was visually inspected at original resolution. It shows the primary
 map, both distinct primary headline shares, the materially different
-log-traffic result, loaded-layer state, VSR outline, and visible Esri/data
-attribution. It contains no credential, account interface, local path, or
-unrelated personal information. Alt text and a caption carry the analytical
-meaning, build/date identity, and correction caveat.
+log-traffic result, loaded-layer state, pink relative-exposure shading, the
+orange VSR outline, the dashed teal receiver-qualified analytical-domain
+outline, and visible Esri/map-data attribution along the lower edge. It contains
+no credential, account interface, local path, or unrelated personal information.
+Alt text and a caption carry those visual identities, the build/date identity,
+and the correction caveat.
 
 This is an application screenshot of the publisher-hosted `FID = 126`, not an
 export or render of the local analytical snapshot. No VSR feature bytes,
 project-hosted copy, clipped/simplified geometry, or derived VSR image was added.
-The screenshot retains the application's Danielle Alvarez/CMSF/BWBS disclosure
-path and visible dynamic Esri/data attribution. That follows ADR 0019's direct-
-service/no-copy route and the application's existing attribution controls; it
-does not claim a redistribution licence for the underlying geometry.
+The screenshot's VSR source/use controls are collapsed, so the static image does
+not itself expose that disclosure path. The adjacent README caption therefore
+credits [Danielle Alvarez / California Marine Sanctuary Foundation / Protecting
+Blue Whales and Blue Skies](https://www.arcgis.com/home/item.html?id=b400c7f418b04dc5a9d7ce5015adae32)
+and states the publisher's non-navigational context, while the screenshot retains
+visible Esri/map-data attribution along its lower edge. That follows ADR 0019's
+direct-service/no-copy route and the application's existing attribution
+controls; it does not claim a redistribution licence for the underlying
+geometry.
 
 The first automatic capture occurred before the asynchronous project layers had
 loaded and was discarded. The selected capture was taken only after the page
