@@ -143,7 +143,7 @@ derived from it are reported.
 
 Neither that snapshot nor any copied, clipped, simplified, converted, or other
 derived VSR geometry may be committed or publicly published by this project.
-For Version 1, the public application will display `FID = 126` directly from
+For Version 1, the public application displays `FID = 126` directly from
 the publisher's public Feature Service, as decided in
 [ADR 0019](../docs/decisions/0019-reference-the-publisher-hosted-vsr-service.md).
 That display route does not make the retained snapshot publicly distributable

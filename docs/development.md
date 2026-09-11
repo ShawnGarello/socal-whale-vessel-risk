@@ -2,36 +2,19 @@
 
 **Owns:** the engineering workflow — how work is done, recorded, verified, and reviewed in this repository.
 
-> The **web application and Python analysis package are implemented in part and
-> their commands are real** — they are recorded below and were run to write them
-> down. The repository also contains the [M2 verification
-> utility](../tools/README.md), which is separate from the analysis package. The
-> ArcGIS Pro is optional and unnecessary for Version 1; no ArcGIS Pro project
-> is planned as a repository component. The analysis package validates source
-> inputs and configuration, verifies and manifests one explicitly supplied AIS
-> delivery, partitions explicitly supplied multi-date AccessAIS deliveries one
-> at a time into deterministic daily inputs, processes those inputs
-> sequentially into atomic local bundles, and accumulates them resumably in the
-> period-input manifest,
-> generates the projected per-cell water grid, and
-> transfers the selected modeled blue-whale density surface to that grid by
-> abundance-conserving area weighting. QGIS is the local inspection and visual-
-> verification tool. A one-bundle vessel evidence harness supplies cached
-> segment-piece, per-cell, vessel-hours and cleaned-point diagnostics without
-> producing a production vessel grid. A separate boundary assembles explicitly
-> supplied one-date cleaner bundles into a versioned multi-day period-input
-> manifest and scans its verified partitions through a bounded DuckDB relation,
-> without selecting a plausibility threshold. A focused period vessel-rule
-> evidence boundary reuses one whole-period adjacency stream to summarize the
-> four explicit ADR 0018 candidates in bounded batches; it is synthetically
-> tested and its two profiled real-ready-manifest runs reproduced exact
-> deterministic evidence bytes. A separate candidate
-> vessel-grid boundary now requires explicit gap, implied-speed, readiness, edge,
-> and support parameters, streams whole-period pairs, and writes deterministic
-> per-cell vessel-kilometres with quality and lineage metadata beneath ignored
-> `data/derived/`. Network retrieval, publisher-side transfer completeness, AIS
-> observational completeness, accepted vessel rules, a final vessel input, and
-> later derived processing remain unfinished or unverified.
+> The **web application and Python analysis package are implemented, and their
+> commands are real** — they are recorded below and were exercised before being
+> documented. The repository also contains the separate
+> [M2 verification utility](../tools/README.md). Python owns the reproducible
+> source-validation, AIS intake/cleaning, water/whale/domain construction,
+> production vessel aggregation, exposure, delivery, and later-verification
+> boundaries. QGIS owns checksum-bound visual inspection, not production edits.
+> The static web application presents the precomputed inputs and results and is
+> deployed through the selected release route. ArcGIS Pro is optional and
+> unnecessary for Version 1. Network retrieval remains outside the processing
+> package; publisher-side AIS transfer completeness and observational
+> completeness remain unverified. Current milestone status belongs in the
+> [roadmap](roadmap.md); dated sections below preserve execution history.
 
 ---
 
@@ -213,10 +196,10 @@ creates and validates the static export. `next typegen` is the supported Next.js
 mechanism for generating the ignored route-aware helpers (including
 `LayoutProps`) before TypeScript runs; generated `.next/` types remain local.
 
-The export is roughly 34 MiB on disk with all three generated M5 input layers
-staged. Local M7 checks additionally stage the exposure display/manifest and read
-the tracked results artifact at build time; the current release tool does not
-package those inputs. Much of the remaining size is ArcGIS Maps SDK chunks.
+The verified M7 package is roughly 37 MiB on disk with all four generated
+project layers and their manifests staged. The release tool also reads the
+tracked results artifact at build time without exposing it as a public endpoint.
+Much of the remaining size is ArcGIS Maps SDK chunks.
 That is the on-disk size, not the download: the SDK is code-split and the
 browser fetches only what the current map needs. Check any host's file-count and
 size limits against this before choosing one.
@@ -230,6 +213,8 @@ size limits against this before choosing one.
 | `NEXT_PUBLIC_WHALE_LAYER_URL`  | No                                                 | Where the browser fetches the modeled blue-whale density GeoJSON. Defaults to `/layers/blue-whale-density.geojson`, the same-origin path the display exporter stages into. Set it for a release that publishes a checksum-addressed filename. |
 | `NEXT_PUBLIC_VESSEL_LAYER_URL` | No                                                 | Where the browser fetches the commercial-vessel activity GeoJSON. Defaults to `/layers/commercial-vessel-activity.geojson`. Set it for a release that publishes a checksum-addressed filename.                                                |
 | `NEXT_PUBLIC_DOMAIN_LAYER_URL` | No                                                 | Where the browser fetches the accepted analytical-domain GeoJSON. Defaults to `/layers/accepted-analytical-domain.geojson`. Set it for a release that publishes a checksum-addressed filename.                                                |
+| `NEXT_PUBLIC_EXPOSURE_LAYER_URL` | No                                               | Where the browser fetches the relative-exposure GeoJSON. Defaults to `/layers/relative-exposure.geojson`; release staging binds a checksum-addressed path.                                                                                |
+| `NEXT_PUBLIC_EXPOSURE_MANIFEST_URL` | No                                            | Where the browser fetches the public exposure manifest paired with the display and build-only results. Defaults beside the local exposure layer; release staging binds the checksum-addressed manifest path.                              |
 
 Names and their constraints are documented in
 [`../web/.env.example`](../web/.env.example). Copy it to `web/.env.local` — which

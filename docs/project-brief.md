@@ -17,7 +17,8 @@ production-vessel system-memory stop remains preserved; the successful
 continuation did not rerun cleaning or erase the interruption. Independent
 retained-evidence and documentation audit passed on 2026-09-11 after one
 pre-rebase wording qualifier was narrowed; no implementation changed.
-M9 public-release work remains open. See
+M9 portfolio documentation and release-readiness work is in progress; final
+public release remains open. See
 the [roadmap](roadmap.md) for criterion status.
 
 ---

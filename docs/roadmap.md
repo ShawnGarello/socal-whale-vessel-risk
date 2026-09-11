@@ -18,7 +18,7 @@ A milestone is not "in progress" because work has been thought about. It is in p
 | M6  | Whale–vessel exposure analysis   | Complete    |
 | M7  | Application integration          | In progress |
 | M8  | Verification and reproducibility | Complete    |
-| M9  | Public release                   | Not started |
+| M9  | Public release                   | In progress |
 
 ---
 
@@ -2097,7 +2097,7 @@ above. Exact records and limitations remain in the
 
 ## M9 — Public release
 
-**Status:** Not started
+**Status:** In progress
 
 **Objective**
 Make the project publicly presentable: deployed, documented, and readable by a reviewer who has ten minutes.
@@ -2106,6 +2106,25 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 
 - M7 (application integrated).
 - M8 (results verified).
+
+### Progress
+
+**Portfolio documentation and release-readiness review prepared**
+
+- The public README has been restructured around the project question, live
+  application, implemented behavior, accepted method, verified headline
+  findings, limitations, reproduction entry points, and links to the owning
+  evidence.
+- One inspected screenshot of the current deployed build is selected for the
+  portfolio. It shows the primary exposure/results overview, retains Esri and
+  data attribution, and is explicitly dated and distinguished from the merged
+  but not-yet-deployed M7 wording correction.
+- The owning documentation and tracked repository contents received a scoped
+  release-readiness review. The M9 handoff records link checks, stale-document
+  corrections, cleanup findings, repository-metadata proposals, and the exact
+  remaining release sequence.
+- This preparation work does not close M7 or M9, declare Version 1 released,
+  create a production candidate, change account settings, or deploy anything.
 
 ### Pre-milestone release evidence
 

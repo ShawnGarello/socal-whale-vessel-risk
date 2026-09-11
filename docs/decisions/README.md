@@ -53,8 +53,11 @@ and the [production candidate review](../m7-production-candidate-handoff.md#inde
 
 [ADR 0021](0021-propose-vercel-static-input-delivery.md) selects free Vercel
 Hobby static delivery and route-specific M4 checks. The author confirmed Vercel
-Hobby and ArcGIS pay-as-you-go disabled on 2026-09-07; Hobby eligibility and the
-remaining basemap checks are unverified. Acceptance does not authorize deployment.
+Hobby eligibility and ArcGIS pay-as-you-go disabled on 2026-09-07. The selected
+route subsequently passed its account, key, capacity, exact-receipt, deployed-
+browser, and release-time VSR checks for the authorized M5/M7 package. Acceptance
+does not authorize a later deployment; each release retains its own approval and
+verification gates.
 
 ## Why these exist
 

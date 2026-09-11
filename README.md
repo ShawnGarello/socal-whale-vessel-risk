@@ -1,179 +1,191 @@
-# socal-whale-vessel-risk
+# Southern California whale–vessel spatial overlap
 
-A GIS analysis of where modeled blue-whale habitat and commercial vessel activity overlap off Southern California, and how much of that overlap falls inside California's Vessel Speed Reduction zone.
+An exploratory GIS analysis of where modeled blue-whale habitat overlaps with
+commercial vessel activity off Southern California, and how that relative
+exposure falls inside versus outside the current California Vessel Speed
+Reduction (VSR) zone.
 
-> **Status: in development.** M1 through M6 are complete; M7 is in progress.
-> The ready AIS period contains all 153 dates and 15,458,567 cleaned commercial
-> observations. The exact water grid and modeled-whale transfer are reproducible
-> and visually verified. All four full-period candidate vessel grids were
-> generated, repeated, compared and inspected in QGIS.
+> **[Open the live interactive map](https://socal-whale-vessel-overlap.vercel.app/)**
 >
-> ADR 0018 is **Accepted**: it selects 300 seconds / 30 knots with explicit
-> limitations. A production vessel-input command reuses the tested aggregation
-> engine and adds separate descriptive movement-speed fields. The final
-> period-wide vessel grid and speed summaries were generated, reproduced
-> byte-identically, independently verified and inspected in QGIS on 2026-09-05.
-> Acceptance does not claim the thresholds are scientifically validated, and
-> publisher-transfer and observational completeness remain unverified.
->
-> The web application displays the publisher-hosted VSR boundary directly;
-> project copies of VSR geometry are prohibited. It also displays this
-> project's own modeled blue-whale density grid, exported deterministically to
-> WGS 84 GeoJSON and verified on 2026-09-06 in QGIS and in a browser at the
-> three documented viewports. That layer is served as a static same-origin file
-> and its identity is checked against its checksum in the browser.
-> The accepted commercial-vessel activity and receiver-qualified analytical
-> domain are now exported through the same checksum-bound presentation route
-> and were verified locally in QGIS and Chrome at the same viewports. Vessel
-> activity starts hidden, the domain remains visible as an outline, and the
-> interface distinguishes excluded water from low or zero recorded activity.
->
-> **The reviewed M4 input-layer application is deployed at the stable URL below and
-> M4 is complete.** Route-specific plan, eligibility,
-> basemap-capacity and browser-key checks passed on 2026-09-07. The approved
-> checksum-bound package from merged `main` is reachable and its three pinned
-> input files match exactly. Clean Chrome checks passed at all required
-> viewports. After Production Toolbar was disabled for this project and the
-> unchanged approved package was redeployed, all 900 public files matched the
-> approved receipt byte-for-byte.
-> The exposure method and its distinct display/results delivery contracts are
-> implemented, independently reviewed for exploratory public presentation, and
-> author-accepted with their limitations and prominent log-traffic sensitivity.
-> **That review is not validation of collision probability, observed encounters,
-> or VSR effectiveness.** The exact checksum-paired M5/M7 package from merged
-> `main` was deployed on 2026-09-09 and passed public receipt, header, keyed
-> responsive-browser and release-time VSR checks. A later whole-connection
-> functional run applied the documented network profile to the complete page,
-> including JavaScript, basemap, and publisher VSR requests, and passed. A
-> separate criterion audit closed M5 and M6. M7 remains in progress only because
-> the corrected review/acceptance sentence is implemented and fully tested on
-> this branch but is not yet in a reviewed, authorized public release.
-> M8 is complete. Its resumed fresh
-> verification chain reproduced the registered raw identities, spatial inputs,
-> all 153 cleaned AIS dates (15,458,567 rows), production vessel grid, exposure
-> artifacts and M5/M6 delivery bytes. All accepted deterministic identities and
-> ten receipt-bound anonymous public requests matched. The initial production
-> memory stop remains preserved; the continuation did not rerun the five-month
-> cleaning or represent the two sessions as uninterrupted. Independent audit
-> passed on 2026-09-11 after one pre-rebase wording qualifier was narrowed; no
-> implementation or evidence identity changed. See the
-> [M8 verification handoff](docs/m8-verification-handoff.md), the
-> [roadmap](docs/roadmap.md), the
-> [M5–M7 closure audit](docs/m5-m7-closure-handoff.md), the
-> [M5 whale display handoff](docs/m5-whale-display-handoff.md), the
-> [M5 vessel/domain display handoff](docs/m5-vessel-domain-display-handoff.md), the
-> [M3 handoff](docs/m3-completion-handoff.md), the
-> [M6 exposure handoff](docs/m6-exposure-foundation-handoff.md), the
-> [M6 exposure-results delivery handoff](docs/m6-exposure-results-delivery-handoff.md), and the
-> [M7 exposure-interface handoff](docs/m7-exposure-interface-handoff.md), and the
-> [M7 release-integration handoff](docs/m7-release-integration-handoff.md), and the
-> [M5/M7 production candidate handoff](docs/m7-production-candidate-handoff.md).
-
-## Why
-
-The Southern California Bight carries some of the densest commercial shipping traffic in the United States and also holds foraging habitat for endangered blue whales. California's [Protecting Blue Whales and Blue Skies](https://bluewhalesblueskies.org/) program responds with voluntary Vessel Speed Reduction (VSR) zones, asking large vessels to slow down inside designated waters during a defined season.
-
-These datasets originate from different sources, in different formats and at different resolutions, and require deliberate normalization before they can be compared in one transparent, reproducible analysis. This project brings the three onto a common study area and grid, and documents every step that gets them there.
+> The existing site is public and verified. Version 1 release preparation is in
+> progress: a corrected review/acceptance sentence is merged but is not yet in a
+> new authorized production release. The map and results shown below describe
+> the current deployed build; see [Project status](#project-status).
 
 ## The question
 
-> Where does modeled blue-whale habitat overlap with commercial vessel activity off Southern California, and how much of that relative exposure occurs inside versus outside the current Vessel Speed Reduction zone?
+> Where does modeled blue-whale habitat overlap with commercial vessel activity
+> off Southern California, and how much of that relative exposure occurs inside
+> versus outside the current VSR zone?
 
-## Version 1 scope
+The project answers that question with a reproducible Python analysis and a
+browser-based map. It is a portfolio project for examining spatial reasoning,
+data lineage, analytical choices, and scientific communication—not a
+navigational, regulatory, or vessel-operations tool.
 
-Version 1 is an analytical MVP, not a map viewer: it produces a derived result rather than displaying layers someone else published. It is planned to include —
+## What the application does
 
-- a defined Southern California study area, projection, and analysis grid;
-- an authoritative VSR zone boundary and its season definition;
-- a modeled blue-whale density or distribution layer;
-- processed commercial AIS vessel activity, with vessel speed where the data supports it;
-- a documented **relative exposure** calculation combining whale density and vessel activity;
-- a derived exposure / hotspot layer;
-- inside-versus-outside VSR summary statistics;
-- an interactive ArcGIS web application;
-- reproducible processing, with documented methodology, provenance, assumptions, and limitations.
+The application displays five coordinated layers: modeled blue-whale density,
+commercial vessel activity, the resulting relative-exposure surface, the
+receiver-qualified analytical-domain boundary, and the publisher-hosted 2026
+VSR boundary. A results panel reports inside/outside shares and keeps the
+formula, threshold, grid-resolution, source-vintage, and coverage sensitivities
+within reach.
 
-Underwater noise, vessel emissions, seasonal breakdowns, and scenario comparison are **out of scope for Version 1**. They remain genuine directions for later versions — see [docs/roadmap.md](docs/roadmap.md).
+Visitors can:
 
-## Current status
+- compare the primary proportional-product surface with the materially
+  different log-traffic sensitivity;
+- turn the whale and vessel inputs on to interpret the combined result;
+- inspect exact 5 km cells and their source values;
+- distinguish integrated exposure share from high-exposure water-area share;
+- see cells outside the accepted domain as excluded, not as low or zero
+  traffic; and
+- read limitations, source dates, units, attribution, and the VSR
+  non-navigational disclaimer in the interface.
 
-| Area                        | State                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Project scope and roadmap   | Documented                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| Architecture                | Accepted and refined; Python/QGIS/Esri responsibilities and the publisher-hosted VSR display exception are recorded                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| Data sources                | **M2 complete** — downloaded and inspected; properties, licensing, limits, and public-use/publication postures recorded with a reproducible provenance manifest. VSR redistribution permission remains unconfirmed, so project-hosted copies are prohibited                                                                                                                                                                                                                                                                                                                             |
-| Study area                  | **Accepted with separate roles** — the map/context extent, modeled-whale-support water geometry, and scope-reduced `receivers_50_nautical_miles` analytical domain are distinct; see [ADR 0002](docs/decisions/0002-southern-california-study-area-extent.md)                                                                                                                                                                                                                                                                                                                           |
-| Processing workflow         | **M3 complete** — ready 153-date AIS input; verified water/whale grids and full candidate matrix; the selected vessel rules of [ADR 0018](docs/decisions/0018-use-vessel-kilometres-for-grid-activity.md) were accepted after real production generation, byte-identical repetition and QGIS validation. See [analysis](analysis/README.md).                                                                                                                                                                                                                                            |
-| Analysis and derived layers | **M6 complete** — the water grid, whale grid, current-code exploratory exposure bundles, and distinct exposure display/results contracts are generated, reconciled, reproducible, and visually verified in QGIS 4.2.1. Independent numerical/scientific-content review and author acceptance are recorded, and the closure audit independently matched the primary calculation, fractional accounting, p90 statistic, outside-cell ranking, and all 2,793 display rows. The materially non-robust log-traffic sensitivity remains prominent. This is not validation of collision probability, observed encounters, or VSR effectiveness |
-| Web application             | **M5 complete; M7 in progress** — the deployed package passed public receipt, headers, keyed responsive-browser, failure-isolation, accessibility, release-time VSR, and whole-connection functional checks. The stale sentence saying review and acceptance are pending is corrected and fully tested on this branch; M7 awaits a reviewed, authorized public release of that correction                                                                                                                                                                                                                                                            |
-| Deployment                  | **M4 complete; authorized M5/M7 candidate live** — the existing `stemry/socal-whale-vessel-overlap` free-Hobby project serves the exact approved production package at the stable URL. All 902 public files matched the receipt inventory byte-for-byte; GitHub remains disconnected, no server runtime was introduced, and billing or unrelated project settings were not changed                                                                                                                                                                                                         |
+## Headline findings
 
-**M8 is complete.** A reusable
-exposure-verification command records later checks
-without changing generation lineage. The resumed fresh run reproduced the
-source/spatial inputs, complete cleaned period, production vessel and exposure
-artifacts, delivery representations and anonymous public identities under the
-documented resource gates. Independent retained-evidence and cross-document
-audit passed on 2026-09-11. See the
-[M8 evidence and next steps](docs/m8-verification-handoff.md).
+For the primary 5 km proportional-product result, **92.2% of integrated
+relative exposure falls inside the 2026 VSR boundary and 7.8% falls outside**.
+This is the exposure proxy integrated over exact receiver-qualified water and
+partitioned by each cell's fractional position across the boundary.
 
-## Technology direction
+That statistic is different from the **share of high-exposure water area**.
+Using the all-valid p90 intensity threshold, 6,473.8 km² of qualified water is
+selected; **98.5% of that area is inside and 1.5% is outside**. Area share does
+not measure how much integrated exposure those cells contribute.
 
-The accepted hybrid direction uses Python as the reproducible processing and analytical core, QGIS for local inspection and required visual verification, and a Next.js / TypeScript application using the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/latest/). The VSR boundary is a selected Version 1 exception at the publication boundary: the application loads the publisher's public Feature Service directly with `FID = 126`, attribution to Danielle Alvarez, CMSF, and BWBS, and the publisher's non-navigational disclaimer. The project does not host a copy. [ADR 0021](docs/decisions/0021-propose-vercel-static-input-delivery.md) selects checksum-addressed static same-origin files on free Vercel Hobby for project-derived layers. The whale, vessel-activity, analytical-domain, and exposure files are implemented and deployed as static same-origin assets; the build-only results JSON is not public. On 2026-09-09 the author confirmed the existing Hobby/free-only setup, disabled pay-as-you-go, available allowance, and restricted browser key remained current. Read-only release checks independently verified the current Vercel identity/project and the key's exact approved local and production origins plus rejection of an unrelated origin; they did not independently inspect billing UI state. The isolated existing Vercel project serves the approved package at the stable URL below. Esri hosted-data capabilities are unselected and remain unverified. Paid plans, trials, add-ons, pay-as-you-go, and other charged usage are prohibited.
+The finding is sensitive to the formula. Compressing vessel activity with the
+required log-traffic sensitivity changes the integrated split to **74.9%
+inside and 25.1% outside**, a **−17.2741 percentage-point** change in the inside
+share from the primary product. This is a different analytical formula, not a
+confidence interval. The product result is therefore the selected exploratory
+answer, not a formula-robust estimate.
 
-Python produces the analysis and lineage; QGIS does not replace that production path. The browser displays and filters public results but does not compute exposure. ArcGIS Pro is optional and unnecessary for Version 1. Version 1 uses no custom backend or database. Details in [docs/architecture.md](docs/architecture.md) and [ADR 0015](docs/decisions/0015-adopt-a-hybrid-open-source-and-esri-gis-toolchain.md).
+These numbers were generated in
+[`results/exposure-results.v1.json`](results/exposure-results.v1.json),
+reconciled against the analytical tables, independently reviewed for
+exploratory public presentation, author-accepted with the recorded
+limitations, reproduced during M8, and matched to the deployed package. They
+describe **relative spatial overlap**, not collision probability, observed
+whale–vessel encounters, causal VSR effectiveness, or an optimal boundary.
 
-## Data sources
+## What the inputs mean
 
-All three Version 1 inputs have been retrieved and inspected: the NOAA/SWFSC modeled blue-whale density surface, NOAA Marine Cadastre AIS vessel records, and the 2026 BWBS Vessel Speed Reduction zone. Formats, coordinate systems, resolutions, value meanings, coverage, volume, and terms of use are recorded — with a provenance manifest that can be re-checked against the local files — in [docs/data-sources.md](docs/data-sources.md).
+- **Whales:** NOAA/SWFSC's 2020b multi-year summer–fall blue-whale density
+  model, based on survey years from 1991–2018. These are modeled density
+  estimates, not observed whale locations.
+- **Vessels:** NOAA/USCG AIS from 1 July through 30 November 2024 for commercial
+  type codes 60–89, with no vessel-length filter. Transfer completeness and
+  observational completeness remain unverified; AIS attributes are not all
+  independently observed.
+- **VSR context:** the publisher's current 2026 voluntary California boundary,
+  displayed directly as `FID = 126`. Analysis used an immutable local snapshot
+  retrieved 25 August 2026; the project does not host or redistribute that
+  geometry.
+- **Analytical domain:** modeled-whale-support water within 50 nautical miles
+  (92,600 m) of relevant NAIS reception stations. This is a
+  system-performance-qualified receiver domain—not empirical 2024 AIS coverage
+  and not a coastal buffer.
 
-Three findings are worth knowing before reading anything else. The AIS records come from land-based receivers, so Version 1 scope is reduced to the accepted `receivers_50_nautical_miles` domain: 50 nautical miles (92,600 metres) from the relevant NAIS reception stations, not from the coast. This is a system-performance-qualified AIS receiver domain, not empirical 2024 coverage. Receiver uptime, station completeness, feed interruptions, antenna and terrain effects, and observational completeness remain unknown or unverified; cells outside the domain will be excluded from headline statistics, not classified as low traffic. NOAA's 2025 vessel data is partial through September 30, so 2024 remains the latest published year covering the complete accepted July–November period. Version 1 therefore pairs the current (2026) speed-reduction zone with 2024 traffic. Finally, no explicit VSR redistribution grant was found. [ADR 0019](docs/decisions/0019-reference-the-publisher-hosted-vsr-service.md) resolves Version 1 through direct publisher-service display and prohibits a project-hosted copy; it does not rewrite that uncertainty as permission. Remaining limitations are listed in [docs/roadmap.md](docs/roadmap.md).
+The mixed vintages are intentional and visible: the analysis compares the
+multi-year whale model and July–November 2024 traffic with the current 2026 VSR
+context. It does not claim that the inputs are contemporaneous.
 
-- **Modeled blue-whale distribution** — [NOAA Fisheries species distribution models](https://www.fisheries.noaa.gov/west-coast/science-data/species-distribution-models)
-- **Commercial vessel activity** — [NOAA / USCG AIS vessel traffic](https://coast.noaa.gov/digitalcoast/tools/ais.html)
-- **VSR zone boundary and season** — [Blue Whales and Blue Skies](https://bluewhalesblueskies.org/operators/), with [California Ocean Protection Council](https://opc.ca.gov/2026/05/protecting-whales-from-ship-strikes/) program context
+## Method and architecture
 
-## What this project does not claim
+Python validates and transforms the source data, builds a 5 km California
+Albers grid, transfers modeled whale abundance by area weighting, aggregates
+accepted vessel movement as vessel-kilometres, and calculates exposure. The
+primary cell intensity is modeled whale density multiplied by vessel-activity
+intensity; exact qualified and VSR-intersection areas are then used for
+integration. Vessel speed is reported separately rather than used in the
+exposure index.
 
-This is an exploratory portfolio spatial analysis, not a regulatory or production decision-support product. It does **not** predict individual whale strikes, calculate collision probability, identify observed encounters, measure VSR effectiveness, or identify objectively optimal VSR boundaries, and it makes no policy recommendations. Its outputs describe _relative exposure_ — where habitat and traffic coincide — not risk in any validated sense.
+QGIS supplies required checksum-bound visual inspection of exact spatial
+outputs; it is not a production transformation step. A static Next.js and
+TypeScript application uses the ArcGIS Maps SDK for JavaScript to present
+precomputed results. Project-derived layers are checksum-addressed static files
+served with the application on Vercel; the browser loads the VSR boundary from
+the publisher's ArcGIS service. There is no custom backend, database, live AIS
+feed, or browser-side exposure calculation.
 
-Any modeled distribution is an estimate, not observed whale locations. AIS limitations identified during data discovery — including the publisher's offshore coverage limit and self-reported vessel attributes — must remain visible through processing and reporting. Analytical choices such as thresholds, weightings, and time windows are documented as choices, with their rationale, wherever their results appear.
+![The deployed application showing the 5 km proportional-product exposure surface, 92.2% inside and 7.8% outside integrated shares, the distinct 98.5% inside and 1.5% outside p90 high-exposure-area shares, and the log-traffic sensitivity.](docs/assets/exposure-results-overview-2026-09-11.png)
 
-## Results
+*Current deployed build captured from the public application on 11 September
+2026; results generated 7 September 2026 from the accepted 2024 traffic period,
+multi-year whale model, and 2026 VSR context. Esri and source attribution remain
+visible in the image. The capture does not show the merged but not-yet-deployed
+review/acceptance wording correction.*
 
-The exploratory public presentation passed independent numerical/scientific-
-content review of the retained analytical tables, all 24 threshold/area
-comparisons, and all 2,793 candidate display cells. The author accepted the
-current results, limitations wording, and prominent log-traffic sensitivity.
-The deployed M7 interface consumes the versioned machine-readable M6 results
-artifact without recomputing it. These findings describe relative exposure;
-they are not collision probability, observed encounters, or VSR effectiveness.
-The analysis identifies the largest outside-zone concentrations conservatively
-as ranked contributing cells; it does not claim that those cells form validated
-hotspot clusters.
+## Run and reproduce
 
-## Live demo
+To inspect the application source without reconstructing the analytical data:
 
-[Open the deployed exploratory exposure application](https://socal-whale-vessel-overlap.vercel.app/).
+```powershell
+cd web
+npm ci
+$env:NEXT_PUBLIC_ARCGIS_BASEMAP = "topo-vector"
+npm run dev
+```
 
-## Screenshots
+The keyless basemap path is suitable for local source inspection and displays a
+configuration notice; it is not production-key evidence. The generated project
+layer files are intentionally ignored and are **not included in a clone**, so a
+repository-only local run cannot reproduce the complete deployed map. The
+tracked application-results JSON is a build input, not a public endpoint.
 
-**Not yet available.** Local verification screenshots remain ignored audit
-evidence; public portfolio screenshots have not been selected or committed.
+For the Python checks:
+
+```powershell
+cd analysis
+python -m uv sync --locked
+python -m uv lock --check
+python -m uv run pytest
+```
+
+Full analytical reproduction requires the author-supplied, Git-ignored source
+data and retained immutable inputs. Follow the exact resource gates and ordered
+procedures in the [analysis guide](analysis/README.md); do not treat the test
+suite as a raw-to-results run. Source retrieval, local storage, and provenance
+are documented separately in the [source register](docs/data-sources.md) and
+[data policy](data/README.md). Any ArcGIS browser key belongs only in ignored
+`web/.env.local`, must be origin-restricted and minimally scoped, and must never
+carry publishing or account-management privileges.
 
 ## Documentation
 
-| Document                                                                             | Contents                                                               |
-| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| [docs/project-brief.md](docs/project-brief.md)                                       | Authoritative scope: Version 1 definition, non-goals, success criteria |
-| [docs/roadmap.md](docs/roadmap.md)                                                   | Dependency-ordered milestones, progress, and version direction         |
-| [docs/architecture.md](docs/architecture.md)                                         | Accepted system design, implemented boundaries, and deferred decisions |
-| [docs/data-sources.md](docs/data-sources.md)                                         | Source register, provenance, and verification status                   |
-| [docs/development.md](docs/development.md)                                           | Engineering workflow                                                   |
-| [docs/decisions/](docs/decisions/README.md)                                          | Architecture decision records                                          |
-| [docs/m7-exposure-interface-handoff.md](docs/m7-exposure-interface-handoff.md)       | Local M7 implementation, artifact, test, and browser evidence          |
-| [docs/m7-release-integration-handoff.md](docs/m7-release-integration-handoff.md)     | M7 release tooling, candidate verification, and remaining gates        |
-| [docs/project-vision-and-learning-plan.md](docs/project-vision-and-learning-plan.md) | Original project vision and GIS learning plan                          |
-| [AGENTS.md](AGENTS.md)                                                               | Instructions for coding agents                                         |
+- [Project brief](docs/project-brief.md) — authoritative Version 1 scope,
+  non-goals, and scientific framing
+- [Roadmap](docs/roadmap.md) — milestone criteria and current status
+- [Analysis guide](analysis/README.md) — processing contracts, commands,
+  resource gates, and exact analytical evidence
+- [Web guide](web/README.md) — application behavior and display contracts
+- [Architecture](docs/architecture.md) — system boundaries and data flow
+- [Data sources](docs/data-sources.md) — provenance, versions, source-use
+  posture, and unresolved source facts
+- [Local data policy](data/README.md) — ignored data layout, retrieval rules,
+  and the VSR no-copy policy
+- [Development and release process](docs/development.md) — testing, secrets,
+  release staging, authorization, deployment, and rollback
+- [Architecture decisions](docs/decisions/README.md) — accepted choices and
+  rationale
+- [M8 verification handoff](docs/m8-verification-handoff.md) — retained
+  end-to-end reproduction and audit evidence
+- [M9 release-preparation handoff](docs/m9-release-preparation-handoff.md) —
+  current release-readiness review and remaining gates
 
-Built as a portfolio project. Target for Version 1: **September 10, 2026**.
+## Project status
+
+M1–M6 and M8 are complete. M7 remains in progress until the corrected
+review/acceptance wording is included in a reviewed, explicitly authorized
+production release and verified at the public origin. M9 is in progress through
+this portfolio-documentation and release-readiness branch; neither M9 nor
+Version 1 is declared complete or fully released here. The existing application
+remains live at the stable URL above.
+
+The repository currently has no declared project license. Source data and
+third-party services retain their own terms; in particular, VSR redistribution
+permission is unconfirmed and the project's no-copy rule remains in force. A
+project-license decision requires author approval.
