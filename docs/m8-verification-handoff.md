@@ -56,11 +56,12 @@ separate requirement. README and project-brief summaries reflect this status.
 Historical test counts, M5/M6 completion, M7 whole-connection outcomes, production
 identity and pending release of corrected local wording remain distinct.
 
-All real-artifact records and commands in the matrix/tables below are **historical
-pre-rebase evidence**, not new-head execution. The M8 request/inventory identify
-initial base HEAD `3a9d802...` and the actual verifier source fingerprint later
-committed in `0049535...`; older upstream and release evidence retain their own
-recorded source identities.
+The initial retained-artifact verification records are **historical pre-rebase
+evidence**, not new-head execution. The later fresh-run records are post-rebase
+and identify their execution source commits separately. The M8 request/inventory
+identify initial base HEAD `3a9d802...` and the actual verifier source fingerprint
+later committed in `0049535...`; older upstream and release evidence retain their
+own recorded source identities.
 No record, profile, refusal, accepted input/output or production/rollback package
 was rewritten. No real-data processing or public check was repeated during that
 documentation correction; the separately authorized fresh execution is recorded
