@@ -53,18 +53,16 @@ used or required for any of them.**
 | 4 | 2026 VSR zone map | `https://bluewhalesblueskies.org/wp-content/uploads/2026-VSR-Zone-Map_July-2026.pdf` | `GET` with a browser `User-Agent`; the site returns HTTP 403 to a default `curl` agent | 2026-08-25 |
 | 5 | Marine Cadastre AIS FAQ (May 2026) | `https://coast.noaa.gov/data/marinecadastre/ais/faq.pdf` | `GET`, no parameters | 2026-08-25 |
 
-> **Open owner review, recorded 2026-09-06.** The
-> M4/M5 delivery assessment on the unmerged `research/m4-m5-delivery-assessment`
-> branch reported that the live FAQ
-> at that URL identified itself as a **June 2026** revision when inspected on
-> 2026-09-04, where this register records the May 2026 revision retrieved on
-> 2026-08-25. That report has **not** been re-verified here, and nothing about
-> the retained May 2026 evidence, the recorded field semantics, or any
-> processing rule has been changed on the strength of it. The FAQ is a living
-> document at a stable URL, so a revision is expected and does not invalidate
-> the retrieved copy. The owner should compare the current revision against the
-> retained one and record any changed use terms or field semantics as a dated
-> entry, rather than replacing the retained provenance.
+> **Live revision recheck, 2026-09-11.** The M4/M5 delivery assessment on the
+> unmerged `research/m4-m5-delivery-assessment` branch had reported that this
+> stable URL identified itself as a June 2026 revision on 2026-09-04. A fresh
+> anonymous download on 2026-09-11 instead identified itself as May 2026 and
+> matched the retained 2026-08-25 PDF byte for byte: 506,349 bytes, SHA-256
+> `1dcd64e439618d482878435d6c5ce0bcbf0791f99006a3974dd0757b467691c3`.
+> The earlier revision report is retained here as history but was not
+> reproduced; no source-use term, field semantic, or processing rule changed.
+> The FAQ remains a living document and must be checked again if later source
+> use depends on its then-current contents.
 | 6 | AIS Vessel Type and Group Codes | `https://coast.noaa.gov/data/marinecadastre/ais/VesselTypeCodes2018.pdf` | `GET`, no parameters | 2026-08-25 |
 | 7 | AIS daily prefixes, five dates | `https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/AIS_<date>.zip` | `GET` with header `Range: bytes=0-8388607`, returning HTTP 206. **Only the first 8 MiB of each file was transferred.** Dates: `2024_07_15`, `2024_08_15`, `2024_09_16`, `2024_10_15`, `2024_11_15` | 2026-08-25 (`2024_07_15`), 2026-08-26 (the other four) |
 | 8 | NOAA NGS CUSP West shoreline | `https://geodesy.noaa.gov/dist_shoreline/West.zip` | `GET`, no parameters. Current West-region archive linked by the NOAA Shoreline Data Explorer; HTTP `Last-Modified` was `Wed, 05 Aug 2026 16:46:26 GMT` | 2026-08-28 |
@@ -738,8 +736,10 @@ analytical period is `ready`. This verifies the local identity,
 delivered-row/date reconciliation, cleaner compatibility, and bounded execution
 of these exact artifacts. Local checksum verification is not publisher-side
 transfer completeness, and AIS observational completeness is not verified; both
-remain `unverified`. A ready cleaned-input period is not a final vessel-activity
-grid or an exposure result, and neither exists.
+remain `unverified`. A ready cleaned-input period is not by itself a final
+vessel-activity grid or exposure result. Those downstream products now exist
+and have their own generation and verification evidence; readiness alone did
+not establish them.
 
 For the one-day delivery, the raw validator truthfully returned `passed: false`:
 825 rows had invalid or missing MMSIs and 2,233 had missing vessel types. This
@@ -784,8 +784,9 @@ October, and November monthly gates all passed under the same explicit controls,
 so all five exact monthly deliveries cleared the bounded intake and cleaning
 gates and together produced a `ready` 153-date cleaned-input period. That is
 bounded operational evidence for those exact deliveries only: it does not
-predict a different or re-requested delivery, and it establishes nothing about
-downstream period-wide vessel aggregation, which has not been run. The detailed
+predict a different or re-requested delivery, and it did not establish
+downstream period-wide vessel aggregation, which was run and verified later
+under separate resource and acceptance gates. The detailed
 measurement protocol and gate
 results are in the
 [analysis README](../analysis/README.md#accessais-intake-resource-investigation-and-seven-day-gate).
@@ -997,6 +998,19 @@ The live geometry was not retained or copied into the candidate. This closes
 ADR 0019's comparison gate for the exact candidate recorded in the
 [M5/M7 production candidate handoff](m7-production-candidate-handoff.md); it
 does not authorize upload or replace a later check if the candidate changes.
+
+**M9 preparation recheck, 2026-09-11.** Anonymous requests again returned HTTP
+200 for the expected item and layer and exactly one `FID = 126`. The item
+remained `WhaleAtlas_2026`, owner `danielle_cmsf`, modified
+`2026-06-01T19:24:22Z`; the layer remained version 12 with `Query` capability.
+The current feature was compared in memory with the exact ignored snapshot
+above. Its ordered geometry, coordinate arrays, and sorted complete properties
+matched exactly with zero tolerance; the geometry and coordinate-array hashes
+remained `bf50488078ed558029d1ead6676b4f4d33e5ed20b2e560b4dc564f8e5615f196`
+and `24c486e3f05e8e15a855ba98845893597edf6c25c64c56d396e6b8af09da2693`.
+No live or local geometry was written or copied into this worktree. This is a
+release-readiness recheck, not the required release-time check for a future
+merged-main candidate.
 
 ### Considered and not selected
 

@@ -17,48 +17,27 @@
 > and the final unchanged-package redeployment passed strict receipt matching
 > for all 900 public files.
 >
-> The Next.js application shell, Python processing foundation, deterministic
-> one-extract AIS cleaning, projected water-grid construction, and deterministic
-> whale-grid transfer are implemented and tested. Two clean whale-transfer runs
-> produced byte-identical output, and QGIS 4.2.1 visually verified the exact
-> generated water-grid and whale-grid GeoParquet artifacts. Local boundaries now
-> verify and manifest one supplied AIS artifact and use bounded streaming to
-> partition one author-supplied multi-date AccessAIS CSV or safe ZIP into
-> deterministic daily cleaner inputs with resumable sequential period-manifest
-> recording. The boundary was exercised with overlapping real one-day and
-> two-day direct CSV deliveries, the seven-day operational gate, and the exact
-> July monthly operational gate. Reordered equivalent daily content was reused,
-> all 31 July dates reconciled, and the identical July retry reused every date.
-> The July evidence passed independent audit, and the authorized August,
-> September, October, and November months were then accumulated into the same
-> period state: all 31 August, all 30 September, all 31 October, and all 30
-> November dates reconciled, and each identical retry reused every date, so all
-> 153 expected dates are recorded with no conflict and the shared manifest is
-> `ready`. A bounded period vessel-rule evidence boundary is implemented and
-> synthetically tested; it evaluates the four ADR 0018 candidate combinations
-> from one whole-period adjacency stream without spatial allocation. On
-> 2026-09-04, two profiled executions against that ready 153-date manifest
-> reproduced exact deterministic evidence bytes. Those non-spatial executions
-> did not compare candidate effects in individual grid cells, and no rule has
-> been accepted. The later full-period spatial matrix has now been repeated,
-> compared and inspected, and ADR 0018's selected production rules were accepted
-> after real generation, repetition and QGIS validation. Publisher-side transfer
-> and observational completeness remain unverified. Network retrieval remains
-> unimplemented. The ADR 0020 exposure method is implemented and has been run
-> locally for exploratory results, which are unreviewed and unaccepted; exposure
-> display/results contracts are implemented and locally verified. Static
-> delivery is selected by ADR 0021; the input-layer application is deployed,
-> while the M7 exposure/results interface and complete release staging are
-> implemented and browser-verified locally but not independently audited or
-> deployed.
-> Publisher-hosted VSR display is
-> implemented and locally verified in the web application. Deterministic
-> presentation exports and checksum-bound same-origin display are also
-> implemented and locally verified for the whale, vessel-activity, and accepted
-> analytical-domain layers. Vercel Hobby is selected and its route-specific
-> account checks, isolated project, deployed-origin browser behavior and full
-> receipt integrity are verified. M4 is complete.
-> See the [roadmap](roadmap.md) for milestone status.
+> The complete Version 1 analytical path is implemented and tested: source
+> validation, the 153-date cleaned AIS period, projected water and whale grids,
+> accepted production vessel activity and descriptive speed summaries, the
+> receiver-qualified domain, relative-exposure analysis, and public display and
+> results contracts. Exact spatial outputs have checksum-bound QGIS evidence.
+> M8's fresh run reproduced source and spatial identities, all 15,458,567
+> cleaned commercial observations, production vessel and exposure outputs,
+> display/results deliveries, and receipt-bound anonymous public bytes. The
+> first fresh production-vessel attempt's resource stop remains preserved;
+> successful continuation did not turn the two sessions into an uninterrupted
+> run. Publisher-side AIS transfer completeness and observational completeness
+> remain unverified.
+>
+> The static application with all four project-derived layers, precomputed
+> results, and direct publisher-hosted VSR display is deployed at the stable
+> production origin and passed receipt, header, keyed responsive-browser,
+> release-time VSR, and whole-connection functional checks. The source correction
+> to its stale review/acceptance sentence is merged and locally verified but not
+> yet in a reviewed, authorized public release, so M7 remains in progress. M9
+> release preparation is in progress. See the [roadmap](roadmap.md) for milestone
+> status and the dated handoffs for execution history.
 
 The analytical and statistical domain is accepted in
 [ADR 0002](decisions/0002-southern-california-study-area-extent.md), and the VSR
@@ -73,9 +52,10 @@ ADR 0021 selects free Vercel Hobby as the public host for static project-derived
 files. The whale,
 vessel-activity, and accepted analytical-domain layers are exported as WGS 84
 GeoJSON and read as static same-origin files, which is implemented and verified
-locally and at the stable production origin. The M7 branch consumes the exposure
-delivery contract through the same route locally; the release package does not
-yet include it. On 2026-09-07 the author confirmed Vercel Hobby eligibility for
+locally and at the stable production origin. The deployed release also consumes
+the exposure display/results contract through the same route; the results JSON
+is a private build input rather than a public endpoint. On 2026-09-07 the author
+confirmed Vercel Hobby eligibility for
 this personal, unpaid, non-monetized portfolio and ArcGIS Location Platform with
 pay-as-you-go disabled. Current basemap use was 5,292 of 2,000,000 monthly
 tiles, and the minimum browser key was verified against the exact localhost and
@@ -159,12 +139,11 @@ Static deployment -> visitor's browser
 ```
 
 ADR 0021 selects the project-derived publication branch in this diagram. The
-three M5 input layers are deployed and receipt-verified on that route. The M7
-branch integrates the M6 exposure representation and versioned results locally,
-but the release stage and public deployment still omit both. The VSR display
-source is the publisher-hosted exception selected by ADR 0019. Summary statistics
-follow the analysis boundary as a small, versioned build input; the browser does
-not recompute them.
+three M5 input layers and M6 exposure representation are deployed and
+receipt-verified on that route. Summary statistics follow the analysis boundary
+as a small, versioned build input; they have no public endpoint and the browser
+does not recompute them. The VSR display source is the publisher-hosted exception
+selected by ADR 0019.
 
 ## Component responsibilities
 

@@ -1,7 +1,14 @@
 # 0021 — Use Vercel static input delivery
 
-**Status:** Accepted; deployment approval pending
+**Status:** Accepted
 **Date:** 2026-09-07
+
+**Implementation note, 2026-09-09:** the selected static route was separately
+approved for the exact M5/M7 package, deployed to the stable production origin,
+and verified against its receipt and browser/VSR gates. The decision itself is
+not blanket authorization for a later release; every new upload retains the
+documented independent-audit, free-only account, exact-receipt, and explicit
+deployment-approval boundaries.
 
 ## Context
 
