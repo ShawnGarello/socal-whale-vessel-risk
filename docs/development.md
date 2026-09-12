@@ -1692,6 +1692,27 @@ record harness-assertion refinement rather than application failure.
 
 ### Release-time VSR service and version check
 
+**Final Version 1 candidate, 2026-09-12.** Release
+`v1-final-production-20260912-01` was built from merged-main application source
+`c63559c863c74256e5292c81511afe3e77e702fb`. The locked clean web gate passed
+all 102 tests and static export. Receipt SHA-256
+`6b3ccf5ab712df84ccf88766ac51f06fd1ddf61c4bf082ec918761947896f8d9`
+binds 903 package files / 38,659,578 bytes, including 902 public files /
+38,657,925 bytes. All accepted input bytes, keyed local browser controls,
+generated values/limitations, corrected acceptance text, isolated failures,
+attribution handoff and zero-tolerance VSR comparison passed. Two failed harness
+assertions remain preserved alongside their targeted corrections; no application
+source changed. The exact
+[candidate packet](v1-final-production-candidate-handoff.md) records commands,
+evidence, resource samples and the verified current-production rollback.
+
+This candidate is available for independent technical audit, not deployed.
+Current Vercel read-back shows Hobby and disconnected Git integration; current
+key-referrer access passes. ArcGIS administrative/free-allowance reconfirmation
+remains pending, and independent audit plus separate explicit exact-upload
+approval are required. Later documentation commits do not require rebuilding
+the immutable verified package. M7 and M9 remain in progress.
+
 Before final release, use an anonymous browser session or anonymous HTTP
 requests to verify all of the following without signing in or changing ArcGIS
 content:
