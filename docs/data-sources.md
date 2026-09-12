@@ -1012,6 +1012,20 @@ No live or local geometry was written or copied into this worktree. This is a
 release-readiness recheck, not the required release-time check for a future
 merged-main candidate.
 
+**Final-candidate check, 2026-09-12.** At 16:36:57 UTC, anonymous HTTP 200
+responses again identified the expected item, owner and modification time;
+Feature Layer 0 remained version 12 with `Query`, and exactly one `FID = 126`
+was returned. The immutable snapshot retained the SHA-256 above. Complete
+geometry objects, ordered coordinate arrays and complete sorted properties
+matched in memory with zero tolerance; geometry and coordinate hashes remained
+unchanged. No fetched geometry was retained. Sanitized comparison report
+SHA-256 is
+`cefb960e2b53e349de9d50f9bb3670a1a30c2cf00d435716c24e5bb6c4e63c5f`.
+The [final-candidate handoff](v1-final-production-candidate-handoff.md) binds
+this check to the selected merged source and locally verified package. It is
+not a deployment, redistribution permission, or a substitute for the later
+deployment-time recheck.
+
 ### Considered and not selected
 
 | Candidate | Why not selected |

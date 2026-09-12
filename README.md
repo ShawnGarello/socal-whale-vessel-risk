@@ -182,15 +182,18 @@ carry publishing or account-management privileges.
   end-to-end reproduction and audit evidence
 - [M9 release-preparation handoff](docs/m9-release-preparation-handoff.md) —
   current release-readiness review and remaining gates
+- [Final production candidate](docs/v1-final-production-candidate-handoff.md) —
+  exact locally verified package, audit evidence and outstanding approval gates
 
 ## Project status
 
 M1–M6 and M8 are complete. M7 remains in progress until the corrected
 review/acceptance wording is included in a reviewed, explicitly authorized
-production release and verified at the public origin. M9 is in progress through
-this portfolio-documentation and release-readiness branch; neither M9 nor
-Version 1 is declared complete or fully released here. The existing application
-remains live at the stable URL above.
+production release and verified at the public origin. The final candidate is
+built and locally verified, awaiting independent audit, current ArcGIS account
+reconfirmation and explicit deployment approval. M9 remains in progress;
+neither M9 nor Version 1 is declared complete or fully released here. The
+existing application remains live at the stable URL above.
 
 The repository currently has no declared project license. Source data and
 third-party services retain their own terms; in particular, VSR redistribution

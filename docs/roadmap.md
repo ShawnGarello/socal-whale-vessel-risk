@@ -2128,6 +2128,21 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 
 ### Pre-milestone release evidence
 
+Final production candidate `v1-final-production-20260912-01` was built from
+merged-main source `c63559c863c74256e5292c81511afe3e77e702fb`, including the
+M7 acceptance correction and merged M9 caption correction. Locked web gates
+(102 tests), exact accepted inputs, the 903-file / 38,659,578-byte receipt,
+keyed local three-viewport browser checks, isolated failures and anonymous
+zero-tolerance VSR comparison passed. Preserved harness failures and targeted
+corrections are distinguished in the
+[final-candidate handoff](v1-final-production-candidate-handoff.md).
+The package is available for independent technical audit. Current ArcGIS
+free-only account/allowance/key-administration reconfirmation remains pending
+before the deployment approval packet is complete. Independent audit and
+explicit deployment approval remain required. The current-production M7
+rollback package is verified and preserved. M7 and M9 remain in progress;
+nothing was uploaded or deployed.
+
 On 2026-09-09 the exact author-approved M5/M7 candidate was deployed to the
 existing stable production origin and passed full public inventory, header,
 keyed browser, initial project-only performance modeling, and release-time VSR
