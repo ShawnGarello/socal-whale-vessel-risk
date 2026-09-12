@@ -2128,6 +2128,15 @@ Make the project publicly presentable: deployed, documented, and readable by a r
 
 ### Pre-milestone release evidence
 
+Final production preparation began on 2026-09-11 from merged PR #38, including
+the screenshot-caption correction. The clean dedicated workspace, all nine
+accepted input hashes, and current-production M7 rollback receipt are verified.
+Staging is paused for private browser-key setup and current free-only account
+confirmation; no final candidate exists yet. The
+[final-candidate handoff](v1-final-production-candidate-handoff.md) records
+completed checks and remaining gates. M7 and M9 remain in progress; nothing was
+uploaded or deployed.
+
 On 2026-09-09 the exact author-approved M5/M7 candidate was deployed to the
 existing stable production origin and passed full public inventory, header,
 keyed browser, initial project-only performance modeling, and release-time VSR
